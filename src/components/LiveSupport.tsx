@@ -484,6 +484,12 @@ You have access to a tool called endSession that you should call when the user i
 
         sessionRef.current = session;
 
+        const actualSampleRate = audioContextRef.current.sampleRate;
+        const targetSampleRate = 16000;
+        const resampleRatio = actualSampleRate / targetSampleRate;
+        const bufferDurationMs = 100;
+        const samplesPerBuffer = Math.floor(targetSampleRate * bufferDurationMs / 1000);
+
         await audioContextRef.current.audioWorklet.addModule(
           URL.createObjectURL(
             new Blob(
@@ -492,17 +498,35 @@ You have access to a tool called endSession that you should call when the user i
             class AudioProcessor extends AudioWorkletProcessor {
               constructor() {
                 super();
-                this.buffer = [];
+                this.buffer = new Float32Array(0);
+                this.resampleRatio = ${resampleRatio};
+                this.targetSamples = ${samplesPerBuffer};
               }
               process(inputs) {
                 const input = inputs[0];
                 if (input && input[0]) {
                   const samples = input[0];
-                  const int16 = new Int16Array(samples.length);
-                  for (let i = 0; i < samples.length; i++) {
-                    int16[i] = Math.max(-32768, Math.min(32767, Math.floor(samples[i] * 32768)));
+                  const newBuffer = new Float32Array(this.buffer.length + samples.length);
+                  newBuffer.set(this.buffer);
+                  newBuffer.set(samples, this.buffer.length);
+                  this.buffer = newBuffer;
+                  
+                  const neededInputSamples = Math.ceil(this.targetSamples * this.resampleRatio);
+                  while (this.buffer.length >= neededInputSamples) {
+                    const resampled = new Float32Array(this.targetSamples);
+                    for (let i = 0; i < this.targetSamples; i++) {
+                      const srcIndex = Math.floor(i * this.resampleRatio);
+                      resampled[i] = this.buffer[Math.min(srcIndex, this.buffer.length - 1)];
+                    }
+                    
+                    const int16 = new Int16Array(this.targetSamples);
+                    for (let i = 0; i < this.targetSamples; i++) {
+                      int16[i] = Math.max(-32768, Math.min(32767, Math.floor(resampled[i] * 32768)));
+                    }
+                    this.port.postMessage(int16);
+                    
+                    this.buffer = this.buffer.slice(neededInputSamples);
                   }
-                  this.port.postMessage(int16);
                 }
                 return true;
               }
