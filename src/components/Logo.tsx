@@ -13,8 +13,6 @@ export const Logo: React.FC<LogoProps> = ({
   const isLight = variant === 'light';
   const [imgError, setImgError] = useState(false);
   
-  const textColor = isLight ? 'text-white' : 'text-[#1F2937]';
-  
   return (
     <div className={`flex items-center gap-2 select-none ${className}`}>
       {!imgError ? (
@@ -28,8 +26,9 @@ export const Logo: React.FC<LogoProps> = ({
         <LifeBuoy className={`w-10 h-10 ${isLight ? 'text-white' : 'text-[#F97316]'}`} />
       )}
       <div className="flex flex-col justify-center">
-        <span className={`text-xl font-bold tracking-tight leading-none ${textColor}`}>
-          TechTriage
+        <span className="text-xl font-bold tracking-tight leading-none">
+          <span className={isLight ? 'text-white' : 'text-[#1F2937]'}>Tech</span>
+          <span className="text-[#F97316]">Triage</span>
         </span>
       </div>
     </div>

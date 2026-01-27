@@ -41,53 +41,58 @@ const Header: React.FC<{
   currentView: PageView 
 }> = ({ onNavigate, currentView }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const isHomePage = currentView === PageView.HOME;
+  
   const handleNav = (view: PageView) => {
     onNavigate(view);
     setMobileMenuOpen(false);
     window.scrollTo(0, 0);
   };
 
+  const textColor = isHomePage ? 'text-white' : 'text-[#1F2937]';
+  const hoverColor = 'hover:text-[#F97316]';
+  const dividerColor = isHomePage ? 'bg-white/30' : 'bg-gray-300';
+
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-white shadow-md h-20">
+    <header className={`fixed top-0 left-0 w-full z-50 h-20 transition-colors ${isHomePage ? 'bg-[#1F2937]' : 'bg-white shadow-md'}`}>
       <div className="container mx-auto px-6 h-full flex items-center justify-between">
         <button onClick={() => handleNav(PageView.HOME)} className="focus:outline-none">
-          <Logo variant="dark" />
+          <Logo variant={isHomePage ? 'light' : 'dark'} />
         </button>
         
         <nav className="hidden lg:flex items-center gap-8">
           <button 
             onClick={() => handleNav(PageView.HOME)} 
-            className={`${currentView === PageView.HOME ? 'text-[#F97316]' : 'text-[#1F2937] hover:text-[#F97316]'} transition-colors font-bold text-base`}
+            className={`${currentView === PageView.HOME ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-bold text-base`}
           >
             Product
           </button>
           <button 
             onClick={() => handleNav(PageView.HOW_IT_WORKS)} 
-            className={`${currentView === PageView.HOW_IT_WORKS ? 'text-[#F97316]' : 'text-[#1F2937] hover:text-[#F97316]'} transition-colors font-bold text-base`}
+            className={`${currentView === PageView.HOW_IT_WORKS ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-bold text-base`}
           >
             How It Works
           </button>
           <button 
             onClick={() => handleNav(PageView.PRICING)}
-            className={`${currentView === PageView.PRICING ? 'text-[#F97316]' : 'text-[#1F2937] hover:text-[#F97316]'} transition-colors font-bold text-base`}
+            className={`${currentView === PageView.PRICING ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-bold text-base`}
           >
             Pricing
           </button>
-          <button className="text-[#1F2937] hover:text-[#F97316] transition-colors font-bold text-base">Resources</button>
+          <button className={`${textColor} ${hoverColor} transition-colors font-bold text-base`}>Resources</button>
         </nav>
 
         <div className="hidden lg:flex items-center gap-6">
-          <div className="flex items-center gap-2 text-[#1F2937] font-bold">
+          <div className={`flex items-center gap-2 ${textColor} font-bold`}>
             <Phone className="w-5 h-5" />
             <span>1-800-TECH-FIX</span>
           </div>
-          <div className="h-6 w-px bg-gray-300"></div>
-          <button onClick={() => handleNav(PageView.LOGIN)} className="text-[#1F2937] hover:text-[#F97316] transition-colors font-bold">Log In</button>
+          <div className={`h-6 w-px ${dividerColor}`}></div>
+          <button onClick={() => handleNav(PageView.LOGIN)} className={`${textColor} ${hoverColor} transition-colors font-bold`}>Log In</button>
           <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="py-3 px-6 text-base">Get Started</Button>
         </div>
 
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-[#1F2937] p-2">
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={`lg:hidden ${textColor} p-2`}>
           {mobileMenuOpen ? <X /> : <Menu />}
         </button>
       </div>
