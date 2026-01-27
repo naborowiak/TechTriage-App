@@ -371,7 +371,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
         inputAnalyserRef.current.fftSize = 256;
         source.connect(inputAnalyserRef.current);
 
-        const apiKey = process.env.API_KEY;
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         if (!apiKey) {
           setConnectionError("API key not configured");
           setIsConnecting(false);
