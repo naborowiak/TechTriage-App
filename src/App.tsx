@@ -615,7 +615,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-['Poppins',sans-serif] text-[#1F2937]">
+    <div className="min-h-screen bg-white font-['Inter',sans-serif] text-[#1F2937]">
       <Header onNavigate={setCurrentView} currentView={currentView} />
       <main>
         {renderContent()}

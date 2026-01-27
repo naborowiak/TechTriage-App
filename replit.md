@@ -27,7 +27,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Design System
 - **Color Palette**: Deep Navy (#1F2937) for primary text, Safety Orange (#F97316) for CTAs, standard grays for backgrounds
-- **Typography**: Poppins font family with emphasis on larger font sizes for accessibility
+- **Typography**: Inter font family - clean, neutral, modern SaaS style
+- **Logo**: Abstract triage node symbol representing diagnosis, connection, and resolution - flat design with central orange node connected to 4 navy outer nodes
 - **UI Pattern**: Follows a "Jobber-style" professional aesthetic with pill-shaped buttons, soft shadows, and clear visual hierarchy
 
 ### AI Integration
