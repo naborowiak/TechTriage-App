@@ -138,41 +138,11 @@ const Hero: React.FC<{ onSignup: () => void; onPricing: () => void }> = ({ onSig
         
         <div className="relative mt-8 lg:mt-0 flex justify-center lg:justify-end">
           <div className="relative z-10">
-            <div className="relative mx-auto border-[#374151] bg-[#374151] border-[14px] rounded-[2.5rem] h-[500px] w-[260px] shadow-2xl">
-              <div className="w-[120px] h-[18px] bg-[#374151] top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
-              <div className="rounded-[2rem] overflow-hidden w-[232px] h-[472px] bg-white relative flex flex-col">
-                <div className="bg-[#1F2937] h-28 p-5 pt-10 text-white shrink-0">
-                  <div className="text-xs font-bold opacity-60 uppercase mb-1">Good Morning</div>
-                  <div className="text-lg font-bold">Sarah Jenkins</div>
-                </div>
-                <div className="p-3 space-y-3 bg-[#F9FAFB] flex-1">
-                  <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-lg relative overflow-hidden">
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F97316]"></div>
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="bg-orange-50 text-[#F97316] px-2 py-0.5 rounded text-[10px] font-bold uppercase">Urgent</span>
-                      <span className="text-xs font-bold text-gray-400">10:42 AM</span>
-                    </div>
-                    <h4 className="font-bold text-[#1F2937] text-sm">Furnace Diagnostic</h4>
-                    <p className="text-xs text-gray-500">Strange noise reported</p>
-                  </div>
-                  
-                  <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Maintenance</span>
-                      <span className="text-xs font-bold text-gray-400">Upcoming</span>
-                    </div>
-                    <h4 className="font-bold text-[#1F2937] text-sm">Filter Replacement</h4>
-                    <p className="text-xs text-gray-500">HVAC System Check</p>
-                  </div>
-
-                  <div className="mt-6 flex justify-center">
-                    <div className="w-14 h-14 bg-[#F97316] rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30">
-                      <Play className="w-5 h-5 fill-white text-white ml-0.5" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <img 
+              src="/hero-image.png" 
+              alt="TechTriage Bot helping diagnose a device" 
+              className="max-w-full h-auto max-h-[500px] object-contain rounded-2xl shadow-2xl"
+            />
           </div>
         </div>
       </div>
