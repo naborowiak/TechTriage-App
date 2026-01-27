@@ -101,11 +101,11 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   const waveformCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const playbackContextRef = useRef<AudioContext | null>(null);
+  const inputAudioContextRef = useRef<AudioContext | null>(null);
   const nextPlayTimeRef = useRef<number>(0);
-  const sessionRef = useRef<Session | null>(null);
-  const audioWorkletRef = useRef<AudioWorkletNode | null>(null);
-  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const sessionRef = useRef<Promise<Session> | null>(null);
+  const frameIntervalRef = useRef<number | null>(null);
+  const isSessionEndedRef = useRef(false);
 
   const outputAnalyserRef = useRef<AnalyserNode | null>(null);
   const inputAnalyserRef = useRef<AnalyserNode | null>(null);
@@ -125,23 +125,21 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   );
 
   const stopAllHardware = useCallback(() => {
+    isSessionEndedRef.current = true;
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
+    if (frameIntervalRef.current)
+      clearInterval(frameIntervalRef.current);
     if (streamRef.current)
       streamRef.current.getTracks().forEach((t) => t.stop());
     if (audioContextRef.current && audioContextRef.current.state !== "closed") {
       audioContextRef.current.close().catch(() => {});
     }
-    if (
-      playbackContextRef.current &&
-      playbackContextRef.current.state !== "closed"
-    ) {
-      playbackContextRef.current.close().catch(() => {});
+    if (inputAudioContextRef.current && inputAudioContextRef.current.state !== "closed") {
+      inputAudioContextRef.current.close().catch(() => {});
     }
     if (sessionRef.current) {
-      try {
-        sessionRef.current.close();
-      } catch {}
+      sessionRef.current.then((s) => s.close()).catch(() => {});
     }
   }, []);
 
@@ -234,9 +232,9 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const playbackCtx = playbackContextRef.current;
+    const audioCtx = audioContextRef.current;
     const currentlySpeaking =
-      playbackCtx && playbackCtx.currentTime < nextPlayTimeRef.current + 0.15;
+      audioCtx && audioCtx.currentTime < nextPlayTimeRef.current + 0.15;
 
     if (currentlySpeaking !== isAiSpeaking) {
       setIsAiSpeaking(!!currentlySpeaking);
@@ -272,14 +270,9 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   }, [isAiSpeaking, isConnecting]);
 
   const playAudioData = useCallback((base64Audio: string) => {
-    if (!playbackContextRef.current) {
-      playbackContextRef.current = new AudioContext({ sampleRate: 24000 });
-      outputAnalyserRef.current = playbackContextRef.current.createAnalyser();
-      outputAnalyserRef.current.fftSize = 256;
-      outputAnalyserRef.current.connect(playbackContextRef.current.destination);
-    }
-
-    const ctx = playbackContextRef.current;
+    if (!audioContextRef.current) return;
+    
+    const ctx = audioContextRef.current;
     const analyser = outputAnalyserRef.current;
 
     const binaryString = atob(base64Audio);
@@ -331,19 +324,22 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   useEffect(() => {
     let mounted = true;
 
+    const encode = (bytes: Uint8Array) => {
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    };
+
     const start = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            sampleRate: 16000,
-            channelCount: 1,
-            echoCancellation: true,
-            noiseSuppression: true,
-          },
+          audio: true,
           video: {
             facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 640 },
+            height: { ideal: 480 },
           },
         });
         if (!mounted) return;
@@ -363,14 +359,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
           }
         }
 
-        audioContextRef.current = new AudioContext({ sampleRate: 16000 });
-        const source = audioContextRef.current.createMediaStreamSource(stream);
-        sourceNodeRef.current = source;
-
-        inputAnalyserRef.current = audioContextRef.current.createAnalyser();
-        inputAnalyserRef.current.fftSize = 256;
-        source.connect(inputAnalyserRef.current);
-
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         if (!apiKey) {
           setConnectionError("API key not configured");
@@ -379,16 +367,102 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
         }
 
         const ai = new GoogleGenAI({ apiKey });
+        
+        const audioCtx = new AudioContext({ sampleRate: 24000 });
+        const inputCtx = new AudioContext({ sampleRate: 16000 });
+        audioContextRef.current = audioCtx;
+        inputAudioContextRef.current = inputCtx;
+        
+        const outAnalyser = audioCtx.createAnalyser();
+        outAnalyser.fftSize = 64;
+        outputAnalyserRef.current = outAnalyser;
+        outAnalyser.connect(audioCtx.destination);
+        
+        const inAnalyser = inputCtx.createAnalyser();
+        inAnalyser.fftSize = 64;
+        inputAnalyserRef.current = inAnalyser;
 
-        const session = await ai.live.connect({
-          model: "gemini-2.0-flash-exp",
+        const sessionPromise = ai.live.connect({
+          model: "gemini-2.5-flash-native-audio-preview-12-2025",
+          config: {
+            responseModalities: [Modality.AUDIO],
+            tools: [
+              {
+                functionDeclarations: [
+                  {
+                    name: "endSession",
+                    description: "End the live support session and provide a summary",
+                    parameters: {
+                      type: Type.OBJECT,
+                      properties: {
+                        summary: {
+                          type: Type.STRING,
+                          description: "Brief summary of what was discussed and resolved",
+                        },
+                      },
+                      required: ["summary"],
+                    },
+                  },
+                ],
+              },
+            ],
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
+            systemInstruction: "You are TechTriage Live. You are a professional tech co-pilot helping users diagnose and fix technology and home maintenance issues. Be patient, friendly, and clear in your explanations. If you can see the camera feed, describe what you observe. Keep responses concise since this is a live audio session.",
+          },
           callbacks: {
             onopen: () => {
               console.log("Gemini Live session opened");
               if (mounted) {
                 setIsConnecting(false);
                 setStatus("listening");
+                animationFrameRef.current = requestAnimationFrame(drawWaveform);
               }
+              
+              const source = inputCtx.createMediaStreamSource(stream);
+              source.connect(inAnalyser);
+              
+              const processor = inputCtx.createScriptProcessor(4096, 1, 1);
+              processor.onaudioprocess = (e) => {
+                if (isMutedRef.current || isSessionEndedRef.current) return;
+                const pcm = new Int16Array(e.inputBuffer.length);
+                const chan = e.inputBuffer.getChannelData(0);
+                for (let i = 0; i < chan.length; i++) {
+                  pcm[i] = Math.max(-32768, Math.min(32767, Math.floor(chan[i] * 32768)));
+                }
+                sessionPromise.then(s => s.sendRealtimeInput({
+                  media: {
+                    data: encode(new Uint8Array(pcm.buffer)),
+                    mimeType: 'audio/pcm;rate=16000'
+                  }
+                })).catch(() => {});
+              };
+              source.connect(processor);
+              processor.connect(inputCtx.destination);
+              
+              frameIntervalRef.current = window.setInterval(() => {
+                if (videoRef.current && canvasRef.current && mounted && !isSessionEndedRef.current) {
+                  const canvas = canvasRef.current;
+                  const ctx = canvas.getContext('2d');
+                  if (ctx && videoRef.current.videoWidth > 0) {
+                    canvas.width = 320;
+                    canvas.height = (320 * videoRef.current.videoHeight) / videoRef.current.videoWidth;
+                    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => {
+                      if (blob) {
+                        blob.arrayBuffer().then(buffer => {
+                          sessionPromise.then(s => s.sendRealtimeInput({
+                            media: {
+                              data: encode(new Uint8Array(buffer)),
+                              mimeType: 'image/jpeg'
+                            }
+                          })).catch(() => {});
+                        });
+                      }
+                    }, 'image/jpeg', 0.7);
+                  }
+                }
+              }, 2000);
             },
             onmessage: (message: LiveServerMessage) => {
               if (message.serverContent?.interrupted) {
@@ -409,10 +483,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
 
               if (message.serverContent?.turnComplete) {
                 if (pendingModelTextRef.current.trim()) {
-                  addTranscriptEntry(
-                    "model",
-                    pendingModelTextRef.current.trim(),
-                  );
+                  addTranscriptEntry("model", pendingModelTextRef.current.trim());
                   pendingModelTextRef.current = "";
                 }
               }
@@ -436,135 +507,9 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
               console.log("Gemini Live session closed");
             },
           },
-          config: {
-            responseModalities: [Modality.AUDIO],
-            systemInstruction: `You are a TechTriage AI Agent providing live video support for home and technology troubleshooting. 
-            
-Your role:
-- Help users diagnose and fix technology and home maintenance issues
-- Guide them step by step through solutions
-- Ask clarifying questions when needed
-- Be patient, friendly, and clear in your explanations
-- If you can see their camera feed, describe what you observe and provide relevant guidance
-
-Keep responses concise and conversational since this is a live audio session.
-
-You have access to a tool called endSession that you should call when the user indicates they're done or the issue is resolved. Include a brief summary of what was accomplished.`,
-            tools: [
-              {
-                functionDeclarations: [
-                  {
-                    name: "endSession",
-                    description:
-                      "End the live support session and provide a summary",
-                    parameters: {
-                      type: Type.OBJECT,
-                      properties: {
-                        summary: {
-                          type: Type.STRING,
-                          description:
-                            "Brief summary of what was discussed and resolved",
-                        },
-                      },
-                      required: ["summary"],
-                    },
-                  },
-                ],
-              },
-            ],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: "Kore",
-                },
-              },
-            },
-          },
         });
 
-        sessionRef.current = session;
-
-        const actualSampleRate = audioContextRef.current.sampleRate;
-        const targetSampleRate = 16000;
-        const resampleRatio = actualSampleRate / targetSampleRate;
-        const bufferDurationMs = 100;
-        const samplesPerBuffer = Math.floor(targetSampleRate * bufferDurationMs / 1000);
-
-        await audioContextRef.current.audioWorklet.addModule(
-          URL.createObjectURL(
-            new Blob(
-              [
-                `
-            class AudioProcessor extends AudioWorkletProcessor {
-              constructor() {
-                super();
-                this.buffer = new Float32Array(0);
-                this.resampleRatio = ${resampleRatio};
-                this.targetSamples = ${samplesPerBuffer};
-              }
-              process(inputs) {
-                const input = inputs[0];
-                if (input && input[0]) {
-                  const samples = input[0];
-                  const newBuffer = new Float32Array(this.buffer.length + samples.length);
-                  newBuffer.set(this.buffer);
-                  newBuffer.set(samples, this.buffer.length);
-                  this.buffer = newBuffer;
-                  
-                  const neededInputSamples = Math.ceil(this.targetSamples * this.resampleRatio);
-                  while (this.buffer.length >= neededInputSamples) {
-                    const resampled = new Float32Array(this.targetSamples);
-                    for (let i = 0; i < this.targetSamples; i++) {
-                      const srcIndex = Math.floor(i * this.resampleRatio);
-                      resampled[i] = this.buffer[Math.min(srcIndex, this.buffer.length - 1)];
-                    }
-                    
-                    const int16 = new Int16Array(this.targetSamples);
-                    for (let i = 0; i < this.targetSamples; i++) {
-                      int16[i] = Math.max(-32768, Math.min(32767, Math.floor(resampled[i] * 32768)));
-                    }
-                    this.port.postMessage(int16);
-                    
-                    this.buffer = this.buffer.slice(neededInputSamples);
-                  }
-                }
-                return true;
-              }
-            }
-            registerProcessor('audio-processor', AudioProcessor);
-          `,
-              ],
-              { type: "application/javascript" },
-            ),
-          ),
-        );
-
-        const worklet = new AudioWorkletNode(
-          audioContextRef.current,
-          "audio-processor",
-        );
-        audioWorkletRef.current = worklet;
-        source.connect(worklet);
-
-        worklet.port.onmessage = (event) => {
-          if (isMutedRef.current || !sessionRef.current) return;
-          const int16Data = event.data as Int16Array;
-          const uint8Array = new Uint8Array(int16Data.buffer);
-          let binary = "";
-          for (let i = 0; i < uint8Array.length; i++) {
-            binary += String.fromCharCode(uint8Array[i]);
-          }
-          const base64Data = btoa(binary);
-
-          sessionRef.current.sendRealtimeInput({
-            media: {
-              mimeType: "audio/pcm;rate=16000",
-              data: base64Data,
-            },
-          });
-        };
-
-        animationFrameRef.current = requestAnimationFrame(drawWaveform);
+        sessionRef.current = sessionPromise;
       } catch (e) {
         console.error("Setup error:", e);
         if (mounted) {

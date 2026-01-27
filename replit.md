@@ -38,6 +38,12 @@ Preferred communication style: Simple, everyday language.
   - System instruction defining the AI as a "TechTriage Agent"
   - Function calling support (endSession tool) for structured interactions
   - Image analysis capabilities for diagnosing issues from photos
+- **Live Audio**: Uses `gemini-2.5-flash-native-audio-preview-12-2025` model with:
+  - Real-time bidirectional audio via WebSocket (Multimodal Live API)
+  - Input/output audio transcription enabled
+  - ScriptProcessor for 16kHz audio capture
+  - Separate AudioContexts: 16kHz input, 24kHz output
+  - Periodic video frame capture (every 2 seconds) for visual context
 
 ### Key Components
 - **ChatWidget**: Floating chat interface with image upload, camera capture, and full-screen mode support
