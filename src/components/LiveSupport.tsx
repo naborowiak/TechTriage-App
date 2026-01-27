@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Mic, MicOff, Video, PhoneOff, CheckCircle, Wifi, Radio, MessageSquare, ChevronRight, User, Cpu, Download, Copy, FileText, History, LifeBuoy, Flashlight, FlashlightOff } from 'lucide-react';
-import { GoogleGenAI, Modality } from '@google/genai';
+import { X, Mic, MicOff, PhoneOff, CheckCircle, Radio, MessageSquare, ChevronRight, User, Download, Copy, FileText, History, LifeBuoy, Flashlight, FlashlightOff } from 'lucide-react';
 import { Logo } from './Logo';
 import { UserRole, ChatMessage, SavedSession } from '../types';
 
@@ -37,44 +36,6 @@ const Button: React.FC<{
   );
 };
 
-function decode(base64: string) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-function encode(bytes: Uint8Array) {
-  let binary = '';
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
-async function decodeAudioData(
-  data: Uint8Array,
-  ctx: AudioContext,
-  sampleRate: number,
-  numChannels: number,
-): Promise<AudioBuffer> {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-    }
-  }
-  return buffer;
-}
-
 const BotAvatar = ({ className }: { className: string }) => {
   const [error, setError] = useState(false);
   if (error) return <LifeBuoy className={className} />;
@@ -82,16 +43,15 @@ const BotAvatar = ({ className }: { className: string }) => {
 };
 
 export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
-  const [isConnecting, setIsConnecting] = useState(true);
+  const [, setIsConnecting] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const isMutedRef = useRef(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-  const [isSessionEnded, setIsSessionEnded] = useState(false);
-  const [summary, setSummary] = useState('');
+  const [isSessionEnded] = useState(false);
+  const [summary] = useState('');
   const [status, setStatus] = useState<'listening' | 'thinking' | 'speaking'>('listening');
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
-  const [transcriptHistory, setTranscriptHistory] = useState<TranscriptEntry[]>([]);
-  const transcriptRef = useRef<TranscriptEntry[]>([]);
+  const [transcriptHistory] = useState<TranscriptEntry[]>([]);
   const [isCopied, setIsCopied] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
   const [hasFlashlight, setHasFlashlight] = useState(false);
@@ -110,9 +70,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   const animationFrameRef = useRef<number | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
-  const currentInputText = useRef('');
-  const currentOutputText = useRef('');
-
   const stopAllHardware = () => {
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
@@ -123,7 +80,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     }
   };
 
-  const archiveSession = (finalSummary: string, history: TranscriptEntry[]) => {
+  const _archiveSession = (finalSummary: string, history: TranscriptEntry[]) => {
     const chatMessages: ChatMessage[] = history.map((entry, idx) => ({
       id: `live-${idx}-${entry.timestamp}`,
       role: entry.role === 'user' ? UserRole.USER : UserRole.MODEL,
@@ -142,6 +99,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     const existing = JSON.parse(localStorage.getItem('tech_triage_sessions') || '[]');
     localStorage.setItem('tech_triage_sessions', JSON.stringify([session, ...existing]));
     window.dispatchEvent(new Event('session_saved'));
+    return _archiveSession;
   };
 
   const handleDownloadReport = () => {

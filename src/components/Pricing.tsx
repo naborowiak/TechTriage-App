@@ -7,7 +7,7 @@ interface PricingProps {
   onNavigate: (view: PageView) => void;
 }
 
-export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
+export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   const [isAnnual, setIsAnnual] = useState(true);
 
   const plans = [

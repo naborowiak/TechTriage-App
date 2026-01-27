@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { MessageSquare, X, Send, Image as ImageIcon, Loader2, Video, Maximize2, Download, CheckCircle, ArrowRight, Camera, Library, MoreHorizontal, User, LifeBuoy } from 'lucide-react';
-import { ChatMessage, UserRole, SavedSession } from '../types';
+import { MessageSquare, X, Send, Image as ImageIcon, Video, Maximize2, Download, Camera, Library, MoreHorizontal, LifeBuoy } from 'lucide-react';
+import { ChatMessage, UserRole } from '../types';
 import { sendMessageToGemini } from '../services/geminiService';
-import { Logo } from './Logo';
 import { LiveSupport } from './LiveSupport';
 
 export interface ChatWidgetHandle {
@@ -20,7 +19,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLiveVideoActive, setIsLiveVideoActive] = useState(false);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
-  const [sessionSummary, setSessionSummary] = useState('');
+  const [, setSessionSummary] = useState('');
   const [input, setInput] = useState('');
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
