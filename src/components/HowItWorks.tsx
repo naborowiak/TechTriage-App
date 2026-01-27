@@ -4,28 +4,32 @@ import { Camera, Video, CheckCircle2, ArrowRight, Zap, Shield, Smartphone, PenTo
 export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const steps = [
     {
-      icon: <Camera className="w-8 h-8 text-cta-500" />,
+      icon: <Camera className="w-8 h-8 text-[#F97316]" />,
       title: "1. Capture the Issue",
       description: "Snap a photo or short video of the problem. Our AI instantly identifies the device and potential failure points.",
-      accent: "bg-cta-50"
+      accent: "bg-orange-50",
+      image: "/images/step-photo.jpg"
     },
     {
       icon: <Zap className="w-8 h-8 text-blue-500" />,
       title: "2. Get Instant Triage",
       description: "Our AI provides an immediate safety assessment and diagnostic report. Many common issues are solved right here.",
-      accent: "bg-blue-50"
+      accent: "bg-blue-50",
+      image: "/images/step-ai.jpg"
     },
     {
       icon: <Video className="w-8 h-8 text-purple-500" />,
       title: "3. Video with an Expert",
       description: "Need more help? Connect with a certified technician in seconds. They guide your hands via live video.",
-      accent: "bg-purple-50"
+      accent: "bg-purple-50",
+      image: "/images/video-support.jpg"
     },
     {
-      icon: <CheckCircle2 className="w-8 h-8 text-green-500" />,
+      icon: <CheckCircle2 className="w-8 h-8 text-[#10B981]" />,
       title: "4. Resolve & Archive",
       description: "Get the fix confirmed. A detailed diagnostic report and repair history are saved to your home's digital twin.",
-      accent: "bg-green-50"
+      accent: "bg-green-50",
+      image: "/images/step-fix.jpg"
     }
   ];
 
@@ -46,10 +50,13 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           
           {steps.map((step, i) => (
             <div key={i} className="flex flex-col items-center text-center group">
-              <div className={`${step.accent} w-20 h-20 rounded-3xl flex items-center justify-center mb-8 shadow-sm group-hover:scale-110 transition-transform duration-300 border border-white`}>
+              <div className="w-full h-40 rounded-2xl overflow-hidden mb-6 shadow-lg">
+                <img src={step.image} alt={step.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              </div>
+              <div className={`${step.accent} w-14 h-14 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300 border border-white -mt-10 relative z-10`}>
                 {step.icon}
               </div>
-              <h3 className="text-xl font-bold text-brand-900 mb-4">{step.title}</h3>
+              <h3 className="text-xl font-bold text-[#1F2937] mb-3">{step.title}</h3>
               <p className="text-gray-500 text-sm leading-relaxed font-medium">
                 {step.description}
               </p>
