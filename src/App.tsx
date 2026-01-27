@@ -116,7 +116,7 @@ const Header: React.FC<{
   );
 };
 
-const Hero: React.FC<{ onSignup: () => void; onPricing: () => void }> = ({ onSignup, onPricing }) => (
+const Hero: React.FC<{ onSignup: () => void; onHowItWorks: () => void }> = ({ onSignup, onHowItWorks }) => (
   <section 
     className="relative pt-28 pb-16 lg:pt-32 lg:pb-24 min-h-[600px] lg:min-h-[700px] overflow-hidden bg-cover bg-center bg-no-repeat"
     style={{ backgroundImage: 'url(/hero-bg.jpg)' }}
@@ -125,21 +125,21 @@ const Hero: React.FC<{ onSignup: () => void; onPricing: () => void }> = ({ onSig
     <div className="container mx-auto px-6 relative z-10">
       <div className="max-w-xl">
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full mb-6">
-          <span className="text-[#F97316] font-bold text-sm">SEE WHY 300K+ HOMEOWNERS</span>
-          <span className="text-white/60 font-bold text-sm">TRUST TECHTRIAGE</span>
+          <span className="text-[#F97316] font-bold text-sm">INSTANT ACCESS</span>
+          <span className="text-white/60 font-bold text-sm">TO REAL HELP</span>
         </div>
         <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-          Run your home without the hassle.
+          Show us the problem. We'll handle the rest.
         </h1>
         <p className="text-white/80 text-xl font-medium leading-relaxed mb-10 max-w-lg">
-          The all-in-one support system for home maintenance and tech trouble. No truck roll required.
+          TechTriage connects you to AI + real specialists to troubleshoot safely and remotely. Send a photo for instant triage, jump on live video, or schedule an onsite visit when needed.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <Button variant="orange" onClick={onSignup}>
-            Start Free Trial
+            Start a Triage Chat
           </Button>
-          <Button variant="outline" onClick={onPricing}>
-            View Pricing
+          <Button variant="outline" onClick={onHowItWorks}>
+            See How It Works
           </Button>
         </div>
       </div>
@@ -147,68 +147,115 @@ const Hero: React.FC<{ onSignup: () => void; onPricing: () => void }> = ({ onSig
   </section>
 );
 
-const ValuePropBar: React.FC = () => (
-  <section className="py-16 bg-white border-b border-gray-100">
-    <div className="container mx-auto px-6 text-center max-w-5xl">
-      <h2 className="text-3xl lg:text-4xl font-black text-[#1F2937] tracking-tight mb-8">
-        The <span className="underline decoration-[#F97316] decoration-4 underline-offset-4">all-in-one</span> solution for home service pros
-      </h2>
-      <div className="flex flex-wrap justify-center gap-3 mb-12">
-        {['Instant Fixes', 'DIY Guides', 'Live Experts', 'Track Everything'].map((tag, i) => (
-          <span key={i} className={`px-6 py-3 text-base font-bold rounded-full transition-transform hover:-translate-y-1 cursor-pointer ${i === 0 ? 'bg-[#1F2937] text-white shadow-lg' : 'bg-[#F3F4F6] text-[#1F2937] hover:bg-[#E5E7EB]'}`}>
-            {tag}
-          </span>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-const FeatureCards: React.FC = () => {
-  const features = [
-    { 
-      title: "Smart Home Control", 
-      desc: "Manage all your connected devices from one dashboard. Get alerts, control thermostats, and monitor security—anywhere, anytime.", 
-      icon: <Star className="w-6 h-6" />,
-      image: "/images/smart-home.jpg"
+const SupportTiers: React.FC<{ onSignup: () => void }> = ({ onSignup }) => {
+  const tiers = [
+    {
+      name: "TechTriage",
+      subtitle: "Text Support",
+      icon: <Phone className="w-8 h-8" />,
+      features: ["Text/chat support", "Human escalation", "Fast answers + step-by-step fixes"],
+      color: "bg-blue-500"
     },
-    { 
-      title: "Live Video Support", 
-      desc: "Connect face-to-face with certified technicians. Show them the problem in real-time and get guided solutions instantly.", 
-      icon: <Video className="w-6 h-6" />,
-      image: "/images/video-support.jpg"
+    {
+      name: "TechTriage AI",
+      subtitle: "Photo Upload",
+      icon: <Cpu className="w-8 h-8" />,
+      features: ["Upload photos/screenshots", "AI identifies the issue", "Guided troubleshooting + smart routing"],
+      color: "bg-[#F97316]",
+      highlight: true
     },
-    { 
-      title: "Expert Technicians", 
-      desc: "Access our network of vetted professionals for complex repairs. Book appointments and track progress all in one place.", 
-      icon: <Shield className="w-6 h-6" />,
-      image: "/images/technician.jpg"
+    {
+      name: "TechTriage Live",
+      subtitle: "Video Support",
+      icon: <Video className="w-8 h-8" />,
+      features: ["Real-time video help", "AI + expert guidance", "Session transcript + summary"],
+      color: "bg-purple-600"
     }
   ];
 
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-6 max-w-6xl">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-black text-[#1F2937] mb-4">Everything You Need</h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">From quick fixes to complex repairs, TechTriage has you covered</p>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">
+            Choose your support level
+          </h2>
+          <p className="text-gray-600 text-xl max-w-2xl mx-auto">
+            From quick text answers to live video troubleshooting—we've got you covered.
+          </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
-          {features.map((f, i) => (
-            <div key={i} className="group cursor-pointer bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 overflow-hidden border border-gray-100">
-              <div className="h-48 overflow-hidden">
-                <img src={f.image} alt={f.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              </div>
-              <div className="p-6">
-                <div className="mb-4 bg-[#1F2937] w-12 h-12 rounded-xl flex items-center justify-center text-white group-hover:bg-[#F97316] transition-colors -mt-12 relative z-10 shadow-lg">
-                  {f.icon}
+          {tiers.map((tier, i) => (
+            <div key={i} className={`bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border-2 ${tier.highlight ? 'border-[#F97316]' : 'border-gray-100'}`}>
+              {tier.highlight && (
+                <div className="text-center -mt-12 mb-4">
+                  <span className="bg-[#F97316] text-white text-xs font-bold px-4 py-1 rounded-full uppercase">Most Popular</span>
                 </div>
-                <h3 className="text-xl font-bold text-[#1F2937] mb-3">{f.title}</h3>
-                <p className="text-gray-600 leading-relaxed mb-4">{f.desc}</p>
-                <div className="flex items-center gap-2 text-[#1F2937] font-bold group-hover:text-[#F97316] transition-colors">
-                  Learn more <ArrowRight className="w-5 h-5" />
-                </div>
+              )}
+              <div className={`${tier.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6`}>
+                {tier.icon}
               </div>
+              <h3 className="text-2xl font-black text-[#1F2937] mb-1">{tier.name}</h3>
+              <p className="text-[#F97316] font-bold mb-6">{tier.subtitle}</p>
+              <ul className="space-y-3 mb-6">
+                {tier.features.map((f, j) => (
+                  <li key={j} className="flex items-start gap-3 text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-12">
+          <Button variant="orange" onClick={onSignup} className="text-lg px-10">
+            Start with Text Support
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const HowItWorksSimple: React.FC = () => {
+  const steps = [
+    {
+      step: "1",
+      title: "Tell us what's wrong",
+      desc: "Start a text or chat conversation. Describe the issue in your own words.",
+      icon: <Phone className="w-8 h-8" />
+    },
+    {
+      step: "2",
+      title: "Show us",
+      desc: "Upload a photo, share a screenshot, or jump on live video so we can see exactly what you're dealing with.",
+      icon: <Cpu className="w-8 h-8" />
+    },
+    {
+      step: "3",
+      title: "Get it fixed",
+      desc: "We'll guide you through the solution remotely—or schedule an onsite visit if needed.",
+      icon: <CheckCircle2 className="w-8 h-8" />
+    }
+  ];
+
+  return (
+    <section className="py-20 bg-[#F3F4F6]">
+      <div className="container mx-auto px-6 max-w-5xl">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">How it works</h2>
+          <p className="text-gray-600 text-xl">Three simple steps to solving your problem</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-8">
+          {steps.map((s, i) => (
+            <div key={i} className="text-center">
+              <div className="bg-[#1F2937] w-20 h-20 rounded-full flex items-center justify-center text-white mx-auto mb-6 shadow-lg">
+                {s.icon}
+              </div>
+              <div className="text-[#F97316] font-black text-lg mb-2">Step {s.step}</div>
+              <h3 className="text-2xl font-bold text-[#1F2937] mb-3">{s.title}</h3>
+              <p className="text-gray-600 leading-relaxed">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -217,121 +264,121 @@ const FeatureCards: React.FC = () => {
   );
 };
 
-const StatsBand: React.FC<{ onSignup: () => void }> = ({ onSignup }) => (
-  <section className="py-16 bg-[#1F2937] text-white">
-    <div className="container mx-auto px-6 max-w-6xl">
+const WhatWeHelpWith: React.FC = () => {
+  const problems = [
+    { icon: <Wifi className="w-6 h-6" />, label: "Wi-Fi & internet issues" },
+    { icon: <Tv className="w-6 h-6" />, label: "TVs / streaming / soundbars" },
+    { icon: <Cpu className="w-6 h-6" />, label: "Computers running slow" },
+    { icon: <Home className="w-6 h-6" />, label: "Printers, devices, smart home" },
+    { icon: <Lock className="w-6 h-6" />, label: "Apps/accounts/password recovery" },
+    { icon: <Sparkles className="w-6 h-6" />, label: '"It was working yesterday..." mysteries' },
+    { icon: <Wrench className="w-6 h-6" />, label: "Appliance troubleshooting" },
+    { icon: <Zap className="w-6 h-6" />, label: "HVAC & thermostat help" },
+  ];
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="container mx-auto px-6 max-w-5xl">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">
+            What we can help with
+          </h2>
+          <p className="text-gray-600 text-xl">Everyday problems. Real solutions.</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {problems.map((item, i) => (
+            <div key={i} className="bg-[#F9FAFB] border border-gray-200 p-6 rounded-xl flex flex-col items-center gap-4 hover:shadow-xl transition-all cursor-pointer hover:border-[#F97316] group text-center">
+              <div className="text-[#1F2937] group-hover:text-[#F97316] transition-colors">{item.icon}</div>
+              <span className="text-sm font-bold text-[#1F2937]">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TrustSection: React.FC = () => (
+  <section className="py-20 bg-[#1F2937] text-white">
+    <div className="container mx-auto px-6 max-w-5xl">
       <div className="text-center mb-12">
-        <h2 className="text-3xl lg:text-4xl font-black mb-4">
-          Join over <span className="text-[#F97316]">300,000</span> home service pros who trust TechTriage
+        <h2 className="text-4xl lg:text-5xl font-black mb-6">
+          Real specialists. Real answers.
         </h2>
+        <p className="text-white/70 text-xl max-w-2xl mx-auto">
+          No stress. No runaround. Just honest help when you need it.
+        </p>
       </div>
-      <div className="grid md:grid-cols-3 gap-8 mb-12">
-        <div className="text-center">
-          <div className="text-4xl font-black text-[#F97316] mb-2">2+ million</div>
-          <p className="text-white/70 font-medium text-lg">Issues Resolved</p>
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="bg-white/10 backdrop-blur p-8 rounded-2xl text-center">
+          <div className="w-16 h-16 bg-[#F97316] rounded-full flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-8 h-8 text-white" />
+          </div>
+          <h4 className="font-bold text-white mb-3 text-xl">Safe, remote-first</h4>
+          <p className="text-white/70">
+            Troubleshoot from the comfort of your home. No strangers in your house unless you need them.
+          </p>
         </div>
-        <div className="text-center">
-          <div className="text-4xl font-black text-[#F97316] mb-2">300k+</div>
-          <p className="text-white/70 font-medium text-lg">Happy Homeowners</p>
+        <div className="bg-white/10 backdrop-blur p-8 rounded-2xl text-center">
+          <div className="w-16 h-16 bg-[#F97316] rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-white" />
+          </div>
+          <h4 className="font-bold text-white mb-3 text-xl">You control what you share</h4>
+          <p className="text-white/70">
+            Your photos, videos, and conversations are private. We never share your data without permission.
+          </p>
         </div>
-        <div className="text-center">
-          <div className="text-4xl font-black text-[#F97316] mb-2">4.8/5</div>
-          <p className="text-white/70 font-medium text-lg">Average Rating</p>
+        <div className="bg-white/10 backdrop-blur p-8 rounded-2xl text-center">
+          <div className="w-16 h-16 bg-[#F97316] rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8 text-white" />
+          </div>
+          <h4 className="font-bold text-white mb-3 text-xl">Trusted locally</h4>
+          <p className="text-white/70">
+            Trusted by customers across St. Louis and beyond. Real people helping real neighbors.
+          </p>
         </div>
       </div>
-      <div className="text-center">
-        <Button variant="orange" onClick={onSignup} className="text-xl px-10 py-5">
-          Start Free Trial
+    </div>
+  </section>
+);
+
+const PricingTeaser: React.FC<{ onPricing: () => void }> = ({ onPricing }) => (
+  <section className="py-20 bg-[#F3F4F6]">
+    <div className="container mx-auto px-6 max-w-4xl">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-black text-[#1F2937] mb-4">Simple, transparent pricing</h2>
+        <p className="text-gray-600 text-xl">Pay only for what you need. No hidden fees.</p>
+      </div>
+      <div className="grid md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+          <div className="text-[#F97316] font-bold text-sm mb-2">TEXT SUPPORT</div>
+          <div className="text-3xl font-black text-[#1F2937] mb-2">$9</div>
+          <p className="text-gray-500 text-sm">/session</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center border-2 border-[#F97316]">
+          <div className="text-[#F97316] font-bold text-sm mb-2">AI PHOTO TRIAGE</div>
+          <div className="text-3xl font-black text-[#1F2937] mb-2">$19</div>
+          <p className="text-gray-500 text-sm">/session</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+          <div className="text-[#F97316] font-bold text-sm mb-2">LIVE VIDEO</div>
+          <div className="text-3xl font-black text-[#1F2937] mb-2">$49</div>
+          <p className="text-gray-500 text-sm">/session</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+          <div className="text-[#F97316] font-bold text-sm mb-2">ONSITE VISIT</div>
+          <div className="text-3xl font-black text-[#1F2937] mb-2">Quote</div>
+          <p className="text-gray-500 text-sm">scheduled</p>
+        </div>
+      </div>
+      <div className="text-center mt-10">
+        <Button variant="dark" onClick={onPricing} className="px-10">
+          See Full Pricing
         </Button>
       </div>
     </div>
   </section>
 );
-
-const AISection: React.FC = () => (
-  <section className="py-24 bg-[#F3F4F6]">
-    <div className="container mx-auto px-6 max-w-6xl">
-      <div className="text-center mb-16">
-        <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-6">
-          AI built for blue collar businesses
-        </h2>
-        <p className="max-w-2xl mx-auto text-gray-600 text-xl">
-          We combine cutting-edge vision AI with real human expertise to solve problems faster than ever before.
-        </p>
-      </div>
-      <div className="grid md:grid-cols-3 gap-10">
-        <div className="bg-white p-8 rounded-2xl shadow-xl text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Cpu className="w-8 h-8 text-blue-600" />
-          </div>
-          <h4 className="font-bold text-[#1F2937] mb-4 text-xl">Made for field pros</h4>
-          <p className="text-gray-600 leading-relaxed text-lg">
-            TechTriage AI recognizes thousands of appliance models, error codes, and parts instantly from a single photo.
-          </p>
-        </div>
-        <div className="bg-white p-8 rounded-2xl shadow-xl text-center">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Shield className="w-8 h-8 text-[#F97316]" />
-          </div>
-          <h4 className="font-bold text-[#1F2937] mb-4 text-xl">Learns your style</h4>
-          <p className="text-gray-600 leading-relaxed text-lg">
-            Our system automatically adapts to your preferences, past fixes, and the specific systems in your home.
-          </p>
-        </div>
-        <div className="bg-white p-8 rounded-2xl shadow-xl text-center">
-          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Sparkles className="w-8 h-8 text-purple-600" />
-          </div>
-          <h4 className="font-bold text-[#1F2937] mb-4 text-xl">Shows up when it matters</h4>
-          <p className="text-gray-600 leading-relaxed text-lg">
-            We predict failures before they happen, saving you thousands in emergency repairs with proactive alerts.
-          </p>
-        </div>
-      </div>
-      <div className="text-center mt-12">
-        <Button variant="dark" className="px-10">Learn More</Button>
-      </div>
-    </div>
-  </section>
-);
-
-const IndustriesGrid: React.FC = () => {
-  const items = [
-    { icon: <Wrench className="w-6 h-6"/>, label: "Plumbing" },
-    { icon: <Zap className="w-6 h-6"/>, label: "Electrical" },
-    { icon: <Cpu className="w-6 h-6"/>, label: "HVAC/Climate" },
-    { icon: <Tv className="w-6 h-6"/>, label: "Appliances" },
-    { icon: <Wifi className="w-6 h-6"/>, label: "Smart Home" },
-    { icon: <Home className="w-6 h-6"/>, label: "Landscaping" },
-    { icon: <Droplet className="w-6 h-6"/>, label: "Lawn Care" },
-    { icon: <Lock className="w-6 h-6"/>, label: "Security" },
-  ];
-
-  return (
-    <section className="py-24 bg-white border-t border-gray-100">
-      <div className="container mx-auto px-6 max-w-5xl">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">
-            Proud partner to home services in over <span className="text-[#F97316]">50</span> industries
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {items.map((item, i) => (
-            <div key={i} className="bg-[#F9FAFB] border border-gray-200 p-6 rounded-xl flex flex-col items-center gap-4 hover:shadow-xl transition-all cursor-pointer hover:border-[#F97316] group">
-              <div className="text-[#1F2937] group-hover:text-[#F97316] transition-colors">{item.icon}</div>
-              <span className="text-lg font-bold text-[#1F2937]">{item.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="text-center mt-10">
-          <button className="flex items-center justify-center gap-2 mx-auto text-[#1F2937] font-bold text-lg hover:text-[#F97316] transition-colors">
-            See all industries <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const TestimonialSection: React.FC = () => {
   const testimonials = [
@@ -388,86 +435,64 @@ const TestimonialSection: React.FC = () => {
   );
 };
 
+const FAQSection: React.FC = () => {
+  const [openFaq, setOpenFaq] = React.useState<number | null>(null);
+  const faqs = [
+    { q: "How fast can I get help?", a: "Most text support sessions connect within minutes. AI photo analysis is instant. Live video sessions typically start within 15 minutes." },
+    { q: "What if you can't fix it remotely?", a: "If remote troubleshooting can't solve the issue, we'll help schedule an onsite technician visit at a time that works for you." },
+    { q: "Is my information private?", a: "Absolutely. You control what you share. Photos, videos, and conversations are never shared without your explicit permission." },
+    { q: "Do I need to download an app?", a: "Nope! TechTriage works right in your browser. Just text us, upload a photo, or start a video call—no downloads required." },
+    { q: "What areas do you serve?", a: "We provide remote support nationwide. Onsite visits are currently available in the St. Louis metro area, with more regions coming soon." }
+  ];
+
+  return (
+    <section className="py-20 bg-white">
+      <div className="container mx-auto px-6 max-w-3xl">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-black text-[#1F2937] mb-4">Frequently asked questions</h2>
+        </div>
+        <div className="space-y-4">
+          {faqs.map((faq, i) => (
+            <div key={i} className="border-b border-gray-200">
+              <button
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full py-4 flex items-center justify-between text-left"
+              >
+                <span className="font-bold text-[#1F2937] text-lg">{faq.q}</span>
+                <ArrowRight className={`w-5 h-5 text-[#F97316] transition-transform ${openFaq === i ? 'rotate-90' : ''}`} />
+              </button>
+              {openFaq === i && (
+                <div className="pb-4 text-gray-600 leading-relaxed">{faq.a}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const CTASection: React.FC<{ onSignup: () => void }> = ({ onSignup }) => (
   <section className="py-24 bg-[#1F2937]">
     <div className="container mx-auto px-6 max-w-4xl text-center">
       <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-        You've got this, and we've got your back.
+        Stop stressing. Start fixing.
       </h2>
       <p className="text-white/80 font-medium max-w-2xl mx-auto mb-12 text-xl">
-        Your home is your most important asset. We're all in on providing the technology and support to make sure you win.
+        Whether it's a blinking router or a beeping thermostat, we're here to help. Text us now and get answers in minutes.
       </p>
       <Button variant="orange" onClick={onSignup} className="text-xl px-12 py-5">
-        Start Free Trial
+        Start a Triage Chat
       </Button>
     </div>
   </section>
 );
 
-const SupportSection: React.FC = () => (
-  <section className="py-24 bg-white border-t border-gray-100">
-    <div className="container mx-auto px-6 max-w-6xl">
-      <div className="text-center mb-16">
-        <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">
-          Our business is supporting yours.
-        </h2>
-      </div>
-      <div className="grid md:grid-cols-2 gap-12">
-        <div>
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Support</h3>
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
-                Masters of Home Service
-              </h4>
-              <p className="text-gray-600 mt-2 ml-7 text-lg">
-                Our support team has real experience running home service businesses. They get it.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
-                Free Tools
-              </h4>
-              <p className="text-gray-600 mt-2 ml-7 text-lg">
-                Invoice templates, scheduling tools, and maintenance checklists—all free.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div>
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Education</h3>
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
-                TechTriage Academy
-              </h4>
-              <p className="text-gray-600 mt-2 ml-7 text-lg">
-                Free courses to help you get the most out of your home systems.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
-                TechTriage Summit
-              </h4>
-              <p className="text-gray-600 mt-2 ml-7 text-lg">
-                Annual event bringing together the best minds in home technology.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-);
 
 const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
   const links = {
-    "Industries We Serve": ["Plumbing", "Electrical", "HVAC", "Appliances", "Smart Home", "Security"],
-    "Features": ["Instant Triage", "Video Support", "Maintenance Plans", "Home Health Report", "Warranty Tracker"],
+    "What We Fix": ["Wi-Fi Issues", "TV & Streaming", "Computers", "Smart Home", "Appliances", "HVAC"],
+    "Support Levels": ["Text Support", "AI Photo Triage", "Live Video Help", "Onsite Visits"],
     "Resources": ["Pricing", "DIY Guides", "Safety Center", "Blog", "Podcast", "Support"],
     "Company": ["Our Story", "Our Team", "Press", "Careers", "Contact", "Privacy"]
   };
@@ -531,6 +556,11 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   };
 
+  const handleNavigateToHowItWorks = () => {
+    setCurrentView(PageView.HOW_IT_WORKS);
+    window.scrollTo(0, 0);
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case PageView.HOW_IT_WORKS:
@@ -545,15 +575,15 @@ const App: React.FC = () => {
       default:
         return (
           <>
-            <Hero onSignup={handleNavigateToSignup} onPricing={handleNavigateToPricing} />
-            <ValuePropBar />
-            <FeatureCards />
-            <StatsBand onSignup={handleNavigateToSignup} />
-            <AISection />
-            <IndustriesGrid />
+            <Hero onSignup={handleNavigateToSignup} onHowItWorks={handleNavigateToHowItWorks} />
+            <SupportTiers onSignup={handleNavigateToSignup} />
+            <HowItWorksSimple />
+            <WhatWeHelpWith />
+            <TrustSection />
+            <PricingTeaser onPricing={handleNavigateToPricing} />
             <TestimonialSection />
+            <FAQSection />
             <CTASection onSignup={handleNavigateToSignup} />
-            <SupportSection />
           </>
         );
     }

@@ -1,0 +1,96 @@
+Homepage structure that matches your business model
+1) Hero (above the fold)
+
+Headline (pick 1)
+
+Fix it faster—just text us.
+
+Show us the problem. We’ll handle the rest.
+
+Expert help for home & tech problems—instantly.
+
+Subhead
+TechTriage connects you to AI + real specialists to troubleshoot safely and remotely. Send a photo for instant triage, jump on live video, or schedule an onsite visit when needed.
+
+Primary CTA: Start a Triage Chat
+Secondary CTA: See How It Works
+
+(Hero visual: blurred home background + your phone UI screenshot + navy gradient overlay — exactly what you’re already building.)
+
+2) “Choose your support level” (your 3-tier lineup)
+
+TechTriage (Text)
+
+Text/chat support
+
+Human escalation
+
+Fast answers + step-by-step fixes
+
+TechTriage AI (Photo upload)
+
+Upload photos/screenshots
+
+AI identifies the issue
+
+Guided troubleshooting + smart routing to a specialist
+
+TechTriage Live (Video)
+
+Real-time video help
+
+AI + expert guidance
+
+Session transcript + summary
+
+CTA under this section: Start with Text Support
+
+3) “How it works” (3 steps, super clear)
+
+Tell us what’s wrong (text/chat)
+
+Show us (photo upload or live video)
+
+Get it fixed (remote resolution or onsite visit scheduled)
+
+4) “What we can help with” (make it relatable)
+
+Wi-Fi & internet issues
+
+TVs / streaming / soundbars
+
+Computers running slow
+
+Printers, devices, smart home setup
+
+Apps/accounts/password recovery
+
+“It was working yesterday…” mysteries
+
+(This is where you win trust: everyday problems.)
+
+5) Proof + trust (don’t overdo fake stats)
+
+Instead of “300k pros”, use:
+
+“Real specialists. Real answers.”
+
+“Safe, remote-first troubleshooting.”
+
+“No stress. No runaround.”
+
+Add privacy note: “You control what you share.”
+
+If you don’t have reviews yet: use “Trusted by customers across St. Louis and beyond” (or your real service area).
+
+6) Pricing preview (simple)
+
+Text Support (starting at $X / session or membership)
+
+AI Photo Triage (included / add-on)
+
+Live Video Help (premium)
+
+Onsite Visit (scheduled, separate)
+
+Even if pricing isn’t final, add: “See Pricing” and a “Starting at…” anchor.
