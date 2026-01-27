@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { 
   Menu, X, ArrowRight, Shield, 
   Cpu, Home, Star, Sparkles, Video,
-  Droplet, Tv, Wifi, Phone,
+  Tv, Wifi, Phone,
   Zap, Wrench, Lock, CheckCircle2
 } from 'lucide-react';
 import { ChatWidget, ChatWidgetHandle } from './components/ChatWidget';
@@ -472,21 +472,46 @@ const FAQSection: React.FC = () => {
   );
 };
 
-const CTASection: React.FC<{ onSignup: () => void }> = ({ onSignup }) => (
-  <section className="py-24 bg-[#1F2937]">
-    <div className="container mx-auto px-6 max-w-4xl text-center">
-      <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-        Stop stressing. Start fixing.
-      </h2>
-      <p className="text-white/80 font-medium max-w-2xl mx-auto mb-12 text-xl">
-        Whether it's a blinking router or a beeping thermostat, we're here to help. Text us now and get answers in minutes.
-      </p>
-      <Button variant="orange" onClick={onSignup} className="text-xl px-12 py-5">
-        Start a Triage Chat
-      </Button>
-    </div>
-  </section>
-);
+const CTASection: React.FC<{ onSignup: () => void }> = ({ onSignup }) => {
+  const [email, setEmail] = React.useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      onSignup();
+    }
+  };
+
+  return (
+    <section className="py-24 bg-[#1F2937]">
+      <div className="container mx-auto px-6 max-w-4xl text-center">
+        <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+          Stop stressing. Start fixing.
+        </h2>
+        <p className="text-white/80 font-medium max-w-2xl mx-auto mb-10 text-xl">
+          Whether it's a blinking router or a beeping thermostat, we're here to help. Text us now and get answers in minutes.
+        </p>
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center max-w-xl mx-auto mb-4">
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 px-6 py-4 rounded-full text-[#1F2937] text-lg font-medium focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+            required
+          />
+          <button
+            type="submit"
+            className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-8 py-4 rounded-full text-lg transition-colors whitespace-nowrap"
+          >
+            Start Free Trial
+          </button>
+        </form>
+        <p className="text-white/50 text-sm">No credit card required.</p>
+      </div>
+    </section>
+  );
+};
 
 
 const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
