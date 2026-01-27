@@ -12,7 +12,7 @@ export interface ChatWidgetHandle {
 const BotAvatar = ({ className }: { className: string }) => {
   const [error, setError] = useState(false);
   if (error) return <LifeBuoy className={className} />;
-  return <img src="/Tech_Triage.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
+  return <img src="/tech-triage-logo.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
 };
 
 export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
