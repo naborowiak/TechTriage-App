@@ -25,10 +25,10 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       image: "/images/video-support.jpg"
     },
     {
-      icon: <CheckCircle2 className="w-8 h-8 text-[#10B981]" />,
+      icon: <CheckCircle2 className="w-8 h-8 text-[#F97316]" />,
       title: "4. Resolve & Archive",
       description: "Get the fix confirmed. A detailed diagnostic report and repair history are saved to your home's digital twin.",
-      accent: "bg-green-50",
+      accent: "bg-orange-50",
       image: "/images/step-fix.jpg"
     }
   ];

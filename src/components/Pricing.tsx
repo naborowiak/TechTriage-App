@@ -75,7 +75,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
     <section className="min-h-screen pt-20">
       <div className="bg-[#1F2937] py-16 text-center">
         <h1 className="text-4xl lg:text-5xl font-black text-white mb-4">
-          Try TechTriage <span className="text-[#10B981]">for free</span> now. Pick a plan later.
+          Try TechTriage <span className="text-[#F97316]">for free</span> now. Pick a plan later.
         </h1>
         <p className="text-white/70 text-lg mb-8">
           Put TechTriage to work for you. No credit card required.
@@ -88,7 +88,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
           />
           <button 
             onClick={() => onNavigate(PageView.SIGNUP)}
-            className="bg-[#10B981] hover:bg-[#059669] text-white font-bold px-8 py-3 rounded-r-full transition-colors flex items-center gap-2"
+            className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-8 py-3 rounded-r-full transition-colors flex items-center gap-2"
           >
             Try For 14 Days - It's Free!
           </button>
@@ -115,7 +115,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
               <div className={`w-6 h-6 bg-white rounded-full transition-transform ${isAnnual ? 'translate-x-6' : ''}`}></div>
             </button>
             <span className={`font-bold ${isAnnual ? 'text-[#1F2937]' : 'text-gray-400'}`}>
-              Annual <span className="text-[#10B981] text-sm ml-1">Save up to 25%</span>
+              Annual <span className="text-[#F97316] text-sm ml-1">Save up to 25%</span>
             </span>
           </div>
 
@@ -156,7 +156,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
                   onClick={() => onNavigate(PageView.SIGNUP)}
                   className={`w-full py-3 rounded-full font-bold text-lg transition-colors mb-6 ${
                     plan.highlight 
-                      ? 'bg-[#10B981] hover:bg-[#059669] text-white' 
+                      ? 'bg-[#F97316] hover:bg-[#EA580C] text-white' 
                       : 'bg-[#1F2937] hover:bg-[#374151] text-white'
                   }`}
                 >
@@ -166,7 +166,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
                 <ul className="space-y-3">
                   {plan.features.map((feature, j) => (
                     <li key={j} className="flex items-start gap-2 text-gray-600">
-                      <Check className="w-5 h-5 text-[#10B981] shrink-0 mt-0.5" />
+                      <Check className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -185,7 +185,7 @@ export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
 
       <div className="bg-white py-16">
         <div className="container mx-auto px-6 max-w-4xl">
-          <div className="bg-[#F9FAFB] rounded-2xl p-8 mb-16 border-l-4 border-[#10B981]">
+          <div className="bg-[#F9FAFB] rounded-2xl p-8 mb-16 border-l-4 border-[#F97316]">
             <p className="text-xl font-bold text-[#1F2937] mb-4">
               "I have time for my family again"
             </p>
@@ -234,15 +234,15 @@ export const Pricing: React.FC<PricingProps> = ({ onStart, onNavigate }) => {
             />
             <button 
               onClick={() => onNavigate(PageView.SIGNUP)}
-              className="w-full sm:w-auto bg-[#10B981] hover:bg-[#059669] text-white font-bold px-8 py-4 rounded-l-full rounded-r-full sm:rounded-l-none transition-colors"
+              className="w-full sm:w-auto bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-8 py-4 rounded-l-full rounded-r-full sm:rounded-l-none transition-colors"
             >
               Try TechTriage - It's Free!
             </button>
           </div>
           <div className="flex justify-center gap-8 mt-8 text-white/60 text-sm">
-            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Full control</span>
-            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> Full support</span>
-            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#10B981]" /> No credit card required</span>
+            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#F97316]" /> Full control</span>
+            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#F97316]" /> Full support</span>
+            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#F97316]" /> No credit card required</span>
           </div>
         </div>
       </div>

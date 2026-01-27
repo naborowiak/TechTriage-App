@@ -48,7 +48,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart }) => {
             <div className="flex flex-wrap gap-4">
               {benefits.map((benefit, i) => (
                 <div key={i} className="flex items-center gap-2 text-gray-600">
-                  <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                  <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
                   <span className="font-medium">{benefit}</span>
                 </div>
               ))}

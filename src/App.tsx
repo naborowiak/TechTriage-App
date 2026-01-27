@@ -125,7 +125,7 @@ const Hero: React.FC<{ onSignup: () => void; onPricing: () => void }> = ({ onSig
     <div className="container mx-auto px-6 relative z-10">
       <div className="max-w-xl">
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full mb-6">
-          <span className="text-[#10B981] font-bold text-sm">SEE WHY 300K+ HOMEOWNERS</span>
+          <span className="text-[#F97316] font-bold text-sm">SEE WHY 300K+ HOMEOWNERS</span>
           <span className="text-white/60 font-bold text-sm">TRUST TECHTRIAGE</span>
         </div>
         <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
@@ -151,7 +151,7 @@ const ValuePropBar: React.FC = () => (
   <section className="py-16 bg-white border-b border-gray-100">
     <div className="container mx-auto px-6 text-center max-w-5xl">
       <h2 className="text-3xl lg:text-4xl font-black text-[#1F2937] tracking-tight mb-8">
-        The <span className="underline decoration-[#10B981] decoration-4 underline-offset-4">all-in-one</span> solution for home service pros
+        The <span className="underline decoration-[#F97316] decoration-4 underline-offset-4">all-in-one</span> solution for home service pros
       </h2>
       <div className="flex flex-wrap justify-center gap-3 mb-12">
         {['Instant Fixes', 'DIY Guides', 'Live Experts', 'Track Everything'].map((tag, i) => (
@@ -222,20 +222,20 @@ const StatsBand: React.FC<{ onSignup: () => void }> = ({ onSignup }) => (
     <div className="container mx-auto px-6 max-w-6xl">
       <div className="text-center mb-12">
         <h2 className="text-3xl lg:text-4xl font-black mb-4">
-          Join over <span className="text-[#10B981]">300,000</span> home service pros who trust TechTriage
+          Join over <span className="text-[#F97316]">300,000</span> home service pros who trust TechTriage
         </h2>
       </div>
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <div className="text-center">
-          <div className="text-4xl font-black text-[#10B981] mb-2">2+ million</div>
+          <div className="text-4xl font-black text-[#F97316] mb-2">2+ million</div>
           <p className="text-white/70 font-medium text-lg">Issues Resolved</p>
         </div>
         <div className="text-center">
-          <div className="text-4xl font-black text-[#10B981] mb-2">300k+</div>
+          <div className="text-4xl font-black text-[#F97316] mb-2">300k+</div>
           <p className="text-white/70 font-medium text-lg">Happy Homeowners</p>
         </div>
         <div className="text-center">
-          <div className="text-4xl font-black text-[#10B981] mb-2">4.8/5</div>
+          <div className="text-4xl font-black text-[#F97316] mb-2">4.8/5</div>
           <p className="text-white/70 font-medium text-lg">Average Rating</p>
         </div>
       </div>
@@ -364,7 +364,7 @@ const TestimonialSection: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((t, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-[#10B981]">
+            <div key={i} className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-[#F97316]">
               <div className="flex mb-4">
                 {[...Array(5)].map((_, j) => (
                   <Star key={j} className="w-5 h-5 fill-[#F97316] text-[#F97316]" />
@@ -418,7 +418,7 @@ const SupportSection: React.FC = () => (
           <div className="space-y-6">
             <div>
               <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
                 Masters of Home Service
               </h4>
               <p className="text-gray-600 mt-2 ml-7 text-lg">
@@ -427,7 +427,7 @@ const SupportSection: React.FC = () => (
             </div>
             <div>
               <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
                 Free Tools
               </h4>
               <p className="text-gray-600 mt-2 ml-7 text-lg">
@@ -441,7 +441,7 @@ const SupportSection: React.FC = () => (
           <div className="space-y-6">
             <div>
               <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
                 TechTriage Academy
               </h4>
               <p className="text-gray-600 mt-2 ml-7 text-lg">
@@ -450,7 +450,7 @@ const SupportSection: React.FC = () => (
             </div>
             <div>
               <h4 className="text-xl font-bold text-[#1F2937] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
                 TechTriage Summit
               </h4>
               <p className="text-gray-600 mt-2 ml-7 text-lg">

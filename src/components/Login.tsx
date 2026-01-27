@@ -30,7 +30,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-lg text-lg focus:border-[#10B981] focus:outline-none transition-colors"
+                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-lg text-lg focus:border-[#F97316] focus:outline-none transition-colors"
                 />
               </div>
 
@@ -43,7 +43,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-lg text-lg focus:border-[#10B981] focus:outline-none transition-colors pr-12"
+                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-lg text-lg focus:border-[#F97316] focus:outline-none transition-colors pr-12"
                   />
                   <button
                     type="button"
@@ -55,11 +55,11 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              <button className="text-[#10B981] font-medium hover:underline text-left">
+              <button className="text-[#F97316] font-medium hover:underline text-left">
                 Forgot password?
               </button>
 
-              <button className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-bold text-xl py-4 rounded-lg transition-colors">
+              <button className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-xl py-4 rounded-lg transition-colors">
                 Log In
               </button>
 
@@ -96,7 +96,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
               <div className="text-center pt-6">
                 <button 
                   onClick={() => onNavigate(PageView.SIGNUP)}
-                  className="text-[#10B981] font-medium hover:underline"
+                  className="text-[#F97316] font-medium hover:underline"
                 >
                   Sign up
                 </button>
@@ -113,7 +113,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 <div className="text-2xl font-black">TECHTRIAGE SUMMIT</div>
                 <div className="text-sm opacity-80">FREE ONLINE EVENT</div>
               </div>
-              <div className="bg-gradient-to-r from-[#F97316] to-[#10B981] h-2"></div>
+              <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] h-2"></div>
             </div>
             
             <h3 className="text-3xl font-black text-[#1F2937] mb-4">
