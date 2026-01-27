@@ -112,38 +112,30 @@ const Header: React.FC<{
 };
 
 const Hero: React.FC<{ onSignup: () => void; onPricing: () => void }> = ({ onSignup, onPricing }) => (
-  <section className="relative pt-28 pb-16 lg:pt-32 lg:pb-24 bg-[#1F2937] overflow-hidden">
+  <section 
+    className="relative pt-28 pb-16 lg:pt-32 lg:pb-24 min-h-[600px] lg:min-h-[700px] overflow-hidden bg-cover bg-center bg-no-repeat"
+    style={{ backgroundImage: 'url(/hero-bg.jpg)' }}
+  >
+    <div className="absolute inset-0 bg-gradient-to-r from-[#1F2937]/95 via-[#1F2937]/80 to-transparent"></div>
     <div className="container mx-auto px-6 relative z-10">
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
-        <div className="max-w-xl">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full mb-6">
-            <span className="text-[#10B981] font-bold text-sm">SEE WHY 300K+ HOMEOWNERS</span>
-            <span className="text-white/60 font-bold text-sm">TRUST TECHTRIAGE</span>
-          </div>
-          <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-            Run your home without the hassle.
-          </h1>
-          <p className="text-white/80 text-xl font-medium leading-relaxed mb-10 max-w-lg">
-            The all-in-one support system for home maintenance and tech trouble. No truck roll required.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button variant="orange" onClick={onSignup}>
-              Start Free Trial
-            </Button>
-            <Button variant="outline" onClick={onPricing}>
-              View Pricing
-            </Button>
-          </div>
+      <div className="max-w-xl">
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full mb-6">
+          <span className="text-[#10B981] font-bold text-sm">SEE WHY 300K+ HOMEOWNERS</span>
+          <span className="text-white/60 font-bold text-sm">TRUST TECHTRIAGE</span>
         </div>
-        
-        <div className="relative mt-8 lg:mt-0 flex justify-center lg:justify-end">
-          <div className="relative z-10">
-            <img 
-              src="/hero-image.png" 
-              alt="TechTriage Bot helping diagnose a device" 
-              className="max-w-full h-auto max-h-[500px] object-contain rounded-2xl shadow-2xl"
-            />
-          </div>
+        <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
+          Run your home without the hassle.
+        </h1>
+        <p className="text-white/80 text-xl font-medium leading-relaxed mb-10 max-w-lg">
+          The all-in-one support system for home maintenance and tech trouble. No truck roll required.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Button variant="orange" onClick={onSignup}>
+            Start Free Trial
+          </Button>
+          <Button variant="outline" onClick={onPricing}>
+            View Pricing
+          </Button>
         </div>
       </div>
     </div>
