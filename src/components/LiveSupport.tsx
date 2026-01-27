@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Mic, MicOff, Video, PhoneOff, CheckCircle, Wifi, Radio, MessageSquare, ChevronRight, User, Cpu, Download, Copy, FileText, History, LifeBuoy } from 'lucide-react';
+import { X, Mic, MicOff, Video, PhoneOff, CheckCircle, Wifi, Radio, MessageSquare, ChevronRight, User, Cpu, Download, Copy, FileText, History, LifeBuoy, Flashlight, FlashlightOff } from 'lucide-react';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { Logo } from './Logo';
 import { UserRole, ChatMessage, SavedSession } from '../types';
@@ -93,6 +93,8 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   const [transcriptHistory, setTranscriptHistory] = useState<TranscriptEntry[]>([]);
   const transcriptRef = useRef<TranscriptEntry[]>([]);
   const [isCopied, setIsCopied] = useState(false);
+  const [isFlashlightOn, setIsFlashlightOn] = useState(false);
+  const [hasFlashlight, setHasFlashlight] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -175,6 +177,22 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     }
   };
 
+  const toggleFlashlight = async () => {
+    if (!streamRef.current) return;
+    const videoTrack = streamRef.current.getVideoTracks()[0];
+    if (!videoTrack) return;
+    
+    try {
+      const newState = !isFlashlightOn;
+      await videoTrack.applyConstraints({
+        advanced: [{ torch: newState } as MediaTrackConstraintSet]
+      });
+      setIsFlashlightOn(newState);
+    } catch (e) {
+      console.error('Flashlight toggle failed:', e);
+    }
+  };
+
   const drawWaveform = () => {
     if (!waveformCanvasRef.current) return;
     const canvas = waveformCanvasRef.current;
@@ -226,11 +244,21 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
             audio: true, 
-            video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } 
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
         });
         if (!mounted) return;
         streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const capabilities = videoTrack.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+          if (capabilities.torch) {
+            setHasFlashlight(true);
+          }
+        }
         
         setIsConnecting(false);
         animationFrameRef.current = requestAnimationFrame(drawWaveform);
@@ -250,8 +278,14 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[100] bg-brand-900 flex flex-col overflow-hidden">
-      <div className="relative flex-1 flex items-center justify-center">
-         <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover transition-all duration-1000 ${isSessionEnded ? 'opacity-20 blur-3xl' : 'opacity-100'}`} />
+      <div className="relative flex-1 overflow-hidden">
+         <video 
+           ref={videoRef} 
+           autoPlay 
+           playsInline 
+           muted 
+           className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ${isSessionEnded ? 'opacity-20 blur-3xl scale-110' : 'opacity-100'}`} 
+         />
          <canvas ref={canvasRef} className="hidden" />
 
          <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-start bg-gradient-to-b from-brand-900/80 to-transparent z-20">
@@ -389,6 +423,14 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
             >
                 {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
             </button>
+            {hasFlashlight && (
+              <button 
+                onClick={toggleFlashlight}
+                className={`p-6 rounded-full transition-all duration-300 ${isFlashlightOn ? 'bg-yellow-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              >
+                  {isFlashlightOn ? <Flashlight className="w-7 h-7" /> : <FlashlightOff className="w-7 h-7" />}
+              </button>
+            )}
             <button 
               onClick={() => { stopAllHardware(); onClose(); }}
               className="px-10 py-5 bg-red-600 rounded-full text-white font-bold uppercase tracking-widest text-xs flex items-center gap-3 shadow-2xl shadow-red-900/40 hover:scale-105 transition-all"
