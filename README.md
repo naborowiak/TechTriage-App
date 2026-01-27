@@ -1,13 +1,40 @@
-## Running React on Replit
 
-[React](https://reactjs.org/) is a popular JavaScript library for building user interfaces.
+# TechTriage - AI-Powered Home Support
 
-[Vite](https://vitejs.dev/) is a blazing fast frontend build tool that includes features like Hot Module Reloading (HMR), optimized builds, and TypeScript support out of the box.
+TechTriage is a React application that combines computer vision (Google Gemini 1.5 Pro) with real-time video support concepts to help homeowners diagnose and fix issues.
 
-Using the two in conjunction is one of the fastest ways to build a web app.
+## 🚀 Quick Start
 
-### Getting Started
-- Hit run
-- Edit [App.tsx](#src/App.tsx) and watch it live update!
+### 1. Prerequisites
+- Node.js (v18 or higher)
+- A Google Gemini API Key (Get one at [aistudio.google.com](https://aistudio.google.com))
 
-By default, Replit runs the `dev` script, but you can configure it by changing the `run` field in the [configuration file](#.replit). Here are the vite docs for [serving production websites](https://vitejs.dev/guide/build.html)
+### 2. Installation
+
+```bash
+# Install dependencies
+npm install
+```
+
+### 3. Setup Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+API_KEY=your_actual_api_key_here
+```
+
+### 4. Run Locally
+
+```bash
+npm run dev
+```
+
+The app will start at `http://localhost:5173`.
+
+## 🛠 Tech Stack
+
+- **Framework**: React + Vite
+- **Styling**: Tailwind CSS
+- **AI Model**: Google Gemini (via `@google/genai` SDK)
+- **Icons**: Lucide React

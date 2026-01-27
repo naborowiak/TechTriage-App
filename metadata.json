@@ -1,0 +1,8 @@
+{
+  "name": "TechTriage",
+  "description": "Your Home & Tech Lifeline. Remote triage and support service.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

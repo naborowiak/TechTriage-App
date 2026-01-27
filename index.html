@@ -1,9 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TechTriage - Your Home & Tech Lifeline</title>
+    <!-- Use the file from public/favicon.svg -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,12 +20,12 @@
             },
             colors: {
               brand: {
-                900: "#1F2937",
+                900: "#1F2937", // Deep Navy
                 800: "#374151",
                 50: "#f9fafb"
               },
               cta: {
-                500: "#F97316",
+                500: "#F97316", // Safety Orange
                 600: "#EA580C",
               },
             },
@@ -55,8 +57,8 @@
         background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231F2937' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
       }
     </style>
-    <link rel="stylesheet" href="/src/index.css">
-  </head>
+<link rel="stylesheet" href="/index.css">
+</head>
   <body class="bg-gray-50 text-brand-900 antialiased font-sans selection:bg-cta-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
