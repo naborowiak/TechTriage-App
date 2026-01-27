@@ -19,7 +19,7 @@ export const Logo: React.FC<LogoProps> = ({
     <div className={`flex items-center gap-2 select-none ${className}`}>
       {!imgError ? (
         <img 
-          src="/Tech_Triage.png" 
+          src="/tech-triage-logo.png" 
           alt="TechTriage Logo" 
           className="w-10 h-10 object-contain"
           onError={() => setImgError(true)}
