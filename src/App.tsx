@@ -116,7 +116,7 @@ const Header: React.FC<{
   );
 };
 
-const Hero: React.FC<{ onSignup: () => void; onHowItWorks: () => void }> = ({ onSignup, onHowItWorks }) => (
+const Hero: React.FC<{ onSignup: (email?: string) => void; onHowItWorks: () => void }> = ({ onSignup, onHowItWorks }) => (
   <section 
     className="relative pt-28 pb-16 lg:pt-32 lg:pb-24 min-h-[600px] lg:min-h-[700px] overflow-hidden bg-cover bg-center bg-no-repeat"
     style={{ backgroundImage: 'url(/hero-bg.jpg)' }}
@@ -147,7 +147,7 @@ const Hero: React.FC<{ onSignup: () => void; onHowItWorks: () => void }> = ({ on
   </section>
 );
 
-const SupportTiers: React.FC<{ onSignup: () => void }> = ({ onSignup }) => {
+const SupportTiers: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup }) => {
   const tiers = [
     {
       name: "TechTriage",
@@ -472,13 +472,13 @@ const FAQSection: React.FC = () => {
   );
 };
 
-const CTASection: React.FC<{ onSignup: () => void }> = ({ onSignup }) => {
+const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup }) => {
   const [email, setEmail] = React.useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      onSignup();
+      onSignup(email);
     }
   };
 
@@ -565,13 +565,15 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(PageView.HOME);
+  const [capturedEmail, setCapturedEmail] = useState('');
   const chatRef = useRef<ChatWidgetHandle>(null);
 
   const handleStart = () => {
     chatRef.current?.open("I'd like to start a free trial.");
   };
 
-  const handleNavigateToSignup = () => {
+  const handleNavigateToSignup = (email?: string) => {
+    if (email) setCapturedEmail(email);
     setCurrentView(PageView.SIGNUP);
     window.scrollTo(0, 0);
   };
@@ -593,7 +595,7 @@ const App: React.FC = () => {
       case PageView.PRICING:
         return <Pricing onStart={handleStart} onNavigate={setCurrentView} />;
       case PageView.SIGNUP:
-        return <SignUp onStart={handleStart} />;
+        return <SignUp onStart={handleStart} initialEmail={capturedEmail} />;
       case PageView.LOGIN:
         return <Login onNavigate={setCurrentView} />;
       case PageView.HOME:

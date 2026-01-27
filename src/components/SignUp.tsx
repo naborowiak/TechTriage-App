@@ -3,10 +3,11 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 interface SignUpProps {
   onStart: () => void;
+  initialEmail?: string;
 }
 
-export const SignUp: React.FC<SignUpProps> = ({ onStart }) => {
-  const [email, setEmail] = useState('');
+export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '' }) => {
+  const [email, setEmail] = useState(initialEmail);
 
   const benefits = [
     'No credit card required',
