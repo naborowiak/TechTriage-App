@@ -1,8 +1,16 @@
-# TechTriage - AI-Powered Home Support
+# TechTriage - Consumer-First Home & Tech Support
 
 ## Overview
 
-TechTriage is an AI-powered home maintenance and tech support application that combines Google Gemini's computer vision capabilities with real-time video support concepts. The application allows homeowners to diagnose and fix household issues by uploading photos, chatting with an AI assistant, or connecting to live video support. The target audience includes both tech-savvy users and less technical homeowners (particularly Baby Boomers), which influences the UI/UX design choices emphasizing accessibility and trust.
+TechTriage is a consumer-first home and technology support service that helps everyday people solve problems using a tiered support workflow. The application combines Google Gemini's AI capabilities with human specialist escalation to provide instant access, less cost & stress, and safe remote troubleshooting. The target audience is everyday homeowners (including less technical Baby Boomers), which drives the accessible, trust-focused UI/UX design.
+
+## Business Model
+
+TechTriage offers a tiered support system:
+- **TechTriage (Text)**: $9/session - Text/chat support with AI triage + human escalation
+- **TechTriage AI (Photo)**: $19/session - Upload photos for AI diagnosis with guided troubleshooting
+- **TechTriage Live (Video)**: $49/session - Real-time video help with AI + expert guidance, includes transcript/summary
+- **Onsite Visit**: Quoted separately - When remote help can't fix the issue
 
 ## User Preferences
 
@@ -35,6 +43,17 @@ Preferred communication style: Simple, everyday language.
 - **LiveSupport**: Real-time video support component using Gemini's live API with audio modality
 - **HowItWorks**: Marketing/onboarding page explaining the service workflow
 - **Logo**: Reusable logo component with fallback handling
+
+### Homepage Sections (Consumer-Focused)
+- **Hero**: "Show us the problem. We'll handle the rest." with CTAs for chat and how-it-works
+- **SupportTiers**: 3-tier support cards (Text, AI Photo, Live Video)
+- **HowItWorksSimple**: 3 steps - Tell us, Show us, Get it fixed
+- **WhatWeHelpWith**: Grid of everyday problems (Wi-Fi, TV, computers, smart home, etc.)
+- **TrustSection**: Privacy and safety messaging - "Real specialists. Real answers."
+- **PricingTeaser**: Quick pricing preview for all tiers
+- **FAQSection**: Collapsible FAQ with consumer-focused questions
+- **TestimonialSection**: Customer testimonials
+- **CTASection**: "Stop stressing. Start fixing."
 
 ### Build Configuration
 - **Development Server**: Runs on port 5000 with host binding for external access
