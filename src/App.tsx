@@ -11,6 +11,7 @@ import { PageView } from './types';
 import { HowItWorks } from './components/HowItWorks';
 import { Pricing } from './components/Pricing';
 import { SignUp } from './components/SignUp';
+import { Login } from './components/Login';
 
 const Button: React.FC<{ 
   children: React.ReactNode; 
@@ -82,7 +83,7 @@ const Header: React.FC<{
             <span>1-800-TECH-FIX</span>
           </div>
           <div className="h-6 w-px bg-gray-300"></div>
-          <button className="text-[#1F2937] hover:text-[#F97316] transition-colors font-bold">Log In</button>
+          <button onClick={() => handleNav(PageView.LOGIN)} className="text-[#1F2937] hover:text-[#F97316] transition-colors font-bold">Log In</button>
           <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="py-3 px-6 text-base">Get Started</Button>
         </div>
 
@@ -102,7 +103,7 @@ const Header: React.FC<{
             <Phone className="w-5 h-5" />
             <span>1-800-TECH-FIX</span>
           </div>
-          <button className="text-[#1F2937] font-bold text-lg text-left">Log In</button>
+          <button onClick={() => handleNav(PageView.LOGIN)} className="text-[#1F2937] font-bold text-lg text-left">Log In</button>
           <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="w-full">Get Started</Button>
         </div>
       )}
@@ -525,6 +526,8 @@ const App: React.FC = () => {
         return <Pricing onStart={handleStart} onNavigate={setCurrentView} />;
       case PageView.SIGNUP:
         return <SignUp onStart={handleStart} />;
+      case PageView.LOGIN:
+        return <Login onNavigate={setCurrentView} />;
       case PageView.HOME:
       default:
         return (
