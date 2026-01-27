@@ -3,7 +3,7 @@ import {
   Menu, X, ArrowRight, Shield, 
   Cpu, Home, Star, Sparkles, Video,
   Tv, Wifi, Phone,
-  Zap, Wrench, Lock, CheckCircle2
+  Zap, Wrench, Lock, CheckCircle2, Moon, Sun
 } from 'lucide-react';
 import { ChatWidget, ChatWidgetHandle } from './components/ChatWidget';
 import { Logo } from './components/Logo';
@@ -12,6 +12,7 @@ import { HowItWorks } from './components/HowItWorks';
 import { Pricing } from './components/Pricing';
 import { SignUp } from './components/SignUp';
 import { Login } from './components/Login';
+import { useTheme } from './context/ThemeContext';
 
 const Button: React.FC<{ 
   children: React.ReactNode; 
@@ -41,6 +42,7 @@ const Header: React.FC<{
   currentView: PageView 
 }> = ({ onNavigate, currentView }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
   const isHomePage = currentView === PageView.HOME;
   
   const handleNav = (view: PageView) => {
@@ -49,15 +51,15 @@ const Header: React.FC<{
     window.scrollTo(0, 0);
   };
 
-  const textColor = isHomePage ? 'text-white' : 'text-[#1F2937]';
+  const textColor = isHomePage ? 'text-white' : (isDark ? 'text-white' : 'text-[#1F2937]');
   const hoverColor = 'hover:text-[#F97316]';
-  const dividerColor = isHomePage ? 'bg-white/30' : 'bg-gray-300';
+  const dividerColor = isHomePage ? 'bg-white/30' : (isDark ? 'bg-white/30' : 'bg-gray-300');
 
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 h-20 transition-colors ${isHomePage ? 'bg-[#1F2937]' : 'bg-white shadow-md'}`}>
+    <header className={`fixed top-0 left-0 w-full z-50 h-20 transition-colors ${isHomePage ? 'bg-[#1F2937]' : (isDark ? 'bg-[#1F2937] shadow-md' : 'bg-white shadow-md')}`}>
       <div className="container mx-auto px-6 h-full flex items-center justify-between">
         <button onClick={() => handleNav(PageView.HOME)} className="focus:outline-none">
-          <Logo variant={isHomePage ? 'light' : 'dark'} />
+          <Logo variant={isHomePage || isDark ? 'light' : 'dark'} />
         </button>
         
         <nav className="hidden lg:flex items-center gap-8">
@@ -88,6 +90,13 @@ const Header: React.FC<{
             <span>1-800-TECH-FIX</span>
           </div>
           <div className={`h-6 w-px ${dividerColor}`}></div>
+          <button 
+            onClick={toggleTheme} 
+            className={`${textColor} ${hoverColor} transition-colors p-2 rounded-full hover:bg-white/10`}
+            aria-label="Toggle dark mode"
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
           <button onClick={() => handleNav(PageView.LOGIN)} className={`${textColor} ${hoverColor} transition-colors font-bold`}>Log In</button>
           <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="py-3 px-6 text-base">Get Started</Button>
         </div>
@@ -98,17 +107,24 @@ const Header: React.FC<{
       </div>
 
       {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-200 p-6 flex flex-col gap-6 shadow-xl">
-          <button onClick={() => handleNav(PageView.HOME)} className="text-[#1F2937] font-bold text-lg text-left">Product</button>
-          <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className="text-[#1F2937] font-bold text-lg text-left">How It Works</button>
-          <button onClick={() => handleNav(PageView.PRICING)} className="text-[#1F2937] font-bold text-lg text-left">Pricing</button>
-          <button className="text-[#1F2937] font-bold text-lg text-left">Resources</button>
-          <hr className="border-gray-200" />
-          <div className="flex items-center gap-2 text-[#1F2937] font-bold">
+        <div className={`lg:hidden absolute top-20 left-0 w-full ${isDark ? 'bg-[#1F2937] border-gray-700' : 'bg-white border-gray-200'} border-b p-6 flex flex-col gap-6 shadow-xl`}>
+          <button onClick={() => handleNav(PageView.HOME)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Product</button>
+          <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>How It Works</button>
+          <button onClick={() => handleNav(PageView.PRICING)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Pricing</button>
+          <button className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Resources</button>
+          <hr className={isDark ? 'border-gray-700' : 'border-gray-200'} />
+          <div className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold`}>
             <Phone className="w-5 h-5" />
             <span>1-800-TECH-FIX</span>
           </div>
-          <button onClick={() => handleNav(PageView.LOGIN)} className="text-[#1F2937] font-bold text-lg text-left">Log In</button>
+          <button 
+            onClick={toggleTheme}
+            className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isDark ? 'Light Mode' : 'Dark Mode'}
+          </button>
+          <button onClick={() => handleNav(PageView.LOGIN)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Log In</button>
           <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="w-full">Get Started</Button>
         </div>
       )}
@@ -148,6 +164,7 @@ const Hero: React.FC<{ onSignup: (email?: string) => void; onHowItWorks: () => v
 );
 
 const SupportTiers: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup }) => {
+  const { isDark } = useTheme();
   const tiers = [
     {
       name: "TechTriage",
@@ -174,19 +191,19 @@ const SupportTiers: React.FC<{ onSignup: (email?: string) => void }> = ({ onSign
   ];
 
   return (
-    <section className="py-20 bg-white">
+    <section className={`py-20 ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">
+          <h2 className={`text-4xl lg:text-5xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
             Choose your support level
           </h2>
-          <p className="text-gray-600 text-xl max-w-2xl mx-auto">
+          <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             From quick text answers to live video troubleshooting—we've got you covered.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {tiers.map((tier, i) => (
-            <div key={i} className={`bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border-2 ${tier.highlight ? 'border-[#F97316]' : 'border-gray-100'}`}>
+            <div key={i} className={`rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border-2 ${isDark ? 'bg-[#1F2937]' : 'bg-white'} ${tier.highlight ? 'border-[#F97316]' : (isDark ? 'border-gray-700' : 'border-gray-100')}`}>
               {tier.highlight && (
                 <div className="text-center -mt-12 mb-4">
                   <span className="bg-[#F97316] text-white text-xs font-bold px-4 py-1 rounded-full uppercase">Most Popular</span>
@@ -195,11 +212,11 @@ const SupportTiers: React.FC<{ onSignup: (email?: string) => void }> = ({ onSign
               <div className={`${tier.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6`}>
                 {tier.icon}
               </div>
-              <h3 className="text-2xl font-black text-[#1F2937] mb-1">{tier.name}</h3>
+              <h3 className={`text-2xl font-black mb-1 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{tier.name}</h3>
               <p className="text-[#F97316] font-bold mb-6">{tier.subtitle}</p>
               <ul className="space-y-3 mb-6">
                 {tier.features.map((f, j) => (
-                  <li key={j} className="flex items-start gap-3 text-gray-600">
+                  <li key={j} className={`flex items-start gap-3 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                     <CheckCircle2 className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
                     <span>{f}</span>
                   </li>
@@ -219,6 +236,7 @@ const SupportTiers: React.FC<{ onSignup: (email?: string) => void }> = ({ onSign
 };
 
 const HowItWorksSimple: React.FC = () => {
+  const { isDark } = useTheme();
   const steps = [
     {
       step: "1",
@@ -241,21 +259,21 @@ const HowItWorksSimple: React.FC = () => {
   ];
 
   return (
-    <section className="py-20 bg-[#F3F4F6]">
+    <section className={`py-20 ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
       <div className="container mx-auto px-6 max-w-5xl">
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">How it works</h2>
-          <p className="text-gray-600 text-xl">Three simple steps to solving your problem</p>
+          <h2 className={`text-4xl lg:text-5xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>How it works</h2>
+          <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Three simple steps to solving your problem</p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {steps.map((s, i) => (
             <div key={i} className="text-center">
-              <div className="bg-[#1F2937] w-20 h-20 rounded-full flex items-center justify-center text-white mx-auto mb-6 shadow-lg">
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white mx-auto mb-6 shadow-lg ${isDark ? 'bg-[#F97316]' : 'bg-[#1F2937]'}`}>
                 {s.icon}
               </div>
               <div className="text-[#F97316] font-black text-lg mb-2">Step {s.step}</div>
-              <h3 className="text-2xl font-bold text-[#1F2937] mb-3">{s.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{s.desc}</p>
+              <h3 className={`text-2xl font-bold mb-3 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{s.title}</h3>
+              <p className={`leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{s.desc}</p>
             </div>
           ))}
         </div>
@@ -265,6 +283,7 @@ const HowItWorksSimple: React.FC = () => {
 };
 
 const WhatWeHelpWith: React.FC = () => {
+  const { isDark } = useTheme();
   const problems = [
     { icon: <Wifi className="w-6 h-6" />, label: "Wi-Fi & internet issues" },
     { icon: <Tv className="w-6 h-6" />, label: "TVs / streaming / soundbars" },
@@ -277,19 +296,19 @@ const WhatWeHelpWith: React.FC = () => {
   ];
 
   return (
-    <section className="py-20 bg-white">
+    <section className={`py-20 ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
       <div className="container mx-auto px-6 max-w-5xl">
         <div className="text-center mb-12">
-          <h2 className="text-4xl lg:text-5xl font-black text-[#1F2937] mb-4">
+          <h2 className={`text-4xl lg:text-5xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
             What we can help with
           </h2>
-          <p className="text-gray-600 text-xl">Everyday problems. Real solutions.</p>
+          <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Everyday problems. Real solutions.</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {problems.map((item, i) => (
-            <div key={i} className="bg-[#F9FAFB] border border-gray-200 p-6 rounded-xl flex flex-col items-center gap-4 hover:shadow-xl transition-all cursor-pointer hover:border-[#F97316] group text-center">
-              <div className="text-[#1F2937] group-hover:text-[#F97316] transition-colors">{item.icon}</div>
-              <span className="text-sm font-bold text-[#1F2937]">{item.label}</span>
+            <div key={i} className={`p-6 rounded-xl flex flex-col items-center gap-4 hover:shadow-xl transition-all cursor-pointer hover:border-[#F97316] group text-center border ${isDark ? 'bg-[#1F2937] border-gray-700' : 'bg-[#F9FAFB] border-gray-200'}`}>
+              <div className={`group-hover:text-[#F97316] transition-colors ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{item.icon}</div>
+              <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{item.label}</span>
             </div>
           ))}
         </div>
@@ -342,45 +361,49 @@ const TrustSection: React.FC = () => (
   </section>
 );
 
-const PricingTeaser: React.FC<{ onPricing: () => void }> = ({ onPricing }) => (
-  <section className="py-20 bg-[#F3F4F6]">
-    <div className="container mx-auto px-6 max-w-4xl">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl font-black text-[#1F2937] mb-4">Simple, transparent pricing</h2>
-        <p className="text-gray-600 text-xl">Pay only for what you need. No hidden fees.</p>
+const PricingTeaser: React.FC<{ onPricing: () => void }> = ({ onPricing }) => {
+  const { isDark } = useTheme();
+  return (
+    <section className={`py-20 ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
+      <div className="container mx-auto px-6 max-w-4xl">
+        <div className="text-center mb-12">
+          <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Simple, transparent pricing</h2>
+          <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Pay only for what you need. No hidden fees.</p>
+        </div>
+        <div className="grid md:grid-cols-4 gap-6">
+          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
+            <div className="text-[#F97316] font-bold text-sm mb-2">TEXT SUPPORT</div>
+            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$9</div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
+          </div>
+          <div className={`p-6 rounded-2xl shadow-lg text-center border-2 border-[#F97316] ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
+            <div className="text-[#F97316] font-bold text-sm mb-2">AI PHOTO TRIAGE</div>
+            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$19</div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
+          </div>
+          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
+            <div className="text-[#F97316] font-bold text-sm mb-2">LIVE VIDEO</div>
+            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$49</div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
+          </div>
+          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
+            <div className="text-[#F97316] font-bold text-sm mb-2">ONSITE VISIT</div>
+            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Quote</div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>scheduled</p>
+          </div>
+        </div>
+        <div className="text-center mt-10">
+          <Button variant={isDark ? 'orange' : 'dark'} onClick={onPricing} className="px-10">
+            See Full Pricing
+          </Button>
+        </div>
       </div>
-      <div className="grid md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-[#F97316] font-bold text-sm mb-2">TEXT SUPPORT</div>
-          <div className="text-3xl font-black text-[#1F2937] mb-2">$9</div>
-          <p className="text-gray-500 text-sm">/session</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center border-2 border-[#F97316]">
-          <div className="text-[#F97316] font-bold text-sm mb-2">AI PHOTO TRIAGE</div>
-          <div className="text-3xl font-black text-[#1F2937] mb-2">$19</div>
-          <p className="text-gray-500 text-sm">/session</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-[#F97316] font-bold text-sm mb-2">LIVE VIDEO</div>
-          <div className="text-3xl font-black text-[#1F2937] mb-2">$49</div>
-          <p className="text-gray-500 text-sm">/session</p>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-          <div className="text-[#F97316] font-bold text-sm mb-2">ONSITE VISIT</div>
-          <div className="text-3xl font-black text-[#1F2937] mb-2">Quote</div>
-          <p className="text-gray-500 text-sm">scheduled</p>
-        </div>
-      </div>
-      <div className="text-center mt-10">
-        <Button variant="dark" onClick={onPricing} className="px-10">
-          See Full Pricing
-        </Button>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const TestimonialSection: React.FC = () => {
+  const { isDark } = useTheme();
   const testimonials = [
     {
       quote: "TechTriage has taken a lot of stress off my shoulders. I can troubleshoot from my cell phone. I'm not tied to my office.",
@@ -403,28 +426,28 @@ const TestimonialSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-24 bg-[#F3F4F6]">
+    <section className={`py-24 ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-black text-[#1F2937] mb-4">What Our Customers Say</h2>
-          <p className="text-gray-600 text-lg">Real stories from real homeowners</p>
+          <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>What Our Customers Say</h2>
+          <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Real stories from real homeowners</p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((t, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-[#F97316]">
+            <div key={i} className={`p-8 rounded-2xl shadow-xl border-t-4 border-[#F97316] ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
               <div className="flex mb-4">
                 {[...Array(5)].map((_, j) => (
                   <Star key={j} className="w-5 h-5 fill-[#F97316] text-[#F97316]" />
                 ))}
               </div>
-              <p className="text-gray-700 mb-6 leading-relaxed italic">"{t.quote}"</p>
+              <p className={`mb-6 leading-relaxed italic ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>"{t.quote}"</p>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                <div className={`w-12 h-12 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                   <img src={t.image} alt={t.name} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <div className="font-bold text-[#1F2937]">{t.name}</div>
-                  <div className="text-gray-500 text-sm">{t.role}</div>
+                  <div className={`font-bold ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{t.name}</div>
+                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.role}</div>
                 </div>
               </div>
             </div>
@@ -436,6 +459,7 @@ const TestimonialSection: React.FC = () => {
 };
 
 const FAQSection: React.FC = () => {
+  const { isDark } = useTheme();
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const faqs = [
     { q: "How fast can I get help?", a: "Most text support sessions connect within minutes. AI photo analysis is instant. Live video sessions typically start within 15 minutes." },
@@ -446,23 +470,23 @@ const FAQSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-20 bg-white">
+    <section className={`py-20 ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
       <div className="container mx-auto px-6 max-w-3xl">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-black text-[#1F2937] mb-4">Frequently asked questions</h2>
+          <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Frequently asked questions</h2>
         </div>
         <div className="space-y-4">
           {faqs.map((faq, i) => (
-            <div key={i} className="border-b border-gray-200">
+            <div key={i} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="w-full py-4 flex items-center justify-between text-left"
               >
-                <span className="font-bold text-[#1F2937] text-lg">{faq.q}</span>
+                <span className={`font-bold text-lg ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{faq.q}</span>
                 <ArrowRight className={`w-5 h-5 text-[#F97316] transition-transform ${openFaq === i ? 'rotate-90' : ''}`} />
               </button>
               {openFaq === i && (
-                <div className="pb-4 text-gray-600 leading-relaxed">{faq.a}</div>
+                <div className={`pb-4 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{faq.a}</div>
               )}
             </div>
           ))}
