@@ -1,0 +1,33 @@
+I need to completely redesign the UI of this landing page (App.tsx) to match the professional, high-trust aesthetic of "GetJobber.com", but using our specific brand colors.
+
+Here are the strict Design Guidelines you must follow:
+
+1. THE "JOBBER" LAYOUT STRUCTURE:
+   - Navbar: Sticky white background with a subtle shadow. Left: Logo. Center: "Product", "Industries", "Resources". Right: "1-800" number (text) and a "Get Started" button (Solid Orange).
+   - Hero Section: Split 50/50. Left side: Heavy, bold headline (Navy) with a subheadline (Gray) and TWO buttons ("Get Started" - Orange, "View Pricing" - Navy Outline). Right side: A large, high-quality placeholder image of a phone showing the app interface (I will replace the image later, just use a placeholder div for now).
+   - The "Bento" Grid: Below the hero, create a 3-column grid for "Industries We Serve". Each card should have a light gray background (#F9FAFB), a small icon, and bold text. It should look like a clean, clickable menu.
+   - Value Prop Section: Use a "Zig-Zag" layout (Text Left/Image Right, then switch). Large headings, plenty of white space.
+
+2. COLOR PALETTE (Strict Enforcement):
+   - Primary Background: #FFFFFF (White) for main sections.
+   - Secondary Background: #F3F4F6 (Light Gray) for alternating sections.
+   - Primary Text: #1F2937 (Deep Navy) - Use this for all Headings.
+   - Action Color: #F97316 (Safety Orange) - Use this ONLY for primary buttons and urgent alerts.
+   - Accent Color: #10B981 (Green) - Use sparingly for "Success" states or checkmarks.
+
+3. TYPOGRAPHY & ACCESSIBILITY (Target Audience: Boomers + Tech):
+   - Font: Continue using "Poppins".
+   - Sizing: Increase all base font sizes. Body text should be text-lg (18px). Headings should be text-4xl or larger.
+   - Contrast: Never put gray text on a gray background. Always use Navy on White or White on Navy.
+
+4. SPECIFIC COMPONENT CHANGES:
+   - Buttons: Make them "Pill" shaped (rounded-full) instead of slightly rounded. This is more modern/friendly.
+   - Shadows: Use soft, large shadows (shadow-xl) on cards to make them "pop" off the page, similar to the Jobber screenshots.
+   - The Chat Widget: Keep the existing functional logic (Gemini), but style the launcher button to be a large, floating "Help" pill in the bottom right, distinct from the main content.
+
+5. CONTENT UPDATES:
+   - Headline: "Run your home without the hassle."
+   - Subhead: "The all-in-one support system for home maintenance and tech trouble. No truck roll required."
+   - Call to Action: "Start Free Triage".
+
+Please rewrite the App.tsx return statement to implement this new design immediately.

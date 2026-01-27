@@ -319,10 +319,10 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
         <button 
           aria-label="Open Chat"
           onClick={() => setIsOpen(true)} 
-          className="bg-cta-500 text-white px-6 py-4 rounded-full shadow-xl hover:scale-105 transition-all flex items-center gap-3 font-bold text-sm pointer-events-auto border-2 border-white hover:bg-cta-600"
+          className="bg-[#1F2937] text-white px-8 py-5 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-3 font-bold text-lg pointer-events-auto hover:bg-[#374151]"
         >
-          <MessageSquare className="w-5 h-5" />
-          Chat with us
+          <MessageSquare className="w-6 h-6" />
+          Need Help?
         </button>
       )}
     </div>

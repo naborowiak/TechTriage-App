@@ -3,7 +3,7 @@ import { LifeBuoy } from 'lucide-react';
 
 interface LogoProps {
   className?: string;
-  variant?: 'standard' | 'light';
+  variant?: 'standard' | 'light' | 'dark';
 }
 
 export const Logo: React.FC<LogoProps> = ({ 
@@ -13,21 +13,23 @@ export const Logo: React.FC<LogoProps> = ({
   const isLight = variant === 'light';
   const [imgError, setImgError] = useState(false);
   
+  const textColor = isLight ? 'text-white' : 'text-[#1F2937]';
+  
   return (
     <div className={`flex items-center gap-2 select-none ${className}`}>
       {!imgError ? (
         <img 
           src="/Tech_Triage.png" 
           alt="TechTriage Logo" 
-          className="w-8 h-8 object-contain"
+          className="w-10 h-10 object-contain"
           onError={() => setImgError(true)}
         />
       ) : (
-        <LifeBuoy className={`w-8 h-8 ${isLight ? 'text-white' : 'text-cta-500'}`} />
+        <LifeBuoy className={`w-10 h-10 ${isLight ? 'text-white' : 'text-[#F97316]'}`} />
       )}
       <div className="flex flex-col justify-center">
-        <span className={`text-xl font-bold tracking-tight leading-none ${isLight ? 'text-white' : 'text-brand-900'}`}>
-          Tech<span className={isLight ? 'text-white' : 'text-cta-500'}>Triage</span>
+        <span className={`text-xl font-bold tracking-tight leading-none ${textColor}`}>
+          TechTriage
         </span>
       </div>
     </div>
