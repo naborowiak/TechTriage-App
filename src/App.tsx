@@ -9,6 +9,8 @@ import { ChatWidget, ChatWidgetHandle } from './components/ChatWidget';
 import { Logo } from './components/Logo';
 import { PageView } from './types';
 import { HowItWorks } from './components/HowItWorks';
+import { Pricing } from './components/Pricing';
+import { SignUp } from './components/SignUp';
 
 const Button: React.FC<{ 
   children: React.ReactNode; 
@@ -34,10 +36,9 @@ const Button: React.FC<{
 };
 
 const Header: React.FC<{ 
-  onStart: () => void; 
   onNavigate: (view: PageView) => void; 
   currentView: PageView 
-}> = ({ onStart, onNavigate, currentView }) => {
+}> = ({ onNavigate, currentView }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleNav = (view: PageView) => {
@@ -66,7 +67,12 @@ const Header: React.FC<{
           >
             How It Works
           </button>
-          <button className="text-[#1F2937] hover:text-[#F97316] transition-colors font-bold text-base">Solutions</button>
+          <button 
+            onClick={() => handleNav(PageView.PRICING)}
+            className={`${currentView === PageView.PRICING ? 'text-[#F97316]' : 'text-[#1F2937] hover:text-[#F97316]'} transition-colors font-bold text-base`}
+          >
+            Pricing
+          </button>
           <button className="text-[#1F2937] hover:text-[#F97316] transition-colors font-bold text-base">Resources</button>
         </nav>
 
@@ -77,7 +83,7 @@ const Header: React.FC<{
           </div>
           <div className="h-6 w-px bg-gray-300"></div>
           <button className="text-[#1F2937] hover:text-[#F97316] transition-colors font-bold">Log In</button>
-          <Button variant="orange" onClick={onStart} className="py-3 px-6 text-base">Get Started</Button>
+          <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="py-3 px-6 text-base">Get Started</Button>
         </div>
 
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-[#1F2937] p-2">
@@ -89,7 +95,7 @@ const Header: React.FC<{
         <div className="lg:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-200 p-6 flex flex-col gap-6 shadow-xl">
           <button onClick={() => handleNav(PageView.HOME)} className="text-[#1F2937] font-bold text-lg text-left">Product</button>
           <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className="text-[#1F2937] font-bold text-lg text-left">How It Works</button>
-          <button className="text-[#1F2937] font-bold text-lg text-left">Solutions</button>
+          <button onClick={() => handleNav(PageView.PRICING)} className="text-[#1F2937] font-bold text-lg text-left">Pricing</button>
           <button className="text-[#1F2937] font-bold text-lg text-left">Resources</button>
           <hr className="border-gray-200" />
           <div className="flex items-center gap-2 text-[#1F2937] font-bold">
@@ -97,14 +103,14 @@ const Header: React.FC<{
             <span>1-800-TECH-FIX</span>
           </div>
           <button className="text-[#1F2937] font-bold text-lg text-left">Log In</button>
-          <Button variant="orange" onClick={() => { onStart(); setMobileMenuOpen(false); }} className="w-full">Get Started</Button>
+          <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="w-full">Get Started</Button>
         </div>
       )}
     </header>
   );
 };
 
-const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
+const Hero: React.FC<{ onSignup: () => void; onPricing: () => void }> = ({ onSignup, onPricing }) => (
   <section className="relative pt-28 pb-16 lg:pt-32 lg:pb-24 bg-[#1F2937] overflow-hidden">
     <div className="container mx-auto px-6 relative z-10">
       <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -120,10 +126,10 @@ const Hero: React.FC<{ onStart: () => void }> = ({ onStart }) => (
             The all-in-one support system for home maintenance and tech trouble. No truck roll required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button variant="orange" onClick={onStart}>
-              Start Free Triage
+            <Button variant="orange" onClick={onSignup}>
+              Start Free Trial
             </Button>
-            <Button variant="outline" onClick={onStart}>
+            <Button variant="outline" onClick={onPricing}>
               View Pricing
             </Button>
           </div>
@@ -231,7 +237,7 @@ const FeatureCards: React.FC = () => {
   );
 };
 
-const StatsBand: React.FC<{ onStart: () => void }> = ({ onStart }) => (
+const StatsBand: React.FC<{ onSignup: () => void }> = ({ onSignup }) => (
   <section className="py-16 bg-[#1F2937] text-white">
     <div className="container mx-auto px-6 max-w-6xl">
       <div className="text-center mb-12">
@@ -254,8 +260,8 @@ const StatsBand: React.FC<{ onStart: () => void }> = ({ onStart }) => (
         </div>
       </div>
       <div className="text-center">
-        <Button variant="orange" onClick={onStart} className="text-xl px-10 py-5">
-          Start Free Triage
+        <Button variant="orange" onClick={onSignup} className="text-xl px-10 py-5">
+          Start Free Trial
         </Button>
       </div>
     </div>
@@ -368,7 +374,7 @@ const TestimonialSection: React.FC = () => (
   </section>
 );
 
-const CTASection: React.FC<{ onStart: () => void }> = ({ onStart }) => (
+const CTASection: React.FC<{ onSignup: () => void }> = ({ onSignup }) => (
   <section className="py-24 bg-[#1F2937]">
     <div className="container mx-auto px-6 max-w-4xl text-center">
       <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
@@ -377,8 +383,8 @@ const CTASection: React.FC<{ onStart: () => void }> = ({ onStart }) => (
       <p className="text-white/80 font-medium max-w-2xl mx-auto mb-12 text-xl">
         Your home is your most important asset. We're all in on providing the technology and support to make sure you win.
       </p>
-      <Button variant="orange" onClick={onStart} className="text-xl px-12 py-5">
-        Start Free Triage
+      <Button variant="orange" onClick={onSignup} className="text-xl px-12 py-5">
+        Start Free Trial
       </Button>
     </div>
   </section>
@@ -501,22 +507,36 @@ const App: React.FC = () => {
     chatRef.current?.open("I'd like to start a free trial.");
   };
 
+  const handleNavigateToSignup = () => {
+    setCurrentView(PageView.SIGNUP);
+    window.scrollTo(0, 0);
+  };
+
+  const handleNavigateToPricing = () => {
+    setCurrentView(PageView.PRICING);
+    window.scrollTo(0, 0);
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case PageView.HOW_IT_WORKS:
         return <HowItWorks onStart={handleStart} />;
+      case PageView.PRICING:
+        return <Pricing onStart={handleStart} onNavigate={setCurrentView} />;
+      case PageView.SIGNUP:
+        return <SignUp onStart={handleStart} />;
       case PageView.HOME:
       default:
         return (
           <>
-            <Hero onStart={handleStart} />
+            <Hero onSignup={handleNavigateToSignup} onPricing={handleNavigateToPricing} />
             <ValuePropBar />
             <FeatureCards />
-            <StatsBand onStart={handleStart} />
+            <StatsBand onSignup={handleNavigateToSignup} />
             <AISection />
             <IndustriesGrid />
             <TestimonialSection />
-            <CTASection onStart={handleStart} />
+            <CTASection onSignup={handleNavigateToSignup} />
             <SupportSection />
           </>
         );
@@ -525,7 +545,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white font-['Poppins',sans-serif] text-[#1F2937]">
-      <Header onStart={handleStart} onNavigate={setCurrentView} currentView={currentView} />
+      <Header onNavigate={setCurrentView} currentView={currentView} />
       <main>
         {renderContent()}
       </main>
