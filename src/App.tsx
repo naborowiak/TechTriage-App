@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { 
   Menu, X, ArrowRight, Shield, 
-  Cpu, Home, Star, Play, Sparkles,
+  Cpu, Home, Star, Sparkles, Video,
   Droplet, Tv, Wifi, Phone,
   Zap, Wrench, Lock, CheckCircle2
 } from 'lucide-react';
@@ -167,35 +167,47 @@ const ValuePropBar: React.FC = () => (
 const FeatureCards: React.FC = () => {
   const features = [
     { 
-      title: "Stand out online", 
-      desc: "Get found by local homeowners with your professional TechTriage listing. Showcase your expertise and build trust instantly.", 
-      icon: <Star className="w-6 h-6" /> 
+      title: "Smart Home Control", 
+      desc: "Manage all your connected devices from one dashboard. Get alerts, control thermostats, and monitor security—anywhere, anytime.", 
+      icon: <Star className="w-6 h-6" />,
+      image: "/images/smart-home.jpg"
     },
     { 
-      title: "Get instant answers", 
-      desc: "Our AI identifies issues from a single photo. Get a diagnosis, parts list, and step-by-step fix in under 60 seconds.", 
-      icon: <Zap className="w-6 h-6" /> 
+      title: "Live Video Support", 
+      desc: "Connect face-to-face with certified technicians. Show them the problem in real-time and get guided solutions instantly.", 
+      icon: <Video className="w-6 h-6" />,
+      image: "/images/video-support.jpg"
     },
     { 
-      title: "Attract and keep customers", 
-      desc: "Build loyalty with maintenance reminders, warranty tracking, and proactive home health reports.", 
-      icon: <Shield className="w-6 h-6" /> 
+      title: "Expert Technicians", 
+      desc: "Access our network of vetted professionals for complex repairs. Book appointments and track progress all in one place.", 
+      icon: <Shield className="w-6 h-6" />,
+      image: "/images/technician.jpg"
     }
   ];
 
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-6 max-w-6xl">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-black text-[#1F2937] mb-4">Everything You Need</h2>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">From quick fixes to complex repairs, TechTriage has you covered</p>
+        </div>
         <div className="grid md:grid-cols-3 gap-8">
           {features.map((f, i) => (
-            <div key={i} className="group cursor-pointer bg-[#F9FAFB] p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2">
-              <div className="mb-6 bg-[#1F2937] w-14 h-14 rounded-xl flex items-center justify-center text-white group-hover:bg-[#F97316] transition-colors">
-                {f.icon}
+            <div key={i} className="group cursor-pointer bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 overflow-hidden border border-gray-100">
+              <div className="h-48 overflow-hidden">
+                <img src={f.image} alt={f.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
-              <h3 className="text-2xl font-bold text-[#1F2937] mb-4">{f.title}</h3>
-              <p className="text-gray-600 leading-relaxed text-lg mb-6">{f.desc}</p>
-              <div className="flex items-center gap-2 text-[#1F2937] font-bold group-hover:text-[#F97316] transition-colors">
-                Learn more <ArrowRight className="w-5 h-5" />
+              <div className="p-6">
+                <div className="mb-4 bg-[#1F2937] w-12 h-12 rounded-xl flex items-center justify-center text-white group-hover:bg-[#F97316] transition-colors -mt-12 relative z-10 shadow-lg">
+                  {f.icon}
+                </div>
+                <h3 className="text-xl font-bold text-[#1F2937] mb-3">{f.title}</h3>
+                <p className="text-gray-600 leading-relaxed mb-4">{f.desc}</p>
+                <div className="flex items-center gap-2 text-[#1F2937] font-bold group-hover:text-[#F97316] transition-colors">
+                  Learn more <ArrowRight className="w-5 h-5" />
+                </div>
               </div>
             </div>
           ))}
@@ -321,26 +333,60 @@ const IndustriesGrid: React.FC = () => {
   );
 };
 
-const TestimonialSection: React.FC = () => (
-  <section className="py-24 bg-[#F3F4F6]">
-    <div className="container mx-auto px-6 max-w-4xl">
-      <div className="bg-white p-10 md:p-14 rounded-2xl shadow-2xl border-l-8 border-[#10B981]">
-        <p className="text-2xl md:text-3xl font-bold text-[#1F2937] mb-8 leading-relaxed">
-          "TechTriage has taken a lot of stress off my shoulders. I can troubleshoot from my cell phone. I'm not tied to my office."
-        </p>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gray-200 rounded-full overflow-hidden">
-            <img src="https://i.pravatar.cc/150?u=homeowner" alt="User" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <div className="font-bold text-[#1F2937] text-lg">Kelly Shelton</div>
-            <div className="text-gray-500">Homeowner, St. Louis MO</div>
-          </div>
+const TestimonialSection: React.FC = () => {
+  const testimonials = [
+    {
+      quote: "TechTriage has taken a lot of stress off my shoulders. I can troubleshoot from my cell phone. I'm not tied to my office.",
+      name: "Kelly Shelton",
+      role: "Homeowner, St. Louis MO",
+      image: "/images/testimonial-1.jpg"
+    },
+    {
+      quote: "The AI diagnosed my HVAC issue in seconds. Saved me $400 on an unnecessary service call!",
+      name: "Marcus Johnson",
+      role: "Property Manager, Austin TX",
+      image: "/images/testimonial-2.jpg"
+    },
+    {
+      quote: "Finally, a tech support that speaks my language. The video calls with real experts are a game-changer.",
+      name: "Sarah Chen",
+      role: "First-time Homeowner, Seattle WA",
+      image: "/images/testimonial-3.jpg"
+    }
+  ];
+
+  return (
+    <section className="py-24 bg-[#F3F4F6]">
+      <div className="container mx-auto px-6 max-w-6xl">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-black text-[#1F2937] mb-4">What Our Customers Say</h2>
+          <p className="text-gray-600 text-lg">Real stories from real homeowners</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-8">
+          {testimonials.map((t, i) => (
+            <div key={i} className="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-[#10B981]">
+              <div className="flex mb-4">
+                {[...Array(5)].map((_, j) => (
+                  <Star key={j} className="w-5 h-5 fill-[#F97316] text-[#F97316]" />
+                ))}
+              </div>
+              <p className="text-gray-700 mb-6 leading-relaxed italic">"{t.quote}"</p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                  <img src={t.image} alt={t.name} className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#1F2937]">{t.name}</div>
+                  <div className="text-gray-500 text-sm">{t.role}</div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const CTASection: React.FC<{ onSignup: () => void }> = ({ onSignup }) => (
   <section className="py-24 bg-[#1F2937]">
