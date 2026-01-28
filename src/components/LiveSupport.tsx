@@ -112,6 +112,9 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   const animationFrameRef = useRef<number | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const pendingModelTextRef = useRef<string>("");
+  
+  const addTranscriptEntryRef = useRef<(role: "user" | "model", text: string) => void>(undefined);
+  const endSessionRef = useRef<(summary?: string) => void>(undefined);
 
   const addTranscriptEntry = useCallback(
     (role: "user" | "model", text: string) => {
@@ -123,6 +126,8 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     },
     [],
   );
+  
+  addTranscriptEntryRef.current = addTranscriptEntry;
 
   const stopAllHardware = useCallback(() => {
     isSessionEndedRef.current = true;
@@ -314,6 +319,8 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     },
     [stopAllHardware, archiveSession, transcriptHistory],
   );
+  
+  endSessionRef.current = endSession;
 
   useEffect(() => {
     if (isTranscriptOpen) {
@@ -483,7 +490,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
 
               if (message.serverContent?.turnComplete) {
                 if (pendingModelTextRef.current.trim()) {
-                  addTranscriptEntry("model", pendingModelTextRef.current.trim());
+                  addTranscriptEntryRef.current?.("model", pendingModelTextRef.current.trim());
                   pendingModelTextRef.current = "";
                 }
               }
@@ -492,7 +499,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
                 for (const call of message.toolCall.functionCalls) {
                   if (call.name === "endSession") {
                     const args = call.args as { summary?: string } | undefined;
-                    endSession(args?.summary);
+                    endSessionRef.current?.(args?.summary);
                   }
                 }
               }
@@ -525,15 +532,22 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
 
     return () => {
       mounted = false;
-      stopAllHardware();
+      isSessionEndedRef.current = true;
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (frameIntervalRef.current) clearInterval(frameIntervalRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        audioContextRef.current.close().catch(() => {});
+      }
+      if (inputAudioContextRef.current && inputAudioContextRef.current.state !== "closed") {
+        inputAudioContextRef.current.close().catch(() => {});
+      }
+      if (sessionRef.current) {
+        sessionRef.current.then((s) => s.close()).catch(() => {});
+      }
     };
-  }, [
-    drawWaveform,
-    playAudioData,
-    addTranscriptEntry,
-    endSession,
-    stopAllHardware,
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="fixed inset-0 z-[100] bg-brand-900 flex flex-col overflow-hidden">
