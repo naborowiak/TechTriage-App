@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "ES2020",
@@ -14,12 +15,8 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["./shared/*"]
-    }
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "server", "shared"],
+  "include": ["src"],
   "exclude": ["node_modules", "attached_assets"]
 }
