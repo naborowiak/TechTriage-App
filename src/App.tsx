@@ -3,7 +3,7 @@ import {
   Menu, X, ArrowRight, Shield, 
   Cpu, Home, Star, Sparkles, Video,
   Tv, Wifi, Phone,
-  Zap, Wrench, Lock, CheckCircle2, Moon, Sun
+  Zap, Wrench, Lock, CheckCircle2, Moon, Sun, LogOut, User
 } from 'lucide-react';
 import { ChatWidget, ChatWidgetHandle } from './components/ChatWidget';
 import { Logo } from './components/Logo';
@@ -13,6 +13,7 @@ import { Pricing } from './components/Pricing';
 import { SignUp } from './components/SignUp';
 import { Login } from './components/Login';
 import { useTheme } from './context/ThemeContext';
+import { useAuth } from './hooks/useAuth';
 
 const Button: React.FC<{ 
   children: React.ReactNode; 
@@ -43,6 +44,7 @@ const Header: React.FC<{
 }> = ({ onNavigate, currentView }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
   const isHomePage = currentView === PageView.HOME;
   
   const handleNav = (view: PageView) => {
@@ -97,8 +99,40 @@ const Header: React.FC<{
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
-          <button onClick={() => handleNav(PageView.LOGIN)} className={`${textColor} ${hoverColor} transition-colors font-bold`}>Log In</button>
-          <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="py-3 px-6 text-base">Get Started</Button>
+          {isLoading ? (
+            <div className={`${textColor} font-bold`}>...</div>
+          ) : isAuthenticated && user ? (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                {user.profileImageUrl ? (
+                  <img 
+                    src={user.profileImageUrl} 
+                    alt={user.firstName || 'User'} 
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                <span className={`${textColor} font-bold`}>
+                  {user.firstName || user.email || 'User'}
+                </span>
+              </div>
+              <button 
+                onClick={logout}
+                className={`${textColor} ${hoverColor} transition-colors font-bold flex items-center gap-1`}
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
+          ) : (
+            <>
+              <button onClick={login} className={`${textColor} ${hoverColor} transition-colors font-bold`}>Log In</button>
+              <Button variant="orange" onClick={login} className="py-3 px-6 text-base">Get Started</Button>
+            </>
+          )}
         </div>
 
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={`lg:hidden ${textColor} p-2`}>
@@ -124,8 +158,36 @@ const Header: React.FC<{
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </button>
-          <button onClick={() => handleNav(PageView.LOGIN)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Log In</button>
-          <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="w-full">Get Started</Button>
+          {isAuthenticated && user ? (
+            <>
+              <div className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg`}>
+                {user.profileImageUrl ? (
+                  <img 
+                    src={user.profileImageUrl} 
+                    alt={user.firstName || 'User'} 
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                <span>{user.firstName || user.email || 'User'}</span>
+              </div>
+              <button 
+                onClick={logout}
+                className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left flex items-center gap-2`}
+              >
+                <LogOut className="w-5 h-5" />
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={login} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Log In</button>
+              <Button variant="orange" onClick={login} className="w-full">Get Started</Button>
+            </>
+          )}
         </div>
       )}
     </header>

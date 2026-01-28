@@ -56,8 +56,22 @@ Preferred communication style: Simple, everyday language.
 - **TestimonialSection**: Customer testimonials
 - **CTASection**: "Stop stressing. Start fixing."
 
+### Authentication System
+- **Provider**: Replit Auth (supports Google, GitHub, Apple, email/password via OpenID Connect)
+- **Backend**: Express server on port 3001 with session management
+- **Session Storage**: PostgreSQL-backed sessions using connect-pg-simple
+- **Database Schema**: Drizzle ORM with users and sessions tables
+- **Auth Flow**: 
+  - `/api/login` initiates OAuth flow
+  - `/api/callback` handles OAuth callback and creates/updates user
+  - `/api/auth/user` returns current authenticated user
+  - `/api/logout` destroys session
+- **Frontend Integration**: useAuth hook manages auth state, Header shows user profile when logged in
+
 ### Build Configuration
 - **Development Server**: Runs on port 5000 with host binding for external access
+- **Backend Server**: Runs on port 3001 for API and authentication
+- **Start Command**: `npm start` uses concurrently to run both servers
 - **TypeScript**: Strict mode enabled with ES2020 target and bundler module resolution
 - **Environment Variables**: Mapped from `GEMINI_API_KEY__TECHTRIAGE` to `VITE_GEMINI_API_KEY` at build time
 
