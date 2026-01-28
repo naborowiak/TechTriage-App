@@ -340,10 +340,42 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
       return btoa(binary);
     };
 
+    const downsampleBuffer = (buffer: Float32Array, inputRate: number, targetRate: number): Float32Array => {
+      if (targetRate === inputRate) return buffer;
+      if (targetRate > inputRate) return buffer;
+      
+      const sampleRateRatio = inputRate / targetRate;
+      const newLength = Math.round(buffer.length / sampleRateRatio);
+      const result = new Float32Array(newLength);
+      
+      let offsetResult = 0;
+      let offsetBuffer = 0;
+      
+      while (offsetResult < result.length) {
+        const nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+        
+        let accum = 0, count = 0;
+        for (let i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+          accum += buffer[i];
+          count++;
+        }
+        
+        result[offsetResult] = count > 0 ? accum / count : 0;
+        offsetResult++;
+        offsetBuffer = nextOffsetBuffer;
+      }
+      return result;
+    };
+
     const start = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            autoGainControl: true,
+            noiseSuppression: true,
+          },
           video: {
             facingMode: "environment",
             width: { ideal: 640 },
@@ -367,8 +399,8 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
           }
         }
 
-        const audioCtx = new AudioContext({ sampleRate: 24000 });
-        const inputCtx = new AudioContext({ sampleRate: 16000 });
+        const audioCtx = new AudioContext();
+        const inputCtx = new AudioContext();
         audioContextRef.current = audioCtx;
         inputAudioContextRef.current = inputCtx;
         
@@ -410,11 +442,16 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
               const processor = inputCtx.createScriptProcessor(4096, 1, 1);
               processor.onaudioprocess = (e) => {
                 if (isMutedRef.current || isSessionEndedRef.current || !ws || ws.readyState !== WebSocket.OPEN) return;
-                const pcm = new Int16Array(e.inputBuffer.length);
-                const chan = e.inputBuffer.getChannelData(0);
-                for (let i = 0; i < chan.length; i++) {
-                  pcm[i] = Math.max(-32768, Math.min(32767, Math.floor(chan[i] * 32768)));
+                
+                const inputData = e.inputBuffer.getChannelData(0);
+                const downsampled = downsampleBuffer(inputData, inputCtx.sampleRate, 16000);
+                
+                const pcm = new Int16Array(downsampled.length);
+                for (let i = 0; i < downsampled.length; i++) {
+                  const s = Math.max(-1, Math.min(1, downsampled[i]));
+                  pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
                 }
+                
                 ws.send(JSON.stringify({
                   type: 'audio',
                   data: encode(new Uint8Array(pcm.buffer))

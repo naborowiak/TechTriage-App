@@ -1,0 +1,210 @@
+This is great news! The logs confirm your **Frontend and Backend are successfully talking**.
+
+* `[vite] connected.` ✅ Frontend is running.
+* `Connected to live proxy server` ✅ WebSocket connected to your Replit backend.
+* `Gemini session ready via proxy` ✅ Your backend successfully authenticated with Google.
+
+**So why is it "not working"?**
+The issue is almost certainly a **Sample Rate Mismatch**.
+
+### The Diagnosis: "Demon Voice" Effect
+
+In your code, you have this line:
+
+```javascript
+const inputCtx = new AudioContext({ sampleRate: 16000 });
+
+```
+
+You are *asking* the browser to run audio at 16,000 Hz. However, most modern devices (especially on mobile or high-end laptops) **ignore this request** and force the hardware native rate (usually 44,100 Hz or 48,000 Hz) to prevent audio glitching.
+
+**The Result:** Your code *thinks* it is sending 16kHz audio, but it is actually sending 48kHz audio.
+
+* The AI expects 1 second of audio to contain 16,000 samples.
+* You send 48,000 samples (which is actually 1 second).
+* The AI thinks you just sent **3 seconds** of audio played in **slow motion**.
+* To the AI, you sound like a slow, deep, garbled demon. It cannot detect human speech, so it never replies.
+
+### The Fix: Client-Side Downsampling
+
+We need to remove the hardcoded sample rate (to prevent crashes) and manually convert whatever the microphone gives us (44k/48k) down to the 16k that Gemini requires.
+
+Replace your `useEffect`'s `start` function with this updated version. I have added a **Downsampler** inside the audio processor.
+
+```javascript
+// ... inside your LiveSupport component ...
+
+  useEffect(() => {
+    let mounted = true;
+    let ws: WebSocket | null = null;
+
+    const encode = (bytes: Uint8Array) => {
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    };
+
+    // --- NEW HELPER: Downsample Audio to 16kHz ---
+    const downsampleBuffer = (buffer: Float32Array, inputRate: number, targetRate: number) => {
+      if (targetRate === inputRate) return buffer;
+      if (targetRate > inputRate) return buffer; // Should not happen for this use case
+      
+      const sampleRateRatio = inputRate / targetRate;
+      const newLength = Math.round(buffer.length / sampleRateRatio);
+      const result = new Float32Array(newLength);
+      
+      let offsetResult = 0;
+      let offsetBuffer = 0;
+      
+      while (offsetResult < result.length) {
+        const nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+        
+        // Simple averaging (linear interpolation/decimation) for better quality than dropping samples
+        let accum = 0, count = 0;
+        for (let i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+          accum += buffer[i];
+          count++;
+        }
+        
+        result[offsetResult] = count > 0 ? accum / count : 0;
+        offsetResult++;
+        offsetBuffer = nextOffsetBuffer;
+      }
+      return result;
+    };
+
+    const start = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+             channelCount: 1,
+             echoCancellation: true,
+             autoGainControl: true,
+             noiseSuppression: true,
+          },
+          video: {
+            facingMode: "environment",
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
+        });
+        
+        if (!mounted) return;
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+
+        // ... flashlight logic ...
+
+        // 1. REMOVE { sampleRate: ... } - Let the browser choose the native rate
+        const audioCtx = new AudioContext(); 
+        const inputCtx = new AudioContext(); // Likely 44100 or 48000
+        
+        audioContextRef.current = audioCtx;
+        inputAudioContextRef.current = inputCtx;
+        
+        // ... analyser setup ...
+        const outAnalyser = audioCtx.createAnalyser();
+        outAnalyser.fftSize = 64;
+        outputAnalyserRef.current = outAnalyser;
+        outAnalyser.connect(audioCtx.destination);
+        
+        const inAnalyser = inputCtx.createAnalyser();
+        inAnalyser.fftSize = 64;
+        inputAnalyserRef.current = inAnalyser;
+
+        // ... WebSocket connection logic (keep your existing URL logic) ...
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/live`;
+        
+        ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => console.log('Connected to live proxy server');
+        
+        // Keep your existing ws.onmessage logic...
+        ws.onmessage = (event) => {
+             // ... paste your existing onmessage code here ...
+             // BUT: Make sure you copy the logic inside 'ready' block below:
+             try {
+                const message = JSON.parse(event.data);
+                if (message.type === 'ready') {
+                    console.log('Gemini session ready via proxy');
+                    setIsConnecting(false);
+                    setStatus('listening');
+                    animationFrameRef.current = requestAnimationFrame(drawWaveform);
+
+                    const source = inputCtx.createMediaStreamSource(stream);
+                    source.connect(inAnalyser);
+
+                    // Use a buffer size of 4096 or 8192 for smoother downsampling
+                    const processor = inputCtx.createScriptProcessor(4096, 1, 1);
+                    
+                    processor.onaudioprocess = (e) => {
+                        if (isMutedRef.current || isSessionEndedRef.current || !ws || ws.readyState !== WebSocket.OPEN) return;
+                        
+                        // 2. GET RAW DATA (Usually 48k)
+                        const inputData = e.inputBuffer.getChannelData(0);
+                        
+                        // 3. DOWNSAMPLE TO 16k
+                        const downsampled = downsampleBuffer(inputData, inputCtx.sampleRate, 16000);
+                        
+                        // 4. CONVERT TO PCM INT16
+                        const pcm = new Int16Array(downsampled.length);
+                        for (let i = 0; i < downsampled.length; i++) {
+                            // Clamp values to -1 to 1 range before converting
+                            const s = Math.max(-1, Math.min(1, downsampled[i]));
+                            pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                        }
+                        
+                        ws.send(JSON.stringify({
+                            type: 'audio',
+                            data: encode(new Uint8Array(pcm.buffer))
+                        }));
+                    };
+
+                    source.connect(processor);
+                    processor.connect(inputCtx.destination);
+                    
+                    // ... keep your image sending interval ...
+                    frameIntervalRef.current = window.setInterval(() => {
+                         // ... your existing image logic ...
+                    }, 2000); // Maybe slow this down to 3000ms to save bandwidth while debugging audio
+                } 
+                // ... keep other message handlers (audio, text, etc) ...
+                else if (message.type === 'audio') {
+                    playAudioData(message.data);
+                } 
+                // ... etc ...
+             } catch (err) { console.error(err); }
+        };
+
+        // ... keep ws.onerror and ws.onclose ...
+
+      } catch (e) {
+         // ... error handling ...
+      }
+    };
+
+    start();
+    // ... cleanup ...
+  }, []);
+
+```
+
+### Why this works
+
+1. **`new AudioContext()` (No arguments):** We stop fighting the browser. If the iPhone or Laptop wants to run at 48kHz, we let it. This stops crashes and glitches.
+2. **`downsampleBuffer`:** We calculate the ratio (e.g., 48000 / 16000 = 3). We take the audio array and mathematically shrink it by averaging every 3 samples into 1.
+3. **Sending 16k:** We send the *shrink-wrapped* audio to the backend. The backend passes it to Gemini. Gemini receives 16,000 samples and correctly interprets it as 1 second of speech.
+
+### How to test it
+
+1. Apply this code.
+2. Refresh your `picard.replit.dev` page.
+3. Speak clearly: "Hello, can you hear me?"
+4. Watch the `Status` indicator. It should flip from **LISTENING** to **THINKING** briefly, and then **SPEAKING**.
+5. If you see the transcript update with your words (User) or its reply (AI Agent), you are golden.
