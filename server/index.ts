@@ -53,26 +53,32 @@ async function setupGeminiLive(ws: WebSocket) {
           ws.send(JSON.stringify({ type: 'ready' }));
           
           // Send initial prompt to trigger greeting
+          console.log("Sending initial greeting prompt...");
           session.sendClientContent({
             turns: [{
               role: "user",
-              parts: [{ text: "Session started. Please greet me and let me know you're ready to help." }]
+              parts: [{ text: "Hello! I just connected. Please greet me warmly and let me know you're ready to help with my tech issue." }]
             }],
             turnComplete: true
           });
         },
         onmessage: (message: any) => {
           try {
+            console.log("Received Gemini message:", JSON.stringify(message).substring(0, 500));
+            
             // Handle audio output
             if (message.serverContent?.modelTurn?.parts) {
+              console.log("Processing modelTurn parts:", message.serverContent.modelTurn.parts.length);
               for (const part of message.serverContent.modelTurn.parts) {
                 if (part.inlineData?.mimeType?.startsWith('audio/')) {
+                  console.log("Sending audio data to client");
                   ws.send(JSON.stringify({
                     type: 'audio',
                     data: part.inlineData.data
                   }));
                 }
                 if (part.text) {
+                  console.log("Sending text to client:", part.text.substring(0, 100));
                   ws.send(JSON.stringify({
                     type: 'text',
                     data: part.text
