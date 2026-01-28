@@ -1,20 +1,5 @@
-run = "npm run dev"
-modules = ["nodejs-20", "python-3.11"]
-hidden = [".config", "tsconfig.json", "tsconfig.node.json", "vite.config.js", ".gitignore"]
-entrypoint = "src/App.tsx"
-
-[nix]
-channel = "stable-24_05"
-packages = ["unzip"]
-
-[unitTest]
-language = "nodejs"
-
-[deployment]
-deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
-publicDir = "dist"
-run = ["node", "server/index.js"]
+[agent]
+expertMode = true
 
 [[ports]]
 localPort = 51
@@ -25,33 +10,5 @@ localPort = 3001
 externalPort = 3001
 
 [[ports]]
-localPort = 5000
-externalPort = 80
-
-[agent]
-expertMode = true
-integrations = ["github:1.0.0", "javascript_log_in_with_replit:2.0.0"]
-
-[workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "dev server"
-
-[[workflows.workflow]]
-name = "dev server"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run server & npm run dev"
-waitForPort = 5000
+localPort = 5001
+externalPort = 3003
