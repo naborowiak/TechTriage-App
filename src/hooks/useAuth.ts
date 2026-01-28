@@ -60,21 +60,8 @@ export function useAuth() {
     window.location.href = '/api/login';
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      setState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      });
-      window.location.reload();
-    } catch (error) {
-      console.error('Failed to logout:', error);
-    }
+  const logout = useCallback(() => {
+    window.location.href = '/api/logout';
   }, []);
 
   return {
