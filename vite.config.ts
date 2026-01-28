@@ -10,6 +10,13 @@ export default defineConfig({
     port: 5000,
     host: '0.0.0.0',
     allowedHosts: true,
-    strictPort: true
+    strictPort: true,
+    proxy: {
+      '/live': {
+        target: 'ws://localhost:3001',
+        ws: true,
+        changeOrigin: true
+      }
+    }
   }
 })

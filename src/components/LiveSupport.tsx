@@ -19,13 +19,6 @@ import {
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { UserRole, ChatMessage, SavedSession } from "../types";
-import {
-  GoogleGenAI,
-  Modality,
-  LiveServerMessage,
-  Type,
-  Session,
-} from "@google/genai";
 
 interface LiveSupportProps {
   onClose: () => void;
@@ -94,7 +87,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   const [isCopied, setIsCopied] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
   const [hasFlashlight, setHasFlashlight] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -103,7 +95,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const nextPlayTimeRef = useRef<number>(0);
-  const sessionRef = useRef<Promise<Session> | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const frameIntervalRef = useRef<number | null>(null);
   const isSessionEndedRef = useRef(false);
 
@@ -143,10 +135,18 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     if (inputAudioContextRef.current && inputAudioContextRef.current.state !== "closed") {
       inputAudioContextRef.current.close().catch(() => {});
     }
-    if (sessionRef.current) {
-      sessionRef.current.then((s) => s.close()).catch(() => {});
+    if (wsRef.current) {
+      try {
+        wsRef.current.close();
+      } catch (e) {
+        // Ignore close errors
+      }
     }
+    wsRef.current = null;
   }, []);
+  
+  const stopAllHardwareRef = useRef(stopAllHardware);
+  stopAllHardwareRef.current = stopAllHardware;
 
   const archiveSession = useCallback(
     (finalSummary: string, history: TranscriptEntry[]) => {
@@ -330,6 +330,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
 
   useEffect(() => {
     let mounted = true;
+    let ws: WebSocket | null = null;
 
     const encode = (bytes: Uint8Array) => {
       let binary = '';
@@ -366,15 +367,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
           }
         }
 
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-          setConnectionError("API key not configured");
-          setIsConnecting(false);
-          return;
-        }
-
-        const ai = new GoogleGenAI({ apiKey });
-        
         const audioCtx = new AudioContext({ sampleRate: 24000 });
         const inputCtx = new AudioContext({ sampleRate: 16000 });
         audioContextRef.current = audioCtx;
@@ -389,158 +381,117 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
         inAnalyser.fftSize = 64;
         inputAnalyserRef.current = inAnalyser;
 
-        let liveSession: Session | null = null;
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/live`;
+        console.log('Connecting to WebSocket:', wsUrl);
         
-        const sessionPromise = ai.live.connect({
-          model: "gemini-2.5-flash-native-audio-preview-12-2025",
-          config: {
-            responseModalities: [Modality.AUDIO],
-            tools: [
-              {
-                functionDeclarations: [
-                  {
-                    name: "endSession",
-                    description: "End the live support session and provide a summary",
-                    parameters: {
-                      type: Type.OBJECT,
-                      properties: {
-                        summary: {
-                          type: Type.STRING,
-                          description: "Brief summary of what was discussed and resolved",
-                        },
-                      },
-                      required: ["summary"],
-                    },
-                  },
-                ],
-              },
-            ],
-            inputAudioTranscription: {},
-            outputAudioTranscription: {},
-            systemInstruction: "You are TechTriage Live. You are a professional tech co-pilot helping users diagnose and fix technology and home maintenance issues. Be patient, friendly, and clear in your explanations. If you can see the camera feed, describe what you observe. Keep responses concise since this is a live audio session.",
-          },
-          callbacks: {
-            onopen: () => {
-              console.log("Gemini Live session opened");
-              if (mounted) {
-                setIsConnecting(false);
-                setStatus("listening");
-                animationFrameRef.current = requestAnimationFrame(drawWaveform);
-              }
-            },
-            onmessage: (message: LiveServerMessage) => {
-              if (message.serverContent?.interrupted) {
-                nextPlayTimeRef.current = 0;
-                return;
-              }
-
-              if (message.serverContent?.modelTurn?.parts) {
-                for (const part of message.serverContent.modelTurn.parts) {
-                  if (part.inlineData?.data) {
-                    playAudioData(part.inlineData.data);
-                  }
-                  if (part.text) {
-                    pendingModelTextRef.current += part.text;
-                  }
-                }
-              }
-
-              if (message.serverContent?.turnComplete) {
-                if (pendingModelTextRef.current.trim()) {
-                  addTranscriptEntryRef.current?.("model", pendingModelTextRef.current.trim());
-                  pendingModelTextRef.current = "";
-                }
-              }
-
-              if (message.toolCall?.functionCalls) {
-                for (const call of message.toolCall.functionCalls) {
-                  if (call.name === "endSession") {
-                    const args = call.args as { summary?: string } | undefined;
-                    endSessionRef.current?.(args?.summary);
-                  }
-                }
-              }
-            },
-            onerror: (e: ErrorEvent) => {
-              console.error("Gemini Live error:", e);
-              if (mounted) {
-                setConnectionError(e.message || "Connection error");
-              }
-            },
-            onclose: () => {
-              console.log("Gemini Live session closed");
-            },
-          },
-        });
-
-        sessionRef.current = sessionPromise;
+        ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
         
-        // Wait for session to be ready, then set up audio
-        liveSession = await sessionPromise;
+        ws.onopen = () => {
+          console.log('Connected to live proxy server');
+        };
         
-        // Set up audio input
-        const source = inputCtx.createMediaStreamSource(stream);
-        source.connect(inAnalyser);
-        
-        const processor = inputCtx.createScriptProcessor(4096, 1, 1);
-        processor.onaudioprocess = (e) => {
-          if (isMutedRef.current || isSessionEndedRef.current || !liveSession) return;
-          const pcm = new Int16Array(e.inputBuffer.length);
-          const chan = e.inputBuffer.getChannelData(0);
-          for (let i = 0; i < chan.length; i++) {
-            pcm[i] = Math.max(-32768, Math.min(32767, Math.floor(chan[i] * 32768)));
-          }
+        ws.onmessage = (event) => {
+          if (!mounted) return;
+          
           try {
-            liveSession.sendRealtimeInput({
-              media: {
-                data: encode(new Uint8Array(pcm.buffer)),
-                mimeType: 'audio/pcm;rate=16000'
+            const message = JSON.parse(event.data);
+            
+            if (message.type === 'ready') {
+              console.log('Gemini session ready via proxy');
+              setIsConnecting(false);
+              setStatus('listening');
+              animationFrameRef.current = requestAnimationFrame(drawWaveform);
+              
+              const source = inputCtx.createMediaStreamSource(stream);
+              source.connect(inAnalyser);
+              
+              const processor = inputCtx.createScriptProcessor(4096, 1, 1);
+              processor.onaudioprocess = (e) => {
+                if (isMutedRef.current || isSessionEndedRef.current || !ws || ws.readyState !== WebSocket.OPEN) return;
+                const pcm = new Int16Array(e.inputBuffer.length);
+                const chan = e.inputBuffer.getChannelData(0);
+                for (let i = 0; i < chan.length; i++) {
+                  pcm[i] = Math.max(-32768, Math.min(32767, Math.floor(chan[i] * 32768)));
+                }
+                ws.send(JSON.stringify({
+                  type: 'audio',
+                  data: encode(new Uint8Array(pcm.buffer))
+                }));
+              };
+              source.connect(processor);
+              processor.connect(inputCtx.destination);
+              
+              frameIntervalRef.current = window.setInterval(() => {
+                if (videoRef.current && canvasRef.current && mounted && !isSessionEndedRef.current && ws && ws.readyState === WebSocket.OPEN) {
+                  const canvas = canvasRef.current;
+                  const ctx = canvas.getContext('2d');
+                  if (ctx && videoRef.current.videoWidth > 0) {
+                    canvas.width = 320;
+                    canvas.height = (320 * videoRef.current.videoHeight) / videoRef.current.videoWidth;
+                    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => {
+                      if (blob && ws && ws.readyState === WebSocket.OPEN) {
+                        blob.arrayBuffer().then(buffer => {
+                          ws!.send(JSON.stringify({
+                            type: 'image',
+                            data: encode(new Uint8Array(buffer))
+                          }));
+                        });
+                      }
+                    }, 'image/jpeg', 0.7);
+                  }
+                }
+              }, 2000);
+            } else if (message.type === 'audio') {
+              playAudioData(message.data);
+            } else if (message.type === 'text') {
+              pendingModelTextRef.current += message.data;
+            } else if (message.type === 'turnComplete') {
+              if (pendingModelTextRef.current.trim()) {
+                addTranscriptEntryRef.current?.('model', pendingModelTextRef.current.trim());
+                pendingModelTextRef.current = '';
               }
-            });
+            } else if (message.type === 'interrupted') {
+              nextPlayTimeRef.current = 0;
+            } else if (message.type === 'endSession') {
+              endSessionRef.current?.(message.summary);
+            } else if (message.type === 'error') {
+              console.error('Server error:', message.message);
+              endSessionRef.current?.(`Session ended: ${message.message || 'Connection error'}`);
+              stopAllHardwareRef.current();
+            }
           } catch (err) {
-            console.error("Error sending audio:", err);
+            console.error('Error parsing WebSocket message:', err);
           }
         };
-        source.connect(processor);
-        processor.connect(inputCtx.destination);
         
-        // Set up video frame capture
-        frameIntervalRef.current = window.setInterval(() => {
-          if (videoRef.current && canvasRef.current && mounted && !isSessionEndedRef.current && liveSession) {
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            if (ctx && videoRef.current.videoWidth > 0) {
-              canvas.width = 320;
-              canvas.height = (320 * videoRef.current.videoHeight) / videoRef.current.videoWidth;
-              ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-              canvas.toBlob(blob => {
-                if (blob && liveSession) {
-                  blob.arrayBuffer().then(buffer => {
-                    try {
-                      liveSession!.sendRealtimeInput({
-                        media: {
-                          data: encode(new Uint8Array(buffer)),
-                          mimeType: 'image/jpeg'
-                        }
-                      });
-                    } catch (err) {
-                      console.error("Error sending video frame:", err);
-                    }
-                  });
-                }
-              }, 'image/jpeg', 0.7);
-            }
+        ws.onerror = (e) => {
+          console.error('WebSocket error:', e);
+          if (mounted && !isSessionEndedRef.current) {
+            setIsConnecting(false);
+            endSessionRef.current?.('Session ended due to connection error');
+            stopAllHardwareRef.current();
           }
-        }, 2000);
+        };
         
-        console.log("Audio and video capture initialized");
+        ws.onclose = () => {
+          console.log('WebSocket closed');
+          if (mounted && !isSessionEndedRef.current) {
+            setIsConnecting(false);
+            endSessionRef.current?.('Session ended');
+            stopAllHardwareRef.current();
+          }
+        };
+        
       } catch (e) {
         console.error("Setup error:", e);
         if (mounted) {
-          setConnectionError(
-            e instanceof Error ? e.message : "Failed to start session",
-          );
           setIsConnecting(false);
+          const errorMessage = e instanceof Error ? e.message : "Failed to start session";
+          endSessionRef.current?.(`Session could not start: ${errorMessage}`);
+          stopAllHardwareRef.current();
         }
       }
     };
@@ -549,19 +500,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
 
     return () => {
       mounted = false;
-      isSessionEndedRef.current = true;
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-      if (frameIntervalRef.current) clearInterval(frameIntervalRef.current);
-      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-        audioContextRef.current.close().catch(() => {});
-      }
-      if (inputAudioContextRef.current && inputAudioContextRef.current.state !== "closed") {
-        inputAudioContextRef.current.close().catch(() => {});
-      }
-      if (sessionRef.current) {
-        sessionRef.current.then((s) => s.close()).catch(() => {});
-      }
+      stopAllHardwareRef.current();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -599,22 +538,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
           </div>
         </div>
 
-        {connectionError && (
-          <div className="absolute inset-0 flex items-center justify-center z-50 bg-brand-900/80">
-            <div className="bg-red-500/20 border border-red-500/50 rounded-2xl p-8 max-w-md text-center">
-              <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-white font-bold text-lg mb-2">
-                Connection Error
-              </h3>
-              <p className="text-white/70 mb-4">{connectionError}</p>
-              <Button variant="outline" onClick={onClose}>
-                Close
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {isConnecting && !connectionError && (
+        {isConnecting && (
           <div className="absolute inset-0 flex items-center justify-center z-50 bg-brand-900/60">
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-cta-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
