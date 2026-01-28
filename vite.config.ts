@@ -12,6 +12,11 @@ export default defineConfig({
     allowedHosts: true,
     strictPort: true,
     proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      },
       '/live': {
         target: 'ws://localhost:3001',
         ws: true,

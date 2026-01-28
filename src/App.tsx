@@ -3,7 +3,7 @@ import {
   Menu, X, ArrowRight, Shield, 
   Cpu, Home, Star, Sparkles, Video,
   Tv, Wifi, Phone,
-  Zap, Wrench, Lock, CheckCircle2, Moon, Sun
+  Zap, Wrench, Lock, CheckCircle2, Moon, Sun, LogOut, User
 } from 'lucide-react';
 import { ChatWidget, ChatWidgetHandle } from './components/ChatWidget';
 import { Logo } from './components/Logo';
@@ -13,6 +13,7 @@ import { Pricing } from './components/Pricing';
 import { SignUp } from './components/SignUp';
 import { Login } from './components/Login';
 import { useTheme } from './context/ThemeContext';
+import { useAuth, User as AuthUser } from './hooks/useAuth';
 
 const Button: React.FC<{ 
   children: React.ReactNode; 
@@ -39,8 +40,12 @@ const Button: React.FC<{
 
 const Header: React.FC<{ 
   onNavigate: (view: PageView) => void; 
-  currentView: PageView 
-}> = ({ onNavigate, currentView }) => {
+  currentView: PageView;
+  user: AuthUser | null;
+  isLoading: boolean;
+  onLogin: () => void;
+  onLogout: () => void;
+}> = ({ onNavigate, currentView, user, isLoading, onLogin, onLogout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const isHomePage = currentView === PageView.HOME;
@@ -55,17 +60,19 @@ const Header: React.FC<{
   const hoverColor = 'hover:text-[#F97316]';
   const dividerColor = isHomePage ? 'bg-white/30' : (isDark ? 'bg-white/30' : 'bg-gray-300');
 
+  const displayName = user?.firstName || user?.email?.split('@')[0] || 'User';
+
   return (
     <header className={`fixed top-0 left-0 w-full z-50 h-20 transition-colors ${isHomePage ? 'bg-[#1F2937]' : (isDark ? 'bg-[#1F2937] shadow-md' : 'bg-white shadow-md')}`}>
       <div className="container mx-auto px-6 h-full flex items-center justify-between">
-        <button onClick={() => handleNav(PageView.HOME)} className="focus:outline-none">
+        <button onClick={() => handleNav(PageView.HOME)} className="focus:outline-none flex-shrink-0">
           <Logo variant={isHomePage || isDark ? 'light' : 'dark'} />
         </button>
         
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8 ml-8">
           <button 
             onClick={() => handleNav(PageView.HOME)} 
-            className={`${currentView === PageView.HOME ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-bold text-base`}
+            className={`${textColor} ${hoverColor} transition-colors font-bold text-base`}
           >
             Product
           </button>
@@ -97,8 +104,35 @@ const Header: React.FC<{
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
-          <button onClick={() => handleNav(PageView.LOGIN)} className={`${textColor} ${hoverColor} transition-colors font-bold`}>Log In</button>
-          <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="py-3 px-6 text-base">Get Started</Button>
+          
+          {isLoading ? (
+            <div className={`${textColor} font-bold`}>Loading...</div>
+          ) : user ? (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                {user.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt={displayName} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isHomePage || isDark ? 'bg-white/20' : 'bg-gray-200'}`}>
+                    <User className="w-4 h-4" />
+                  </div>
+                )}
+                <span className={`${textColor} font-bold`}>{displayName}</span>
+              </div>
+              <button 
+                onClick={onLogout}
+                className={`flex items-center gap-2 ${textColor} ${hoverColor} transition-colors font-bold`}
+              >
+                <LogOut className="w-4 h-4" />
+                Log Out
+              </button>
+            </div>
+          ) : (
+            <>
+              <button onClick={onLogin} className={`${textColor} ${hoverColor} transition-colors font-bold`}>Log In</button>
+              <Button variant="orange" onClick={onLogin} className="py-3 px-6 text-base">Get Started</Button>
+            </>
+          )}
         </div>
 
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={`lg:hidden ${textColor} p-2`}>
@@ -124,8 +158,35 @@ const Header: React.FC<{
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </button>
-          <button onClick={() => handleNav(PageView.LOGIN)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Log In</button>
-          <Button variant="orange" onClick={() => handleNav(PageView.SIGNUP)} className="w-full">Get Started</Button>
+          
+          {isLoading ? (
+            <div className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold`}>Loading...</div>
+          ) : user ? (
+            <>
+              <div className="flex items-center gap-3">
+                {user.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt={displayName} className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-white/20' : 'bg-gray-200'}`}>
+                    <User className="w-5 h-5" />
+                  </div>
+                )}
+                <span className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg`}>{displayName}</span>
+              </div>
+              <button 
+                onClick={onLogout}
+                className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}
+              >
+                <LogOut className="w-5 h-5" />
+                Log Out
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={onLogin} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Log In</button>
+              <Button variant="orange" onClick={onLogin} className="w-full">Get Started</Button>
+            </>
+          )}
         </div>
       )}
     </header>
@@ -550,6 +611,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(PageView.HOME);
   const [capturedEmail, setCapturedEmail] = useState('');
   const chatRef = useRef<ChatWidgetHandle>(null);
+  const { user, isLoading, login, logout } = useAuth();
 
   const handleStart = () => {
     chatRef.current?.open("I'd like to start a free trial.");
@@ -595,7 +657,14 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white font-['Inter',sans-serif] text-[#1F2937]">
-      <Header onNavigate={setCurrentView} currentView={currentView} />
+      <Header 
+        onNavigate={setCurrentView} 
+        currentView={currentView}
+        user={user}
+        isLoading={isLoading}
+        onLogin={login}
+        onLogout={logout}
+      />
       <main>
         {renderContent()}
       </main>
