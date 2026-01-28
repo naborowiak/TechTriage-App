@@ -631,7 +631,6 @@ const App: React.FC = () => {
             <HowItWorksSimple />
             <WhatWeHelpWith />
             <TrustSection />
-            <PricingTeaser onPricing={handleNavigateToPricing} />
             <TestimonialSection />
             <FAQSection />
             <CTASection onSignup={handleNavigateToSignup} />
