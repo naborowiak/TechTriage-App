@@ -1,5 +1,8 @@
 import express from "express";
 import cors from "cors";
+import { createServer } from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
@@ -14,6 +17,173 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+const SYSTEM_INSTRUCTION = `You are a TechTriage Agent - a friendly, professional technical support specialist.
+
+GREETING: When a session starts, immediately greet the user warmly. Say something like: "Hi there! I'm your TechTriage specialist. I can see your camera feed - go ahead and show me what's giving you trouble, and I'll help you figure it out."
+
+BEHAVIOR:
+- Be conversational and helpful, like a knowledgeable friend
+- When you see an image, describe what you're seeing and provide guidance
+- Ask clarifying questions if needed
+- Provide step-by-step troubleshooting when appropriate
+- If you see error messages or model numbers, acknowledge them specifically
+
+SAFETY:
+- Never assist with gas leaks, electrical panels, bare wires, or structural changes
+- For dangerous situations, advise calling a professional immediately
+
+TONE: Warm, confident, professional. You're a real person helping a friend with tech issues.`;
+
+async function setupGeminiLive(ws: WebSocket) {
+  const apiKey = process.env.GEMINI_API_KEY__TECHTRIAGE;
+  if (!apiKey) {
+    ws.send(JSON.stringify({ type: 'error', message: 'API key not configured' }));
+    ws.close();
+    return;
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const session = await ai.live.connect({
+      model: "gemini-2.0-flash-live-preview-04-09",
+      callbacks: {
+        onopen: () => {
+          console.log("Gemini Live session opened");
+          ws.send(JSON.stringify({ type: 'ready' }));
+          
+          // Send initial prompt to trigger greeting
+          session.sendClientContent({
+            turns: [{
+              role: "user",
+              parts: [{ text: "Session started. Please greet me and let me know you're ready to help." }]
+            }],
+            turnComplete: true
+          });
+        },
+        onmessage: (message: any) => {
+          try {
+            // Handle audio output
+            if (message.serverContent?.modelTurn?.parts) {
+              for (const part of message.serverContent.modelTurn.parts) {
+                if (part.inlineData?.mimeType?.startsWith('audio/')) {
+                  ws.send(JSON.stringify({
+                    type: 'audio',
+                    data: part.inlineData.data
+                  }));
+                }
+                if (part.text) {
+                  ws.send(JSON.stringify({
+                    type: 'text',
+                    data: part.text
+                  }));
+                }
+              }
+            }
+            
+            // Handle turn completion
+            if (message.serverContent?.turnComplete) {
+              ws.send(JSON.stringify({ type: 'turnComplete' }));
+            }
+            
+            // Handle interruption
+            if (message.serverContent?.interrupted) {
+              ws.send(JSON.stringify({ type: 'interrupted' }));
+            }
+            
+            // Handle tool calls
+            if (message.toolCall) {
+              const functionCall = message.toolCall.functionCalls?.[0];
+              if (functionCall?.name === 'endSession') {
+                ws.send(JSON.stringify({
+                  type: 'endSession',
+                  summary: functionCall.args?.summary || 'Session completed'
+                }));
+              }
+            }
+          } catch (err) {
+            console.error("Error processing Gemini message:", err);
+          }
+        },
+        onerror: (error: any) => {
+          console.error("Gemini Live error:", error);
+          ws.send(JSON.stringify({ type: 'error', message: 'Gemini connection error' }));
+        },
+        onclose: () => {
+          console.log("Gemini Live session closed");
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+        }
+      },
+      config: {
+        responseModalities: [Modality.AUDIO, Modality.TEXT],
+        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: "Kore"
+            }
+          }
+        },
+        tools: [{
+          functionDeclarations: [{
+            name: 'endSession',
+            description: 'Call this when the user wants to end the support session or when the issue is resolved.',
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                summary: {
+                  type: Type.STRING,
+                  description: 'A brief summary of what was diagnosed or fixed.'
+                }
+              },
+              required: ['summary']
+            }
+          }]
+        }]
+      }
+    });
+
+    // Handle incoming messages from client
+    ws.on('message', async (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        
+        if (message.type === 'audio') {
+          // Send audio to Gemini
+          session.sendRealtimeInput({
+            audio: {
+              data: message.data,
+              mimeType: "audio/pcm;rate=16000"
+            }
+          });
+        } else if (message.type === 'image') {
+          // Send image to Gemini via media field
+          session.sendRealtimeInput({
+            media: {
+              data: message.data,
+              mimeType: "image/jpeg"
+            }
+          });
+        }
+      } catch (err) {
+        console.error("Error handling client message:", err);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log("Client disconnected, closing Gemini session");
+      session.close();
+    });
+
+  } catch (error) {
+    console.error("Failed to connect to Gemini Live:", error);
+    ws.send(JSON.stringify({ type: 'error', message: 'Failed to connect to AI service' }));
+    ws.close();
+  }
+}
+
 async function main() {
   try {
     await setupAuth(app);
@@ -24,8 +194,19 @@ async function main() {
   }
 
   const PORT = 3001;
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = createServer(app);
+  
+  // Setup WebSocket server
+  const wss = new WebSocketServer({ server, path: '/live' });
+  
+  wss.on('connection', (ws) => {
+    console.log("New WebSocket connection for live session");
+    setupGeminiLive(ws);
+  });
+
+  server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`WebSocket server ready at /live`);
   });
 }
 

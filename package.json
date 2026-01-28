@@ -20,6 +20,7 @@
     "@types/memoizee": "^0.4.12",
     "@types/passport": "^1.0.17",
     "@types/pg": "^8.16.0",
+    "@types/ws": "^8.18.1",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.6",
     "drizzle-kit": "^0.31.8",
