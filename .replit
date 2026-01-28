@@ -40,10 +40,6 @@ author = "agent"
 task = "workflow.run"
 args = "dev server"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Backend Server"
-
 [[workflows.workflow]]
 name = "dev server"
 author = "agent"
@@ -53,17 +49,5 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node server/index.js & npm run dev"
+args = "npx tsx server/index.ts & npm run dev"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Backend Server"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run server"
-waitForPort = 3001
