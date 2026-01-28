@@ -2,6 +2,11 @@ import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import { GoogleGenAI, Modality, Type } from '@google/genai';
 import http from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +21,8 @@ if (!API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
+
+app.use(express.static(path.join(__dirname, '../dist')));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -181,6 +188,10 @@ wss.on('connection', async (clientWs) => {
     console.error('Client WebSocket error:', e.message);
     cleanup();
   });
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 server.listen(PORT, '0.0.0.0', () => {
