@@ -389,6 +389,8 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
         inAnalyser.fftSize = 64;
         inputAnalyserRef.current = inAnalyser;
 
+        let liveSession: Session | null = null;
+        
         const sessionPromise = ai.live.connect({
           model: "gemini-2.5-flash-native-audio-preview-12-2025",
           config: {
@@ -425,51 +427,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
                 setStatus("listening");
                 animationFrameRef.current = requestAnimationFrame(drawWaveform);
               }
-              
-              const source = inputCtx.createMediaStreamSource(stream);
-              source.connect(inAnalyser);
-              
-              const processor = inputCtx.createScriptProcessor(4096, 1, 1);
-              processor.onaudioprocess = (e) => {
-                if (isMutedRef.current || isSessionEndedRef.current) return;
-                const pcm = new Int16Array(e.inputBuffer.length);
-                const chan = e.inputBuffer.getChannelData(0);
-                for (let i = 0; i < chan.length; i++) {
-                  pcm[i] = Math.max(-32768, Math.min(32767, Math.floor(chan[i] * 32768)));
-                }
-                sessionPromise.then(s => s.sendRealtimeInput({
-                  media: {
-                    data: encode(new Uint8Array(pcm.buffer)),
-                    mimeType: 'audio/pcm;rate=16000'
-                  }
-                })).catch(() => {});
-              };
-              source.connect(processor);
-              processor.connect(inputCtx.destination);
-              
-              frameIntervalRef.current = window.setInterval(() => {
-                if (videoRef.current && canvasRef.current && mounted && !isSessionEndedRef.current) {
-                  const canvas = canvasRef.current;
-                  const ctx = canvas.getContext('2d');
-                  if (ctx && videoRef.current.videoWidth > 0) {
-                    canvas.width = 320;
-                    canvas.height = (320 * videoRef.current.videoHeight) / videoRef.current.videoWidth;
-                    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(blob => {
-                      if (blob) {
-                        blob.arrayBuffer().then(buffer => {
-                          sessionPromise.then(s => s.sendRealtimeInput({
-                            media: {
-                              data: encode(new Uint8Array(buffer)),
-                              mimeType: 'image/jpeg'
-                            }
-                          })).catch(() => {});
-                        });
-                      }
-                    }, 'image/jpeg', 0.7);
-                  }
-                }
-              }, 2000);
             },
             onmessage: (message: LiveServerMessage) => {
               if (message.serverContent?.interrupted) {
@@ -517,6 +474,66 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
         });
 
         sessionRef.current = sessionPromise;
+        
+        // Wait for session to be ready, then set up audio
+        liveSession = await sessionPromise;
+        
+        // Set up audio input
+        const source = inputCtx.createMediaStreamSource(stream);
+        source.connect(inAnalyser);
+        
+        const processor = inputCtx.createScriptProcessor(4096, 1, 1);
+        processor.onaudioprocess = (e) => {
+          if (isMutedRef.current || isSessionEndedRef.current || !liveSession) return;
+          const pcm = new Int16Array(e.inputBuffer.length);
+          const chan = e.inputBuffer.getChannelData(0);
+          for (let i = 0; i < chan.length; i++) {
+            pcm[i] = Math.max(-32768, Math.min(32767, Math.floor(chan[i] * 32768)));
+          }
+          try {
+            liveSession.sendRealtimeInput({
+              media: {
+                data: encode(new Uint8Array(pcm.buffer)),
+                mimeType: 'audio/pcm;rate=16000'
+              }
+            });
+          } catch (err) {
+            console.error("Error sending audio:", err);
+          }
+        };
+        source.connect(processor);
+        processor.connect(inputCtx.destination);
+        
+        // Set up video frame capture
+        frameIntervalRef.current = window.setInterval(() => {
+          if (videoRef.current && canvasRef.current && mounted && !isSessionEndedRef.current && liveSession) {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            if (ctx && videoRef.current.videoWidth > 0) {
+              canvas.width = 320;
+              canvas.height = (320 * videoRef.current.videoHeight) / videoRef.current.videoWidth;
+              ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob(blob => {
+                if (blob && liveSession) {
+                  blob.arrayBuffer().then(buffer => {
+                    try {
+                      liveSession!.sendRealtimeInput({
+                        media: {
+                          data: encode(new Uint8Array(buffer)),
+                          mimeType: 'image/jpeg'
+                        }
+                      });
+                    } catch (err) {
+                      console.error("Error sending video frame:", err);
+                    }
+                  });
+                }
+              }, 'image/jpeg', 0.7);
+            }
+          }
+        }, 2000);
+        
+        console.log("Audio and video capture initialized");
       } catch (e) {
         console.error("Setup error:", e);
         if (mounted) {
