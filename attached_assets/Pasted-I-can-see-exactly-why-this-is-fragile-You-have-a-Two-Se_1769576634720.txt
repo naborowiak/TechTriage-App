@@ -1,0 +1,67 @@
+I can see exactly why this is fragile. You have a "Two-Server Problem" that is causing a race condition or a silent failure in Replit.
+
+Here is the breakdown of why it keeps breaking and how to stabilize it.
+
+The Core Issue: The "Invisible" Backend
+Your vite.config.ts is set up to proxy API requests to http://localhost:3001:
+
+JavaScript
+proxy: {
+  '/api': {
+    target: 'http://localhost:3001', // <--- This assumes a backend is ALREADY running here
+    // ...
+  }
+}
+The problem: In Replit, when you hit "Run", it typically executes a single command (likely vite or npm run dev). If that command only starts Vite (port 5000), your Express backend (port 3001) never starts.
+
+The frontend loads, but every login attempt or API call hits a dead end, causing the "refused to connect" or 504 errors.
+
+Solution 1: Run Both Servers (The Fix)
+You need to ensure your "Run" command starts both the Backend (Express) and the Frontend (Vite) simultaneously.
+
+1. Check your package.json Look at your scripts. You likely have separate scripts for server and client. You need a "dev" script that runs them together.
+
+Install concurrently if you haven't:
+
+Bash
+npm install concurrently --save-dev
+2. Update package.json scripts Change your dev script to look like this (adjusting filenames as needed):
+
+JSON
+"scripts": {
+  "server": "tsx watch server/index.ts",  // or nodemon, or wherever your express app is
+  "client": "vite",
+  "dev": "concurrently \"npm run server\" \"npm run client\""
+}
+3. Update .replit Ensure your Replit run command points to this combined script:
+
+Ini, TOML
+run = "npm run dev"
+Solution 2: The strictPort Crash
+In your vite.config.ts, you have:
+
+JavaScript
+strictPort: true,
+Why this breaks Replit: If you restart your Repl, sometimes the old process holding port 5000 hasn't fully died yet. When the new process starts, it sees port 5000 is busy. Because strictPort is true, Vite immediately crashes instead of trying another port or waiting.
+
+The Fix: Set strictPort: false or remove it. This allows Vite to survive a "zombie port" scenario long enough for you to debug it.
+
+Solution 3: The Database Blocker
+In auth.ts, you are initializing the session store at the top level:
+
+JavaScript
+const pgStore = connectPg(session);
+// ...
+If your Postgres database is sleeping (common in Replit) or the DATABASE_URL is missing, the backend will crash immediately upon startup.
+
+The Fix: Wrap your database connection logic in a try/catch block or ensure the environment variables are loaded before this file is imported.
+
+Immediate Action Plan
+Modify vite.config.ts: Change strictPort: true to false.
+
+Verify Backend Port: Go to your Express entry point (likely index.ts or server.ts) and confirm it is actually listening on port 3001.
+
+JavaScript
+// Ensure this matches your vite proxy target!
+app.listen(3001, "0.0.0.0", () => { ... });
+Check Startup Command: Does your "Run" button actually start the Express server?
