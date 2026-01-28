@@ -361,47 +361,6 @@ const TrustSection: React.FC = () => (
   </section>
 );
 
-const PricingTeaser: React.FC<{ onPricing: () => void }> = ({ onPricing }) => {
-  const { isDark } = useTheme();
-  return (
-    <section className={`py-20 ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
-      <div className="container mx-auto px-6 max-w-4xl">
-        <div className="text-center mb-12">
-          <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Simple, transparent pricing</h2>
-          <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Pay only for what you need. No hidden fees.</p>
-        </div>
-        <div className="grid md:grid-cols-4 gap-6">
-          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">TEXT SUPPORT</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$9</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
-          </div>
-          <div className={`p-6 rounded-2xl shadow-lg text-center border-2 border-[#F97316] ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">AI PHOTO TRIAGE</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$19</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
-          </div>
-          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">LIVE VIDEO</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$49</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
-          </div>
-          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">ONSITE VISIT</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Quote</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>scheduled</p>
-          </div>
-        </div>
-        <div className="text-center mt-10">
-          <Button variant={isDark ? 'orange' : 'dark'} onClick={onPricing} className="px-10">
-            See Full Pricing
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-};
-
 const TestimonialSection: React.FC = () => {
   const { isDark } = useTheme();
   const testimonials = [
@@ -599,11 +558,6 @@ const App: React.FC = () => {
   const handleNavigateToSignup = (email?: string) => {
     if (email) setCapturedEmail(email);
     setCurrentView(PageView.SIGNUP);
-    window.scrollTo(0, 0);
-  };
-
-  const handleNavigateToPricing = () => {
-    setCurrentView(PageView.PRICING);
     window.scrollTo(0, 0);
   };
 
