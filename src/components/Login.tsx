@@ -13,7 +13,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const handleGoogleLogin = () => {
-    window.location.href = '/api/login';
+    window.location.href = '/auth/google';
   };
 
   return (

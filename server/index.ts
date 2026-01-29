@@ -300,29 +300,58 @@ async function setupGeminiLive(ws: WebSocket) {
 
 async function main() {
   try {
+    // Trust proxy for secure cookies behind reverse proxy
+    app.set("trust proxy", 1);
+
     // --- GOOGLE AUTH SETUP START ---
     app.use(
       session({
-        secret: "techtriage_secret",
+        secret: process.env.SESSION_SECRET || "techtriage_dev_secret_change_in_prod",
         resave: false,
         saveUninitialized: false,
-        cookie: { secure: isProduction }, // Secure cookies in production
+        cookie: {
+          secure: isProduction,
+          httpOnly: true,
+          sameSite: isProduction ? "none" : "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        },
       }),
     );
 
     app.use(passport.initialize());
     app.use(passport.session());
 
+    // Build callback URL dynamically based on environment
+    const getCallbackURL = () => {
+      if (process.env.REPLIT_DOMAINS) {
+        const domain = process.env.REPLIT_DOMAINS.split(",")[0];
+        return `https://${domain}/api/auth/callback/google`;
+      }
+      if (process.env.CALLBACK_URL) {
+        return process.env.CALLBACK_URL;
+      }
+      return "/api/auth/callback/google";
+    };
+
     passport.use(
       new GoogleStrategy(
         {
           clientID: process.env.GOOGLE_CLIENT_ID || "",
           clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-          callbackURL: "/api/auth/callback/google",
-          proxy: true, // Trust proxy headers
+          callbackURL: getCallbackURL(),
+          proxy: true,
         },
         (accessToken, refreshToken, profile, done) => {
-          return done(null, profile);
+          // Transform Google profile to match expected User format
+          const user = {
+            id: profile.id,
+            username: profile.displayName || profile.emails?.[0]?.value || "",
+            email: profile.emails?.[0]?.value || null,
+            firstName: profile.name?.givenName || null,
+            lastName: profile.name?.familyName || null,
+            profileImageUrl: profile.photos?.[0]?.value || null,
+          };
+          return done(null, user);
         },
       ),
     );
@@ -339,19 +368,35 @@ async function main() {
     // 2. Handle Callback
     app.get(
       "/api/auth/callback/google",
-      passport.authenticate("google", { failureRedirect: "/" }),
+      passport.authenticate("google", { failureRedirect: "/?error=auth_failed" }),
       (req, res) => {
-        res.redirect("/"); // Redirects home after successful login
+        res.redirect("/");
       },
     );
 
-    // 3. Get User Info (Replaces the old /api/auth/user)
+    // 3. Get User Info
     app.get("/api/auth/user", (req, res) => {
-      if (req.isAuthenticated()) {
+      if (req.isAuthenticated() && req.user) {
         res.json({ user: req.user });
       } else {
         res.status(401).json({ user: null });
       }
+    });
+
+    // 4. Logout
+    app.get("/api/auth/logout", (req, res) => {
+      req.logout((err) => {
+        if (err) {
+          console.error("Logout error:", err);
+        }
+        req.session.destroy((err) => {
+          if (err) {
+            console.error("Session destroy error:", err);
+          }
+          res.clearCookie("connect.sid");
+          res.redirect("/");
+        });
+      });
     });
     // --- GOOGLE AUTH SETUP END ---
     console.log("Auth setup complete");

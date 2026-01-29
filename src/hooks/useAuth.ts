@@ -57,11 +57,11 @@ export function useAuth() {
   }, [fetchUser]);
 
   const login = useCallback(() => {
-    window.location.href = '/api/login';
+    window.location.href = '/auth/google';
   }, []);
 
   const logout = useCallback(() => {
-    window.location.href = '/api/logout';
+    window.location.href = '/api/auth/logout';
   }, []);
 
   return {
