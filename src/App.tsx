@@ -1,36 +1,55 @@
-import React, { useState, useRef } from 'react';
-import { 
-  Menu, X, ArrowRight, Shield, 
-  Cpu, Home, Star, Sparkles, Video,
-  Tv, Wifi, Phone,
-  Zap, Wrench, Lock, CheckCircle2, Moon, Sun, LogOut, User
-} from 'lucide-react';
-import { ChatWidget, ChatWidgetHandle } from './components/ChatWidget';
-import { Logo } from './components/Logo';
-import { PageView } from './types';
-import { HowItWorks } from './components/HowItWorks';
-import { Pricing } from './components/Pricing';
-import { SignUp } from './components/SignUp';
-import { Login } from './components/Login';
-import { useTheme } from './context/ThemeContext';
-import { useAuth } from './hooks/useAuth';
+import React, { useState, useRef } from "react";
+import {
+  Menu,
+  X,
+  ArrowRight,
+  Shield,
+  Cpu,
+  Home,
+  Star,
+  Sparkles,
+  Video,
+  Tv,
+  Wifi,
+  Phone,
+  Zap,
+  Wrench,
+  Lock,
+  CheckCircle2,
+  Moon,
+  Sun,
+  LogOut,
+  User,
+} from "lucide-react";
+import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
+import { Logo } from "./components/Logo";
+import { PageView } from "./types";
+import { HowItWorks } from "./components/HowItWorks";
+import { Pricing } from "./components/Pricing";
+import { SignUp } from "./components/SignUp";
+import { Login } from "./components/Login";
+import { useTheme } from "./context/ThemeContext";
+import { useAuth } from "./hooks/useAuth";
 
-const Button: React.FC<{ 
-  children: React.ReactNode; 
-  variant?: 'orange' | 'outline' | 'outlineNavy' | 'dark'; 
-  className?: string; 
-  onClick?: () => void 
-}> = ({ children, variant = 'orange', className = '', onClick }) => {
+const Button: React.FC<{
+  children: React.ReactNode;
+  variant?: "orange" | "outline" | "outlineNavy" | "dark";
+  className?: string;
+  onClick?: () => void;
+}> = ({ children, variant = "orange", className = "", onClick }) => {
   const variants = {
-    orange: "bg-[#F97316] hover:bg-[#EA580C] text-white shadow-lg shadow-orange-500/20",
-    outline: "bg-transparent border-2 border-white text-white hover:bg-white/10",
-    outlineNavy: "bg-transparent border-2 border-[#1F2937] text-[#1F2937] hover:bg-[#1F2937] hover:text-white",
-    dark: "bg-[#1F2937] text-white hover:bg-[#374151]"
+    orange:
+      "bg-[#F97316] hover:bg-[#EA580C] text-white shadow-lg shadow-orange-500/20",
+    outline:
+      "bg-transparent border-2 border-white text-white hover:bg-white/10",
+    outlineNavy:
+      "bg-transparent border-2 border-[#1F2937] text-[#1F2937] hover:bg-[#1F2937] hover:text-white",
+    dark: "bg-[#1F2937] text-white hover:bg-[#374151]",
   };
 
   return (
-    <button 
-      onClick={onClick} 
+    <button
+      onClick={onClick}
       className={`px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 ${variants[variant]} ${className}`}
     >
       {children}
@@ -40,11 +59,11 @@ const Button: React.FC<{
 
 const Header: React.FC<{
   onNavigate: (view: PageView) => void;
-  currentView: PageView
+  currentView: PageView;
 }> = ({ onNavigate, currentView }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
-  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth(); // Removed 'login' from here since we use direct link
   const isHomePage = currentView === PageView.HOME;
 
   const handleNav = (view: PageView) => {
@@ -53,35 +72,52 @@ const Header: React.FC<{
     window.scrollTo(0, 0);
   };
 
-  const textColor = isHomePage ? 'text-white' : (isDark ? 'text-white' : 'text-[#1F2937]');
-  const textColorMuted = isHomePage ? 'text-white/80' : (isDark ? 'text-white/80' : 'text-[#1F2937]/80');
-  const hoverColor = 'hover:text-[#F97316]';
+  const handleGoogleLogin = () => {
+    window.location.href = "/auth/google";
+  };
+
+  const textColor = isHomePage
+    ? "text-white"
+    : isDark
+      ? "text-white"
+      : "text-[#1F2937]";
+  const textColorMuted = isHomePage
+    ? "text-white/80"
+    : isDark
+      ? "text-white/80"
+      : "text-[#1F2937]/80";
+  const hoverColor = "hover:text-[#F97316]";
 
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 h-[72px] transition-colors ${isHomePage ? 'bg-[#1F2937]' : (isDark ? 'bg-[#1F2937] shadow-md' : 'bg-white shadow-md')}`}>
+    <header
+      className={`fixed top-0 left-0 w-full z-50 h-[72px] transition-colors ${isHomePage ? "bg-[#1F2937]" : isDark ? "bg-[#1F2937] shadow-md" : "bg-white shadow-md"}`}
+    >
       <div className="max-w-7xl mx-auto px-6 lg:px-8 h-full flex items-center justify-between">
         {/* LEFT: Logo */}
-        <button onClick={() => handleNav(PageView.HOME)} className="focus:outline-none shrink-0">
-          <Logo variant={isHomePage || isDark ? 'light' : 'dark'} />
+        <button
+          onClick={() => handleNav(PageView.HOME)}
+          className="focus:outline-none shrink-0"
+        >
+          <Logo variant={isHomePage || isDark ? "light" : "dark"} />
         </button>
 
         {/* CENTER: Primary Navigation */}
         <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
           <button
             onClick={() => handleNav(PageView.HOME)}
-            className={`whitespace-nowrap ${currentView === PageView.HOME ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
+            className={`whitespace-nowrap ${currentView === PageView.HOME ? "text-[#F97316]" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
             Product
           </button>
           <button
             onClick={() => handleNav(PageView.HOW_IT_WORKS)}
-            className={`whitespace-nowrap ${currentView === PageView.HOW_IT_WORKS ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
+            className={`whitespace-nowrap ${currentView === PageView.HOW_IT_WORKS ? "text-[#F97316]" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
             How It Works
           </button>
           <button
             onClick={() => handleNav(PageView.PRICING)}
-            className={`whitespace-nowrap ${currentView === PageView.PRICING ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
+            className={`whitespace-nowrap ${currentView === PageView.PRICING ? "text-[#F97316]" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
             Pricing
           </button>
@@ -95,7 +131,11 @@ const Header: React.FC<{
             className={`${textColorMuted} ${hoverColor} transition-colors p-1.5 rounded-full hover:bg-white/10`}
             aria-label="Toggle dark mode"
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
           </button>
 
           {/* Auth section */}
@@ -107,7 +147,7 @@ const Header: React.FC<{
                 {user.profileImageUrl ? (
                   <img
                     src={user.profileImageUrl}
-                    alt={user.firstName || 'User'}
+                    alt={user.firstName || "User"}
                     className="w-7 h-7 rounded-full object-cover"
                   />
                 ) : (
@@ -115,8 +155,10 @@ const Header: React.FC<{
                     <User className="w-3.5 h-3.5 text-white" />
                   </div>
                 )}
-                <span className={`${textColorMuted} text-sm font-medium hidden xl:inline`}>
-                  {user.firstName || 'User'}
+                <span
+                  className={`${textColorMuted} text-sm font-medium hidden xl:inline`}
+                >
+                  {user.firstName || "User"}
                 </span>
               </div>
               <button
@@ -130,13 +172,13 @@ const Header: React.FC<{
           ) : (
             <>
               <button
-                onClick={login}
+                onClick={handleGoogleLogin}
                 className={`${textColorMuted} ${hoverColor} transition-colors text-sm font-medium whitespace-nowrap`}
               >
                 Log In
               </button>
               <button
-                onClick={login}
+                onClick={handleGoogleLogin}
                 className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors whitespace-nowrap"
               >
                 Get Started
@@ -148,7 +190,7 @@ const Header: React.FC<{
         {/* Mobile: Hamburger + CTA */}
         <div className="flex lg:hidden items-center gap-3">
           <button
-            onClick={login}
+            onClick={handleGoogleLogin}
             className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-4 py-2 rounded-full text-sm transition-colors"
           >
             Get Started
@@ -158,35 +200,66 @@ const Header: React.FC<{
             className={`${textColor} p-2`}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
       </div>
 
       {/* Mobile menu dropdown */}
       {mobileMenuOpen && (
-        <div className={`lg:hidden absolute top-[72px] left-0 w-full ${isDark || isHomePage ? 'bg-[#1F2937] border-gray-700' : 'bg-white border-gray-200'} border-b p-6 flex flex-col gap-5 shadow-xl`}>
-          <button onClick={() => handleNav(PageView.HOME)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Product</button>
-          <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>How It Works</button>
-          <button onClick={() => handleNav(PageView.PRICING)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Pricing</button>
+        <div
+          className={`lg:hidden absolute top-[72px] left-0 w-full ${isDark || isHomePage ? "bg-[#1F2937] border-gray-700" : "bg-white border-gray-200"} border-b p-6 flex flex-col gap-5 shadow-xl`}
+        >
+          <button
+            onClick={() => handleNav(PageView.HOME)}
+            className={`${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-semibold text-base text-left`}
+          >
+            Product
+          </button>
+          <button
+            onClick={() => handleNav(PageView.HOW_IT_WORKS)}
+            className={`${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-semibold text-base text-left`}
+          >
+            How It Works
+          </button>
+          <button
+            onClick={() => handleNav(PageView.PRICING)}
+            className={`${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-semibold text-base text-left`}
+          >
+            Pricing
+          </button>
 
-          <hr className={isDark || isHomePage ? 'border-gray-700' : 'border-gray-200'} />
+          <hr
+            className={
+              isDark || isHomePage ? "border-gray-700" : "border-gray-200"
+            }
+          />
 
           <button
             onClick={toggleTheme}
-            className={`flex items-center gap-2 ${isDark || isHomePage ? 'text-white/80' : 'text-[#1F2937]/80'} font-medium text-left`}
+            className={`flex items-center gap-2 ${isDark || isHomePage ? "text-white/80" : "text-[#1F2937]/80"} font-medium text-left`}
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            {isDark ? 'Light Mode' : 'Dark Mode'}
+            {isDark ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+            {isDark ? "Light Mode" : "Dark Mode"}
           </button>
 
           {isAuthenticated && user ? (
             <>
-              <div className={`flex items-center gap-2 ${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-medium`}>
+              <div
+                className={`flex items-center gap-2 ${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-medium`}
+              >
                 {user.profileImageUrl ? (
                   <img
                     src={user.profileImageUrl}
-                    alt={user.firstName || 'User'}
+                    alt={user.firstName || "User"}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
@@ -194,11 +267,11 @@ const Header: React.FC<{
                     <User className="w-4 h-4 text-white" />
                   </div>
                 )}
-                <span>{user.firstName || user.email || 'User'}</span>
+                <span>{user.firstName || user.email || "User"}</span>
               </div>
               <button
                 onClick={logout}
-                className={`${isDark || isHomePage ? 'text-white/80' : 'text-[#1F2937]/80'} font-medium text-left flex items-center gap-2`}
+                className={`${isDark || isHomePage ? "text-white/80" : "text-[#1F2937]/80"} font-medium text-left flex items-center gap-2`}
               >
                 <LogOut className="w-5 h-5" />
                 Logout
@@ -206,8 +279,8 @@ const Header: React.FC<{
             </>
           ) : (
             <button
-              onClick={login}
-              className={`${isDark || isHomePage ? 'text-white/80' : 'text-[#1F2937]/80'} font-medium text-left`}
+              onClick={handleGoogleLogin}
+              className={`${isDark || isHomePage ? "text-white/80" : "text-[#1F2937]/80"} font-medium text-left`}
             >
               Log In
             </button>
@@ -218,12 +291,15 @@ const Header: React.FC<{
   );
 };
 
-const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({ onFreeTrial, onPricing }) => (
+const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
+  onFreeTrial,
+  onPricing,
+}) => (
   <section className="relative pt-[72px] min-h-[700px] lg:min-h-[800px] overflow-hidden">
     {/* Background hero image */}
     <div
       className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: 'url(/hero-image.jpg)' }}
+      style={{ backgroundImage: "url(/hero-image.jpg)" }}
     >
       {/* Dark overlay for text readability */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#1F2937]/90 via-[#1F2937]/70 to-transparent"></div>
@@ -235,21 +311,33 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({ on
         <div className="pt-8 lg:pt-0">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
             <span className="text-[#F97316] font-bold text-sm">NEW</span>
-            <span className="text-white font-medium text-sm">AI-Powered Live Video Support</span>
+            <span className="text-white font-medium text-sm">
+              AI-Powered Live Video Support
+            </span>
             <ArrowRight className="w-4 h-4 text-[#F97316]" />
           </div>
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-            Fix it faster—<br />
+            Fix it faster—
+            <br />
             <span className="text-[#F97316]">just show us.</span>
           </h1>
           <p className="text-white/80 text-xl lg:text-2xl font-medium leading-relaxed mb-10 max-w-lg">
-            TechTriage connects you to AI + real specialists to troubleshoot safely and remotely. Photo, video, or text—we've got you covered.
+            TechTriage connects you to AI + real specialists to troubleshoot
+            safely and remotely. Photo, video, or text—we've got you covered.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button variant="orange" onClick={onFreeTrial} className="shadow-xl shadow-orange-500/30 text-lg px-10">
+            <Button
+              variant="orange"
+              onClick={onFreeTrial}
+              className="shadow-xl shadow-orange-500/30 text-lg px-10"
+            >
               Free Trial
             </Button>
-            <Button variant="outline" onClick={onPricing} className="text-lg px-10">
+            <Button
+              variant="outline"
+              onClick={onPricing}
+              className="text-lg px-10"
+            >
               View Pricing
             </Button>
           </div>
@@ -279,32 +367,41 @@ const HowItWorksSimple: React.FC = () => {
       step: "01",
       title: "Tell us what's wrong",
       desc: "Start a chat and describe your issue in plain English. No tech jargon required.",
-      icon: <Phone className="w-7 h-7" />
+      icon: <Phone className="w-7 h-7" />,
     },
     {
       step: "02",
       title: "Show us the problem",
       desc: "Upload a photo, share your screen, or start a live video call so we can see exactly what you're dealing with.",
-      icon: <Video className="w-7 h-7" />
+      icon: <Video className="w-7 h-7" />,
     },
     {
       step: "03",
       title: "Get it fixed",
       desc: "Follow our step-by-step guidance to resolve the issue—or we'll schedule an onsite visit if needed.",
-      icon: <CheckCircle2 className="w-7 h-7" />
-    }
+      icon: <CheckCircle2 className="w-7 h-7" />,
+    },
   ];
 
   return (
-    <section className={`py-24 noise-texture noise-texture-subtle ${isDark ? 'bg-[#0D1117]' : 'bg-[#F9FAFB]'}`}>
+    <section
+      className={`py-24 noise-texture noise-texture-subtle ${isDark ? "bg-[#0D1117]" : "bg-[#F9FAFB]"}`}
+    >
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-16">
-          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">How It Works</span>
-          <h2 className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
+          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">
+            How It Works
+          </span>
+          <h2
+            className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? "text-white" : "text-[#1F2937]"}`}
+          >
             Three steps to peace of mind
           </h2>
-          <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-[#4B5563]'}`}>
-            Getting help has never been easier. No appointments, no waiting rooms.
+          <p
+            className={`text-xl max-w-2xl mx-auto ${isDark ? "text-gray-400" : "text-[#4B5563]"}`}
+          >
+            Getting help has never been easier. No appointments, no waiting
+            rooms.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
@@ -314,15 +411,29 @@ const HowItWorksSimple: React.FC = () => {
               {i < 2 && (
                 <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-[#F97316] to-transparent"></div>
               )}
-              <div className={`relative rounded-2xl p-8 ${isDark ? 'bg-[#1F2937]' : 'bg-[#F9FAFB]'}`}>
+              <div
+                className={`relative rounded-2xl p-8 ${isDark ? "bg-[#1F2937]" : "bg-[#F9FAFB]"}`}
+              >
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
                     {s.icon}
                   </div>
-                  <span className={`text-5xl font-black ${isDark ? 'text-white/10' : 'text-[#1F2937]/10'}`}>{s.step}</span>
+                  <span
+                    className={`text-5xl font-black ${isDark ? "text-white/10" : "text-[#1F2937]/10"}`}
+                  >
+                    {s.step}
+                  </span>
                 </div>
-                <h3 className={`text-xl font-black mb-3 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{s.title}</h3>
-                <p className={`leading-relaxed ${isDark ? 'text-gray-400' : 'text-[#4B5563]'}`}>{s.desc}</p>
+                <h3
+                  className={`text-xl font-black mb-3 ${isDark ? "text-white" : "text-[#1F2937]"}`}
+                >
+                  {s.title}
+                </h3>
+                <p
+                  className={`leading-relaxed ${isDark ? "text-gray-400" : "text-[#4B5563]"}`}
+                >
+                  {s.desc}
+                </p>
               </div>
             </div>
           ))}
@@ -335,25 +446,65 @@ const HowItWorksSimple: React.FC = () => {
 const WhatWeHelpWith: React.FC = () => {
   const { isDark } = useTheme();
   const problems = [
-    { icon: <Wifi className="w-8 h-8" />, label: "Wi-Fi & Internet", desc: "Connection issues, slow speeds, dead zones" },
-    { icon: <Tv className="w-8 h-8" />, label: "TV & Streaming", desc: "Setup, apps, soundbars, remotes" },
-    { icon: <Cpu className="w-8 h-8" />, label: "Computers", desc: "Slow performance, updates, viruses" },
-    { icon: <Home className="w-8 h-8" />, label: "Smart Home", desc: "Devices, hubs, automation" },
-    { icon: <Lock className="w-8 h-8" />, label: "Accounts & Passwords", desc: "Recovery, setup, security" },
-    { icon: <Sparkles className="w-8 h-8" />, label: "Mystery Issues", desc: '"It was working yesterday..."' },
-    { icon: <Wrench className="w-8 h-8" />, label: "Appliances", desc: "Error codes, troubleshooting" },
-    { icon: <Zap className="w-8 h-8" />, label: "HVAC & Thermostats", desc: "Programming, connectivity" },
+    {
+      icon: <Wifi className="w-8 h-8" />,
+      label: "Wi-Fi & Internet",
+      desc: "Connection issues, slow speeds, dead zones",
+    },
+    {
+      icon: <Tv className="w-8 h-8" />,
+      label: "TV & Streaming",
+      desc: "Setup, apps, soundbars, remotes",
+    },
+    {
+      icon: <Cpu className="w-8 h-8" />,
+      label: "Computers",
+      desc: "Slow performance, updates, viruses",
+    },
+    {
+      icon: <Home className="w-8 h-8" />,
+      label: "Smart Home",
+      desc: "Devices, hubs, automation",
+    },
+    {
+      icon: <Lock className="w-8 h-8" />,
+      label: "Accounts & Passwords",
+      desc: "Recovery, setup, security",
+    },
+    {
+      icon: <Sparkles className="w-8 h-8" />,
+      label: "Mystery Issues",
+      desc: '"It was working yesterday..."',
+    },
+    {
+      icon: <Wrench className="w-8 h-8" />,
+      label: "Appliances",
+      desc: "Error codes, troubleshooting",
+    },
+    {
+      icon: <Zap className="w-8 h-8" />,
+      label: "HVAC & Thermostats",
+      desc: "Programming, connectivity",
+    },
   ];
 
   return (
-    <section className={`py-24 noise-texture ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
+    <section
+      className={`py-24 noise-texture ${isDark ? "bg-[#111827]" : "bg-white"}`}
+    >
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-16">
-          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">What We Fix</span>
-          <h2 className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
+          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">
+            What We Fix
+          </span>
+          <h2
+            className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? "text-white" : "text-[#1F2937]"}`}
+          >
             Everyday tech problems, solved
           </h2>
-          <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-[#4B5563]'}`}>
+          <p
+            className={`text-xl max-w-2xl mx-auto ${isDark ? "text-gray-400" : "text-[#4B5563]"}`}
+          >
             From blinking routers to beeping thermostats—we speak your language.
           </p>
         </div>
@@ -363,21 +514,27 @@ const WhatWeHelpWith: React.FC = () => {
               key={i}
               className={`group p-6 rounded-2xl transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
                 isDark
-                  ? 'bg-[#1F2937] hover:bg-[#374151]'
-                  : 'bg-[#F9FAFB] hover:bg-white hover:shadow-xl'
+                  ? "bg-[#1F2937] hover:bg-[#374151]"
+                  : "bg-[#F9FAFB] hover:bg-white hover:shadow-xl"
               }`}
             >
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-colors ${
-                isDark
-                  ? 'bg-[#374151] text-white group-hover:bg-[#F97316]'
-                  : 'bg-white text-[#1F2937] group-hover:bg-[#F97316] group-hover:text-white shadow-sm'
-              }`}>
+              <div
+                className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-colors ${
+                  isDark
+                    ? "bg-[#374151] text-white group-hover:bg-[#F97316]"
+                    : "bg-white text-[#1F2937] group-hover:bg-[#F97316] group-hover:text-white shadow-sm"
+                }`}
+              >
                 {item.icon}
               </div>
-              <h3 className={`font-bold text-lg mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
+              <h3
+                className={`font-bold text-lg mb-2 ${isDark ? "text-white" : "text-[#1F2937]"}`}
+              >
                 {item.label}
               </h3>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-[#6B7280]'}`}>
+              <p
+                className={`text-sm ${isDark ? "text-gray-400" : "text-[#6B7280]"}`}
+              >
                 {item.desc}
               </p>
             </div>
@@ -393,12 +550,17 @@ const TrustSection: React.FC = () => (
     <div className="container mx-auto px-6 max-w-6xl">
       <div className="grid lg:grid-cols-2 gap-16 items-center">
         <div>
-          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">Why TechTriage</span>
+          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">
+            Why TechTriage
+          </span>
           <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
-            Real specialists.<br />Real answers.
+            Real specialists.
+            <br />
+            Real answers.
           </h2>
           <p className="text-white/70 text-xl mb-8 leading-relaxed">
-            No stress. No runaround. Just honest help from people who actually know what they're doing.
+            No stress. No runaround. Just honest help from people who actually
+            know what they're doing.
           </p>
           <div className="space-y-6">
             <div className="flex items-start gap-4">
@@ -406,8 +568,12 @@ const TrustSection: React.FC = () => (
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-lg mb-1">Safe & Remote-First</h4>
-                <p className="text-white/60">Troubleshoot from home. No strangers unless you need them.</p>
+                <h4 className="font-bold text-white text-lg mb-1">
+                  Safe & Remote-First
+                </h4>
+                <p className="text-white/60">
+                  Troubleshoot from home. No strangers unless you need them.
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -415,8 +581,12 @@ const TrustSection: React.FC = () => (
                 <Lock className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-lg mb-1">Your Privacy, Protected</h4>
-                <p className="text-white/60">You control what you share. We never sell your data.</p>
+                <h4 className="font-bold text-white text-lg mb-1">
+                  Your Privacy, Protected
+                </h4>
+                <p className="text-white/60">
+                  You control what you share. We never sell your data.
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -424,8 +594,12 @@ const TrustSection: React.FC = () => (
                 <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-lg mb-1">Trusted Nationwide</h4>
-                <p className="text-white/60">Real people helping real neighbors, coast to coast.</p>
+                <h4 className="font-bold text-white text-lg mb-1">
+                  Trusted Nationwide
+                </h4>
+                <p className="text-white/60">
+                  Real people helping real neighbors, coast to coast.
+                </p>
               </div>
             </div>
           </div>
@@ -448,14 +622,20 @@ const TrustSection: React.FC = () => (
                 <span className="text-white font-bold">94%</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-[#10B981] rounded-full" style={{ width: '94%' }}></div>
+                <div
+                  className="h-full bg-[#10B981] rounded-full"
+                  style={{ width: "94%" }}
+                ></div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-white/60">Avg. Response Time</span>
                 <span className="text-white font-bold">&lt; 3 min</span>
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-[#F97316] rounded-full" style={{ width: '88%' }}></div>
+                <div
+                  className="h-full bg-[#F97316] rounded-full"
+                  style={{ width: "88%" }}
+                ></div>
               </div>
             </div>
           </div>
@@ -469,48 +649,85 @@ const TestimonialSection: React.FC = () => {
   const { isDark } = useTheme();
   const testimonials = [
     {
-      quote: "TechTriage has taken a lot of stress off my shoulders. I can troubleshoot from my cell phone. I'm not tied to my office.",
+      quote:
+        "TechTriage has taken a lot of stress off my shoulders. I can troubleshoot from my cell phone. I'm not tied to my office.",
       name: "Kelly Shelton",
       role: "Homeowner, St. Louis MO",
-      image: "/images/testimonial-1.jpg"
+      image: "/images/testimonial-1.jpg",
     },
     {
-      quote: "The AI diagnosed my HVAC issue in seconds. Saved me $400 on an unnecessary service call!",
+      quote:
+        "The AI diagnosed my HVAC issue in seconds. Saved me $400 on an unnecessary service call!",
       name: "Marcus Johnson",
       role: "Property Manager, Austin TX",
-      image: "/images/testimonial-2.jpg"
+      image: "/images/testimonial-2.jpg",
     },
     {
-      quote: "Finally, a tech support that speaks my language. The video calls with real experts are a game-changer.",
+      quote:
+        "Finally, a tech support that speaks my language. The video calls with real experts are a game-changer.",
       name: "Sarah Chen",
       role: "First-time Homeowner, Seattle WA",
-      image: "/images/testimonial-3.jpg"
-    }
+      image: "/images/testimonial-3.jpg",
+    },
   ];
 
   return (
-    <section className={`py-24 noise-texture noise-texture-subtle ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
+    <section
+      className={`py-24 noise-texture noise-texture-subtle ${isDark ? "bg-[#0D1117]" : "bg-[#F3F4F6]"}`}
+    >
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-12">
-          <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>What Our Customers Say</h2>
-          <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Real stories from real homeowners</p>
+          <h2
+            className={`text-4xl font-black mb-4 ${isDark ? "text-white" : "text-[#1F2937]"}`}
+          >
+            What Our Customers Say
+          </h2>
+          <p
+            className={`text-lg ${isDark ? "text-gray-400" : "text-gray-600"}`}
+          >
+            Real stories from real homeowners
+          </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((t, i) => (
-            <div key={i} className={`p-8 rounded-2xl shadow-xl border-t-4 border-[#F97316] ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
+            <div
+              key={i}
+              className={`p-8 rounded-2xl shadow-xl border-t-4 border-[#F97316] ${isDark ? "bg-[#1F2937]" : "bg-white"}`}
+            >
               <div className="flex mb-4">
                 {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-5 h-5 fill-[#F97316] text-[#F97316]" />
+                  <Star
+                    key={j}
+                    className="w-5 h-5 fill-[#F97316] text-[#F97316]"
+                  />
                 ))}
               </div>
-              <p className={`mb-6 leading-relaxed italic ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>"{t.quote}"</p>
+              <p
+                className={`mb-6 leading-relaxed italic ${isDark ? "text-gray-300" : "text-gray-700"}`}
+              >
+                "{t.quote}"
+              </p>
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                  <img src={t.image} alt={t.name} className="w-full h-full object-cover" />
+                <div
+                  className={`w-12 h-12 rounded-full overflow-hidden ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
+                >
+                  <img
+                    src={t.image}
+                    alt={t.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
-                  <div className={`font-bold ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{t.name}</div>
-                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{t.role}</div>
+                  <div
+                    className={`font-bold ${isDark ? "text-white" : "text-[#1F2937]"}`}
+                  >
+                    {t.name}
+                  </div>
+                  <div
+                    className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
+                    {t.role}
+                  </div>
                 </div>
               </div>
             </div>
@@ -525,31 +742,65 @@ const FAQSection: React.FC = () => {
   const { isDark } = useTheme();
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const faqs = [
-    { q: "How fast can I get help?", a: "Most text support sessions connect within minutes. AI photo analysis is instant. Live video sessions typically start within 15 minutes." },
-    { q: "What if you can't fix it remotely?", a: "If remote troubleshooting can't solve the issue, we'll help schedule an onsite technician visit at a time that works for you." },
-    { q: "Is my information private?", a: "Absolutely. You control what you share. Photos, videos, and conversations are never shared without your explicit permission." },
-    { q: "Do I need to download an app?", a: "Nope! TechTriage works right in your browser. Just text us, upload a photo, or start a video call—no downloads required." },
-    { q: "What areas do you serve?", a: "We provide remote support nationwide. Onsite visits are currently available in the St. Louis metro area, with more regions coming soon." }
+    {
+      q: "How fast can I get help?",
+      a: "Most text support sessions connect within minutes. AI photo analysis is instant. Live video sessions typically start within 15 minutes.",
+    },
+    {
+      q: "What if you can't fix it remotely?",
+      a: "If remote troubleshooting can't solve the issue, we'll help schedule an onsite technician visit at a time that works for you.",
+    },
+    {
+      q: "Is my information private?",
+      a: "Absolutely. You control what you share. Photos, videos, and conversations are never shared without your explicit permission.",
+    },
+    {
+      q: "Do I need to download an app?",
+      a: "Nope! TechTriage works right in your browser. Just text us, upload a photo, or start a video call—no downloads required.",
+    },
+    {
+      q: "What areas do you serve?",
+      a: "We provide remote support nationwide. Onsite visits are currently available in the St. Louis metro area, with more regions coming soon.",
+    },
   ];
 
   return (
-    <section className={`py-20 noise-texture noise-texture-subtle ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
+    <section
+      className={`py-20 noise-texture noise-texture-subtle ${isDark ? "bg-[#111827]" : "bg-white"}`}
+    >
       <div className="container mx-auto px-6 max-w-3xl">
         <div className="text-center mb-12">
-          <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Frequently asked questions</h2>
+          <h2
+            className={`text-4xl font-black mb-4 ${isDark ? "text-white" : "text-[#1F2937]"}`}
+          >
+            Frequently asked questions
+          </h2>
         </div>
         <div className="space-y-4">
           {faqs.map((faq, i) => (
-            <div key={i} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div
+              key={i}
+              className={`border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}
+            >
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="w-full py-4 flex items-center justify-between text-left"
               >
-                <span className={`font-bold text-lg ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{faq.q}</span>
-                <ArrowRight className={`w-5 h-5 text-[#F97316] transition-transform ${openFaq === i ? 'rotate-90' : ''}`} />
+                <span
+                  className={`font-bold text-lg ${isDark ? "text-white" : "text-[#1F2937]"}`}
+                >
+                  {faq.q}
+                </span>
+                <ArrowRight
+                  className={`w-5 h-5 text-[#F97316] transition-transform ${openFaq === i ? "rotate-90" : ""}`}
+                />
               </button>
               {openFaq === i && (
-                <div className={`pb-4 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{faq.a}</div>
+                <div
+                  className={`pb-4 leading-relaxed ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                >
+                  {faq.a}
+                </div>
               )}
             </div>
           ))}
@@ -559,8 +810,10 @@ const FAQSection: React.FC = () => {
   );
 };
 
-const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup }) => {
-  const [email, setEmail] = React.useState('');
+const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
+  onSignup,
+}) => {
+  const [email, setEmail] = React.useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -583,7 +836,10 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup
         <p className="text-white/90 font-medium max-w-2xl mx-auto mb-10 text-xl lg:text-2xl">
           Stop Googling. Stop stressing. Get real help in minutes.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto mb-6">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto mb-6"
+        >
           <input
             type="email"
             placeholder="Enter your email"
@@ -618,8 +874,9 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup
   );
 };
 
-
-const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
+const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
+  onNavigate,
+}) => {
   const handleNav = (view: PageView) => {
     onNavigate(view);
     window.scrollTo(0, 0);
@@ -628,21 +885,47 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
   // Map link names to navigation actions
   const getLinkAction = (item: string): (() => void) | null => {
     const navMap: Record<string, () => void> = {
-      "Pricing": () => handleNav(PageView.PRICING),
+      Pricing: () => handleNav(PageView.PRICING),
       "Text Support": () => handleNav(PageView.PRICING),
       "AI Photo Triage": () => handleNav(PageView.PRICING),
       "Live Video Help": () => handleNav(PageView.PRICING),
       "Onsite Visits": () => handleNav(PageView.PRICING),
-      "Support": () => handleNav(PageView.HOW_IT_WORKS),
+      Support: () => handleNav(PageView.HOW_IT_WORKS),
     };
     return navMap[item] || null;
   };
 
   const links = {
-    "What We Fix": ["Wi-Fi Issues", "TV & Streaming", "Computers", "Smart Home", "Appliances", "HVAC"],
-    "Support Levels": ["Text Support", "AI Photo Triage", "Live Video Help", "Onsite Visits"],
-    "Resources": ["Pricing", "How It Works", "Safety Center", "Blog", "Podcast", "Support"],
-    "Company": ["Our Story", "Our Team", "Press", "Careers", "Contact", "Privacy"]
+    "What We Fix": [
+      "Wi-Fi Issues",
+      "TV & Streaming",
+      "Computers",
+      "Smart Home",
+      "Appliances",
+      "HVAC",
+    ],
+    "Support Levels": [
+      "Text Support",
+      "AI Photo Triage",
+      "Live Video Help",
+      "Onsite Visits",
+    ],
+    Resources: [
+      "Pricing",
+      "How It Works",
+      "Safety Center",
+      "Blog",
+      "Podcast",
+      "Support",
+    ],
+    Company: [
+      "Our Story",
+      "Our Team",
+      "Press",
+      "Careers",
+      "Contact",
+      "Privacy",
+    ],
   };
 
   return (
@@ -658,7 +941,7 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
             <div key={cat}>
               <h4 className="font-bold text-white mb-6 text-base">{cat}</h4>
               <ul className="space-y-3">
-                {items.map(item => {
+                {items.map((item) => {
                   const action = getLinkAction(item);
                   // Special case for "How It Works"
                   if (item === "How It Works") {
@@ -695,11 +978,19 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
           ))}
         </div>
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-white/40 text-sm font-medium">© 2026 TechTriage Inc. All rights reserved.</div>
+          <div className="text-white/40 text-sm font-medium">
+            © 2026 TechTriage Inc. All rights reserved.
+          </div>
           <div className="flex gap-6 text-white/40 text-sm font-medium">
-            <span className="hover:text-white transition-colors cursor-pointer">Privacy Policy</span>
-            <span className="hover:text-white transition-colors cursor-pointer">Terms of Service</span>
-            <span className="hover:text-white transition-colors cursor-pointer">Accessibility</span>
+            <span className="hover:text-white transition-colors cursor-pointer">
+              Privacy Policy
+            </span>
+            <span className="hover:text-white transition-colors cursor-pointer">
+              Terms of Service
+            </span>
+            <span className="hover:text-white transition-colors cursor-pointer">
+              Accessibility
+            </span>
           </div>
         </div>
       </div>
@@ -709,7 +1000,7 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(PageView.HOME);
-  const [capturedEmail, setCapturedEmail] = useState('');
+  const [capturedEmail, setCapturedEmail] = useState("");
   const chatRef = useRef<ChatWidgetHandle>(null);
 
   const handleStart = () => {
@@ -717,12 +1008,14 @@ const App: React.FC = () => {
   };
 
   const handleFreeTrial = () => {
-    chatRef.current?.open("I want to learn how TechTriage can help with my home tech issues.");
+    chatRef.current?.open(
+      "I want to learn how TechTriage can help with my home tech issues.",
+    );
   };
 
   const handleNavigateToSignup = (email?: string | React.MouseEvent) => {
     // Filter out MouseEvent objects (when called from onClick without args)
-    if (email && typeof email === 'string') {
+    if (email && typeof email === "string") {
       setCapturedEmail(email);
     }
     setCurrentView(PageView.SIGNUP);
@@ -748,7 +1041,10 @@ const App: React.FC = () => {
       default:
         return (
           <>
-            <Hero onFreeTrial={handleFreeTrial} onPricing={handleNavigateToPricing} />
+            <Hero
+              onFreeTrial={handleFreeTrial}
+              onPricing={handleNavigateToPricing}
+            />
             <HowItWorksSimple />
             <WhatWeHelpWith />
             <TrustSection />
@@ -763,9 +1059,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-white font-['Inter',sans-serif] text-[#1F2937]">
       <Header onNavigate={setCurrentView} currentView={currentView} />
-      <main>
-        {renderContent()}
-      </main>
+      <main>{renderContent()}</main>
       <Footer onNavigate={setCurrentView} />
       <ChatWidget ref={chatRef} />
     </div>

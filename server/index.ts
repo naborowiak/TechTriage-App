@@ -329,9 +329,9 @@ async function main() {
     passport.serializeUser((user, done) => done(null, user));
     passport.deserializeUser((obj: any, done) => done(null, obj));
 
-    // 1. Start Login
+    // 1. Start Login - matches what frontend calls (/api/login)
     app.get(
-      "/auth/google",
+      "/api/login",
       passport.authenticate("google", { scope: ["profile", "email"] }),
     );
 
@@ -344,13 +344,34 @@ async function main() {
       },
     );
 
-    // 3. Get User Info (Replaces the old /api/auth/user)
+    // 3. Get User Info
     app.get("/api/auth/user", (req, res) => {
       if (req.isAuthenticated()) {
-        res.json({ user: req.user });
+        const profile = req.user as any;
+        // Map Google profile to the format frontend expects
+        res.json({
+          user: {
+            id: profile.id,
+            username: profile.displayName || profile.emails?.[0]?.value,
+            email: profile.emails?.[0]?.value || null,
+            firstName: profile.name?.givenName || profile.displayName?.split(' ')[0] || null,
+            lastName: profile.name?.familyName || null,
+            profileImageUrl: profile.photos?.[0]?.value || null,
+          }
+        });
       } else {
         res.status(401).json({ user: null });
       }
+    });
+
+    // 4. Logout
+    app.get("/api/logout", (req, res) => {
+      req.logout((err) => {
+        if (err) {
+          console.error("Logout error:", err);
+        }
+        res.redirect("/");
+      });
     });
     // --- GOOGLE AUTH SETUP END ---
     console.log("Auth setup complete");
