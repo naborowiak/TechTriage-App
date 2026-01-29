@@ -197,19 +197,139 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
 
   useEffect(() => {
     let mounted = true;
-    
+    let ws: WebSocket | null = null;
+    let scriptProcessor: ScriptProcessorNode | null = null;
+    let videoIntervalId: ReturnType<typeof setInterval> | null = null;
+
+    // Target sample rate for Gemini API
+    const TARGET_SAMPLE_RATE = 16000;
+
+    // Downsample audio from native rate to 16kHz using linear interpolation
+    const downsampleBuffer = (
+      buffer: Float32Array,
+      inputSampleRate: number,
+      outputSampleRate: number
+    ): Float32Array => {
+      if (inputSampleRate === outputSampleRate) {
+        return buffer;
+      }
+      const ratio = inputSampleRate / outputSampleRate;
+      const newLength = Math.round(buffer.length / ratio);
+      const result = new Float32Array(newLength);
+
+      for (let i = 0; i < newLength; i++) {
+        const srcIndex = i * ratio;
+        const srcIndexFloor = Math.floor(srcIndex);
+        const srcIndexCeil = Math.min(srcIndexFloor + 1, buffer.length - 1);
+        const lerp = srcIndex - srcIndexFloor;
+        result[i] = buffer[srcIndexFloor] * (1 - lerp) + buffer[srcIndexCeil] * lerp;
+      }
+      return result;
+    };
+
+    // Convert Float32Array to little-endian 16-bit PCM
+    const floatTo16BitPCM = (float32Array: Float32Array): ArrayBuffer => {
+      const buffer = new ArrayBuffer(float32Array.length * 2);
+      const view = new DataView(buffer);
+      for (let i = 0; i < float32Array.length; i++) {
+        const s = Math.max(-1, Math.min(1, float32Array[i]));
+        // Convert to 16-bit signed integer, little-endian
+        view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      }
+      return buffer;
+    };
+
+    // Convert ArrayBuffer to base64 string
+    const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    };
+
+    // Play incoming audio from Gemini (16kHz PCM)
+    const playAudio = (base64Audio: string) => {
+      if (!audioContextRef.current) return;
+
+      try {
+        const binaryString = atob(base64Audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        // Convert 16-bit PCM to Float32
+        const pcmData = new Int16Array(bytes.buffer);
+        const float32Data = new Float32Array(pcmData.length);
+        for (let i = 0; i < pcmData.length; i++) {
+          float32Data[i] = pcmData[i] / 32768;
+        }
+
+        // Create audio buffer at 24kHz (Gemini native audio model output rate)
+        const audioBuffer = audioContextRef.current.createBuffer(1, float32Data.length, 24000);
+        audioBuffer.getChannelData(0).set(float32Data);
+
+        const source = audioContextRef.current.createBufferSource();
+        source.buffer = audioBuffer;
+
+        // Connect to analyser for visualization
+        if (outputAnalyserRef.current) {
+          source.connect(outputAnalyserRef.current);
+          outputAnalyserRef.current.connect(audioContextRef.current.destination);
+        } else {
+          source.connect(audioContextRef.current.destination);
+        }
+
+        // Schedule playback
+        const startTime = Math.max(audioContextRef.current.currentTime, nextStartTimeRef.current);
+        source.start(startTime);
+        nextStartTimeRef.current = startTime + audioBuffer.duration;
+      } catch (err) {
+        console.error('Error playing audio:', err);
+      }
+    };
+
+    // Capture video frame and send to backend
+    const captureAndSendFrame = () => {
+      if (!canvasRef.current || !videoRef.current || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Set canvas size to match video (scaled down for efficiency)
+      canvas.width = 640;
+      canvas.height = 480;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert to JPEG and send
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      const base64 = dataUrl.split(',')[1];
+
+      ws.send(JSON.stringify({
+        type: 'image',
+        data: base64
+      }));
+    };
+
     const start = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            audio: true, 
-            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+        // Get media stream - don't hardcode sampleRate for AudioContext
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
         });
         if (!mounted) return;
+
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-        
+
+        // Check for flashlight capability
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const capabilities = videoTrack.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
@@ -217,20 +337,125 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
             setHasFlashlight(true);
           }
         }
-        
-        setIsConnecting(false);
+
+        // Create AudioContext for input processing (let browser choose native rate)
+        const inputAudioContext = new AudioContext();
+        inputAudioContextRef.current = inputAudioContext;
+        const nativeSampleRate = inputAudioContext.sampleRate;
+        console.log(`Native audio sample rate: ${nativeSampleRate}Hz`);
+
+        // Create AudioContext for output playback
+        const outputAudioContext = new AudioContext();
+        audioContextRef.current = outputAudioContext;
+
+        // Setup input analyser for visualization
+        const inputAnalyser = inputAudioContext.createAnalyser();
+        inputAnalyser.fftSize = 256;
+        inputAnalyserRef.current = inputAnalyser;
+
+        // Setup output analyser for visualization
+        const outputAnalyser = outputAudioContext.createAnalyser();
+        outputAnalyser.fftSize = 256;
+        outputAnalyserRef.current = outputAnalyser;
+
+        // Connect microphone to processor
+        const source = inputAudioContext.createMediaStreamSource(stream);
+        source.connect(inputAnalyser);
+
+        // Use ScriptProcessorNode for audio capture (buffer size 4096 works well)
+        scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
+        inputAnalyser.connect(scriptProcessor);
+        scriptProcessor.connect(inputAudioContext.destination);
+
+        // Connect to WebSocket backend
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/live`;
+        console.log(`Connecting to WebSocket: ${wsUrl}`);
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected');
+          setStatus('listening');
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'ready') {
+              console.log('Gemini session ready');
+              setIsConnecting(false);
+
+              // Start sending video frames every 2 seconds
+              videoIntervalId = setInterval(captureAndSendFrame, 2000);
+            } else if (message.type === 'audio') {
+              setStatus('speaking');
+              playAudio(message.data);
+            } else if (message.type === 'text') {
+              console.log('AI text:', message.data);
+            } else if (message.type === 'turnComplete') {
+              setStatus('listening');
+            } else if (message.type === 'error') {
+              console.error('Server error:', message.message);
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket closed');
+        };
+
+        // Process audio and send to backend
+        scriptProcessor.onaudioprocess = (e) => {
+          if (!ws || ws.readyState !== WebSocket.OPEN) return;
+          if (isMutedRef.current) return;
+
+          const inputData = e.inputBuffer.getChannelData(0);
+
+          // Downsample from native rate to 16kHz
+          const downsampled = downsampleBuffer(inputData, nativeSampleRate, TARGET_SAMPLE_RATE);
+
+          // Convert to 16-bit little-endian PCM
+          const pcmBuffer = floatTo16BitPCM(downsampled);
+
+          // Convert to base64 and send
+          const base64 = arrayBufferToBase64(pcmBuffer);
+
+          ws.send(JSON.stringify({
+            type: 'audio',
+            data: base64
+          }));
+        };
+
+        // Start waveform visualization
         animationFrameRef.current = requestAnimationFrame(drawWaveform);
-      } catch (e) { 
-        console.error(e); 
+
+      } catch (e) {
+        console.error('Error starting live support:', e);
         setIsConnecting(false);
       }
     };
-    
+
     start();
-    
-    return () => { 
-      mounted = false; 
-      stopAllHardware(); 
+
+    return () => {
+      mounted = false;
+      if (videoIntervalId) clearInterval(videoIntervalId);
+      if (scriptProcessor) {
+        scriptProcessor.disconnect();
+        scriptProcessor.onaudioprocess = null;
+      }
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+      stopAllHardware();
     };
   }, []);
 

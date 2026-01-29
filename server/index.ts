@@ -17,9 +17,41 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-const SYSTEM_INSTRUCTION = `You are a TechTriage Agent - a friendly, professional technical support specialist.
+// Available voices with their characteristics for variety
+const VOICES = [
+  { name: "Kore", style: "firm and professional" },
+  { name: "Puck", style: "upbeat and energetic" },
+  { name: "Charon", style: "informative and clear" },
+  { name: "Aoede", style: "breezy and approachable" },
+  { name: "Fenrir", style: "excitable and enthusiastic" },
+  { name: "Achird", style: "friendly and warm" },
+  { name: "Sulafat", style: "warm and reassuring" },
+  { name: "Sadachbia", style: "lively and engaging" },
+  { name: "Zubenelgenubi", style: "casual and relaxed" },
+  { name: "Vindemiatrix", style: "gentle and patient" },
+];
 
-GREETING: When a session starts, immediately greet the user warmly. Say something like: "Hi there! I'm your TechTriage specialist. I can see your camera feed - go ahead and show me what's giving you trouble, and I'll help you figure it out."
+// Greeting variations to keep things fresh
+const GREETINGS = [
+  "Hi there! I'm your TechTriage specialist. I can see your camera feed - go ahead and show me what's giving you trouble, and I'll help you figure it out.",
+  "Hey! Welcome to TechTriage. I'm here and ready to help. Point your camera at whatever's giving you grief and let's solve this together.",
+  "Hello! TechTriage support here. I've got your video feed - show me the problem and we'll get it sorted out.",
+  "Hi! I'm your tech support buddy today. Camera's looking good - what are we troubleshooting?",
+  "Welcome! I'm ready to help with your tech issue. Just show me what you're dealing with and we'll tackle it step by step.",
+];
+
+function getRandomVoice() {
+  return VOICES[Math.floor(Math.random() * VOICES.length)];
+}
+
+function getRandomGreeting() {
+  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+}
+
+function buildSystemInstruction(voiceStyle: string) {
+  return `You are a TechTriage Agent - a friendly, professional technical support specialist.
+
+YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally in how you speak.
 
 BEHAVIOR:
 - Be conversational and helpful, like a knowledgeable friend
@@ -32,7 +64,8 @@ SAFETY:
 - Never assist with gas leaks, electrical panels, bare wires, or structural changes
 - For dangerous situations, advise calling a professional immediately
 
-TONE: Warm, confident, professional. You're a real person helping a friend with tech issues.`;
+TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real person helping a friend with tech issues.`;
+}
 
 async function setupGeminiLive(ws: WebSocket) {
   const apiKey = process.env.GEMINI_API_KEY__TECHTRIAGE;
@@ -44,22 +77,38 @@ async function setupGeminiLive(ws: WebSocket) {
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    
+
+    // Select random voice and greeting for this session
+    const selectedVoice = getRandomVoice();
+    const selectedGreeting = getRandomGreeting();
+    console.log(`Session voice: ${selectedVoice.name} (${selectedVoice.style})`);
+
+    // Flag to track when session is ready for greeting
+    let sessionReady = false;
+    let sessionInstance: any = null;
+
     const session = await ai.live.connect({
-      model: "gemini-2.0-flash-live-preview-04-09",
+      model: "gemini-2.5-flash-native-audio-preview-12-2025",
       callbacks: {
         onopen: () => {
-          console.log("Gemini Live session opened");
-          ws.send(JSON.stringify({ type: 'ready' }));
-          
-          console.log("Sending initial greeting prompt...");
-          session.sendClientContent({
-            turns: [{
-              role: "user",
-              parts: [{ text: "Hello! I just connected. Please greet me warmly and let me know you're ready to help with my tech issue." }]
-            }],
-            turnComplete: true
-          });
+          console.log("Gemini Live session opened at", new Date().toISOString());
+          ws.send(JSON.stringify({ type: 'ready', voice: selectedVoice.name }));
+          sessionReady = true;
+          console.log("Session ready flag set, sessionInstance:", !!sessionInstance);
+
+          // Send greeting after a short delay to ensure session is fully assigned
+          setTimeout(() => {
+            if (sessionInstance) {
+              console.log("Sending initial greeting prompt...");
+              sessionInstance.sendClientContent({
+                turns: [{
+                  role: "user",
+                  parts: [{ text: `Hello! I just connected. Please greet me with something like: "${selectedGreeting}"` }]
+                }],
+                turnComplete: true
+              });
+            }
+          }, 100);
         },
         onmessage: (message: any) => {
           try {
@@ -108,22 +157,26 @@ async function setupGeminiLive(ws: WebSocket) {
         },
         onerror: (error: any) => {
           console.error("Gemini Live error:", error);
+          console.error("Gemini error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
           ws.send(JSON.stringify({ type: 'error', message: 'Gemini connection error' }));
         },
-        onclose: () => {
-          console.log("Gemini Live session closed");
+        onclose: (event: any) => {
+          console.log("Gemini Live session closed at", new Date().toISOString());
+          console.log("Close event:", event);
+          console.log("Close event code:", event?.code);
+          console.log("Close event reason:", event?.reason);
           if (ws.readyState === WebSocket.OPEN) {
             ws.close();
           }
         }
       },
       config: {
-        responseModalities: [Modality.AUDIO, Modality.TEXT],
-        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        responseModalities: [Modality.AUDIO],
+        systemInstruction: { parts: [{ text: buildSystemInstruction(selectedVoice.style) }] },
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
-              voiceName: "Kore"
+              voiceName: selectedVoice.name
             }
           }
         },
@@ -145,6 +198,9 @@ async function setupGeminiLive(ws: WebSocket) {
         }]
       }
     });
+
+    // Assign session instance for use in onopen callback
+    sessionInstance = session;
 
     ws.on('message', async (data) => {
       try {
