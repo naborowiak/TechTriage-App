@@ -85,12 +85,6 @@ const Header: React.FC<{
           >
             Pricing
           </button>
-          <button
-            onClick={() => handleNav(PageView.HOW_IT_WORKS)}
-            className={`whitespace-nowrap ${textColor} ${hoverColor} transition-colors font-semibold text-[15px]`}
-          >
-            Resources
-          </button>
         </nav>
 
         {/* RIGHT: Utility items */}
@@ -175,7 +169,6 @@ const Header: React.FC<{
           <button onClick={() => handleNav(PageView.HOME)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Product</button>
           <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>How It Works</button>
           <button onClick={() => handleNav(PageView.PRICING)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Pricing</button>
-          <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Resources</button>
 
           <hr className={isDark || isHomePage ? 'border-gray-700' : 'border-gray-200'} />
 
