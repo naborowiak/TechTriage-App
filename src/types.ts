@@ -11,6 +11,7 @@ export interface ChatMessage {
   image?: string;
   isError?: boolean;
   timestamp: number;
+  agentName?: string;
 }
 
 export interface SavedSession {
@@ -28,7 +29,8 @@ export enum PageView {
   SIGNUP = 'signup',
   LOGIN = 'login',
   HISTORY = 'history',
-  SAFETY = 'safety'
+  SAFETY = 'safety',
+  DASHBOARD = 'dashboard'
 }
 
 export interface PricingTier {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Menu,
   X,
@@ -28,8 +28,10 @@ import { HowItWorks } from "./components/HowItWorks";
 import { Pricing } from "./components/Pricing";
 import { SignUp } from "./components/SignUp";
 import { Login } from "./components/Login";
+import { Dashboard } from "./components/Dashboard";
 import { useTheme } from "./context/ThemeContext";
 import { useAuth } from "./hooks/useAuth";
+import { LiveSupport } from "./components/LiveSupport";
 
 const Button: React.FC<{
   children: React.ReactNode;
@@ -998,13 +1000,64 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
   );
 };
 
+// URL path to PageView mapping
+const pathToView: Record<string, PageView> = {
+  '/': PageView.HOME,
+  '/how-it-works': PageView.HOW_IT_WORKS,
+  '/pricing': PageView.PRICING,
+  '/signup': PageView.SIGNUP,
+  '/login': PageView.LOGIN,
+};
+
+const viewToPath: Record<PageView, string> = {
+  [PageView.HOME]: '/',
+  [PageView.HOW_IT_WORKS]: '/how-it-works',
+  [PageView.PRICING]: '/pricing',
+  [PageView.SIGNUP]: '/signup',
+  [PageView.LOGIN]: '/login',
+  [PageView.HISTORY]: '/history',
+  [PageView.SAFETY]: '/safety',
+};
+
+// Get initial view from URL
+const getInitialView = (): PageView => {
+  const path = window.location.pathname;
+  return pathToView[path] || PageView.HOME;
+};
+
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<PageView>(PageView.HOME);
+  const [currentView, setCurrentView] = useState<PageView>(getInitialView);
   const [capturedEmail, setCapturedEmail] = useState("");
   const chatRef = useRef<ChatWidgetHandle>(null);
 
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const view = pathToView[path] || PageView.HOME;
+      setCurrentView(view);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Custom navigate function that updates URL
+  const navigate = (view: PageView) => {
+    const path = viewToPath[view] || '/';
+    if (window.location.pathname !== path) {
+      window.history.pushState({ view }, '', path);
+    }
+    setCurrentView(view);
+    window.scrollTo(0, 0);
+  };
+
   const handleStart = () => {
     chatRef.current?.open("I'd like to start a free trial.");
+  };
+
+  const handleSpeakToExpert = () => {
+    chatRef.current?.openAsLiveAgent();
   };
 
   const handleFreeTrial = () => {
@@ -1018,13 +1071,11 @@ const App: React.FC = () => {
     if (email && typeof email === "string") {
       setCapturedEmail(email);
     }
-    setCurrentView(PageView.SIGNUP);
-    window.scrollTo(0, 0);
+    navigate(PageView.SIGNUP);
   };
 
   const handleNavigateToPricing = () => {
-    setCurrentView(PageView.PRICING);
-    window.scrollTo(0, 0);
+    navigate(PageView.PRICING);
   };
 
   const renderContent = () => {
@@ -1032,11 +1083,11 @@ const App: React.FC = () => {
       case PageView.HOW_IT_WORKS:
         return <HowItWorks onStart={handleStart} />;
       case PageView.PRICING:
-        return <Pricing onStart={handleStart} onNavigate={setCurrentView} />;
+        return <Pricing onStart={handleStart} onNavigate={navigate} />;
       case PageView.SIGNUP:
-        return <SignUp onStart={handleStart} initialEmail={capturedEmail} />;
+        return <SignUp onStart={handleStart} initialEmail={capturedEmail} onSpeakToExpert={handleSpeakToExpert} />;
       case PageView.LOGIN:
-        return <Login onNavigate={setCurrentView} />;
+        return <Login onNavigate={navigate} />;
       case PageView.HOME:
       default:
         return (
@@ -1058,9 +1109,9 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white font-['Inter',sans-serif] text-[#1F2937]">
-      <Header onNavigate={setCurrentView} currentView={currentView} />
+      <Header onNavigate={navigate} currentView={currentView} />
       <main>{renderContent()}</main>
-      <Footer onNavigate={setCurrentView} />
+      <Footer onNavigate={navigate} />
       <ChatWidget ref={chatRef} />
     </div>
   );

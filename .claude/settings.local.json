@@ -10,7 +10,8 @@
       "Bash(npm run start)",
       "Bash(curl:*)",
       "Bash(grep:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(find:*)"
     ]
   }
 }

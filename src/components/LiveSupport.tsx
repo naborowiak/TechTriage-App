@@ -51,7 +51,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
   const [summary] = useState('');
   const [status, setStatus] = useState<'listening' | 'thinking' | 'speaking'>('listening');
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
-  const [transcriptHistory] = useState<TranscriptEntry[]>([]);
+  const [transcriptHistory, setTranscriptHistory] = useState<TranscriptEntry[]>([]);
   const [isCopied, setIsCopied] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
   const [hasFlashlight, setHasFlashlight] = useState(false);
@@ -394,6 +394,12 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
               playAudio(message.data);
             } else if (message.type === 'text') {
               console.log('AI text:', message.data);
+              // Add AI response to transcript
+              setTranscriptHistory(prev => [...prev, {
+                role: 'model',
+                text: message.data,
+                timestamp: Date.now()
+              }]);
             } else if (message.type === 'turnComplete') {
               setStatus('listening');
             } else if (message.type === 'error') {

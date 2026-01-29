@@ -23,6 +23,176 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Trial tracking storage (in-memory for now, use database in production)
+interface TrialRecord {
+  email: string;
+  ip: string;
+  startedAt: number;
+  expiresAt: number;
+  fingerprint?: string;
+}
+
+const trialRecords: Map<string, TrialRecord> = new Map();
+
+// Helper to get client IP
+const getClientIP = (req: express.Request): string => {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || 'unknown';
+};
+
+// Check trial eligibility
+app.post("/api/trial/check", (req, res) => {
+  const { email, fingerprint } = req.body;
+  const ip = getClientIP(req);
+
+  // Check by email
+  const emailRecord = trialRecords.get(`email:${email}`);
+  if (emailRecord && Date.now() < emailRecord.expiresAt) {
+    return res.json({
+      eligible: false,
+      reason: 'email_used',
+      message: 'This email has already been used for a trial.',
+      expiresAt: emailRecord.expiresAt
+    });
+  }
+
+  // Check by IP
+  const ipRecord = trialRecords.get(`ip:${ip}`);
+  if (ipRecord && Date.now() < ipRecord.expiresAt) {
+    return res.json({
+      eligible: false,
+      reason: 'ip_used',
+      message: 'A trial has already been started from this location.',
+      expiresAt: ipRecord.expiresAt
+    });
+  }
+
+  // Check by fingerprint if provided
+  if (fingerprint) {
+    const fpRecord = trialRecords.get(`fp:${fingerprint}`);
+    if (fpRecord && Date.now() < fpRecord.expiresAt) {
+      return res.json({
+        eligible: false,
+        reason: 'device_used',
+        message: 'A trial has already been started on this device.',
+        expiresAt: fpRecord.expiresAt
+      });
+    }
+  }
+
+  res.json({ eligible: true });
+});
+
+// Start a new trial
+app.post("/api/trial/start", (req, res) => {
+  const { email, fingerprint } = req.body;
+  const ip = getClientIP(req);
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  // Check eligibility first
+  const emailRecord = trialRecords.get(`email:${email}`);
+  const ipRecord = trialRecords.get(`ip:${ip}`);
+
+  if ((emailRecord && Date.now() < emailRecord.expiresAt) ||
+      (ipRecord && Date.now() < ipRecord.expiresAt)) {
+    return res.status(403).json({
+      error: 'Trial already used',
+      message: 'You have already used your free trial.'
+    });
+  }
+
+  const now = Date.now();
+  const trialDuration = 24 * 60 * 60 * 1000; // 24 hours
+  const expiresAt = now + trialDuration;
+
+  const record: TrialRecord = {
+    email,
+    ip,
+    startedAt: now,
+    expiresAt,
+    fingerprint
+  };
+
+  // Store by email and IP
+  trialRecords.set(`email:${email}`, record);
+  trialRecords.set(`ip:${ip}`, record);
+  if (fingerprint) {
+    trialRecords.set(`fp:${fingerprint}`, record);
+  }
+
+  console.log(`[TRIAL] Started trial for ${email} from IP ${ip}`);
+
+  res.json({
+    success: true,
+    trialStarted: now,
+    trialExpires: expiresAt,
+    message: 'Your 24-hour free trial has started!'
+  });
+});
+
+// Get trial status
+app.get("/api/trial/status", (req, res) => {
+  const ip = getClientIP(req);
+  const email = req.query.email as string;
+
+  let record: TrialRecord | undefined;
+
+  if (email) {
+    record = trialRecords.get(`email:${email}`);
+  }
+
+  if (!record) {
+    record = trialRecords.get(`ip:${ip}`);
+  }
+
+  if (record) {
+    const now = Date.now();
+    const isActive = now < record.expiresAt;
+    const remainingMs = Math.max(0, record.expiresAt - now);
+
+    return res.json({
+      hasTrial: true,
+      isActive,
+      startedAt: record.startedAt,
+      expiresAt: record.expiresAt,
+      remainingMs,
+      remainingHours: Math.floor(remainingMs / (60 * 60 * 1000)),
+      remainingMinutes: Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000))
+    });
+  }
+
+  res.json({
+    hasTrial: false,
+    isActive: false
+  });
+});
+
+// Chat audit logging endpoint
+app.post("/api/audit/chat", (req, res) => {
+  const { sessionId, userId, agentName, agentMode, action, messageRole, messageText } = req.body;
+  const ip = getClientIP(req);
+
+  console.log('[CHAT AUDIT]', JSON.stringify({
+    timestamp: new Date().toISOString(),
+    ip,
+    sessionId,
+    userId,
+    agentName,
+    agentMode,
+    action,
+    messageRole,
+    messageText: messageText?.substring(0, 100) // Truncate for logging
+  }, null, 2));
+
+  res.json({ logged: true });
+});
+
 // Available voices with their characteristics for variety
 const VOICES = [
   { name: "Kore", style: "firm and professional" },
