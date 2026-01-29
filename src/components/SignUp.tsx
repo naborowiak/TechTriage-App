@@ -7,6 +7,7 @@ interface SignUpProps {
   onStart: () => void;
   initialEmail?: string;
   onSpeakToExpert?: () => void;
+  onComplete?: (user: { firstName: string; lastName?: string; email: string }) => void;
 }
 
 type OnboardingStep = 'credentials' | 'profile' | 'home' | 'needs' | 'complete';
@@ -31,7 +32,7 @@ const ProgressBar: React.FC<{ step: number; totalSteps: number }> = ({ step, tot
     <div className="w-full max-w-md mb-8">
       <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#10B981] transition-all duration-500 ease-out"
+          className="h-full bg-[#F97316] transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -39,7 +40,7 @@ const ProgressBar: React.FC<{ step: number; totalSteps: number }> = ({ step, tot
   );
 };
 
-export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSpeakToExpert }) => {
+export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSpeakToExpert, onComplete }) => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('credentials');
   const [showPassword, setShowPassword] = useState(false);
   const [trialError, setTrialError] = useState<string | null>(null);
@@ -112,7 +113,17 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
   const handleComplete = () => {
     // Here you would typically send the data to your backend
     console.log('Onboarding complete:', formData);
-    onStart();
+
+    // Navigate to dashboard with user data
+    if (onComplete) {
+      onComplete({
+        firstName: formData.firstName,
+        lastName: formData.lastName || undefined,
+        email: formData.email
+      });
+    } else {
+      onStart();
+    }
   };
 
   // Step 1: Email & Password
@@ -510,7 +521,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
 
               <button
                 onClick={handleComplete}
-                className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-bold text-lg py-4 rounded-full flex items-center justify-center gap-2 transition-colors mt-6"
+                className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-lg py-4 rounded-full flex items-center justify-center gap-2 transition-colors mt-6"
               >
                 Get Started <ArrowRight className="w-5 h-5" />
               </button>
@@ -527,7 +538,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
             <div className="space-y-6">
               {benefits.map((benefit, i) => (
                 <div key={i} className="flex items-start gap-4">
-                  <CheckCircle2 className="w-6 h-6 text-[#10B981] shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-6 h-6 text-[#F97316] shrink-0 mt-0.5" />
                   <div>
                     <div className="font-bold text-lg">{benefit.title}</div>
                     <div className="text-white/70">{benefit.desc}</div>
@@ -543,10 +554,10 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
 
   // Render right panel for steps 1-4
   const RightPanel = () => {
-    const stats = [
-      { label: 'Issues Resolved', value: '50,000+' },
-      { label: 'Avg Response Time', value: '< 3 min' },
-      { label: 'Customer Rating', value: '4.9/5' },
+    const features = [
+      { icon: '🤖', label: 'AI-Powered Diagnostics' },
+      { icon: '📸', label: 'Photo & Video Analysis' },
+      { icon: '👨‍💻', label: 'Expert Support On-Demand' },
     ];
 
     return (
@@ -562,12 +573,12 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
         <div className="relative z-10 max-w-md mx-auto text-white">
           <div className="mb-8">
             <div className="text-sm font-bold uppercase tracking-wider text-[#F97316] mb-2">
-              Did you know...
+              Why TechTriage?
             </div>
             <h2 className="text-4xl font-black leading-tight">
-              Homeowners save{' '}
-              <span className="text-[#10B981]">$200+</span>
-              {' '}on average with TechTriage
+              Get tech help{' '}
+              <span className="text-[#F97316]">instantly</span>
+              {' '}— no waiting, no runaround
             </h2>
           </div>
 
@@ -575,11 +586,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
             Skip the expensive service calls. Our AI-powered support helps you fix issues yourself or know exactly what needs professional attention.
           </p>
 
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-2xl font-black text-[#F97316]">{stat.value}</div>
-                <div className="text-sm text-white/60">{stat.label}</div>
+          <div className="space-y-4 mb-8">
+            {features.map((feature, i) => (
+              <div key={i} className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
+                <span className="text-2xl">{feature.icon}</span>
+                <span className="text-white font-medium">{feature.label}</span>
               </div>
             ))}
           </div>

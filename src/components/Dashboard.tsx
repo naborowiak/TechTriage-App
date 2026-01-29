@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Camera, Video, Clock, User, ChevronRight, Sparkles, Shield, History, Settings, LogOut, Menu, X, Image as ImageIcon } from 'lucide-react';
+import { MessageSquare, Camera, Video, Clock, User, ChevronRight, Sparkles, Shield, History, Settings, LogOut, Menu } from 'lucide-react';
 import { Logo } from './Logo';
 import { getTrialStatus } from '../services/trialService';
 

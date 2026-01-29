@@ -345,11 +345,11 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
           </div>
           <div className="flex items-center gap-6 text-sm text-white/70">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+              <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
               <span>No credit card required</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+              <CheckCircle2 className="w-5 h-5 text-[#F97316]" />
               <span>Cancel anytime</span>
             </div>
           </div>
@@ -592,7 +592,7 @@ const TrustSection: React.FC = () => (
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#10B981] rounded-xl flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -625,7 +625,7 @@ const TrustSection: React.FC = () => (
               </div>
               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#10B981] rounded-full"
+                  className="h-full bg-[#F97316] rounded-full"
                   style={{ width: "94%" }}
                 ></div>
               </div>
@@ -1007,6 +1007,7 @@ const pathToView: Record<string, PageView> = {
   '/pricing': PageView.PRICING,
   '/signup': PageView.SIGNUP,
   '/login': PageView.LOGIN,
+  '/dashboard': PageView.DASHBOARD,
 };
 
 const viewToPath: Record<PageView, string> = {
@@ -1017,6 +1018,7 @@ const viewToPath: Record<PageView, string> = {
   [PageView.LOGIN]: '/login',
   [PageView.HISTORY]: '/history',
   [PageView.SAFETY]: '/safety',
+  [PageView.DASHBOARD]: '/dashboard',
 };
 
 // Get initial view from URL
@@ -1025,10 +1027,41 @@ const getInitialView = (): PageView => {
   return pathToView[path] || PageView.HOME;
 };
 
+// Dashboard user interface
+interface DashboardUser {
+  firstName: string;
+  lastName?: string;
+  email: string;
+}
+
+// Get stored dashboard user
+const getStoredUser = (): DashboardUser | null => {
+  try {
+    const stored = localStorage.getItem('techtriage_user');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error('Failed to get stored user:', e);
+  }
+  return null;
+};
+
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);
   const [capturedEmail, setCapturedEmail] = useState("");
+  const [dashboardUser, setDashboardUser] = useState<DashboardUser | null>(getStoredUser);
+  const [showLiveSupport, setShowLiveSupport] = useState(false);
   const chatRef = useRef<ChatWidgetHandle>(null);
+
+  // Check if user should see dashboard on initial load
+  useEffect(() => {
+    const storedUser = getStoredUser();
+    if (storedUser && window.location.pathname === '/dashboard') {
+      setDashboardUser(storedUser);
+      setCurrentView(PageView.DASHBOARD);
+    }
+  }, []);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -1078,6 +1111,39 @@ const App: React.FC = () => {
     navigate(PageView.PRICING);
   };
 
+  // Handle signup completion - store user and go to dashboard
+  const handleSignupComplete = (user: DashboardUser) => {
+    setDashboardUser(user);
+    localStorage.setItem('techtriage_user', JSON.stringify(user));
+    navigate(PageView.DASHBOARD);
+  };
+
+  // Dashboard handlers
+  const handleDashboardChat = () => {
+    chatRef.current?.open();
+  };
+
+  const handleDashboardUploadImage = () => {
+    // Open chat with image upload intent
+    chatRef.current?.open("I'd like to upload a photo of my issue for analysis.");
+  };
+
+  const handleDashboardStartVideo = () => {
+    setShowLiveSupport(true);
+  };
+
+  const handleDashboardLogout = () => {
+    setDashboardUser(null);
+    localStorage.removeItem('techtriage_user');
+    localStorage.removeItem('techtriage_trial');
+    navigate(PageView.HOME);
+  };
+
+  // Show live support fullscreen if active
+  if (showLiveSupport) {
+    return <LiveSupport onClose={() => setShowLiveSupport(false)} />;
+  }
+
   const renderContent = () => {
     switch (currentView) {
       case PageView.HOW_IT_WORKS:
@@ -1085,9 +1151,31 @@ const App: React.FC = () => {
       case PageView.PRICING:
         return <Pricing onStart={handleStart} onNavigate={navigate} />;
       case PageView.SIGNUP:
-        return <SignUp onStart={handleStart} initialEmail={capturedEmail} onSpeakToExpert={handleSpeakToExpert} />;
+        return (
+          <SignUp
+            onStart={handleStart}
+            initialEmail={capturedEmail}
+            onSpeakToExpert={handleSpeakToExpert}
+            onComplete={handleSignupComplete}
+          />
+        );
       case PageView.LOGIN:
         return <Login onNavigate={navigate} />;
+      case PageView.DASHBOARD:
+        if (dashboardUser) {
+          return (
+            <Dashboard
+              user={dashboardUser}
+              onStartChat={handleDashboardChat}
+              onUploadImage={handleDashboardUploadImage}
+              onStartVideo={handleDashboardStartVideo}
+              onLogout={handleDashboardLogout}
+            />
+          );
+        }
+        // If no user, redirect to signup
+        navigate(PageView.SIGNUP);
+        return null;
       case PageView.HOME:
       default:
         return (
@@ -1106,6 +1194,16 @@ const App: React.FC = () => {
         );
     }
   };
+
+  // Dashboard has its own layout, don't show header/footer
+  if (currentView === PageView.DASHBOARD && dashboardUser) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] font-['Inter',sans-serif] text-[#1F2937]">
+        {renderContent()}
+        <ChatWidget ref={chatRef} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white font-['Inter',sans-serif] text-[#1F2937]">
