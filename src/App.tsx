@@ -172,16 +172,16 @@ const Header: React.FC<{
           ) : (
             <>
               <button
-                onClick={handleGoogleLogin}
+                onClick={() => onNavigate(PageView.LOGIN)}
                 className={`${textColorMuted} ${hoverColor} transition-colors text-sm font-medium whitespace-nowrap`}
               >
                 Log In
               </button>
               <button
-                onClick={handleGoogleLogin}
+                onClick={() => onNavigate(PageView.SIGNUP)}
                 className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors whitespace-nowrap"
               >
-                Get Started
+                Start Free Trial
               </button>
             </>
           )}
@@ -190,10 +190,10 @@ const Header: React.FC<{
         {/* Mobile: Hamburger + CTA */}
         <div className="flex lg:hidden items-center gap-3">
           <button
-            onClick={handleGoogleLogin}
+            onClick={() => onNavigate(PageView.SIGNUP)}
             className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-4 py-2 rounded-full text-sm transition-colors"
           >
-            Get Started
+            Start Free Trial
           </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
