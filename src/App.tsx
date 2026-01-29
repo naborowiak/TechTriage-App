@@ -302,7 +302,7 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
       style={{ backgroundImage: "url(/hero-image.jpg)" }}
     >
       {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1F2937]/90 via-[#1F2937]/70 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F2937]/90 via-[#1F2937]/90 to-transparent"></div>
     </div>
 
     <div className="container mx-auto px-6 lg:px-12 relative z-10">
