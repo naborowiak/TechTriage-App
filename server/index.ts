@@ -321,14 +321,27 @@ async function main() {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    // Build callback URL dynamically based on environment
+    // Support multiple custom domains (comma-separated)
+    const allowedDomains = process.env.APP_DOMAINS
+      ? process.env.APP_DOMAINS.split(",").map((d) => d.trim())
+      : [];
+
+    // Helper to check if a host is an allowed custom domain
+    const isAllowedDomain = (host: string) => {
+      return allowedDomains.some((d) => host === d || host.endsWith(`.${d}`));
+    };
+
+    // Build callback URL - uses first custom domain or falls back to Replit/relative
     const getCallbackURL = () => {
-      if (process.env.REPLIT_DOMAINS) {
-        const domain = process.env.REPLIT_DOMAINS.split(",")[0];
-        return `https://${domain}/api/auth/callback/google`;
+      if (allowedDomains.length > 0) {
+        return `https://${allowedDomains[0]}/api/auth/callback/google`;
       }
       if (process.env.CALLBACK_URL) {
         return process.env.CALLBACK_URL;
+      }
+      if (process.env.REPLIT_DOMAINS) {
+        const domain = process.env.REPLIT_DOMAINS.split(",")[0];
+        return `https://${domain}/api/auth/callback/google`;
       }
       return "/api/auth/callback/google";
     };
@@ -359,18 +372,30 @@ async function main() {
     passport.serializeUser((user, done) => done(null, user));
     passport.deserializeUser((obj: any, done) => done(null, obj));
 
-    // 1. Start Login
-    app.get(
-      "/auth/google",
-      passport.authenticate("google", { scope: ["profile", "email"] }),
-    );
+    // 1. Start Login - store origin domain before redirecting to Google
+    app.get("/auth/google", (req, res, next) => {
+      // Store the origin domain so we can redirect back after auth
+      const host = req.get("host") || "";
+      if (isAllowedDomain(host)) {
+        (req.session as any).authOrigin = host;
+      }
+      next();
+    }, passport.authenticate("google", { scope: ["profile", "email"] }));
 
-    // 2. Handle Callback
+    // 2. Handle Callback - redirect back to origin domain
     app.get(
       "/api/auth/callback/google",
       passport.authenticate("google", { failureRedirect: "/?error=auth_failed" }),
       (req, res) => {
-        res.redirect("/");
+        const authOrigin = (req.session as any).authOrigin;
+        delete (req.session as any).authOrigin;
+
+        // Redirect to stored origin domain if it's allowed, otherwise relative
+        if (authOrigin && isAllowedDomain(authOrigin)) {
+          res.redirect(`https://${authOrigin}/`);
+        } else {
+          res.redirect("/");
+        }
       },
     );
 
@@ -383,8 +408,11 @@ async function main() {
       }
     });
 
-    // 4. Logout
+    // 4. Logout - redirect back to the domain user is on
     app.get("/api/auth/logout", (req, res) => {
+      const host = req.get("host") || "";
+      const redirectDomain = isAllowedDomain(host) ? host : null;
+
       req.logout((err) => {
         if (err) {
           console.error("Logout error:", err);
@@ -394,7 +422,12 @@ async function main() {
             console.error("Session destroy error:", err);
           }
           res.clearCookie("connect.sid");
-          res.redirect("/");
+          // Redirect to current domain if allowed, otherwise relative
+          if (redirectDomain) {
+            res.redirect(`https://${redirectDomain}/`);
+          } else {
+            res.redirect("/");
+          }
         });
       });
     });
