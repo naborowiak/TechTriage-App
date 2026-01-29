@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
 
 app.use(cors({
   origin: true,
@@ -247,18 +249,34 @@ async function main() {
     console.error("Auth setup failed:", error);
   }
 
-  const PORT = 3001;
+  // In production, serve the built frontend files
+  if (isProduction) {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+
+    // SPA catch-all: serve index.html for any non-API routes
+    app.get("/{*splat}", (req, res, next) => {
+      if (req.path.startsWith("/api") || req.path.startsWith("/live")) {
+        return next();
+      }
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+    console.log("Serving static files from dist/");
+  }
+
+  // Use port 5000 in production (Replit), 3001 in development
+  const PORT = isProduction ? 5000 : 3001;
   const server = createServer(app);
-  
+
   const wss = new WebSocketServer({ server, path: '/live' });
-  
+
   wss.on('connection', (ws) => {
     console.log("New WebSocket connection for live session");
     setupGeminiLive(ws);
   });
 
   server.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT} (${isProduction ? "production" : "development"})`);
     console.log(`WebSocket server ready at /live`);
   });
 }

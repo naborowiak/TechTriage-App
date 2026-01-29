@@ -11,9 +11,9 @@ packages = ["unzip"]
 language = "nodejs"
 
 [deployment]
-deploymentTarget = "static"
+deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-publicDir = "dist"
+run = ["npm", "run", "server:prod"]
 
 [[ports]]
 localPort = 51
