@@ -71,7 +71,8 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
       setIsOpen(true);
       setIsSessionEnded(false);
       if (initialMessage && initialMessage.trim().length > 0) {
-        handleSend(initialMessage);
+        // Set the message as pre-filled input instead of sending it
+        setInput(initialMessage);
       }
     }
   }));

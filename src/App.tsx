@@ -38,15 +38,15 @@ const Button: React.FC<{
   );
 };
 
-const Header: React.FC<{ 
-  onNavigate: (view: PageView) => void; 
-  currentView: PageView 
+const Header: React.FC<{
+  onNavigate: (view: PageView) => void;
+  currentView: PageView
 }> = ({ onNavigate, currentView }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, isLoading, login, logout } = useAuth();
   const isHomePage = currentView === PageView.HOME;
-  
+
   const handleNav = (view: PageView) => {
     onNavigate(view);
     setMobileMenuOpen(false);
@@ -54,117 +54,146 @@ const Header: React.FC<{
   };
 
   const textColor = isHomePage ? 'text-white' : (isDark ? 'text-white' : 'text-[#1F2937]');
+  const textColorMuted = isHomePage ? 'text-white/80' : (isDark ? 'text-white/80' : 'text-[#1F2937]/80');
   const hoverColor = 'hover:text-[#F97316]';
-  const dividerColor = isHomePage ? 'bg-white/30' : (isDark ? 'bg-white/30' : 'bg-gray-300');
 
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 h-20 transition-colors ${isHomePage ? 'bg-[#1F2937]' : (isDark ? 'bg-[#1F2937] shadow-md' : 'bg-white shadow-md')}`}>
-      <div className="container mx-auto px-6 h-full flex items-center justify-between">
-        <button onClick={() => handleNav(PageView.HOME)} className="focus:outline-none">
+    <header className={`fixed top-0 left-0 w-full z-50 h-[72px] transition-colors ${isHomePage ? 'bg-[#1F2937]' : (isDark ? 'bg-[#1F2937] shadow-md' : 'bg-white shadow-md')}`}>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 h-full flex items-center justify-between">
+        {/* LEFT: Logo */}
+        <button onClick={() => handleNav(PageView.HOME)} className="focus:outline-none shrink-0">
           <Logo variant={isHomePage || isDark ? 'light' : 'dark'} />
         </button>
-        
-        <nav className="hidden lg:flex items-center gap-8">
-          <button 
-            onClick={() => handleNav(PageView.HOME)} 
-            className={`${currentView === PageView.HOME ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-bold text-base`}
+
+        {/* CENTER: Primary Navigation */}
+        <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+          <button
+            onClick={() => handleNav(PageView.HOME)}
+            className={`whitespace-nowrap ${currentView === PageView.HOME ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
             Product
           </button>
-          <button 
-            onClick={() => handleNav(PageView.HOW_IT_WORKS)} 
-            className={`${currentView === PageView.HOW_IT_WORKS ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-bold text-base`}
+          <button
+            onClick={() => handleNav(PageView.HOW_IT_WORKS)}
+            className={`whitespace-nowrap ${currentView === PageView.HOW_IT_WORKS ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
             How It Works
           </button>
-          <button 
+          <button
             onClick={() => handleNav(PageView.PRICING)}
-            className={`${currentView === PageView.PRICING ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-bold text-base`}
+            className={`whitespace-nowrap ${currentView === PageView.PRICING ? 'text-[#F97316]' : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
             Pricing
           </button>
-          <button className={`${textColor} ${hoverColor} transition-colors font-bold text-base`}>Resources</button>
+          <button
+            onClick={() => handleNav(PageView.HOW_IT_WORKS)}
+            className={`whitespace-nowrap ${textColor} ${hoverColor} transition-colors font-semibold text-[15px]`}
+          >
+            Resources
+          </button>
         </nav>
 
-        <div className="hidden lg:flex items-center gap-6">
-          <div className={`flex items-center gap-2 ${textColor} font-bold`}>
-            <Phone className="w-5 h-5" />
-            <span>1-800-TECH-FIX</span>
-          </div>
-          <div className={`h-6 w-px ${dividerColor}`}></div>
-          <button 
-            onClick={toggleTheme} 
-            className={`${textColor} ${hoverColor} transition-colors p-2 rounded-full hover:bg-white/10`}
+        {/* RIGHT: Utility items */}
+        <div className="hidden lg:flex items-center gap-5 shrink-0">
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className={`${textColorMuted} ${hoverColor} transition-colors p-1.5 rounded-full hover:bg-white/10`}
             aria-label="Toggle dark mode"
           >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+
+          {/* Auth section */}
           {isLoading ? (
-            <div className={`${textColor} font-bold`}>...</div>
+            <div className={`${textColorMuted} text-sm`}>...</div>
           ) : isAuthenticated && user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 {user.profileImageUrl ? (
-                  <img 
-                    src={user.profileImageUrl} 
-                    alt={user.firstName || 'User'} 
-                    className="w-8 h-8 rounded-full object-cover"
+                  <img
+                    src={user.profileImageUrl}
+                    alt={user.firstName || 'User'}
+                    className="w-7 h-7 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-7 h-7 rounded-full bg-[#F97316] flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-white" />
                   </div>
                 )}
-                <span className={`${textColor} font-bold`}>
-                  {user.firstName || user.email || 'User'}
+                <span className={`${textColorMuted} text-sm font-medium hidden xl:inline`}>
+                  {user.firstName || 'User'}
                 </span>
               </div>
-              <button 
+              <button
                 onClick={logout}
-                className={`${textColor} ${hoverColor} transition-colors font-bold flex items-center gap-1`}
+                className={`${textColorMuted} ${hoverColor} transition-colors text-sm font-medium flex items-center gap-1`}
               >
                 <LogOut className="w-4 h-4" />
-                Logout
+                <span className="hidden xl:inline">Logout</span>
               </button>
             </div>
           ) : (
             <>
-              <button onClick={login} className={`${textColor} ${hoverColor} transition-colors font-bold`}>Log In</button>
-              <Button variant="orange" onClick={login} className="py-3 px-6 text-base">Get Started</Button>
+              <button
+                onClick={login}
+                className={`${textColorMuted} ${hoverColor} transition-colors text-sm font-medium whitespace-nowrap`}
+              >
+                Log In
+              </button>
+              <button
+                onClick={login}
+                className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors whitespace-nowrap"
+              >
+                Get Started
+              </button>
             </>
           )}
         </div>
 
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className={`lg:hidden ${textColor} p-2`}>
-          {mobileMenuOpen ? <X /> : <Menu />}
-        </button>
+        {/* Mobile: Hamburger + CTA */}
+        <div className="flex lg:hidden items-center gap-3">
+          <button
+            onClick={login}
+            className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-4 py-2 rounded-full text-sm transition-colors"
+          >
+            Get Started
+          </button>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className={`${textColor} p-2`}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
+      {/* Mobile menu dropdown */}
       {mobileMenuOpen && (
-        <div className={`lg:hidden absolute top-20 left-0 w-full ${isDark ? 'bg-[#1F2937] border-gray-700' : 'bg-white border-gray-200'} border-b p-6 flex flex-col gap-6 shadow-xl`}>
-          <button onClick={() => handleNav(PageView.HOME)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Product</button>
-          <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>How It Works</button>
-          <button onClick={() => handleNav(PageView.PRICING)} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Pricing</button>
-          <button className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Resources</button>
-          <hr className={isDark ? 'border-gray-700' : 'border-gray-200'} />
-          <div className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold`}>
-            <Phone className="w-5 h-5" />
-            <span>1-800-TECH-FIX</span>
-          </div>
-          <button 
+        <div className={`lg:hidden absolute top-[72px] left-0 w-full ${isDark || isHomePage ? 'bg-[#1F2937] border-gray-700' : 'bg-white border-gray-200'} border-b p-6 flex flex-col gap-5 shadow-xl`}>
+          <button onClick={() => handleNav(PageView.HOME)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Product</button>
+          <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>How It Works</button>
+          <button onClick={() => handleNav(PageView.PRICING)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Pricing</button>
+          <button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className={`${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-semibold text-base text-left`}>Resources</button>
+
+          <hr className={isDark || isHomePage ? 'border-gray-700' : 'border-gray-200'} />
+
+          <button
             onClick={toggleTheme}
-            className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}
+            className={`flex items-center gap-2 ${isDark || isHomePage ? 'text-white/80' : 'text-[#1F2937]/80'} font-medium text-left`}
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </button>
+
           {isAuthenticated && user ? (
             <>
-              <div className={`flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg`}>
+              <div className={`flex items-center gap-2 ${isDark || isHomePage ? 'text-white' : 'text-[#1F2937]'} font-medium`}>
                 {user.profileImageUrl ? (
-                  <img 
-                    src={user.profileImageUrl} 
-                    alt={user.firstName || 'User'} 
+                  <img
+                    src={user.profileImageUrl}
+                    alt={user.firstName || 'User'}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
@@ -174,19 +203,21 @@ const Header: React.FC<{
                 )}
                 <span>{user.firstName || user.email || 'User'}</span>
               </div>
-              <button 
+              <button
                 onClick={logout}
-                className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left flex items-center gap-2`}
+                className={`${isDark || isHomePage ? 'text-white/80' : 'text-[#1F2937]/80'} font-medium text-left flex items-center gap-2`}
               >
                 <LogOut className="w-5 h-5" />
                 Logout
               </button>
             </>
           ) : (
-            <>
-              <button onClick={login} className={`${isDark ? 'text-white' : 'text-[#1F2937]'} font-bold text-lg text-left`}>Log In</button>
-              <Button variant="orange" onClick={login} className="w-full">Get Started</Button>
-            </>
+            <button
+              onClick={login}
+              className={`${isDark || isHomePage ? 'text-white/80' : 'text-[#1F2937]/80'} font-medium text-left`}
+            >
+              Log In
+            </button>
           )}
         </div>
       )}
@@ -194,148 +225,112 @@ const Header: React.FC<{
   );
 };
 
-const Hero: React.FC<{ onSignup: (email?: string) => void; onHowItWorks: () => void }> = ({ onSignup, onHowItWorks }) => (
-  <section 
-    className="relative pt-28 pb-16 lg:pt-32 lg:pb-24 min-h-[600px] lg:min-h-[700px] overflow-hidden bg-cover bg-center bg-no-repeat"
-    style={{ backgroundImage: 'url(/hero-bg.jpg)' }}
-  >
-    <div className="absolute inset-0 bg-gradient-to-r from-[#1F2937]/95 via-[#1F2937]/80 to-transparent"></div>
-    <div className="container mx-auto px-6 relative z-10">
-      <div className="max-w-xl">
-        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full mb-6">
-          <span className="text-[#F97316] font-bold text-sm">INSTANT ACCESS</span>
-          <span className="text-white/60 font-bold text-sm">TO REAL HELP</span>
+const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({ onFreeTrial, onPricing }) => (
+  <section className="relative pt-[72px] min-h-[700px] lg:min-h-[800px] overflow-hidden">
+    {/* Background hero image */}
+    <div
+      className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: 'url(/hero-image.jpg)' }}
+    >
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1F2937]/90 via-[#1F2937]/70 to-transparent"></div>
+    </div>
+
+    <div className="container mx-auto px-6 lg:px-12 relative z-10">
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[600px] lg:min-h-[700px]">
+        {/* Left side - Content */}
+        <div className="pt-8 lg:pt-0">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
+            <span className="text-[#F97316] font-bold text-sm">NEW</span>
+            <span className="text-white font-medium text-sm">AI-Powered Live Video Support</span>
+            <ArrowRight className="w-4 h-4 text-[#F97316]" />
+          </div>
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
+            Fix it faster—<br />
+            <span className="text-[#F97316]">just show us.</span>
+          </h1>
+          <p className="text-white/80 text-xl lg:text-2xl font-medium leading-relaxed mb-10 max-w-lg">
+            TechTriage connects you to AI + real specialists to troubleshoot safely and remotely. Photo, video, or text—we've got you covered.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <Button variant="orange" onClick={onFreeTrial} className="shadow-xl shadow-orange-500/30 text-lg px-10">
+              Free Trial
+            </Button>
+            <Button variant="outline" onClick={onPricing} className="text-lg px-10">
+              View Pricing
+            </Button>
+          </div>
+          <div className="flex items-center gap-6 text-sm text-white/70">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+              <span>No credit card required</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+              <span>Cancel anytime</span>
+            </div>
+          </div>
         </div>
-        <h1 className="text-4xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-          Show us the problem. We'll handle the rest.
-        </h1>
-        <p className="text-white/80 text-xl font-medium leading-relaxed mb-10 max-w-lg">
-          TechTriage connects you to AI + real specialists to troubleshoot safely and remotely. Send a photo for instant triage, jump on live video, or schedule an onsite visit when needed.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button variant="orange" onClick={onSignup}>
-            Start a Triage Chat
-          </Button>
-          <Button variant="outline" onClick={onHowItWorks}>
-            See How It Works
-          </Button>
-        </div>
+
+        {/* Right side - empty to let the background image show */}
+        <div className="hidden lg:block"></div>
       </div>
     </div>
   </section>
 );
 
-const SupportTiers: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup }) => {
-  const { isDark } = useTheme();
-  const tiers = [
-    {
-      name: "TechTriage",
-      subtitle: "Text Support",
-      icon: <Phone className="w-8 h-8" />,
-      features: ["Text/chat support", "Human escalation", "Fast answers + step-by-step fixes"],
-      color: "bg-blue-500"
-    },
-    {
-      name: "TechTriage AI",
-      subtitle: "Photo Upload",
-      icon: <Cpu className="w-8 h-8" />,
-      features: ["Upload photos/screenshots", "AI identifies the issue", "Guided troubleshooting + smart routing"],
-      color: "bg-[#F97316]",
-      highlight: true
-    },
-    {
-      name: "TechTriage Live",
-      subtitle: "Video Support",
-      icon: <Video className="w-8 h-8" />,
-      features: ["Real-time video help", "AI + expert guidance", "Session transcript + summary"],
-      color: "bg-purple-600"
-    }
-  ];
-
-  return (
-    <section className={`py-20 ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
-      <div className="container mx-auto px-6 max-w-6xl">
-        <div className="text-center mb-16">
-          <h2 className={`text-4xl lg:text-5xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
-            Choose your support level
-          </h2>
-          <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            From quick text answers to live video troubleshooting—we've got you covered.
-          </p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {tiers.map((tier, i) => (
-            <div key={i} className={`rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-2 border-2 ${isDark ? 'bg-[#1F2937]' : 'bg-white'} ${tier.highlight ? 'border-[#F97316]' : (isDark ? 'border-gray-700' : 'border-gray-100')}`}>
-              {tier.highlight && (
-                <div className="text-center -mt-12 mb-4">
-                  <span className="bg-[#F97316] text-white text-xs font-bold px-4 py-1 rounded-full uppercase">Most Popular</span>
-                </div>
-              )}
-              <div className={`${tier.color} w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6`}>
-                {tier.icon}
-              </div>
-              <h3 className={`text-2xl font-black mb-1 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{tier.name}</h3>
-              <p className="text-[#F97316] font-bold mb-6">{tier.subtitle}</p>
-              <ul className="space-y-3 mb-6">
-                {tier.features.map((f, j) => (
-                  <li key={j} className={`flex items-start gap-3 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <CheckCircle2 className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="text-center mt-12">
-          <Button variant="orange" onClick={onSignup} className="text-lg px-10">
-            Start with Text Support
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-};
-
 const HowItWorksSimple: React.FC = () => {
   const { isDark } = useTheme();
   const steps = [
     {
-      step: "1",
+      step: "01",
       title: "Tell us what's wrong",
-      desc: "Start a text or chat conversation. Describe the issue in your own words.",
-      icon: <Phone className="w-8 h-8" />
+      desc: "Start a chat and describe your issue in plain English. No tech jargon required.",
+      icon: <Phone className="w-7 h-7" />
     },
     {
-      step: "2",
-      title: "Show us",
-      desc: "Upload a photo, share a screenshot, or jump on live video so we can see exactly what you're dealing with.",
-      icon: <Cpu className="w-8 h-8" />
+      step: "02",
+      title: "Show us the problem",
+      desc: "Upload a photo, share your screen, or start a live video call so we can see exactly what you're dealing with.",
+      icon: <Video className="w-7 h-7" />
     },
     {
-      step: "3",
+      step: "03",
       title: "Get it fixed",
-      desc: "We'll guide you through the solution remotely—or schedule an onsite visit if needed.",
-      icon: <CheckCircle2 className="w-8 h-8" />
+      desc: "Follow our step-by-step guidance to resolve the issue—or we'll schedule an onsite visit if needed.",
+      icon: <CheckCircle2 className="w-7 h-7" />
     }
   ];
 
   return (
-    <section className={`py-20 ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
-      <div className="container mx-auto px-6 max-w-5xl">
+    <section className={`py-24 noise-texture noise-texture-subtle ${isDark ? 'bg-[#0D1117]' : 'bg-[#F9FAFB]'}`}>
+      <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-16">
-          <h2 className={`text-4xl lg:text-5xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>How it works</h2>
-          <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Three simple steps to solving your problem</p>
+          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">How It Works</span>
+          <h2 className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
+            Three steps to peace of mind
+          </h2>
+          <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-[#4B5563]'}`}>
+            Getting help has never been easier. No appointments, no waiting rooms.
+          </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
           {steps.map((s, i) => (
-            <div key={i} className="text-center">
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white mx-auto mb-6 shadow-lg ${isDark ? 'bg-[#F97316]' : 'bg-[#1F2937]'}`}>
-                {s.icon}
+            <div key={i} className="relative">
+              {/* Connector line */}
+              {i < 2 && (
+                <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-[#F97316] to-transparent"></div>
+              )}
+              <div className={`relative rounded-2xl p-8 ${isDark ? 'bg-[#1F2937]' : 'bg-[#F9FAFB]'}`}>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                    {s.icon}
+                  </div>
+                  <span className={`text-5xl font-black ${isDark ? 'text-white/10' : 'text-[#1F2937]/10'}`}>{s.step}</span>
+                </div>
+                <h3 className={`text-xl font-black mb-3 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{s.title}</h3>
+                <p className={`leading-relaxed ${isDark ? 'text-gray-400' : 'text-[#4B5563]'}`}>{s.desc}</p>
               </div>
-              <div className="text-[#F97316] font-black text-lg mb-2">Step {s.step}</div>
-              <h3 className={`text-2xl font-bold mb-3 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{s.title}</h3>
-              <p className={`leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{s.desc}</p>
             </div>
           ))}
         </div>
@@ -347,30 +342,51 @@ const HowItWorksSimple: React.FC = () => {
 const WhatWeHelpWith: React.FC = () => {
   const { isDark } = useTheme();
   const problems = [
-    { icon: <Wifi className="w-6 h-6" />, label: "Wi-Fi & internet issues" },
-    { icon: <Tv className="w-6 h-6" />, label: "TVs / streaming / soundbars" },
-    { icon: <Cpu className="w-6 h-6" />, label: "Computers running slow" },
-    { icon: <Home className="w-6 h-6" />, label: "Printers, devices, smart home" },
-    { icon: <Lock className="w-6 h-6" />, label: "Apps/accounts/password recovery" },
-    { icon: <Sparkles className="w-6 h-6" />, label: '"It was working yesterday..." mysteries' },
-    { icon: <Wrench className="w-6 h-6" />, label: "Appliance troubleshooting" },
-    { icon: <Zap className="w-6 h-6" />, label: "HVAC & thermostat help" },
+    { icon: <Wifi className="w-8 h-8" />, label: "Wi-Fi & Internet", desc: "Connection issues, slow speeds, dead zones" },
+    { icon: <Tv className="w-8 h-8" />, label: "TV & Streaming", desc: "Setup, apps, soundbars, remotes" },
+    { icon: <Cpu className="w-8 h-8" />, label: "Computers", desc: "Slow performance, updates, viruses" },
+    { icon: <Home className="w-8 h-8" />, label: "Smart Home", desc: "Devices, hubs, automation" },
+    { icon: <Lock className="w-8 h-8" />, label: "Accounts & Passwords", desc: "Recovery, setup, security" },
+    { icon: <Sparkles className="w-8 h-8" />, label: "Mystery Issues", desc: '"It was working yesterday..."' },
+    { icon: <Wrench className="w-8 h-8" />, label: "Appliances", desc: "Error codes, troubleshooting" },
+    { icon: <Zap className="w-8 h-8" />, label: "HVAC & Thermostats", desc: "Programming, connectivity" },
   ];
 
   return (
-    <section className={`py-20 ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
-      <div className="container mx-auto px-6 max-w-5xl">
-        <div className="text-center mb-12">
-          <h2 className={`text-4xl lg:text-5xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
-            What we can help with
+    <section className={`py-24 noise-texture ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
+      <div className="container mx-auto px-6 max-w-6xl">
+        <div className="text-center mb-16">
+          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">What We Fix</span>
+          <h2 className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
+            Everyday tech problems, solved
           </h2>
-          <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Everyday problems. Real solutions.</p>
+          <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-[#4B5563]'}`}>
+            From blinking routers to beeping thermostats—we speak your language.
+          </p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {problems.map((item, i) => (
-            <div key={i} className={`p-6 rounded-xl flex flex-col items-center gap-4 hover:shadow-xl transition-all cursor-pointer hover:border-[#F97316] group text-center border ${isDark ? 'bg-[#1F2937] border-gray-700' : 'bg-[#F9FAFB] border-gray-200'}`}>
-              <div className={`group-hover:text-[#F97316] transition-colors ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{item.icon}</div>
-              <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>{item.label}</span>
+            <div
+              key={i}
+              className={`group p-6 rounded-2xl transition-all duration-300 cursor-pointer hover:-translate-y-1 ${
+                isDark
+                  ? 'bg-[#1F2937] hover:bg-[#374151]'
+                  : 'bg-[#F9FAFB] hover:bg-white hover:shadow-xl'
+              }`}
+            >
+              <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-colors ${
+                isDark
+                  ? 'bg-[#374151] text-white group-hover:bg-[#F97316]'
+                  : 'bg-white text-[#1F2937] group-hover:bg-[#F97316] group-hover:text-white shadow-sm'
+              }`}>
+                {item.icon}
+              </div>
+              <h3 className={`font-bold text-lg mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>
+                {item.label}
+              </h3>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-[#6B7280]'}`}>
+                {item.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -380,89 +396,81 @@ const WhatWeHelpWith: React.FC = () => {
 };
 
 const TrustSection: React.FC = () => (
-  <section className="py-20 bg-[#1F2937] text-white">
-    <div className="container mx-auto px-6 max-w-5xl">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl lg:text-5xl font-black mb-6">
-          Real specialists. Real answers.
-        </h2>
-        <p className="text-white/70 text-xl max-w-2xl mx-auto">
-          No stress. No runaround. Just honest help when you need it.
-        </p>
-      </div>
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="bg-white/10 backdrop-blur p-8 rounded-2xl text-center">
-          <div className="w-16 h-16 bg-[#F97316] rounded-full flex items-center justify-center mx-auto mb-6">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
-          <h4 className="font-bold text-white mb-3 text-xl">Safe, remote-first</h4>
-          <p className="text-white/70">
-            Troubleshoot from the comfort of your home. No strangers in your house unless you need them.
+  <section className="py-24 bg-gradient-to-br from-[#1F2937] to-[#111827] text-white overflow-hidden noise-texture noise-texture-strong">
+    <div className="container mx-auto px-6 max-w-6xl">
+      <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">Why TechTriage</span>
+          <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
+            Real specialists.<br />Real answers.
+          </h2>
+          <p className="text-white/70 text-xl mb-8 leading-relaxed">
+            No stress. No runaround. Just honest help from people who actually know what they're doing.
           </p>
+          <div className="space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shrink-0">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-lg mb-1">Safe & Remote-First</h4>
+                <p className="text-white/60">Troubleshoot from home. No strangers unless you need them.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shrink-0">
+                <Lock className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-lg mb-1">Your Privacy, Protected</h4>
+                <p className="text-white/60">You control what you share. We never sell your data.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-[#10B981] rounded-xl flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-lg mb-1">Trusted Nationwide</h4>
+                <p className="text-white/60">Real people helping real neighbors, coast to coast.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="bg-white/10 backdrop-blur p-8 rounded-2xl text-center">
-          <div className="w-16 h-16 bg-[#F97316] rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-8 h-8 text-white" />
+        <div className="relative hidden lg:block">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#F97316]/20 to-purple-500/20 rounded-3xl blur-3xl"></div>
+          <div className="relative bg-white/5 backdrop-blur border border-white/10 rounded-3xl p-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl flex items-center justify-center">
+                <Star className="w-8 h-8 text-white fill-white" />
+              </div>
+              <div>
+                <div className="text-white font-black text-3xl">4.9/5</div>
+                <div className="text-white/60">Customer Rating</div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-white/60">Issue Resolution</span>
+                <span className="text-white font-bold">94%</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-[#10B981] rounded-full" style={{ width: '94%' }}></div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/60">Avg. Response Time</span>
+                <span className="text-white font-bold">&lt; 3 min</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-[#F97316] rounded-full" style={{ width: '88%' }}></div>
+              </div>
+            </div>
           </div>
-          <h4 className="font-bold text-white mb-3 text-xl">You control what you share</h4>
-          <p className="text-white/70">
-            Your photos, videos, and conversations are private. We never share your data without permission.
-          </p>
-        </div>
-        <div className="bg-white/10 backdrop-blur p-8 rounded-2xl text-center">
-          <div className="w-16 h-16 bg-[#F97316] rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-8 h-8 text-white" />
-          </div>
-          <h4 className="font-bold text-white mb-3 text-xl">Trusted locally</h4>
-          <p className="text-white/70">
-            Trusted by customers across St. Louis and beyond. Real people helping real neighbors.
-          </p>
         </div>
       </div>
     </div>
   </section>
 );
-
-const PricingTeaser: React.FC<{ onPricing: () => void }> = ({ onPricing }) => {
-  const { isDark } = useTheme();
-  return (
-    <section className={`py-20 ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
-      <div className="container mx-auto px-6 max-w-4xl">
-        <div className="text-center mb-12">
-          <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Simple, transparent pricing</h2>
-          <p className={`text-xl ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Pay only for what you need. No hidden fees.</p>
-        </div>
-        <div className="grid md:grid-cols-4 gap-6">
-          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">TEXT SUPPORT</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$9</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
-          </div>
-          <div className={`p-6 rounded-2xl shadow-lg text-center border-2 border-[#F97316] ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">AI PHOTO TRIAGE</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$19</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
-          </div>
-          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">LIVE VIDEO</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>$49</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/session</p>
-          </div>
-          <div className={`p-6 rounded-2xl shadow-lg text-center ${isDark ? 'bg-[#1F2937]' : 'bg-white'}`}>
-            <div className="text-[#F97316] font-bold text-sm mb-2">ONSITE VISIT</div>
-            <div className={`text-3xl font-black mb-2 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Quote</div>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>scheduled</p>
-          </div>
-        </div>
-        <div className="text-center mt-10">
-          <Button variant={isDark ? 'orange' : 'dark'} onClick={onPricing} className="px-10">
-            See Full Pricing
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const TestimonialSection: React.FC = () => {
   const { isDark } = useTheme();
@@ -488,7 +496,7 @@ const TestimonialSection: React.FC = () => {
   ];
 
   return (
-    <section className={`py-24 ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
+    <section className={`py-24 noise-texture noise-texture-subtle ${isDark ? 'bg-[#0D1117]' : 'bg-[#F3F4F6]'}`}>
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-12">
           <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>What Our Customers Say</h2>
@@ -532,7 +540,7 @@ const FAQSection: React.FC = () => {
   ];
 
   return (
-    <section className={`py-20 ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
+    <section className={`py-20 noise-texture noise-texture-subtle ${isDark ? 'bg-[#111827]' : 'bg-white'}`}>
       <div className="container mx-auto px-6 max-w-3xl">
         <div className="text-center mb-12">
           <h2 className={`text-4xl font-black mb-4 ${isDark ? 'text-white' : 'text-[#1F2937]'}`}>Frequently asked questions</h2>
@@ -569,31 +577,49 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup
   };
 
   return (
-    <section className="py-24 bg-[#1F2937]">
-      <div className="container mx-auto px-6 max-w-4xl text-center">
-        <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-          Stop stressing. Start fixing.
+    <section className="py-24 bg-gradient-to-br from-[#F97316] to-[#EA580C] relative overflow-hidden noise-texture">
+      {/* Background decoration */}
+      <div className="absolute inset-0 opacity-10 z-0">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+      </div>
+      <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
+        <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+          Ready to fix it?
         </h2>
-        <p className="text-white/80 font-medium max-w-2xl mx-auto mb-10 text-xl">
-          Whether it's a blinking router or a beeping thermostat, we're here to help. Text us now and get answers in minutes.
+        <p className="text-white/90 font-medium max-w-2xl mx-auto mb-10 text-xl lg:text-2xl">
+          Stop Googling. Stop stressing. Get real help in minutes.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 justify-center max-w-xl mx-auto mb-4">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto mb-6">
           <input
             type="email"
-            placeholder="Email Address"
+            placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 px-6 py-4 rounded-full text-[#1F2937] text-lg font-medium focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+            className="flex-1 px-6 py-4 rounded-full text-[#1F2937] text-lg font-medium focus:outline-none focus:ring-4 focus:ring-white/30 shadow-xl"
             required
           />
           <button
             type="submit"
-            className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-8 py-4 rounded-full text-lg transition-colors whitespace-nowrap"
+            className="bg-[#1F2937] hover:bg-[#111827] text-white font-bold px-10 py-4 rounded-full text-lg transition-all whitespace-nowrap shadow-xl hover:shadow-2xl"
           >
-            Start Free Trial
+            Get Started Free
           </button>
         </form>
-        <p className="text-white/50 text-sm">No credit card required.</p>
+        <div className="flex items-center justify-center gap-6 text-white/80 text-sm">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>No credit card</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Cancel anytime</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>24/7 support</span>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -601,10 +627,28 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({ onSignup
 
 
 const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
+  const handleNav = (view: PageView) => {
+    onNavigate(view);
+    window.scrollTo(0, 0);
+  };
+
+  // Map link names to navigation actions
+  const getLinkAction = (item: string): (() => void) | null => {
+    const navMap: Record<string, () => void> = {
+      "Pricing": () => handleNav(PageView.PRICING),
+      "Text Support": () => handleNav(PageView.PRICING),
+      "AI Photo Triage": () => handleNav(PageView.PRICING),
+      "Live Video Help": () => handleNav(PageView.PRICING),
+      "Onsite Visits": () => handleNav(PageView.PRICING),
+      "Support": () => handleNav(PageView.HOW_IT_WORKS),
+    };
+    return navMap[item] || null;
+  };
+
   const links = {
     "What We Fix": ["Wi-Fi Issues", "TV & Streaming", "Computers", "Smart Home", "Appliances", "HVAC"],
     "Support Levels": ["Text Support", "AI Photo Triage", "Live Video Help", "Onsite Visits"],
-    "Resources": ["Pricing", "DIY Guides", "Safety Center", "Blog", "Podcast", "Support"],
+    "Resources": ["Pricing", "How It Works", "Safety Center", "Blog", "Podcast", "Support"],
     "Company": ["Our Story", "Our Team", "Press", "Careers", "Contact", "Privacy"]
   };
 
@@ -612,7 +656,7 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
     <footer className="bg-[#1F2937] pt-20 pb-10">
       <div className="container mx-auto px-6">
         <div className="mb-12">
-          <button onClick={() => { onNavigate(PageView.HOME); window.scrollTo(0,0); }}>
+          <button onClick={() => handleNav(PageView.HOME)}>
             <Logo variant="light" />
           </button>
         </div>
@@ -621,17 +665,38 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
             <div key={cat}>
               <h4 className="font-bold text-white mb-6 text-base">{cat}</h4>
               <ul className="space-y-3">
-                {items.map(item => (
-                  <li key={item}>
-                    {item === "Instant Triage" ? (
-                      <button onClick={() => { onNavigate(PageView.HOW_IT_WORKS); window.scrollTo(0,0); }} className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors">
-                        {item}
-                      </button>
-                    ) : (
-                      <a href="#" className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors">{item}</a>
-                    )}
-                  </li>
-                ))}
+                {items.map(item => {
+                  const action = getLinkAction(item);
+                  // Special case for "How It Works"
+                  if (item === "How It Works") {
+                    return (
+                      <li key={item}>
+                        <button
+                          onClick={() => handleNav(PageView.HOW_IT_WORKS)}
+                          className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors"
+                        >
+                          {item}
+                        </button>
+                      </li>
+                    );
+                  }
+                  return (
+                    <li key={item}>
+                      {action ? (
+                        <button
+                          onClick={action}
+                          className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors"
+                        >
+                          {item}
+                        </button>
+                      ) : (
+                        <span className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors cursor-pointer">
+                          {item}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
@@ -639,9 +704,9 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-white/40 text-sm font-medium">© 2026 TechTriage Inc. All rights reserved.</div>
           <div className="flex gap-6 text-white/40 text-sm font-medium">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Accessibility</a>
+            <span className="hover:text-white transition-colors cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-white transition-colors cursor-pointer">Terms of Service</span>
+            <span className="hover:text-white transition-colors cursor-pointer">Accessibility</span>
           </div>
         </div>
       </div>
@@ -658,19 +723,21 @@ const App: React.FC = () => {
     chatRef.current?.open("I'd like to start a free trial.");
   };
 
-  const handleNavigateToSignup = (email?: string) => {
-    if (email) setCapturedEmail(email);
+  const handleFreeTrial = () => {
+    chatRef.current?.open("I want to learn how TechTriage can help with my home tech issues.");
+  };
+
+  const handleNavigateToSignup = (email?: string | React.MouseEvent) => {
+    // Filter out MouseEvent objects (when called from onClick without args)
+    if (email && typeof email === 'string') {
+      setCapturedEmail(email);
+    }
     setCurrentView(PageView.SIGNUP);
     window.scrollTo(0, 0);
   };
 
   const handleNavigateToPricing = () => {
     setCurrentView(PageView.PRICING);
-    window.scrollTo(0, 0);
-  };
-
-  const handleNavigateToHowItWorks = () => {
-    setCurrentView(PageView.HOW_IT_WORKS);
     window.scrollTo(0, 0);
   };
 
@@ -688,12 +755,10 @@ const App: React.FC = () => {
       default:
         return (
           <>
-            <Hero onSignup={handleNavigateToSignup} onHowItWorks={handleNavigateToHowItWorks} />
-            <SupportTiers onSignup={handleNavigateToSignup} />
+            <Hero onFreeTrial={handleFreeTrial} onPricing={handleNavigateToPricing} />
             <HowItWorksSimple />
             <WhatWeHelpWith />
             <TrustSection />
-            <PricingTeaser onPricing={handleNavigateToPricing} />
             <TestimonialSection />
             <FAQSection />
             <CTASection onSignup={handleNavigateToSignup} />

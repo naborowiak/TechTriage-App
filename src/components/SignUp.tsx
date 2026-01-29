@@ -16,8 +16,8 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '' }) =>
   ];
 
   return (
-    <section className="min-h-screen pt-20 bg-[#F9FAFB]">
-      <div className="grid lg:grid-cols-2 min-h-[calc(100vh-80px)]">
+    <section className="min-h-screen pt-[72px] bg-[#F9FAFB]">
+      <div className="grid lg:grid-cols-2 min-h-[calc(100vh-72px)]">
         <div className="flex flex-col justify-center px-8 lg:px-16 py-12 bg-[#F9FAFB]">
           <div className="max-w-md">
             <h1 className="text-4xl lg:text-5xl font-black text-[#1F2937] leading-tight mb-6">

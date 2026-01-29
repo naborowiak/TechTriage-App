@@ -72,7 +72,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <section className="min-h-screen pt-20">
+    <section className="min-h-screen pt-[72px]">
       <div className="bg-[#1F2937] py-16 text-center">
         <h1 className="text-4xl lg:text-5xl font-black text-white mb-4">
           Try TechTriage <span className="text-[#F97316]">for free</span> now. Pick a plan later.

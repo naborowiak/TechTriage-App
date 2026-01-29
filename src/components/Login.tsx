@@ -13,8 +13,8 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <section className="min-h-screen pt-20 bg-white">
-      <div className="grid lg:grid-cols-2 min-h-[calc(100vh-80px)]">
+    <section className="min-h-screen pt-[72px] bg-white">
+      <div className="grid lg:grid-cols-2 min-h-[calc(100vh-72px)]">
         <div className="flex flex-col items-center justify-center px-6 py-12">
           <div className="w-full max-w-md">
             <div className="flex justify-center mb-10">
