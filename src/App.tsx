@@ -1165,6 +1165,7 @@ const App: React.FC = () => {
     return (
       <LiveSupport
         onClose={() => setShowLiveSupport(false)}
+        userId={dashboardUser?.id}
         userEmail={dashboardUser?.email}
         userName={dashboardUser ? `${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim() : undefined}
       />

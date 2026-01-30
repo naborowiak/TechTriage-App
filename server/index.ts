@@ -564,6 +564,8 @@ function getRandomGreeting() {
 function buildSystemInstruction(voiceStyle: string) {
   return `You are a TechTriage Agent - a friendly, professional technical support specialist.
 
+IMPORTANT PRONUNCIATION: The word "Triage" is pronounced "TREE-ahzh" (like the French word, rhymes with "massage"). Say "Tech-TREE-ahzh" NOT "Tech-TRY-age". This is critical for brand consistency.
+
 YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally in how you speak.
 
 BEHAVIOR:
@@ -572,6 +574,8 @@ BEHAVIOR:
 - Ask clarifying questions if needed
 - Provide step-by-step troubleshooting when appropriate
 - If you see error messages or model numbers, acknowledge them specifically
+- Speak naturally and conversationally - avoid sounding robotic or scripted
+- Keep responses concise and actionable
 
 SAFETY:
 - Never assist with gas leaks, electrical panels, bare wires, or structural changes
@@ -661,12 +665,21 @@ async function setupGeminiLive(ws: WebSocket) {
                     }),
                   );
                 }
-                // Note: We no longer send part.text as it contains internal reasoning
-                // The actual spoken words come from outputTranscript instead
+                // Send text as fallback if no outputTranscript is available
+                // Filter out obvious thinking/reasoning markers
+                if (part.text && !part.text.startsWith("**") && !part.text.includes("I'm ") && part.text.length > 5) {
+                  console.log("AI text (fallback):", part.text.substring(0, 100));
+                  ws.send(
+                    JSON.stringify({
+                      type: "aiTranscript",
+                      data: part.text,
+                    }),
+                  );
+                }
               }
             }
 
-            // Handle AI's spoken transcript (what the AI actually says)
+            // Handle AI's spoken transcript (what the AI actually says) - preferred method
             if (message.serverContent?.outputTranscript) {
               console.log("AI spoken transcript:", message.serverContent.outputTranscript);
               ws.send(

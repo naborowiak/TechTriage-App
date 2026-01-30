@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 
 interface LiveSupportProps {
   onClose: () => void;
+  userId?: string;
   userEmail?: string;
   userName?: string;
 }
@@ -46,7 +47,7 @@ const BotAvatar = ({ className }: { className: string }) => {
   return <img src="/Tech_Triage.png" className={`${className} object-contain`} alt="AI" onError={() => setError(true)} />;
 };
 
-export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userEmail, userName }) => {
+export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userId, userEmail, userName }) => {
   const [, setIsConnecting] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const isMutedRef = useRef(false);
@@ -87,9 +88,8 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userEmail, us
     }
   };
 
-  const archiveSession = (finalSummary: string, history: TranscriptEntry[]) => {
-    // Create a session object that includes transcript for SessionHistory
-    const session = {
+  const archiveSession = async (finalSummary: string, history: TranscriptEntry[]) => {
+    const sessionData = {
       id: `live-${Date.now()}`,
       title: finalSummary.length > 50 ? `${finalSummary.substring(0, 50)}...` : finalSummary,
       date: Date.now(),
@@ -102,9 +102,29 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userEmail, us
       }))
     };
 
+    // Save to localStorage as fallback
     const existing = JSON.parse(localStorage.getItem('tech_triage_sessions') || '[]');
-    localStorage.setItem('tech_triage_sessions', JSON.stringify([session, ...existing]));
+    localStorage.setItem('tech_triage_sessions', JSON.stringify([sessionData, ...existing]));
     window.dispatchEvent(new Event('session_saved'));
+
+    // Also save to database if user is logged in
+    if (userId) {
+      try {
+        await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            sessionType: 'video',
+            title: sessionData.title,
+            summary: finalSummary,
+            transcript: sessionData.transcript,
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to save session to database:', error);
+      }
+    }
   };
 
   // Generate a formatted "How-To Guide" PDF from the session

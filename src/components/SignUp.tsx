@@ -185,6 +185,13 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
         // Still proceed with local data if API fails
       }
 
+      // Save phone and other settings to localStorage
+      localStorage.setItem('techtriage_settings', JSON.stringify({
+        phone: formData.phone || '',
+        emailNotifications: true,
+        sessionGuideEmails: true
+      }));
+
       if (onComplete) {
         onComplete({
           id: data.user?.id,
