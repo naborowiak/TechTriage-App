@@ -16,7 +16,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx drizzle-kit introspect:*)",
       "Bash(npm run db:push:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git push:*)"
     ]
   }
 }
