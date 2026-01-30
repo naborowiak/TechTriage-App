@@ -1191,6 +1191,26 @@ const App: React.FC = () => {
         return <Login onNavigate={navigate} onLogin={handleSignupComplete} />;
       case PageView.DASHBOARD:
         if (dashboardUser) {
+          // Determine what content to show inside dashboard
+          let dashboardContent: React.ReactNode = null;
+          if (dashboardView === 'history') {
+            dashboardContent = (
+              <SessionHistory
+                userEmail={dashboardUser.email}
+                userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim()}
+                embedded
+              />
+            );
+          } else if (dashboardView === 'settings') {
+            dashboardContent = (
+              <Settings
+                user={dashboardUser}
+                onUpdateUser={handleUpdateUser}
+                embedded
+              />
+            );
+          }
+
           return (
             <Dashboard
               user={dashboardUser}
@@ -1204,20 +1224,7 @@ const App: React.FC = () => {
               activeView={dashboardView}
               onUpdateUser={handleUpdateUser}
             >
-              {dashboardView === 'history' && (
-                <SessionHistory
-                  userEmail={dashboardUser.email}
-                  userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim()}
-                  embedded
-                />
-              )}
-              {dashboardView === 'settings' && (
-                <Settings
-                  user={dashboardUser}
-                  onUpdateUser={handleUpdateUser}
-                  embedded
-                />
-              )}
+              {dashboardContent}
             </Dashboard>
           );
         }
