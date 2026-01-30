@@ -1191,25 +1191,6 @@ const App: React.FC = () => {
         return <Login onNavigate={navigate} onLogin={handleSignupComplete} />;
       case PageView.DASHBOARD:
         if (dashboardUser) {
-          // Handle dashboard sub-views
-          if (dashboardView === 'history') {
-            return (
-              <SessionHistory
-                onBack={handleBackToDashboard}
-                userEmail={dashboardUser.email}
-                userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim()}
-              />
-            );
-          }
-          if (dashboardView === 'settings') {
-            return (
-              <Settings
-                onBack={handleBackToDashboard}
-                user={dashboardUser}
-                onUpdateUser={handleUpdateUser}
-              />
-            );
-          }
           return (
             <Dashboard
               user={dashboardUser}
@@ -1219,7 +1200,25 @@ const App: React.FC = () => {
               onLogout={handleDashboardLogout}
               onOpenHistory={handleOpenHistory}
               onOpenSettings={handleOpenSettings}
-            />
+              onBackToDashboard={handleBackToDashboard}
+              activeView={dashboardView}
+              onUpdateUser={handleUpdateUser}
+            >
+              {dashboardView === 'history' && (
+                <SessionHistory
+                  userEmail={dashboardUser.email}
+                  userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim()}
+                  embedded
+                />
+              )}
+              {dashboardView === 'settings' && (
+                <Settings
+                  user={dashboardUser}
+                  onUpdateUser={handleUpdateUser}
+                  embedded
+                />
+              )}
+            </Dashboard>
           );
         }
         // If no user, redirect to signup

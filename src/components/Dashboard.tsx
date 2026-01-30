@@ -15,6 +15,10 @@ interface DashboardProps {
   onLogout: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
+  onBackToDashboard?: () => void;
+  activeView?: 'main' | 'history' | 'settings';
+  children?: React.ReactNode;
+  onUpdateUser?: (user: { firstName: string; lastName?: string; email: string }) => void;
 }
 
 interface TrialInfo {
@@ -69,7 +73,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onStartVideo,
   onLogout,
   onOpenHistory,
-  onOpenSettings
+  onOpenSettings,
+  onBackToDashboard,
+  activeView = 'main',
+  children,
+  onUpdateUser: _onUpdateUser
 }) => {
   const [trialInfo, setTrialInfo] = useState<TrialInfo>({ isActive: false });
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -129,7 +137,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <nav className="p-4 space-y-1">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white font-medium">
+          <button
+            onClick={() => { setSidebarOpen(false); if (activeView !== 'main' && onBackToDashboard) onBackToDashboard(); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              activeView === 'main' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
+          >
             <User className="w-5 h-5" />
             Dashboard
           </button>
@@ -142,14 +155,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </button>
           <button
             onClick={() => { setSidebarOpen(false); onOpenHistory(); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              activeView === 'history' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
           >
             <History className="w-5 h-5" />
             Session History
           </button>
           <button
             onClick={() => { setSidebarOpen(false); onOpenSettings(); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              activeView === 'settings' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+            }`}
           >
             <Settings className="w-5 h-5" />
             Settings
@@ -206,100 +223,104 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </header>
 
-        {/* Dashboard content */}
-        <div className="p-6 lg:p-8 max-w-6xl mx-auto">
-          {/* Welcome section */}
-          <div className="mb-8">
-            <h1 className="text-3xl lg:text-4xl font-black text-[#1F2937] mb-2">
-              Welcome, {user.firstName}!
-            </h1>
-            <p className="text-lg text-gray-500">
-              How can we help you today? Choose an option below to get started.
-            </p>
-          </div>
-
-          {/* Trial banner (mobile) */}
-          {trialInfo.isActive && (
-            <div className="sm:hidden flex items-center gap-2 px-4 py-3 mb-6 bg-orange-50 rounded-xl border border-orange-200">
-              <Clock className="w-5 h-5 text-[#F97316]" />
-              <span className="text-sm font-medium text-[#1F2937]">
-                Free Trial: {trialInfo.remainingHours}h {trialInfo.remainingMinutes}m remaining
-              </span>
+        {/* Main content area - show children if provided, otherwise dashboard content */}
+        {children ? (
+          <div className="p-6 lg:p-8">{children}</div>
+        ) : (
+          <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+            {/* Welcome section */}
+            <div className="mb-8">
+              <h1 className="text-3xl lg:text-4xl font-black text-[#1F2937] mb-2">
+                Welcome, {user.firstName}!
+              </h1>
+              <p className="text-lg text-gray-500">
+                How can we help you today? Choose an option below to get started.
+              </p>
             </div>
-          )}
 
-          {/* Main action cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <ActionCard
-              icon={<MessageSquare className="w-7 h-7" />}
-              title="Chat with AI"
-              description="Describe your issue in plain English and get instant guidance from our AI assistant."
-              buttonText="Start Chatting"
-              onClick={onStartChat}
-              highlight
-            />
-            <ActionCard
-              icon={<Camera className="w-7 h-7" />}
-              title="Upload a Photo"
-              description="Take a picture of the problem - error codes, devices, anything. We'll analyze it instantly."
-              buttonText="Upload Image"
-              onClick={onUploadImage}
-            />
-            <ActionCard
-              icon={<Video className="w-7 h-7" />}
-              title="Live Video Session"
-              description="Show us in real-time what's happening. Perfect for complex issues that need hands-on guidance."
-              buttonText="Start Video"
-              onClick={onStartVideo}
-            />
-          </div>
-
-          {/* Quick tip */}
-          <div className="mb-8">
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Tip</h2>
-            <QuickTip tip={currentTip} />
-          </div>
-
-          {/* How it works reminder */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-100">
-            <h2 className="text-lg font-bold text-[#1F2937] mb-4">How TechTriage Works</h2>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  1
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1F2937]">Describe or Show</div>
-                  <div className="text-sm text-gray-500">Tell us what's wrong or upload a photo</div>
-                </div>
+            {/* Trial banner (mobile) */}
+            {trialInfo.isActive && (
+              <div className="sm:hidden flex items-center gap-2 px-4 py-3 mb-6 bg-orange-50 rounded-xl border border-orange-200">
+                <Clock className="w-5 h-5 text-[#F97316]" />
+                <span className="text-sm font-medium text-[#1F2937]">
+                  Free Trial: {trialInfo.remainingHours}h {trialInfo.remainingMinutes}m remaining
+                </span>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  2
+            )}
+
+            {/* Main action cards */}
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <ActionCard
+                icon={<MessageSquare className="w-7 h-7" />}
+                title="Chat with AI"
+                description="Describe your issue in plain English and get instant guidance from our AI assistant."
+                buttonText="Start Chatting"
+                onClick={onStartChat}
+                highlight
+              />
+              <ActionCard
+                icon={<Camera className="w-7 h-7" />}
+                title="Upload a Photo"
+                description="Take a picture of the problem - error codes, devices, anything. We'll analyze it instantly."
+                buttonText="Upload Image"
+                onClick={onUploadImage}
+              />
+              <ActionCard
+                icon={<Video className="w-7 h-7" />}
+                title="Live Video Session"
+                description="Show us in real-time what's happening. Perfect for complex issues that need hands-on guidance."
+                buttonText="Start Video"
+                onClick={onStartVideo}
+              />
+            </div>
+
+            {/* Quick tip */}
+            <div className="mb-8">
+              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Tip</h2>
+              <QuickTip tip={currentTip} />
+            </div>
+
+            {/* How it works reminder */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100">
+              <h2 className="text-lg font-bold text-[#1F2937] mb-4">How TechTriage Works</h2>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    1
+                  </div>
+                  <div>
+                    <div className="font-semibold text-[#1F2937]">Describe or Show</div>
+                    <div className="text-sm text-gray-500">Tell us what's wrong or upload a photo</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-semibold text-[#1F2937]">Get Diagnosis</div>
-                  <div className="text-sm text-gray-500">Our AI analyzes and identifies the issue</div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    2
+                  </div>
+                  <div>
+                    <div className="font-semibold text-[#1F2937]">Get Diagnosis</div>
+                    <div className="text-sm text-gray-500">Our AI analyzes and identifies the issue</div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  3
-                </div>
-                <div>
-                  <div className="font-semibold text-[#1F2937]">Fix It</div>
-                  <div className="text-sm text-gray-500">Follow our step-by-step guidance</div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    3
+                  </div>
+                  <div>
+                    <div className="font-semibold text-[#1F2937]">Fix It</div>
+                    <div className="text-sm text-gray-500">Follow our step-by-step guidance</div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Safety note */}
-          <div className="mt-6 flex items-center gap-3 text-sm text-gray-500">
-            <Shield className="w-5 h-5 text-[#F97316]" />
-            <span>Your data is encrypted and never shared. We prioritize your privacy and safety.</span>
+            {/* Safety note */}
+            <div className="mt-6 flex items-center gap-3 text-sm text-gray-500">
+              <Shield className="w-5 h-5 text-[#F97316]" />
+              <span>Your data is encrypted and never shared. We prioritize your privacy and safety.</span>
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Logout Confirmation Modal */}

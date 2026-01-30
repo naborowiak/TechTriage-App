@@ -3,9 +3,10 @@ import { ArrowLeft, Calendar, Clock, Download, Trash2, MessageSquare, Video, Cam
 import jsPDF from 'jspdf';
 
 interface SessionHistoryProps {
-  onBack: () => void;
+  onBack?: () => void;
   userEmail?: string;
   userName?: string;
+  embedded?: boolean;
 }
 
 interface SavedSession {
@@ -21,7 +22,7 @@ interface SavedSession {
   }>;
 }
 
-export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmail: _userEmail, userName }) => {
+export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmail: _userEmail, userName, embedded = false }) => {
   const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<SavedSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,25 +175,8 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
     doc.save(`TechTriage_Guide_${new Date(session.date).toISOString().split('T')[0]}.pdf`);
   };
 
-  return (
-    <div className="min-h-screen bg-[#F9FAFB]">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-[#1F2937]" />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-[#1F2937]">Session History</h1>
-            <p className="text-sm text-gray-500">Review your past support sessions</p>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto p-6 lg:p-8">
+  const content = (
+    <>
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
@@ -339,6 +323,41 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
             )}
           </div>
         </div>
+    </>
+  );
+
+  // If embedded, just return the content
+  if (embedded) {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-[#1F2937]">Session History</h1>
+          <p className="text-sm text-gray-500">Review your past support sessions</p>
+        </div>
+        {content}
+      </div>
+    );
+  }
+
+  // Full page mode with header
+  return (
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto flex items-center gap-4">
+          <button
+            onClick={onBack}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-[#1F2937]" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-[#1F2937]">Session History</h1>
+            <p className="text-sm text-gray-500">Review your past support sessions</p>
+          </div>
+        </div>
+      </header>
+      <div className="max-w-6xl mx-auto p-6 lg:p-8">
+        {content}
       </div>
     </div>
   );

@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, User, Bell, Shield, Trash2, Mail, Phone, Save, CheckCircle } from 'lucide-react';
 
 interface SettingsProps {
-  onBack: () => void;
+  onBack?: () => void;
   user: {
     firstName: string;
     lastName?: string;
     email: string;
   };
   onUpdateUser: (user: { firstName: string; lastName?: string; email: string }) => void;
+  embedded?: boolean;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser }) => {
+export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser, embedded = false }) => {
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName || '');
   const [email, setEmail] = useState(user.email);
@@ -71,25 +72,8 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser }
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F9FAFB]">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
-        <div className="max-w-3xl mx-auto flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-[#1F2937]" />
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-[#1F2937]">Settings</h1>
-            <p className="text-sm text-gray-500">Manage your account and preferences</p>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-3xl mx-auto p-6 lg:p-8 space-y-6">
+  const content = (
+    <div className="space-y-6">
         {/* Profile Section */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100">
@@ -249,6 +233,41 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser }
             </>
           )}
         </button>
+      </div>
+  );
+
+  // If embedded, just return the content
+  if (embedded) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-[#1F2937]">Settings</h1>
+          <p className="text-sm text-gray-500">Manage your account and preferences</p>
+        </div>
+        {content}
+      </div>
+    );
+  }
+
+  // Full page mode with header
+  return (
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
+        <div className="max-w-3xl mx-auto flex items-center gap-4">
+          <button
+            onClick={onBack}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-[#1F2937]" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-[#1F2937]">Settings</h1>
+            <p className="text-sm text-gray-500">Manage your account and preferences</p>
+          </div>
+        </div>
+      </header>
+      <div className="max-w-3xl mx-auto p-6 lg:p-8">
+        {content}
       </div>
     </div>
   );
