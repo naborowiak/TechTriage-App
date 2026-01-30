@@ -333,7 +333,7 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
               onClick={onFreeTrial}
               className="shadow-xl shadow-orange-500/30 text-lg px-10"
             >
-              Free Trial
+              Start Free Trial
             </Button>
             <Button
               variant="outline"
@@ -1094,9 +1094,7 @@ const App: React.FC = () => {
   };
 
   const handleFreeTrial = () => {
-    chatRef.current?.open(
-      "I want to learn how TechTriage can help with my home tech issues.",
-    );
+    navigate(PageView.SIGNUP);
   };
 
   const handleNavigateToSignup = (email?: string | React.MouseEvent) => {
@@ -1141,7 +1139,13 @@ const App: React.FC = () => {
 
   // Show live support fullscreen if active
   if (showLiveSupport) {
-    return <LiveSupport onClose={() => setShowLiveSupport(false)} />;
+    return (
+      <LiveSupport
+        onClose={() => setShowLiveSupport(false)}
+        userEmail={dashboardUser?.email}
+        userName={dashboardUser ? `${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim() : undefined}
+      />
+    );
   }
 
   const renderContent = () => {

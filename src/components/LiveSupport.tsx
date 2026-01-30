@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Mic, MicOff, PhoneOff, CheckCircle, Radio, MessageSquare, ChevronRight, User, Download, Copy, FileText, History, LifeBuoy, Flashlight, FlashlightOff } from 'lucide-react';
+import { X, Mic, MicOff, PhoneOff, CheckCircle, Radio, MessageSquare, ChevronRight, User, Download, Copy, FileText, History, LifeBuoy, Flashlight, FlashlightOff, Mail, Loader2 } from 'lucide-react';
 import { Logo } from './Logo';
 import { UserRole, ChatMessage, SavedSession } from '../types';
+import jsPDF from 'jspdf';
 
 interface LiveSupportProps {
   onClose: () => void;
+  userEmail?: string;
+  userName?: string;
 }
 
 interface TranscriptEntry {
@@ -13,12 +16,13 @@ interface TranscriptEntry {
   timestamp: number;
 }
 
-const Button: React.FC<{ 
-  children: React.ReactNode; 
-  className?: string; 
+const Button: React.FC<{
+  children: React.ReactNode;
+  className?: string;
   variant?: 'primary' | 'danger' | 'gold' | 'glass' | 'outline';
-  onClick?: () => void 
-}> = ({ children, className = '', variant = 'gold', onClick }) => {
+  onClick?: () => void;
+  disabled?: boolean;
+}> = ({ children, className = '', variant = 'gold', onClick, disabled = false }) => {
   const themes = {
     primary: "bg-cta-500 hover:bg-cta-600 text-white shadow-lg shadow-cta-500/20",
     danger: "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20",
@@ -27,9 +31,10 @@ const Button: React.FC<{
     outline: "bg-transparent border-2 border-gray-200 text-gray-600 hover:border-cta-500 hover:text-cta-500"
   };
   return (
-    <button 
-      onClick={onClick} 
-      className={`px-8 py-4 rounded-[1.5rem] font-bold uppercase tracking-widest text-[10px] transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 ${themes[variant]} ${className}`}
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`px-8 py-4 rounded-[1.5rem] font-bold uppercase tracking-widest text-[10px] transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 ${themes[variant]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {children}
     </button>
@@ -42,19 +47,22 @@ const BotAvatar = ({ className }: { className: string }) => {
   return <img src="/Tech_Triage.png" className={`${className} object-contain`} alt="AI" onError={() => setError(true)} />;
 };
 
-export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
+export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userEmail, userName }) => {
   const [, setIsConnecting] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const isMutedRef = useRef(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-  const [isSessionEnded] = useState(false);
-  const [summary] = useState('');
+  const [isSessionEnded, setIsSessionEnded] = useState(false);
+  const [summary, setSummary] = useState('');
   const [status, setStatus] = useState<'listening' | 'thinking' | 'speaking'>('listening');
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
   const [transcriptHistory, setTranscriptHistory] = useState<TranscriptEntry[]>([]);
   const [isCopied, setIsCopied] = useState(false);
   const [isFlashlightOn, setIsFlashlightOn] = useState(false);
   const [hasFlashlight, setHasFlashlight] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,11 +110,198 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
     return _archiveSession;
   };
 
+  // Generate a formatted "How-To Guide" PDF from the session
+  const generateSessionGuidePDF = (): string => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+    let yPosition = margin;
+
+    // Helper function to add text with word wrap
+    const addWrappedText = (text: string, fontSize: number, isBold: boolean = false) => {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+      const lines = doc.splitTextToSize(text, contentWidth);
+
+      for (const line of lines) {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = margin;
+        }
+        doc.text(line, margin, yPosition);
+        yPosition += fontSize * 0.5;
+      }
+      yPosition += 5;
+    };
+
+    // Header
+    doc.setFillColor(31, 41, 55); // brand-900
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TechTriage', margin, 25);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Your Personal Tech Support Guide', margin, 33);
+
+    yPosition = 55;
+    doc.setTextColor(31, 41, 55);
+
+    // Title
+    addWrappedText('Session Summary & How-To Guide', 18, true);
+    yPosition += 5;
+
+    // Date and user info
+    doc.setTextColor(107, 114, 128);
+    addWrappedText(`Date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, 10);
+    if (userName) {
+      addWrappedText(`Prepared for: ${userName}`, 10);
+    }
+    yPosition += 10;
+
+    // Summary section
+    doc.setTextColor(249, 115, 22); // cta-500
+    addWrappedText('ISSUE SUMMARY', 12, true);
+    doc.setTextColor(31, 41, 55);
+    addWrappedText(summary || 'No summary available', 11);
+    yPosition += 10;
+
+    // Extract key steps from the transcript
+    const aiMessages = transcriptHistory.filter(e => e.role === 'model');
+    const userMessages = transcriptHistory.filter(e => e.role === 'user');
+
+    // Conversation overview
+    doc.setTextColor(249, 115, 22);
+    addWrappedText('WHAT WE DISCUSSED', 12, true);
+    doc.setTextColor(31, 41, 55);
+
+    if (userMessages.length > 0) {
+      addWrappedText(`You described: "${userMessages[0]?.text?.substring(0, 200)}${userMessages[0]?.text?.length > 200 ? '...' : ''}"`, 10);
+      yPosition += 5;
+    }
+
+    // Key instructions/steps section
+    doc.setTextColor(249, 115, 22);
+    addWrappedText('STEP-BY-STEP GUIDE', 12, true);
+    doc.setTextColor(31, 41, 55);
+
+    let stepNumber = 1;
+    for (const msg of aiMessages) {
+      // Skip very short messages
+      if (msg.text.length < 20) continue;
+
+      addWrappedText(`Step ${stepNumber}: ${msg.text}`, 10);
+      yPosition += 3;
+      stepNumber++;
+
+      // Limit to 10 steps for readability
+      if (stepNumber > 10) break;
+    }
+
+    yPosition += 10;
+
+    // Full transcript section
+    doc.setTextColor(249, 115, 22);
+    addWrappedText('FULL CONVERSATION TRANSCRIPT', 12, true);
+    doc.setTextColor(31, 41, 55);
+
+    for (const entry of transcriptHistory) {
+      const time = new Date(entry.timestamp).toLocaleTimeString();
+      const speaker = entry.role === 'user' ? 'You' : 'TechTriage AI';
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text(`[${time}] ${speaker}:`, margin, yPosition);
+      yPosition += 5;
+      doc.setFont('helvetica', 'normal');
+      addWrappedText(entry.text, 9);
+      yPosition += 3;
+    }
+
+    // Footer
+    yPosition += 10;
+    doc.setDrawColor(229, 231, 235);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 10;
+    doc.setTextColor(107, 114, 128);
+    doc.setFontSize(8);
+    doc.text('This guide was automatically generated by TechTriage AI.', margin, yPosition);
+    yPosition += 4;
+    doc.text('For additional support, visit techtriage.com or start a new session.', margin, yPosition);
+    yPosition += 4;
+    doc.text(`Generated: ${new Date().toISOString()}`, margin, yPosition);
+
+    // Return as base64
+    return doc.output('datauristring').split(',')[1];
+  };
+
+  // Download the PDF guide
+  const handleDownloadGuide = () => {
+    const pdfBase64 = generateSessionGuidePDF();
+
+    // Create blob from base64
+    const byteCharacters = atob(pdfBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TechTriage_Guide_${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Send the guide via email
+  const handleSendGuideEmail = async () => {
+    if (!userEmail) {
+      setEmailError('No email address available');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    setEmailError(null);
+
+    try {
+      const pdfBase64 = generateSessionGuidePDF();
+
+      const response = await fetch('/api/send-session-guide', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userEmail,
+          userName: userName || 'Valued Customer',
+          summary: summary,
+          pdfBase64: pdfBase64,
+          sessionDate: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+
+      setEmailSent(true);
+    } catch (error) {
+      console.error('Error sending guide email:', error);
+      setEmailError('Failed to send email. Please try downloading instead.');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   const handleDownloadReport = () => {
     const header = `TECHTRIAGE LIVE REPORT\nDate: ${new Date().toLocaleString()}\nSummary: ${summary}\n\nCONVERSATION TRANSCRIPT:\n`;
     const body = transcriptHistory.map(e => `[${new Date(e.timestamp).toLocaleTimeString()}] ${e.role.toUpperCase()}: ${e.text}`).join('\n\n');
     const footer = `\n\n--- END OF REPORT ---\nSecurity Verified By TechTriage AI`;
-    
+
     const blob = new Blob([header + body + footer], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -400,10 +595,25 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
                 text: message.data,
                 timestamp: Date.now()
               }]);
+            } else if (message.type === 'userTranscript') {
+              console.log('User said:', message.data);
+              // Add user's spoken words to transcript
+              setTranscriptHistory(prev => [...prev, {
+                role: 'user',
+                text: message.data,
+                timestamp: Date.now()
+              }]);
             } else if (message.type === 'turnComplete') {
               setStatus('listening');
             } else if (message.type === 'error') {
               console.error('Server error:', message.message);
+            } else if (message.type === 'endSession') {
+              console.log('Session ended:', message.summary);
+              setSummary(message.summary || 'Session completed');
+              setIsSessionEnded(true);
+              setStatus('listening');
+              // Stop hardware when session ends
+              stopAllHardware();
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -583,9 +793,28 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
-                        <Button variant="primary" onClick={handleDownloadReport} className="w-full">
-                            <Download className="w-4 h-4" /> Download Report
+                        <Button variant="primary" onClick={handleDownloadGuide} className="w-full">
+                            <Download className="w-4 h-4" /> Download PDF Guide
                         </Button>
+                        {userEmail && !emailSent && (
+                          <Button
+                            variant="outline"
+                            onClick={handleSendGuideEmail}
+                            className="w-full"
+                            disabled={isSendingEmail}
+                          >
+                            {isSendingEmail ? (
+                              <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
+                            ) : (
+                              <><Mail className="w-4 h-4" /> Email Guide</>
+                            )}
+                          </Button>
+                        )}
+                        {emailSent && (
+                          <div className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-green-50 rounded-[1.5rem] border-2 border-green-200 text-green-700 font-bold text-[10px] uppercase tracking-widest">
+                            <CheckCircle className="w-4 h-4" /> Guide Sent!
+                          </div>
+                        )}
                         <Button variant="outline" onClick={() => setIsTranscriptOpen(true)} className="w-full">
                             <MessageSquare className="w-4 h-4" /> Review Chat
                         </Button>
@@ -593,10 +822,20 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose }) => {
                            <History className="w-4 h-4" /> Finish & Exit
                         </Button>
                     </div>
-                    
+
+                    {emailError && (
+                      <div className="mt-4 p-4 bg-red-50 rounded-xl border border-red-200 text-red-700 text-sm text-center">
+                        {emailError}
+                      </div>
+                    )}
+
                     <div className="mt-8 text-center">
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          A full recap has been saved to your <span className="text-cta-500 underline">Archive</span>
+                          {emailSent ? (
+                            <>Your guide has been sent to <span className="text-cta-500">{userEmail}</span></>
+                          ) : (
+                            <>A full recap has been saved to your <span className="text-cta-500 underline">Archive</span></>
+                          )}
                         </p>
                     </div>
                  </div>

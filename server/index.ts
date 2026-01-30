@@ -7,6 +7,7 @@ import { GoogleGenAI, Modality, Type } from "@google/genai";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import nodemailer from "nodemailer";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -193,6 +194,118 @@ app.post("/api/audit/chat", (req, res) => {
   res.json({ logged: true });
 });
 
+// Email transporter configuration
+// In production, use a real email service (SendGrid, AWS SES, etc.)
+const createEmailTransporter = () => {
+  // Check for email configuration
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+
+  // Fallback: Use ethereal for testing (creates a test account)
+  console.log("No SMTP config found - email sending will be simulated");
+  return null;
+};
+
+// Send session guide via email
+app.post("/api/send-session-guide", async (req, res) => {
+  const { email, userName, summary, pdfBase64, sessionDate } = req.body;
+
+  if (!email || !pdfBase64) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  console.log(`[EMAIL] Sending session guide to ${email}`);
+
+  const transporter = createEmailTransporter();
+
+  if (!transporter) {
+    // Simulate email sending in development
+    console.log("[EMAIL] Simulated email send to:", email);
+    console.log("[EMAIL] Subject: Your TechTriage Session Guide");
+    console.log("[EMAIL] PDF attachment size:", pdfBase64.length, "bytes");
+    return res.json({ success: true, simulated: true });
+  }
+
+  try {
+    const pdfBuffer = Buffer.from(pdfBase64, "base64");
+    const dateStr = new Date(sessionDate).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"TechTriage Support" <support@techtriage.com>',
+      to: email,
+      subject: `Your TechTriage Session Guide - ${dateStr}`,
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #1F2937; padding: 30px; border-radius: 16px 16px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800;">TechTriage</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">Your Personal Tech Support Guide</p>
+          </div>
+
+          <div style="background-color: #F9FAFB; padding: 30px; border: 1px solid #E5E7EB; border-top: none;">
+            <h2 style="color: #1F2937; margin: 0 0 16px 0; font-size: 22px;">Hi ${userName}!</h2>
+
+            <p style="color: #4B5563; font-size: 16px; line-height: 1.6;">
+              Thank you for using TechTriage! We've put together a personalized guide based on your recent support session.
+            </p>
+
+            <div style="background-color: white; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; margin: 24px 0;">
+              <h3 style="color: #F97316; margin: 0 0 12px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Session Summary</h3>
+              <p style="color: #1F2937; font-size: 16px; font-weight: 600; margin: 0; line-height: 1.5;">${summary || "Session completed successfully"}</p>
+            </div>
+
+            <p style="color: #4B5563; font-size: 16px; line-height: 1.6;">
+              Your complete how-to guide is attached as a PDF. It includes:
+            </p>
+
+            <ul style="color: #4B5563; font-size: 15px; line-height: 1.8; padding-left: 20px;">
+              <li>Step-by-step instructions we discussed</li>
+              <li>Full conversation transcript</li>
+              <li>Key troubleshooting tips</li>
+            </ul>
+
+            <p style="color: #4B5563; font-size: 16px; line-height: 1.6;">
+              Save this guide for future reference - it's tailored specifically to your situation!
+            </p>
+          </div>
+
+          <div style="background-color: #1F2937; padding: 24px; border-radius: 0 0 16px 16px; text-align: center;">
+            <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin: 0;">
+              Need more help? Start a new session at <a href="https://techtriage.com" style="color: #F97316;">techtriage.com</a>
+            </p>
+          </div>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `TechTriage_Guide_${new Date(sessionDate).toISOString().split("T")[0]}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
+    console.log("[EMAIL] Successfully sent to:", email);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[EMAIL] Failed to send:", error);
+    res.status(500).json({ error: "Failed to send email" });
+  }
+});
+
 // Available voices with their characteristics for variety
 const VOICES = [
   { name: "Kore", style: "firm and professional" },
@@ -347,6 +460,17 @@ async function setupGeminiLive(ws: WebSocket) {
               ws.send(JSON.stringify({ type: "interrupted" }));
             }
 
+            // Handle user speech transcription
+            if (message.serverContent?.inputTranscript) {
+              console.log("User transcript:", message.serverContent.inputTranscript);
+              ws.send(
+                JSON.stringify({
+                  type: "userTranscript",
+                  data: message.serverContent.inputTranscript,
+                }),
+              );
+            }
+
             if (message.toolCall) {
               const functionCall = message.toolCall.functionCalls?.[0];
               if (functionCall?.name === "endSession") {
@@ -400,6 +524,8 @@ async function setupGeminiLive(ws: WebSocket) {
             },
           },
         },
+        // Enable real-time transcription of user's speech
+        inputAudioTranscription: {},
         tools: [
           {
             functionDeclarations: [
