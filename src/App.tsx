@@ -29,6 +29,8 @@ import { Pricing } from "./components/Pricing";
 import { SignUp } from "./components/SignUp";
 import { Login } from "./components/Login";
 import { Dashboard } from "./components/Dashboard";
+import { SessionHistory } from "./components/SessionHistory";
+import { Settings } from "./components/Settings";
 import { useTheme } from "./context/ThemeContext";
 import { useAuth } from "./hooks/useAuth";
 import { LiveSupport } from "./components/LiveSupport";
@@ -1029,6 +1031,7 @@ const getInitialView = (): PageView => {
 
 // Dashboard user interface
 interface DashboardUser {
+  id?: string;
   firstName: string;
   lastName?: string;
   email: string;
@@ -1047,11 +1050,14 @@ const getStoredUser = (): DashboardUser | null => {
   return null;
 };
 
+type DashboardView = 'main' | 'history' | 'settings';
+
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);
   const [capturedEmail, setCapturedEmail] = useState("");
   const [dashboardUser, setDashboardUser] = useState<DashboardUser | null>(getStoredUser);
   const [showLiveSupport, setShowLiveSupport] = useState(false);
+  const [dashboardView, setDashboardView] = useState<DashboardView>('main');
   const chatRef = useRef<ChatWidgetHandle>(null);
 
   // Check if user should see dashboard on initial load
@@ -1132,9 +1138,26 @@ const App: React.FC = () => {
 
   const handleDashboardLogout = () => {
     setDashboardUser(null);
+    setDashboardView('main');
     localStorage.removeItem('techtriage_user');
     localStorage.removeItem('techtriage_trial');
     navigate(PageView.HOME);
+  };
+
+  const handleOpenHistory = () => {
+    setDashboardView('history');
+  };
+
+  const handleOpenSettings = () => {
+    setDashboardView('settings');
+  };
+
+  const handleBackToDashboard = () => {
+    setDashboardView('main');
+  };
+
+  const handleUpdateUser = (updatedUser: DashboardUser) => {
+    setDashboardUser(updatedUser);
   };
 
   // Show live support fullscreen if active
@@ -1164,9 +1187,28 @@ const App: React.FC = () => {
           />
         );
       case PageView.LOGIN:
-        return <Login onNavigate={navigate} />;
+        return <Login onNavigate={navigate} onLogin={handleSignupComplete} />;
       case PageView.DASHBOARD:
         if (dashboardUser) {
+          // Handle dashboard sub-views
+          if (dashboardView === 'history') {
+            return (
+              <SessionHistory
+                onBack={handleBackToDashboard}
+                userEmail={dashboardUser.email}
+                userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim()}
+              />
+            );
+          }
+          if (dashboardView === 'settings') {
+            return (
+              <Settings
+                onBack={handleBackToDashboard}
+                user={dashboardUser}
+                onUpdateUser={handleUpdateUser}
+              />
+            );
+          }
           return (
             <Dashboard
               user={dashboardUser}
@@ -1174,6 +1216,8 @@ const App: React.FC = () => {
               onUploadImage={handleDashboardUploadImage}
               onStartVideo={handleDashboardStartVideo}
               onLogout={handleDashboardLogout}
+              onOpenHistory={handleOpenHistory}
+              onOpenSettings={handleOpenSettings}
             />
           );
         }

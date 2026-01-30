@@ -1,19 +1,78 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Shield, Zap, Clock } from 'lucide-react';
 import { Logo } from './Logo';
 import { PageView } from '../types';
 
 interface LoginProps {
   onNavigate: (view: PageView) => void;
+  onLogin?: (user: { id?: string; firstName: string; lastName?: string; email: string }) => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
+export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
     window.location.href = '/auth/google';
+  };
+
+  const handleLogin = async () => {
+    setError(null);
+
+    // Basic validation
+    if (!email || !password) {
+      setError('Please enter your email and password.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Call login API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Invalid email or password.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Login successful
+      const user = {
+        id: data.user.id,
+        firstName: data.user.firstName || email.split('@')[0],
+        lastName: data.user.lastName || '',
+        email: data.user.email,
+      };
+
+      // Store in localStorage for persistence
+      localStorage.setItem('techtriage_user', JSON.stringify(user));
+
+      if (onLogin) {
+        onLogin(user);
+      } else {
+        onNavigate(PageView.DASHBOARD);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,8 +122,26 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 Forgot password?
               </button>
 
-              <button className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-xl py-4 rounded-lg transition-colors">
-                Log In
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
+
+              <button
+                onClick={handleLogin}
+                disabled={isLoading}
+                className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-xl py-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Logging in...
+                  </>
+                ) : (
+                  'Log In'
+                )}
               </button>
 
               <div className="flex items-center gap-4 my-6">
@@ -112,23 +189,59 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center justify-center bg-[#F9FAFB] p-12">
-          <div className="max-w-md">
-            <div className="bg-[#1F2937] rounded-xl overflow-hidden mb-6">
-              <div className="p-4 text-white text-center">
-                <div className="text-xs font-bold uppercase opacity-60 mb-1">March 4, 2026</div>
-                <div className="text-2xl font-black">TECHTRIAGE SUMMIT</div>
-                <div className="text-sm opacity-80">FREE ONLINE EVENT</div>
-              </div>
-              <div className="bg-gradient-to-r from-[#F97316] to-[#EA580C] h-2"></div>
-            </div>
-            
-            <h3 className="text-3xl font-black text-[#1F2937] mb-4">
-              Make your first million or your next
+        <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-[#1F2937] to-[#374151] p-12">
+          <div className="max-w-md text-white">
+            <h3 className="text-3xl font-black mb-6 leading-tight">
+              Welcome back to smarter home tech support
             </h3>
-            <p className="text-gray-600 text-lg leading-relaxed">
-              Join over 30,000 service pros for a day of learning built for blue collar. Get expert advice and walk away with the next steps you need to grow your business with confidence.
+            <p className="text-white/70 text-lg leading-relaxed mb-8">
+              Your personalized support dashboard is just a login away. Pick up where you left off or start a new session.
             </p>
+
+            <div className="space-y-4">
+              <div className="flex items-start gap-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                <div className="w-10 h-10 bg-[#F97316] rounded-lg flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Session History</div>
+                  <div className="text-white/60 text-sm">Access all your past sessions and guides anytime</div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                <div className="w-10 h-10 bg-[#F97316] rounded-lg flex items-center justify-center shrink-0">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Instant Support</div>
+                  <div className="text-white/60 text-sm">Get help in seconds with AI-powered diagnostics</div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                <div className="w-10 h-10 bg-[#F97316] rounded-lg flex items-center justify-center shrink-0">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">Secure & Private</div>
+                  <div className="text-white/60 text-sm">Your data is encrypted and never shared</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center text-white text-xs font-bold border-2 border-[#1F2937]">J</div>
+                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold border-2 border-[#1F2937]">M</div>
+                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold border-2 border-[#1F2937]">S</div>
+                </div>
+                <div className="text-white/60 text-sm">
+                  <span className="text-white font-semibold">10,000+</span> homeowners helped this month
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

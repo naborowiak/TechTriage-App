@@ -7,7 +7,7 @@ interface SignUpProps {
   onStart: () => void;
   initialEmail?: string;
   onSpeakToExpert?: () => void;
-  onComplete?: (user: { firstName: string; lastName?: string; email: string }) => void;
+  onComplete?: (user: { id?: string; firstName: string; lastName?: string; email: string }) => void;
 }
 
 type OnboardingStep = 'credentials' | 'profile' | 'home' | 'needs' | 'complete';
@@ -156,17 +156,57 @@ export const SignUp: React.FC<SignUpProps> = ({ onStart, initialEmail = '', onSp
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     console.log('Onboarding complete:', formData);
 
-    if (onComplete) {
-      onComplete({
-        firstName: formData.firstName,
-        lastName: formData.lastName || undefined,
-        email: formData.email
+    try {
+      // Register user in database
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          homeType: formData.homeType,
+          techComfort: formData.techComfort,
+          householdSize: formData.householdSize,
+          primaryIssues: formData.primaryIssues,
+          howHeard: formData.howHeard,
+        }),
       });
-    } else {
-      onStart();
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        console.error('Registration failed:', data.error);
+        // Still proceed with local data if API fails
+      }
+
+      if (onComplete) {
+        onComplete({
+          id: data.user?.id,
+          firstName: formData.firstName,
+          lastName: formData.lastName || undefined,
+          email: formData.email
+        });
+      } else {
+        onStart();
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Fallback to local completion
+      if (onComplete) {
+        onComplete({
+          firstName: formData.firstName,
+          lastName: formData.lastName || undefined,
+          email: formData.email
+        });
+      } else {
+        onStart();
+      }
     }
   };
 

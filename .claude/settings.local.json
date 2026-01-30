@@ -13,7 +13,9 @@
       "Bash(npm run build:*)",
       "Bash(find:*)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx drizzle-kit introspect:*)",
+      "Bash(npm run db:push:*)"
     ]
   }
 }

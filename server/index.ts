@@ -8,6 +8,7 @@ import session from "express-session";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import nodemailer from "nodemailer";
+import * as authService from "./services/authService";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -24,7 +25,230 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Trial tracking storage (in-memory for now, use database in production)
+// ============================================
+// Authentication API Endpoints (Database)
+// ============================================
+
+// Register new user
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      homeType,
+      techComfort,
+      householdSize,
+      primaryIssues,
+      howHeard,
+    } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+
+    const result = await authService.registerUser({
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      homeType,
+      techComfort,
+      householdSize,
+      primaryIssues,
+      howHeard,
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, user: result.user });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ error: "Registration failed. Please try again." });
+  }
+});
+
+// Login user
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const result = await authService.loginUser(email, password);
+
+    if (!result.success) {
+      return res.status(401).json({ error: result.error });
+    }
+
+    res.json({ success: true, user: result.user });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed. Please try again." });
+  }
+});
+
+// Get user by ID
+app.get("/api/auth/user/:id", async (req, res) => {
+  try {
+    const user = await authService.getUserById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      profileImageUrl: user.profileImageUrl,
+      emailNotifications: user.emailNotifications,
+      sessionGuideEmails: user.sessionGuideEmails,
+    });
+  } catch (error) {
+    console.error("Get user error:", error);
+    res.status(500).json({ error: "Failed to get user" });
+  }
+});
+
+// Update user profile
+app.put("/api/auth/user/:id", async (req, res) => {
+  try {
+    const { firstName, lastName, phone, emailNotifications, sessionGuideEmails } = req.body;
+    const updatedUser = await authService.updateUserProfile(req.params.id, {
+      firstName,
+      lastName,
+      phone,
+      emailNotifications,
+      sessionGuideEmails,
+    });
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error("Update user error:", error);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+// Delete user account
+app.delete("/api/auth/user/:id", async (req, res) => {
+  try {
+    await authService.deleteUser(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Delete user error:", error);
+    res.status(500).json({ error: "Failed to delete account" });
+  }
+});
+
+// ============================================
+// Support Sessions API Endpoints
+// ============================================
+
+// Save a support session
+app.post("/api/sessions", async (req, res) => {
+  try {
+    const { userId, sessionType, title, summary, transcript } = req.body;
+    const session = await authService.saveSession({
+      userId,
+      sessionType,
+      title,
+      summary,
+      transcript,
+    });
+    res.json({ success: true, session });
+  } catch (error) {
+    console.error("Save session error:", error);
+    res.status(500).json({ error: "Failed to save session" });
+  }
+});
+
+// Get user's sessions
+app.get("/api/sessions/:userId", async (req, res) => {
+  try {
+    const sessions = await authService.getUserSessions(req.params.userId);
+    res.json({ sessions });
+  } catch (error) {
+    console.error("Get sessions error:", error);
+    res.status(500).json({ error: "Failed to get sessions" });
+  }
+});
+
+// Delete a session
+app.delete("/api/sessions/:sessionId", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    await authService.deleteSession(req.params.sessionId, userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Delete session error:", error);
+    res.status(500).json({ error: "Failed to delete session" });
+  }
+});
+
+// Delete all user sessions
+app.delete("/api/sessions/user/:userId", async (req, res) => {
+  try {
+    await authService.deleteAllUserSessions(req.params.userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Delete all sessions error:", error);
+    res.status(500).json({ error: "Failed to delete sessions" });
+  }
+});
+
+// ============================================
+// Trial Management (Database)
+// ============================================
+
+// Check trial eligibility (database version)
+app.post("/api/trial/check-db", async (req, res) => {
+  try {
+    const { email, fingerprint } = req.body;
+    const ip = getClientIP(req);
+    const result = await authService.checkTrialEligibility(email, ip, fingerprint);
+    res.json(result);
+  } catch (error) {
+    console.error("Trial check error:", error);
+    res.status(500).json({ error: "Failed to check trial eligibility" });
+  }
+});
+
+// Start trial (database version)
+app.post("/api/trial/start-db", async (req, res) => {
+  try {
+    const { email, fingerprint } = req.body;
+    const ip = getClientIP(req);
+    const result = await authService.startTrial(email, ip, fingerprint);
+    res.json(result);
+  } catch (error) {
+    console.error("Start trial error:", error);
+    res.status(500).json({ error: "Failed to start trial" });
+  }
+});
+
+// Get trial status (database version)
+app.get("/api/trial/status/:email", async (req, res) => {
+  try {
+    const result = await authService.getTrialStatus(req.params.email);
+    res.json(result);
+  } catch (error) {
+    console.error("Trial status error:", error);
+    res.status(500).json({ error: "Failed to get trial status" });
+  }
+});
+
+// Trial tracking storage (in-memory fallback for development)
 interface TrialRecord {
   email: string;
   ip: string;
@@ -437,19 +661,20 @@ async function setupGeminiLive(ws: WebSocket) {
                     }),
                   );
                 }
-                if (part.text) {
-                  console.log(
-                    "Sending text to client:",
-                    part.text.substring(0, 100),
-                  );
-                  ws.send(
-                    JSON.stringify({
-                      type: "text",
-                      data: part.text,
-                    }),
-                  );
-                }
+                // Note: We no longer send part.text as it contains internal reasoning
+                // The actual spoken words come from outputTranscript instead
               }
+            }
+
+            // Handle AI's spoken transcript (what the AI actually says)
+            if (message.serverContent?.outputTranscript) {
+              console.log("AI spoken transcript:", message.serverContent.outputTranscript);
+              ws.send(
+                JSON.stringify({
+                  type: "aiTranscript",
+                  data: message.serverContent.outputTranscript,
+                }),
+              );
             }
 
             if (message.serverContent?.turnComplete) {
@@ -524,8 +749,9 @@ async function setupGeminiLive(ws: WebSocket) {
             },
           },
         },
-        // Enable real-time transcription of user's speech
+        // Enable real-time transcription of user's speech and AI's speech
         inputAudioTranscription: {},
+        outputAudioTranscription: {},
         tools: [
           {
             functionDeclarations: [

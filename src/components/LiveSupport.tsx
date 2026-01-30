@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Mic, MicOff, PhoneOff, CheckCircle, Radio, MessageSquare, ChevronRight, User, Download, Copy, FileText, History, LifeBuoy, Flashlight, FlashlightOff, Mail, Loader2 } from 'lucide-react';
 import { Logo } from './Logo';
-import { UserRole, ChatMessage, SavedSession } from '../types';
 import jsPDF from 'jspdf';
 
 interface LiveSupportProps {
@@ -88,26 +87,24 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userEmail, us
     }
   };
 
-  const _archiveSession = (finalSummary: string, history: TranscriptEntry[]) => {
-    const chatMessages: ChatMessage[] = history.map((entry, idx) => ({
-      id: `live-${idx}-${entry.timestamp}`,
-      role: entry.role === 'user' ? UserRole.USER : UserRole.MODEL,
-      text: entry.text,
-      timestamp: entry.timestamp
-    }));
-
-    const session: SavedSession = {
+  const archiveSession = (finalSummary: string, history: TranscriptEntry[]) => {
+    // Create a session object that includes transcript for SessionHistory
+    const session = {
       id: `live-${Date.now()}`,
-      title: `Live Session: ${finalSummary.substring(0, 30)}...`,
+      title: finalSummary.length > 50 ? `${finalSummary.substring(0, 50)}...` : finalSummary,
       date: Date.now(),
-      messages: chatMessages,
-      summary: finalSummary
+      type: 'video' as const,
+      summary: finalSummary,
+      transcript: history.map(entry => ({
+        role: entry.role,
+        text: entry.text,
+        timestamp: entry.timestamp
+      }))
     };
 
     const existing = JSON.parse(localStorage.getItem('tech_triage_sessions') || '[]');
     localStorage.setItem('tech_triage_sessions', JSON.stringify([session, ...existing]));
     window.dispatchEvent(new Event('session_saved'));
-    return _archiveSession;
   };
 
   // Generate a formatted "How-To Guide" PDF from the session
@@ -587,9 +584,9 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userEmail, us
             } else if (message.type === 'audio') {
               setStatus('speaking');
               playAudio(message.data);
-            } else if (message.type === 'text') {
-              console.log('AI text:', message.data);
-              // Add AI response to transcript
+            } else if (message.type === 'aiTranscript') {
+              console.log('AI said:', message.data);
+              // Add AI's spoken words to transcript
               setTranscriptHistory(prev => [...prev, {
                 role: 'model',
                 text: message.data,
@@ -609,11 +606,17 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userEmail, us
               console.error('Server error:', message.message);
             } else if (message.type === 'endSession') {
               console.log('Session ended:', message.summary);
-              setSummary(message.summary || 'Session completed');
+              const finalSummary = message.summary || 'Session completed';
+              setSummary(finalSummary);
               setIsSessionEnded(true);
               setStatus('listening');
               // Stop hardware when session ends
               stopAllHardware();
+              // Archive the session to history - use a callback to get latest transcript
+              setTranscriptHistory(currentHistory => {
+                archiveSession(finalSummary, currentHistory);
+                return currentHistory;
+              });
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
