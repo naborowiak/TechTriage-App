@@ -1,0 +1,219 @@
+import nodemailer from "nodemailer";
+
+// Email transporter configuration
+const createEmailTransporter = () => {
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+
+  console.log("[EMAIL] No SMTP config found - email sending will be simulated");
+  return null;
+};
+
+// Generate the welcome email HTML
+function getWelcomeEmailHtml(firstName: string): string {
+  const displayName = firstName || "there";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to TechTriage</title>
+    <style>
+        /* RESET STYLES */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        table { border-collapse: collapse !important; }
+        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; font-family: Helvetica, Arial, sans-serif; background-color: #f4f4f4; }
+
+        /* RESPONSIVE STYLES */
+        @media screen and (max-width: 600px) {
+            .email-container { width: 100% !important; }
+            .stack-column { display: block !important; width: 100% !important; max-width: 100% !important; direction: ltr !important; padding-bottom: 20px; }
+            .img-max { width: 100% !important; height: auto !important; }
+            .mobile-padding { padding: 20px !important; }
+            .mobile-center { text-align: center !important; }
+            .hero-text { font-size: 28px !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+
+                <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; margin: 0 auto; width: 600px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+
+                    <tr>
+                        <td align="center" style="background-color: #1a202c; background-image: url('https://techtriage.app/tech-life.png'); background-size: cover; background-position: center;">
+                            <div style="padding: 60px 20px;">
+                                <img src="https://placehold.co/150x50/1a202c/ffffff?text=TechTriage+Logo" alt="TechTriage" width="150" style="display: block; margin: 0 auto 20px auto;">
+
+                                <h1 class="hero-text" style="margin: 0; font-size: 32px; color: #ffffff; font-weight: bold; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                                    You're Covered.
+                                </h1>
+                                <p style="margin: 10px 0 0 0; font-size: 16px; color: #ffffff; text-align: center; font-weight: normal;">
+                                    Welcome to the family.
+                                </p>
+                            </div>
+                            </td>
+                    </tr>
+
+                    <tr>
+                        <td class="mobile-padding" style="padding: 40px 40px 30px 40px; color: #333333;">
+                            <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: bold; color: #1a202c;">
+                                Hey ${displayName}, thanks for joining TechTriage!
+                            </p>
+                            <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #4a5568;">
+                                You've successfully activated your trial. That means you now have a team of real specialists in your pocket, ready to fix everything from your Wi-Fi to your washing machine.
+                            </p>
+                            <p style="margin: 0 0 0 0; font-size: 15px; line-height: 1.6; color: #4a5568;">
+                                Let's get you set up so you're ready when something breaks.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="background-color: #1a202c; padding: 40px 20px; border-top: 4px solid #f97316;">
+                            <h2 style="margin: 0 0 5px 0; font-size: 20px; color: #f97316; text-transform: uppercase; letter-spacing: 1px;">
+                                Step 1:
+                            </h2>
+                            <h3 style="margin: 0 0 25px 0; font-size: 22px; color: #ffffff; font-weight: normal;">
+                                Try the "Show Us" feature
+                            </h3>
+
+                            <p style="margin: 0 0 25px 0; font-size: 15px; color: #cbd5e0; max-width: 400px;">
+                                You don't have to explain the problem. Log in and test the camera tool so you can see how easy it is to show us the issue.
+                            </p>
+
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" bgcolor="#f97316" style="border-radius: 4px;">
+                                        <a href="https://techtriage.app" target="_blank" style="padding: 14px 30px; border: 1px solid #f97316; border-radius: 4px; font-family: Helvetica, Arial, sans-serif; font-size: 16px; color: #ffffff; text-decoration: none; font-weight: bold; display: inline-block;">
+                                            Try Your First Request
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 20px 0 0 0; font-size: 14px; color: #a0aec0;">
+                                Takes less than 2 minutes
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 40px 20px; background-color: #ffffff; border-bottom: 4px solid #1a202c;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td valign="middle" width="40%" class="stack-column" style="padding-right: 20px;">
+                                        <img src="https://placehold.co/200x200/e2e8f0/1a202c?text=Bill+Wonka" alt="Bill Wonka" width="200" style="display: block; width: 100%; max-width: 200px; border-radius: 4px;">
+                                    </td>
+                                    <td valign="middle" width="60%" class="stack-column">
+                                        <p style="margin: 0 0 15px 0; font-size: 18px; line-height: 1.4; color: #1a202c; font-style: italic; font-weight: bold;">
+                                            "TechTriage has taken a lot of stress off my shoulders. I can troubleshoot from my cell phone. I'm not tied to my office."
+                                        </p>
+                                        <p style="margin: 0; font-size: 14px; color: #4a5568; font-weight: bold;">
+                                            Bill Wonka<br>
+                                            <span style="font-weight: normal; color: #718096;">Homeowner, St. Louis MO</span>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="background-color: #ffffff;">
+                             <img src="https://placehold.co/600x250/f7fafc/cbd5e0?text=Live+Video+Help" alt="Video Support Session" width="600" style="display: block; width: 100%; height: auto;">
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="background-color: #1a202c; padding: 40px 20px; border-top: 4px solid #f97316;">
+                            <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #f97316;">What we fix</h2>
+
+                            <p style="margin: 0 0 10px 0; font-size: 15px; color: #ffffff;">
+                                Keep this email handy. You can contact us for:
+                            </p>
+
+                            <p style="margin: 0 0 30px 0; font-size: 14px; color: #cbd5e0; font-weight: bold; letter-spacing: 0.5px; line-height: 1.8;">
+                                WI-FI ISSUES • COMPUTERS • SMART HOME • APPLIANCES • HVAC
+                            </p>
+
+                            <p style="margin: 0; font-size: 15px; color: #cbd5e0;">
+                                <a href="mailto:support@techtriage.com" style="color: #ffffff; text-decoration: underline;">Reply to this email</a> if you have login trouble.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 30px 20px; background-color: #ffffff;">
+
+                            <table border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="padding: 0 5px;"><a href="#"><img src="https://placehold.co/30x30/1a202c/ffffff?text=F" width="30" alt="FB"></a></td>
+                                    <td style="padding: 0 5px;"><a href="#"><img src="https://placehold.co/30x30/1a202c/ffffff?text=L" width="30" alt="LI"></a></td>
+                                    <td style="padding: 0 5px;"><a href="#"><img src="https://placehold.co/30x30/1a202c/ffffff?text=X" width="30" alt="X"></a></td>
+                                    <td style="padding: 0 5px;"><a href="#"><img src="https://placehold.co/30x30/1a202c/ffffff?text=I" width="30" alt="IG"></a></td>
+                                </tr>
+                            </table>
+
+                            <p style="font-size: 11px; color: #718096; line-height: 1.5; margin: 20px 0 20px 0;">
+                                TechTriage Inc.<br>
+                                Safe & Remote-First Support Nationwide<br>
+                                <a href="#" style="color: #1a202c; text-decoration: underline; font-weight: bold;">Unsubscribe</a> &nbsp; <a href="#" style="color: #1a202c; text-decoration: underline; font-weight: bold;">Manage preferences</a>
+                            </p>
+
+                            <img src="https://techtriage.app/tech-triage-logo.png" width="80" style="display: block;">
+                        </td>
+                    </tr>
+
+                </table>
+                </td>
+        </tr>
+    </table>
+
+</body>
+</html>`;
+}
+
+// Send welcome email to a new user
+export async function sendWelcomeEmail(email: string, firstName?: string): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending welcome email to ${email}`);
+
+  const transporter = createEmailTransporter();
+
+  if (!transporter) {
+    // Simulate email sending in development
+    console.log("[EMAIL] Simulated welcome email send to:", email);
+    console.log("[EMAIL] Subject: Welcome to TechTriage!");
+    return { success: true, simulated: true };
+  }
+
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"TechTriage" <support@techtriage.com>',
+      to: email,
+      subject: "Welcome to TechTriage - You're Covered!",
+      html: getWelcomeEmailHtml(firstName || ""),
+    });
+
+    console.log("[EMAIL] Welcome email successfully sent to:", email);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send welcome email:", error);
+    return { success: false, error: String(error) };
+  }
+}

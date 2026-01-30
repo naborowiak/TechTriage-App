@@ -9,6 +9,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import nodemailer from "nodemailer";
 import * as authService from "./services/authService";
+import { sendWelcomeEmail } from "./services/emailService";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -69,6 +70,11 @@ app.post("/api/auth/register", async (req, res) => {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
+
+    // Send welcome email in the background (don't block the response)
+    sendWelcomeEmail(email, firstName).catch((err) => {
+      console.error("[EMAIL] Failed to send welcome email:", err);
+    });
 
     res.json({ success: true, user: result.user });
   } catch (error) {
