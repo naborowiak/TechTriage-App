@@ -140,15 +140,14 @@ export const SignUp: React.FC<SignUpProps> = ({
   onComplete,
   onNavigate,
 }) => {
-  // Check if this is an OAuth user (redirected from Google auth)
-  const isOAuthFlow = new URLSearchParams(window.location.search).get('oauth') === 'true';
+  // Check auth state - user might be OAuth authenticated
   const { user: oauthUser, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>(isOAuthFlow ? "profile" : "credentials");
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("credentials");
   const [showPassword, setShowPassword] = useState(false);
   const [trialError, setTrialError] = useState<string | null>(null);
   const [isCheckingTrial, setIsCheckingTrial] = useState(false);
-  const [isOAuthUser, setIsOAuthUser] = useState(isOAuthFlow);
+  const [isOAuthUser, setIsOAuthUser] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: initialEmail,
     password: "",
@@ -163,9 +162,10 @@ export const SignUp: React.FC<SignUpProps> = ({
     howHeard: "",
   });
 
-  // Pre-fill form data from OAuth user session
+  // Handle OAuth users - set up form and step when auth is confirmed
   useEffect(() => {
-    if (isOAuthFlow && !authLoading && isAuthenticated && oauthUser) {
+    if (!authLoading && isAuthenticated && oauthUser) {
+      // User is authenticated via OAuth - set up for onboarding
       setFormData(prev => ({
         ...prev,
         email: oauthUser.email || prev.email,
@@ -173,6 +173,8 @@ export const SignUp: React.FC<SignUpProps> = ({
         lastName: oauthUser.lastName || prev.lastName,
       }));
       setIsOAuthUser(true);
+      // Skip to profile step since they already have credentials via OAuth
+      setCurrentStep("profile");
       // Start trial for OAuth users
       if (oauthUser.email) {
         startTrial(oauthUser.email).catch(err => {
@@ -180,24 +182,18 @@ export const SignUp: React.FC<SignUpProps> = ({
         });
       }
     }
-  }, [isOAuthFlow, authLoading, isAuthenticated, oauthUser]);
+  }, [authLoading, isAuthenticated, oauthUser]);
 
-  // Show loading state while checking OAuth session
-  if (isOAuthFlow && authLoading) {
+  // Show loading state while checking auth
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Setting up your account...</p>
+          <p className="text-gray-600 font-medium">Loading...</p>
         </div>
       </div>
     );
-  }
-
-  // If OAuth flow but not authenticated, redirect to home
-  if (isOAuthFlow && !authLoading && !isAuthenticated) {
-    window.location.href = '/';
-    return null;
   }
 
   const handleLogoClick = () => {

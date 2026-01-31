@@ -1133,19 +1133,44 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Handle OAuth users landing on dashboard - sync session user to dashboardUser
+  // Handle OAuth users - sync session user to dashboardUser and check onboarding status
   useEffect(() => {
-    if (!authLoading && isAuthenticated && sessionUser && window.location.pathname === '/dashboard') {
+    if (!authLoading && isAuthenticated && sessionUser) {
+      const currentPath = window.location.pathname;
+
+      // Create dashboard user object from session
       const oauthUser: DashboardUser = {
         id: sessionUser.id,
         firstName: sessionUser.firstName || sessionUser.username || 'User',
         lastName: sessionUser.lastName || undefined,
         email: sessionUser.email || '',
       };
-      setDashboardUser(oauthUser);
-      // Also store in localStorage for persistence
-      localStorage.setItem('techtriage_user', JSON.stringify(oauthUser));
-      setCurrentView(PageView.DASHBOARD);
+
+      // If on dashboard, set up the user
+      if (currentPath === '/dashboard') {
+        setDashboardUser(oauthUser);
+        localStorage.setItem('techtriage_user', JSON.stringify(oauthUser));
+        setCurrentView(PageView.DASHBOARD);
+      }
+
+      // If on signup and authenticated, check if they've completed onboarding
+      if (currentPath === '/signup' && sessionUser.id) {
+        // Fetch full user profile to check onboarding status
+        fetch(`/api/auth/user/${sessionUser.id}`)
+          .then(res => res.json())
+          .then(data => {
+            // If user has completed onboarding (has homeType or techComfort), go to dashboard
+            if (data.homeType || data.techComfort) {
+              setDashboardUser(oauthUser);
+              localStorage.setItem('techtriage_user', JSON.stringify(oauthUser));
+              navigate(PageView.DASHBOARD);
+            }
+            // Otherwise, let them continue with onboarding in SignUp component
+          })
+          .catch(err => {
+            console.error('Error checking user profile:', err);
+          });
+      }
     }
   }, [authLoading, isAuthenticated, sessionUser]);
 
