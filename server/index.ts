@@ -27,6 +27,25 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Test email endpoint (for validating SMTP configuration)
+app.post("/api/test-email", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email address required" });
+  }
+
+  console.log("[EMAIL TEST] Attempting to send test email to:", email);
+  console.log("[EMAIL TEST] SMTP_HOST configured:", !!process.env.SMTP_HOST);
+
+  try {
+    const result = await sendWelcomeEmail(email, "Test User");
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error("[EMAIL TEST] Error:", error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 // ============================================
 // Authentication API Endpoints (Database)
 // ============================================
