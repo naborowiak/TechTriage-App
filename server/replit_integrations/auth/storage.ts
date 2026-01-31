@@ -8,6 +8,11 @@ export const authStorage = {
     return result[0] || null;
   },
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    const result = await db.select().from(usersTable).where(eq(usersTable.email, email));
+    return result[0] || null;
+  },
+
   async upsertUser(userData: {
     id: string;
     email?: string;
@@ -15,9 +20,16 @@ export const authStorage = {
     lastName?: string;
     profileImageUrl?: string;
   }): Promise<{ user: User; isNewUser: boolean }> {
-    const existingUser = await this.getUser(userData.id);
+    // First, check if user exists by Google ID
+    let existingUser = await this.getUser(userData.id);
+
+    // If not found by ID, check by email (handles case where user registered with email/password first)
+    if (!existingUser && userData.email) {
+      existingUser = await this.getUserByEmail(userData.email);
+    }
 
     if (existingUser) {
+      // Update existing user - always use the existing user's ID to maintain consistency
       await db
         .update(usersTable)
         .set({
@@ -27,12 +39,16 @@ export const authStorage = {
           profileImageUrl: userData.profileImageUrl || existingUser.profileImageUrl,
           updatedAt: new Date(),
         })
-        .where(eq(usersTable.id, userData.id));
-      return { user: (await this.getUser(userData.id))!, isNewUser: false };
+        .where(eq(usersTable.id, existingUser.id));
+      return { user: (await this.getUser(existingUser.id))!, isNewUser: false };
     } else {
+      // Create new user - email is required for new users
+      if (!userData.email) {
+        throw new Error("Email is required for new user registration");
+      }
       const newUser: InsertUser = {
         id: userData.id,
-        email: userData.email || null,
+        email: userData.email,
         firstName: userData.firstName || null,
         lastName: userData.lastName || null,
         profileImageUrl: userData.profileImageUrl || null,

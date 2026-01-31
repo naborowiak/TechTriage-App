@@ -75,13 +75,22 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
     }
   };
 
+  const handleLogoClick = () => {
+    onNavigate(PageView.HOME);
+  };
+
   return (
-    <section className="min-h-screen pt-[72px] bg-white">
-      <div className="grid lg:grid-cols-2 min-h-[calc(100vh-72px)]">
+    <section className="min-h-screen bg-white">
+      <div className="grid lg:grid-cols-2 min-h-screen">
         <div className="flex flex-col items-center justify-center px-6 py-12">
           <div className="w-full max-w-md">
             <div className="flex justify-center mb-10">
-              <Logo variant="dark" className="scale-125" />
+              <button
+                onClick={handleLogoClick}
+                className="focus:outline-none hover:opacity-80 transition-opacity"
+              >
+                <Logo variant="dark" className="scale-125" />
+              </button>
             </div>
 
             <div className="space-y-6">

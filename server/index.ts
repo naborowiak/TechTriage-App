@@ -917,14 +917,24 @@ async function main() {
         },
         async (accessToken, refreshToken, profile, done) => {
           try {
+            const email = profile.emails?.[0]?.value;
+            console.log("[GOOGLE AUTH] Processing login for:", email);
+
+            if (!email) {
+              console.error("[GOOGLE AUTH] No email returned from Google");
+              return done(new Error("No email address returned from Google"));
+            }
+
             // Upsert user to database and check if new
             const { user: dbUser, isNewUser } = await authStorage.upsertUser({
               id: profile.id,
-              email: profile.emails?.[0]?.value,
+              email,
               firstName: profile.name?.givenName,
               lastName: profile.name?.familyName,
               profileImageUrl: profile.photos?.[0]?.value,
             });
+
+            console.log("[GOOGLE AUTH] User upserted successfully:", { id: dbUser.id, email: dbUser.email, isNewUser });
 
             // Send welcome email for new users
             if (isNewUser && dbUser.email) {
@@ -945,6 +955,11 @@ async function main() {
             return done(null, user);
           } catch (error) {
             console.error("[GOOGLE AUTH] Error during user upsert:", error);
+            // Log full error details for debugging
+            if (error instanceof Error) {
+              console.error("[GOOGLE AUTH] Error message:", error.message);
+              console.error("[GOOGLE AUTH] Error stack:", error.stack);
+            }
             return done(error as Error);
           }
         },

@@ -3,7 +3,6 @@ import {
   Menu,
   X,
   ArrowRight,
-  Shield,
   Home,
   Star,
   Video,
@@ -20,6 +19,13 @@ import {
   Monitor,
   Printer,
   Thermometer,
+  MessageSquare,
+  Camera,
+  Zap,
+  Clock,
+  PhoneOff,
+  Bot,
+  Wrench,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { Logo } from "./components/Logo";
@@ -314,20 +320,22 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[600px] lg:min-h-[700px]">
         {/* Left side - Content */}
         <div className="pt-8 lg:pt-0">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
-            <span className="text-[#F97316] font-bold text-sm">WE GET IT</span>
-            <span className="text-white font-medium text-sm">
-              Tech shouldn't be this frustrating
+          <div className="inline-flex items-center gap-2 bg-[#F97316]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-[#F97316]/30">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            <ArrowRight className="w-4 h-4 text-[#F97316]" />
+            <span className="text-white font-semibold text-sm">
+              AI support available 24/7
+            </span>
           </div>
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-            When tech fails,
+            Fix your tech issue
             <br />
-            <span className="text-[#F97316]">we're here.</span>
+            <span className="text-[#F97316]">in minutes, not hours.</span>
           </h1>
           <p className="text-white/80 text-xl lg:text-2xl font-medium leading-relaxed mb-10 max-w-lg">
-            We've all been there—the Wi-Fi cuts out, the smart TV won't connect, the thermostat's showing hieroglyphics. Get real help in minutes, not hours on hold.
+            Wi-Fi down? Smart TV acting up? Describe your problem, snap a photo, or start a video walkthrough—our AI guides you to a fix instantly.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <Button
@@ -370,19 +378,19 @@ const HowItWorksSimple: React.FC = () => {
     {
       step: "01",
       title: "Tell us what's happening",
-      desc: "\"My Wi-Fi keeps dropping\" or \"There's a weird error code\"—just describe it like you would to a friend. We speak human.",
-      icon: <Phone className="w-7 h-7" />,
+      desc: "\"My Wi-Fi keeps dropping\" or \"There's a weird error code\"—just describe it like you would to a friend. Our AI speaks human.",
+      icon: <MessageSquare className="w-7 h-7" />,
     },
     {
       step: "02",
       title: "Show us (if it helps)",
-      desc: "Snap a photo of that blinking light, share your screen, or hop on video. Sometimes seeing is believing—and fixing.",
-      icon: <Video className="w-7 h-7" />,
+      desc: "Snap a photo of that blinking light, share your screen, or start a video walkthrough. Our AI analyzes it instantly.",
+      icon: <Camera className="w-7 h-7" />,
     },
     {
       step: "03",
       title: "Actually get it fixed",
-      desc: "No more Googling for 2 hours. We walk you through it step-by-step until it's working—or we'll send someone who can.",
+      desc: "No more Googling for 2 hours. Our AI guides you step-by-step until it's working—most issues resolved in minutes.",
       icon: <CheckCircle2 className="w-7 h-7" />,
     },
   ];
@@ -548,104 +556,157 @@ const WhatWeHelpWith: React.FC = () => {
   );
 };
 
-const TrustSection: React.FC = () => (
-  <section className="py-24 bg-gradient-to-br from-[#1F2937] to-[#111827] text-white overflow-hidden noise-texture noise-texture-strong">
-    <div className="container mx-auto px-6 max-w-6xl">
-      <div className="grid lg:grid-cols-2 gap-16 items-center">
-        <div>
+const WhyTechTriage: React.FC = () => {
+  const traditionalPains = [
+    { icon: <Phone className="w-5 h-5" />, text: "Press 1 for billing, 2 for..." },
+    { icon: <Clock className="w-5 h-5" />, text: "Your wait time is 47 minutes" },
+    { icon: <PhoneOff className="w-5 h-5" />, text: "Call disconnected. Start over." },
+  ];
+
+  const techTriageSolutions = [
+    { icon: <MessageSquare className="w-5 h-5" />, label: "Chat", desc: "AI troubleshooting" },
+    { icon: <Camera className="w-5 h-5" />, label: "Snap", desc: "Photo diagnosis" },
+    { icon: <Video className="w-5 h-5" />, label: "Video", desc: "AI walkthrough" },
+    { icon: <Wrench className="w-5 h-5" />, label: "Onsite", desc: "If needed" },
+  ];
+
+  const benefits = [
+    {
+      icon: <Zap className="w-8 h-8" />,
+      title: "Instant AI Answers",
+      desc: "No hold music. No phone trees. Just describe your issue and get clear, step-by-step guidance in seconds.",
+    },
+    {
+      icon: <Camera className="w-8 h-8" />,
+      title: "Show, Don't Explain",
+      desc: "Snap a photo of that blinking light or error code. Our AI analyzes it instantly—no confusing descriptions needed.",
+    },
+    {
+      icon: <CheckCircle2 className="w-8 h-8" />,
+      title: "Remote-First Fixes",
+      desc: "Most issues are resolved without anyone stepping foot in your home. Onsite visits only if absolutely necessary.",
+    },
+  ];
+
+  return (
+    <section className="py-24 bg-gradient-to-br from-[#1F2937] to-[#111827] text-white overflow-hidden noise-texture noise-texture-strong">
+      <div className="container mx-auto px-6 max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-16">
           <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">
             Why TechTriage
           </span>
           <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
-            We've been there.
-            <br />
-            We get it.
+            Tech support that actually works
           </h2>
-          <p className="text-white/70 text-xl mb-8 leading-relaxed">
-            Tech is supposed to make life easier—until it doesn't. We built TechTriage because everyone deserves help that's fast, friendly, and actually useful.
+          <p className="text-white/70 text-xl max-w-2xl mx-auto">
+            We built TechTriage because everyone deserves help that's instant, clear, and doesn't waste your time.
           </p>
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shrink-0">
-                <Shield className="w-6 h-6 text-white" />
+        </div>
+
+        {/* Comparison Section */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-20">
+          {/* Traditional Support - Left */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-red-500/5 rounded-3xl"></div>
+            <div className="relative bg-white/5 backdrop-blur border border-white/10 rounded-3xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                  <PhoneOff className="w-6 h-6 text-red-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white/60">Traditional Support</h3>
               </div>
-              <div>
-                <h4 className="font-bold text-white text-lg mb-1">
-                  Patient & Friendly
-                </h4>
-                <p className="text-white/60">
-                  We explain things clearly and take the time to make sure you understand. Ask as many questions as you need.
-                </p>
+              <div className="space-y-4">
+                {traditionalPains.map((pain, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
+                    <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400">
+                      {pain.icon}
+                    </div>
+                    <span className="text-white/50 font-medium">{pain.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <div className="flex items-center gap-2 text-white/40 text-sm">
+                  <Clock className="w-4 h-4" />
+                  <span>Average wait: 20-45 minutes</span>
+                </div>
               </div>
             </div>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shrink-0">
-                <Lock className="w-6 h-6 text-white" />
+          </div>
+
+          {/* TechTriage - Right */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F97316]/10 to-orange-500/5 rounded-3xl"></div>
+            <div className="relative bg-white/5 backdrop-blur border border-[#F97316]/30 rounded-3xl p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-xl flex items-center justify-center">
+                  <Bot className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">TechTriage</h3>
               </div>
-              <div>
-                <h4 className="font-bold text-white text-lg mb-1">
-                  Your Stuff, Your Privacy
-                </h4>
-                <p className="text-white/60">
-                  We see what you show us—nothing more. Your data stays yours.
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                {techTriageSolutions.map((solution, i) => (
+                  <div key={i} className="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-[#F97316]/50 transition-colors">
+                    <div className="w-10 h-10 bg-[#F97316]/20 rounded-lg flex items-center justify-center text-[#F97316] mb-3">
+                      {solution.icon}
+                    </div>
+                    <div className="font-bold text-white mb-1">{solution.label}</div>
+                    <div className="text-white/50 text-sm">{solution.desc}</div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-[#F97316] rounded-xl flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h4 className="font-bold text-white text-lg mb-1">
-                  Real Humans Who Care
-                </h4>
-                <p className="text-white/60">
-                  AI is smart, but sometimes you need a real person. We've got both.
-                </p>
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <div className="flex items-center gap-2 text-[#F97316] text-sm font-medium">
+                  <Zap className="w-4 h-4" />
+                  <span>Instant response • Most issues fixed remotely</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div className="relative hidden lg:block">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#F97316]/20 to-purple-500/20 rounded-3xl blur-3xl"></div>
-          <div className="relative bg-white/5 backdrop-blur border border-white/10 rounded-3xl p-8">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl flex items-center justify-center">
-                <Star className="w-8 h-8 text-white fill-white" />
+
+        {/* Benefit Cards */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {benefits.map((benefit, i) => (
+            <div
+              key={i}
+              className="group p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-[#F97316]/50 transition-all duration-300 hover:-translate-y-1"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
+                {benefit.icon}
               </div>
-              <div>
-                <div className="text-white font-black text-3xl">4.9/5</div>
-                <div className="text-white/60">Customer Rating</div>
-              </div>
+              <h3 className="text-xl font-bold text-white mb-3">{benefit.title}</h3>
+              <p className="text-white/60 leading-relaxed">{benefit.desc}</p>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-white/60">Issue Resolution</span>
-                <span className="text-white font-bold">94%</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#F97316] rounded-full"
-                  style={{ width: "94%" }}
-                ></div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/60">Avg. Response Time</span>
-                <span className="text-white font-bold">&lt; 3 min</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#F97316] rounded-full"
-                  style={{ width: "88%" }}
-                ></div>
-              </div>
+          ))}
+        </div>
+
+        {/* Bottom Stats - Softer metrics */}
+        <div className="mt-16 pt-12 border-t border-white/10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">Instant</div>
+              <div className="text-white/50 text-sm">AI response time</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">Minutes</div>
+              <div className="text-white/50 text-sm">Typical resolution</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">Most</div>
+              <div className="text-white/50 text-sm">Issues fixed remotely</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">24/7</div>
+              <div className="text-white/50 text-sm">AI availability</div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const TestimonialSection: React.FC = () => {
   const { isDark } = useTheme();
@@ -659,14 +720,14 @@ const TestimonialSection: React.FC = () => {
     },
     {
       quote:
-        "I spent 3 hours trying to connect my new smart TV. TechTriage walked me through it in 10 minutes over video chat. So helpful and easy to follow.",
+        "I spent 3 hours trying to connect my new smart TV. TechTriage's AI walked me through it in 10 minutes with a video guide. So easy to follow!",
       name: "Michelle T.",
       role: "Busy Mom, Chicago IL",
       image: "/images/testimonial-2.jpg",
     },
     {
       quote:
-        "The team is patient, kind, and actually explains things in a way I understand. Finally, tech support that works for real people.",
+        "I just snapped a photo of the error on my router and got the exact fix I needed. No hold music, no frustration. Finally, tech support that works.",
       name: "Robert K.",
       role: "Retiree, Phoenix AZ",
       image: "/images/testimonial-3.jpg",
@@ -746,7 +807,11 @@ const FAQSection: React.FC = () => {
   const faqs = [
     {
       q: "How quickly can I get support?",
-      a: "TechTriage Chat responses are typically under a minute. TechTriage Snap photo analysis is instant. TechTriage Live video sessions usually connect within 10-15 minutes during business hours.",
+      a: "Instantly! Our AI responds immediately—no waiting, no hold music. Chat, Snap (photo analysis), and Video walkthrough sessions all start right away, 24/7.",
+    },
+    {
+      q: "Is this AI or human support?",
+      a: "TechTriage is AI-first. All Chat, Snap, and Video sessions are powered by AI that guides you through troubleshooting step-by-step. If remote troubleshooting can't resolve your issue, onsite visits can be scheduled where technicians are available.",
     },
     {
       q: "What types of issues do you support?",
@@ -758,11 +823,7 @@ const FAQSection: React.FC = () => {
     },
     {
       q: "What if my issue can't be resolved remotely?",
-      a: "If remote troubleshooting can't resolve your issue, we'll provide a detailed diagnostic report and help coordinate with a trusted local technician. Members receive discounts on onsite service visits.",
-    },
-    {
-      q: "What is your cancellation policy?",
-      a: "You can cancel your TechTriage membership at any time from your account settings. There are no cancellation fees or long-term contracts. Cancellations take effect at the end of your current billing period.",
+      a: "Most issues are fixed remotely through our AI-guided troubleshooting. If not, we can schedule an onsite visit—but only if technicians are available in your service area.",
     },
   ];
 
@@ -836,7 +897,7 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
           Life's too short for tech headaches
         </h2>
         <p className="text-white/90 font-medium max-w-2xl mx-auto mb-10 text-xl lg:text-2xl">
-          No more searching for answers at midnight. No more feeling stuck with your own devices. Just real help, when you need it.
+          No more searching for answers at midnight. No more feeling stuck with your own devices. Just instant AI-powered help, whenever you need it.
         </p>
         <form
           onSubmit={handleSubmit}
@@ -868,7 +929,7 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5" />
-            <span>24/7 support</span>
+            <span>AI available 24/7</span>
           </div>
         </div>
       </div>
@@ -1187,6 +1248,7 @@ const App: React.FC = () => {
             initialEmail={capturedEmail}
             onSpeakToExpert={handleSpeakToExpert}
             onComplete={handleSignupComplete}
+            onNavigate={navigate}
           />
         );
       case PageView.LOGIN:
@@ -1243,7 +1305,7 @@ const App: React.FC = () => {
             />
             <HowItWorksSimple />
             <WhatWeHelpWith />
-            <TrustSection />
+            <WhyTechTriage />
             <TestimonialSection />
             <FAQSection />
             <CTASection onSignup={handleNavigateToSignup} />
@@ -1254,6 +1316,16 @@ const App: React.FC = () => {
 
   // Dashboard has its own layout, don't show header/footer
   if (currentView === PageView.DASHBOARD && dashboardUser) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] font-['Inter',sans-serif] text-[#1F2937]">
+        {renderContent()}
+        <ChatWidget ref={chatRef} />
+      </div>
+    );
+  }
+
+  // SignUp and Login pages have their own standalone layout, don't show header/footer
+  if (currentView === PageView.SIGNUP || currentView === PageView.LOGIN) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] font-['Inter',sans-serif] text-[#1F2937]">
         {renderContent()}
