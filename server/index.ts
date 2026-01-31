@@ -979,7 +979,7 @@ async function main() {
       next();
     }, passport.authenticate("google", { scope: ["profile", "email"] }));
 
-    // 2. Handle Callback - redirect back to origin domain
+    // 2. Handle Callback - redirect back to origin domain dashboard
     app.get(
       "/api/auth/callback/google",
       passport.authenticate("google", { failureRedirect: "/?error=auth_failed" }),
@@ -987,11 +987,11 @@ async function main() {
         const authOrigin = (req.session as any).authOrigin;
         delete (req.session as any).authOrigin;
 
-        // Redirect to stored origin domain if it's allowed, otherwise relative
+        // Redirect to dashboard on the stored origin domain if allowed, otherwise relative
         if (authOrigin && isAllowedDomain(authOrigin)) {
-          res.redirect(`https://${authOrigin}/`);
+          res.redirect(`https://${authOrigin}/dashboard`);
         } else {
-          res.redirect("/");
+          res.redirect("/dashboard");
         }
       },
     );

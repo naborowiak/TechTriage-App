@@ -1121,6 +1121,9 @@ const App: React.FC = () => {
   const [dashboardView, setDashboardView] = useState<DashboardView>('main');
   const chatRef = useRef<ChatWidgetHandle>(null);
 
+  // Get auth state from session (for OAuth users)
+  const { user: sessionUser, isAuthenticated, isLoading: authLoading } = useAuth();
+
   // Check if user should see dashboard on initial load
   useEffect(() => {
     const storedUser = getStoredUser();
@@ -1129,6 +1132,22 @@ const App: React.FC = () => {
       setCurrentView(PageView.DASHBOARD);
     }
   }, []);
+
+  // Handle OAuth users landing on dashboard - sync session user to dashboardUser
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && sessionUser && window.location.pathname === '/dashboard') {
+      const oauthUser: DashboardUser = {
+        id: sessionUser.id,
+        firstName: sessionUser.firstName || sessionUser.username || 'User',
+        lastName: sessionUser.lastName || undefined,
+        email: sessionUser.email || '',
+      };
+      setDashboardUser(oauthUser);
+      // Also store in localStorage for persistence
+      localStorage.setItem('techtriage_user', JSON.stringify(oauthUser));
+      setCurrentView(PageView.DASHBOARD);
+    }
+  }, [authLoading, isAuthenticated, sessionUser]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
