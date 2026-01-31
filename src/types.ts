@@ -26,6 +26,7 @@ export enum PageView {
   HOME = 'home',
   HOW_IT_WORKS = 'how_it_works',
   PRICING = 'pricing',
+  FAQ = 'faq',
   SIGNUP = 'signup',
   LOGIN = 'login',
   HISTORY = 'history',

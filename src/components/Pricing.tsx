@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, ArrowRight, ChevronDown } from 'lucide-react';
+import { Check, ArrowRight, ChevronDown, MessageSquare, Camera, Video, Shield, Clock, Home, Users, Zap } from 'lucide-react';
 import { PageView } from '../types';
 
 interface PricingProps {
@@ -9,165 +9,305 @@ interface PricingProps {
 
 export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   const [isAnnual, setIsAnnual] = useState(true);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const plans = [
     {
-      name: 'Grow',
-      tagline: 'For individuals',
-      monthlyPrice: 49,
-      annualPrice: 39,
-      description: 'Take first steps to get started with TechTriage for your home.',
+      name: 'Chat',
+      tagline: 'Get Started Free',
+      monthlyPrice: 0,
+      annualPrice: 0,
+      isFree: true,
+      description: 'AI-powered answers for quick tech questions. Perfect for getting started.',
+      icon: MessageSquare,
       features: [
-        'AI-powered diagnostics',
-        'Unlimited chat support',
-        'Photo analysis',
-        'Basic maintenance reminders',
-        'Email support'
+        '5 AI chat sessions per month',
+        'Access to knowledge base',
+        'Basic troubleshooting guides',
+        'Email support',
       ],
-      cta: 'Start Free Trial'
+      limitations: [
+        'No photo diagnosis',
+        'No live video support',
+      ],
+      cta: 'Sign Up Free',
+      ctaStyle: 'outlined',
     },
     {
-      name: 'Connect',
+      name: 'Home',
       tagline: 'Most Popular',
-      monthlyPrice: 99,
-      annualPrice: 75,
-      description: 'Automate more of your home care and keep customers coming back.',
+      monthlyPrice: 25,
+      annualPrice: 19,
+      description: 'Complete coverage for your home. Chat, snap a photo, or go live with an expert.',
+      icon: Home,
       features: [
-        'Everything in Grow, plus:',
-        'Live video support',
-        'Priority response times',
-        'Warranty tracking',
-        'Appliance health reports',
-        'Phone support'
+        'Unlimited TechTriage Chat',
+        'TechTriage Snap photo diagnosis',
+        '2 TechTriage Live video sessions/mo',
+        'Priority support queue',
+        '15% off onsite service visits',
+        'Appliance & device tracking',
       ],
-      cta: 'Start Free Trial',
-      highlight: true
+      cta: 'Get Started',
+      ctaStyle: 'primary',
+      highlight: true,
     },
     {
-      name: 'Core',
-      tagline: 'Best Value',
-      monthlyPrice: 149,
-      annualPrice: 119,
-      description: 'Organize your home to grow your expertise.',
+      name: 'Pro',
+      tagline: 'For Families & Landlords',
+      monthlyPrice: 59,
+      annualPrice: 49,
+      description: 'Unlimited everything. Ideal for families, landlords, and Airbnb hosts.',
+      icon: Users,
       features: [
-        'Everything in Connect, plus:',
-        'Unlimited video sessions',
-        'Predictive maintenance AI',
-        'Multi-property support',
-        'Custom integrations',
-        'Dedicated account manager'
+        'Everything in Home, plus:',
+        'Unlimited TechTriage Live video',
+        'Fastest priority response',
+        'Multi-home support (up to 5)',
+        '$100 annual onsite service credit',
+        'Family member accounts',
+        'Dedicated support line',
       ],
-      cta: 'Start Free Trial'
-    }
+      cta: 'Get Started',
+      ctaStyle: 'secondary',
+    },
+  ];
+
+  const products = [
+    {
+      name: 'TechTriage Chat',
+      icon: MessageSquare,
+      description: 'AI-powered text support for instant answers to your tech questions.',
+      color: '#1F2937',
+    },
+    {
+      name: 'TechTriage Snap',
+      icon: Camera,
+      description: 'Upload a photo and get an AI diagnosis of what\'s wrong—no waiting.',
+      color: '#F97316',
+    },
+    {
+      name: 'TechTriage Live',
+      icon: Video,
+      description: 'Real-time video with AI assistance and human specialists when you need them.',
+      color: '#EA580C',
+    },
   ];
 
   const faqs = [
-    { q: 'What are the savings on annual promotions?', a: 'Annual billing saves you up to 25% compared to monthly billing.' },
-    { q: 'Are there any commitments or contracts?', a: 'No long-term contracts. Cancel anytime with no penalties.' },
-    { q: 'How does the free trial work?', a: 'Get full access to all features for 14 days. No credit card required to start.' },
-    { q: 'How do I know which plan is best for my business?', a: 'Start with Grow for basic needs, upgrade to Connect for video support, or Core for multi-property management.' },
-    { q: 'Can I change plans?', a: 'Yes, upgrade or downgrade your plan at any time from your account settings.' }
+    {
+      q: 'What is TechTriage Snap?',
+      a: 'TechTriage Snap is our photo diagnosis feature. Upload a photo of an error message, blinking light, or device issue, and our AI analyzes it instantly to provide troubleshooting guidance.',
+    },
+    {
+      q: 'How does TechTriage Live work?',
+      a: 'TechTriage Live connects you with a real-time video session. Our AI assists immediately, and a human specialist can join when needed to guide you through more complex issues step-by-step.',
+    },
+    {
+      q: 'What is your cancellation policy?',
+      a: 'You can cancel your membership at any time from your account settings. There are no cancellation fees or long-term contracts. Cancellations take effect at the end of your current billing period.',
+    },
+    {
+      q: 'What does the Pro plan\'s multi-home support include?',
+      a: 'Pro members can manage up to 5 different properties under one account—ideal for landlords, vacation rental hosts, or families with multiple homes. Each property maintains its own device inventory and service history.',
+    },
+    {
+      q: 'What types of issues do you support?',
+      a: 'We specialize in consumer technology: Wi-Fi and networking, computers and laptops, smart home devices (Alexa, Google Home, Ring, Nest), TVs and streaming, printers, smart thermostats, and general tech troubleshooting.',
+    },
+    {
+      q: 'Do you offer a mobile app?',
+      a: 'TechTriage currently works directly in your web browser with no download required. Our mobile app is coming soon for an even more convenient experience—stay tuned for updates.',
+    },
   ];
-
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
     <section className="min-h-screen pt-[72px]">
-      <div className="bg-[#1F2937] py-16 text-center">
-        <h1 className="text-4xl lg:text-5xl font-black text-white mb-4">
-          Try TechTriage <span className="text-[#F97316]">for free</span> now. Pick a plan later.
-        </h1>
-        <p className="text-white/70 text-lg mb-8">
-          Put TechTriage to work for you. No credit card required.
-        </p>
-        <div className="flex items-center justify-center gap-4 mb-8">
-          <input
-            type="email"
-            placeholder="Email address"
-            className="px-6 py-3 rounded-l-full w-72 text-[#1F2937] focus:outline-none"
-          />
-          <button 
-            onClick={() => onNavigate(PageView.SIGNUP)}
-            className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-8 py-3 rounded-r-full transition-colors flex items-center gap-2"
-          >
-            Try For 14 Days - It's Free!
-          </button>
-        </div>
-
-        <div className="flex justify-center gap-4 mt-8">
-          <button className="px-6 py-2 rounded-full bg-white/10 text-white font-medium">
-            For Individuals
-          </button>
-          <button className="px-6 py-2 rounded-full text-white/60 font-medium hover:bg-white/5 transition-colors">
-            For Teams
-          </button>
+      {/* Hero Section */}
+      <div className="bg-gradient-to-b from-[#1F2937] to-[#374151] py-20 text-center">
+        <div className="container mx-auto px-6 max-w-4xl">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full text-white/80 text-sm mb-6">
+            <Shield className="w-4 h-4 text-[#F97316]" />
+            Trusted by 10,000+ homeowners
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
+            Expert Tech Support,<br />
+            <span className="text-[#F97316]">Without the House Call</span>
+          </h1>
+          <p className="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
+            Get instant help with Wi-Fi, smart home, appliances, and more.
+            AI-powered diagnostics plus real human experts when you need them.
+          </p>
+          <div className="flex flex-wrap justify-center gap-6 text-white/60 text-sm">
+            <span className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#F97316]" />
+              Average response: 30 seconds
+            </span>
+            <span className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-[#F97316]" />
+              90% of issues solved remotely
+            </span>
+            <span className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-[#F97316]" />
+              Cancel anytime
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="bg-[#F9FAFB] py-16">
+      {/* Products Overview */}
+      <div className="bg-white py-16 border-b border-gray-100">
+        <div className="container mx-auto px-6 max-w-5xl">
+          <h2 className="text-2xl font-bold text-[#1F2937] text-center mb-4">
+            Three Ways to Get Help
+          </h2>
+          <p className="text-[#374151] text-center mb-12 max-w-2xl mx-auto">
+            Choose how you want to connect based on your issue
+          </p>
+          <div className="grid md:grid-cols-3 gap-8">
+            {products.map((product, i) => (
+              <div key={i} className="text-center">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  style={{ backgroundColor: `${product.color}15` }}
+                >
+                  <product.icon className="w-8 h-8" style={{ color: product.color }} />
+                </div>
+                <h3 className="text-lg font-bold text-[#1F2937] mb-2">{product.name}</h3>
+                <p className="text-[#374151] text-sm">{product.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing Cards */}
+      <div className="bg-[#F9FAFB] py-20">
         <div className="container mx-auto px-6 max-w-6xl">
+          <h2 className="text-3xl font-black text-[#1F2937] text-center mb-4">
+            Simple, Honest Pricing
+          </h2>
+          <p className="text-[#374151] text-center mb-8 max-w-xl mx-auto">
+            No hidden fees. No long contracts. Just peace of mind for your home.
+          </p>
+
+          {/* Billing Toggle - Jobber Style */}
           <div className="flex justify-center items-center gap-4 mb-12">
-            <span className={`font-bold ${!isAnnual ? 'text-[#1F2937]' : 'text-gray-400'}`}>Monthly</span>
+            <span
+              className={`font-semibold cursor-pointer transition-colors ${!isAnnual ? 'text-[#1F2937]' : 'text-gray-400'}`}
+              onClick={() => setIsAnnual(false)}
+            >
+              Monthly
+            </span>
             <button
               onClick={() => setIsAnnual(!isAnnual)}
-              className={`w-14 h-8 rounded-full p-1 transition-colors ${isAnnual ? 'bg-[#1F2937]' : 'bg-gray-300'}`}
+              className={`w-14 h-8 rounded-full p-1 transition-colors ${isAnnual ? 'bg-[#F97316]' : 'bg-gray-300'}`}
+              aria-label="Toggle annual billing"
             >
-              <div className={`w-6 h-6 bg-white rounded-full transition-transform ${isAnnual ? 'translate-x-6' : ''}`}></div>
+              <div className={`w-6 h-6 bg-white rounded-full shadow transition-transform ${isAnnual ? 'translate-x-6' : ''}`} />
             </button>
-            <span className={`font-bold ${isAnnual ? 'text-[#1F2937]' : 'text-gray-400'}`}>
-              Annual <span className="text-[#F97316] text-sm ml-1">Save up to 25%</span>
+            <span
+              className={`font-semibold cursor-pointer transition-colors ${isAnnual ? 'text-[#1F2937]' : 'text-gray-400'}`}
+              onClick={() => setIsAnnual(true)}
+            >
+              Annual
+              <span className={`ml-2 text-xs font-bold px-2 py-1 rounded-full transition-all ${
+                isAnnual
+                  ? 'text-white bg-[#F97316]'
+                  : 'text-gray-400 bg-gray-200'
+              }`}>
+                Save up to 25%
+              </span>
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-[#1F2937]">Need help finding the right plan?</h3>
-              <p className="text-gray-600">Take this quick quiz to find the perfect fit.</p>
-            </div>
-            <button className="mx-auto flex items-center gap-2 text-[#1F2937] font-bold border-2 border-[#1F2937] px-6 py-3 rounded-full hover:bg-[#1F2937] hover:text-white transition-colors">
-              Find your plan <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
+          {/* Pricing Grid */}
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
             {plans.map((plan, i) => (
-              <div 
-                key={i} 
-                className={`bg-white rounded-2xl p-8 ${plan.highlight ? 'ring-2 ring-[#1F2937] shadow-2xl relative' : 'shadow-lg'}`}
+              <div
+                key={i}
+                className={`bg-white rounded-3xl p-8 relative transition-all ${
+                  plan.highlight
+                    ? 'ring-2 ring-[#F97316] shadow-2xl scale-[1.02] md:scale-105'
+                    : 'shadow-lg hover:shadow-xl'
+                }`}
               >
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1F2937] text-white text-xs font-bold px-4 py-1 rounded-full">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#F97316] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
                     MOST POPULAR
                   </div>
                 )}
-                <div className="text-sm font-bold text-gray-500 uppercase mb-2">{plan.tagline}</div>
-                <h3 className="text-2xl font-black text-[#1F2937] mb-4">{plan.name}</h3>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    plan.highlight ? 'bg-[#F97316]/10' : 'bg-[#1F2937]/5'
+                  }`}>
+                    <plan.icon className={`w-6 h-6 ${plan.highlight ? 'text-[#F97316]' : 'text-[#1F2937]'}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-[#1F2937]">{plan.name}</h3>
+                    <div className="text-sm text-[#374151]">{plan.tagline}</div>
+                  </div>
+                </div>
+
                 <div className="mb-4">
-                  <span className="text-4xl font-black text-[#1F2937]">
-                    ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                  </span>
-                  <span className="text-gray-500">/mo</span>
-                  {isAnnual && (
-                    <div className="text-sm text-gray-400">Billed annually</div>
+                  {plan.isFree ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-[#1F2937]">Free</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline gap-2">
+                        {isAnnual && (
+                          <span className="text-xl text-gray-400 line-through">
+                            ${plan.monthlyPrice}
+                          </span>
+                        )}
+                        <span className="text-4xl font-black text-[#1F2937]">
+                          ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                        </span>
+                        <span className="text-[#374151]">/mo</span>
+                      </div>
+                      <div className="text-sm text-[#374151]">
+                        {isAnnual
+                          ? `Billed annually ($${plan.annualPrice * 12}/yr)`
+                          : 'Billed monthly'
+                        }
+                      </div>
+                    </>
                   )}
                 </div>
-                <p className="text-gray-600 mb-6">{plan.description}</p>
+
+                <p className="text-[#374151] mb-6 text-sm leading-relaxed">
+                  {plan.description}
+                </p>
+
                 <button
                   onClick={() => onNavigate(PageView.SIGNUP)}
-                  className={`w-full py-3 rounded-full font-bold text-lg transition-colors mb-6 ${
-                    plan.highlight 
-                      ? 'bg-[#F97316] hover:bg-[#EA580C] text-white' 
+                  className={`w-full py-4 rounded-full font-bold text-base transition-all mb-6 ${
+                    plan.ctaStyle === 'primary'
+                      ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30'
+                      : plan.ctaStyle === 'outlined'
+                      ? 'border-2 border-[#1F2937] text-[#1F2937] hover:bg-[#1F2937] hover:text-white'
                       : 'bg-[#1F2937] hover:bg-[#374151] text-white'
                   }`}
                 >
                   {plan.cta}
                 </button>
-                <div className="text-sm font-bold text-[#1F2937] mb-4">All {plan.name} features:</div>
+
                 <ul className="space-y-3">
                   {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-start gap-2 text-gray-600">
-                      <Check className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
-                      <span>{feature}</span>
+                    <li key={j} className="flex items-start gap-3 text-sm">
+                      <Check className={`w-5 h-5 shrink-0 mt-0.5 ${
+                        plan.highlight ? 'text-[#F97316]' : 'text-green-500'
+                      }`} />
+                      <span className="text-[#374151]">{feature}</span>
+                    </li>
+                  ))}
+                  {plan.limitations?.map((limitation, j) => (
+                    <li key={`limit-${j}`} className="flex items-start gap-3 text-sm text-gray-400">
+                      <span className="w-5 h-5 shrink-0 mt-0.5 text-center">—</span>
+                      <span>{limitation}</span>
                     </li>
                   ))}
                 </ul>
@@ -175,45 +315,78 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             ))}
           </div>
 
-          <div className="text-center mt-8">
-            <button className="text-[#1F2937] font-bold flex items-center gap-2 mx-auto hover:text-[#F97316] transition-colors">
-              Compare all TechTriage features <ChevronDown className="w-4 h-4" />
-            </button>
+          {/* Trust Badges */}
+          <div className="flex flex-wrap justify-center gap-8 mt-12 text-sm text-[#374151]">
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-[#F97316]" />
+              No credit card for free plan
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-[#F97316]" />
+              Cancel anytime
+            </span>
+            <span className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-[#F97316]" />
+              30-day money-back guarantee
+            </span>
           </div>
         </div>
       </div>
 
+      {/* Testimonial */}
       <div className="bg-white py-16">
-        <div className="container mx-auto px-6 max-w-4xl">
-          <div className="bg-[#F9FAFB] rounded-2xl p-8 mb-16 border-l-4 border-[#F97316]">
-            <p className="text-xl font-bold text-[#1F2937] mb-4">
-              "I have time for my family again"
-            </p>
-            <p className="text-gray-600 mb-6">
-              Before TechTriage, I was doing all these admin-focused tasks after hours when I could have been spending time with my family.
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
-              <div>
-                <div className="font-bold text-[#1F2937]">Oliver Dingmann</div>
-                <div className="text-gray-500 text-sm">Dingmann Landscaping</div>
+        <div className="container mx-auto px-6 max-w-3xl">
+          <div className="bg-gradient-to-br from-[#1F2937] to-[#374151] rounded-3xl p-10 text-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#F97316]/10 rounded-full blur-3xl" />
+            <div className="relative">
+              <div className="text-6xl text-[#F97316]/30 font-serif mb-4">"</div>
+              <p className="text-xl text-white font-medium mb-6 leading-relaxed">
+                My router went down at 10pm on a Sunday. TechTriage had me back online in
+                <span className="text-[#F97316]"> 8 minutes</span>. No waiting until Monday,
+                no $150 service call. This is what tech support should be.
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <div className="w-12 h-12 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold">
+                  SM
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-white">Sarah M.</div>
+                  <div className="text-white/60 text-sm">Home Plan Member, Austin TX</div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <h2 className="text-3xl font-black text-[#1F2937] text-center mb-12">FAQ</h2>
-          <div className="space-y-4">
+      {/* FAQ */}
+      <div className="bg-[#F9FAFB] py-16">
+        <div className="container mx-auto px-6 max-w-3xl">
+          <h2 className="text-3xl font-black text-[#1F2937] text-center mb-4">
+            Questions? We've Got Answers
+          </h2>
+          <p className="text-[#374151] text-center mb-12">
+            Everything you need to know about TechTriage membership
+          </p>
+          <div className="space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="border-b border-gray-200">
+              <div
+                key={i}
+                className="bg-white rounded-2xl shadow-sm overflow-hidden"
+              >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full py-4 flex items-center justify-between text-left"
+                  className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
                 >
-                  <span className="font-bold text-[#1F2937]">{faq.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <span className="font-bold text-[#1F2937] pr-4">{faq.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-[#374151] shrink-0 transition-transform ${
+                    openFaq === i ? 'rotate-180' : ''
+                  }`} />
                 </button>
                 {openFaq === i && (
-                  <div className="pb-4 text-gray-600">{faq.a}</div>
+                  <div className="px-6 pb-5 text-[#374151] leading-relaxed border-t border-gray-100 pt-4">
+                    {faq.a}
+                  </div>
                 )}
               </div>
             ))}
@@ -221,29 +394,32 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      <div className="bg-[#1F2937] py-16">
-        <div className="container mx-auto px-6 max-w-4xl">
-          <h2 className="text-3xl font-black text-white text-center mb-8">
-            Start using TechTriage free
+      {/* Final CTA */}
+      <div className="bg-[#1F2937] py-20">
+        <div className="container mx-auto px-6 max-w-3xl text-center">
+          <h2 className="text-3xl font-black text-white mb-4">
+            Ready for Stress-Free Tech Support?
           </h2>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-xl mx-auto">
-            <input
-              type="email"
-              placeholder="Email Address"
-              className="flex-1 w-full sm:w-auto px-6 py-4 rounded-l-full rounded-r-full sm:rounded-r-none text-[#1F2937] focus:outline-none"
-            />
-            <button 
+          <p className="text-white/70 mb-8 max-w-xl mx-auto">
+            Join thousands of homeowners who've ditched the hold music and expensive service calls. It's free to get started.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
               onClick={() => onNavigate(PageView.SIGNUP)}
-              className="w-full sm:w-auto bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-8 py-4 rounded-l-full rounded-r-full sm:rounded-l-none transition-colors"
+              className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-10 py-4 rounded-full transition-all shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 flex items-center justify-center gap-2"
             >
-              Try TechTriage - It's Free!
+              Get Started Free <ArrowRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="border-2 border-white/30 text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-colors"
+            >
+              Compare Plans
             </button>
           </div>
-          <div className="flex justify-center gap-8 mt-8 text-white/60 text-sm">
-            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#F97316]" /> Full control</span>
-            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#F97316]" /> Full support</span>
-            <span className="flex items-center gap-2"><Check className="w-4 h-4 text-[#F97316]" /> No credit card required</span>
-          </div>
+          <p className="text-white/50 text-sm mt-6">
+            Powered by Smart Tek Labs
+          </p>
         </div>
       </div>
     </section>

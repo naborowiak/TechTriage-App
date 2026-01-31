@@ -18,6 +18,9 @@ const createEmailTransporter = () => {
   return null;
 };
 
+// Base URL for images
+const IMAGE_BASE_URL = "https://tech-triage-site.replit.app";
+
 // Generate the welcome email HTML
 function getWelcomeEmailHtml(firstName: string): string {
   const displayName = firstName || "there";
@@ -27,173 +30,155 @@ function getWelcomeEmailHtml(firstName: string): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <title>Welcome to TechTriage</title>
     <style>
-        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-        table { border-collapse: collapse !important; }
-        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; font-family: Helvetica, Arial, sans-serif; background-color: #f4f4f4; }
-        @media screen and (max-width: 600px) {
-            .email-container { width: 100% !important; }
-            .stack-column { display: block !important; width: 100% !important; max-width: 100% !important; }
-            .mobile-padding { padding: 20px !important; }
+        :root { color-scheme: light dark; supported-color-schemes: light dark; }
+        body { margin: 0; padding: 0; min-width: 100%; width: 100% !important; height: 100% !important; background-color: #f4f4f4; }
+        body, table, td, div, p, a { -webkit-font-smoothing: antialiased; text-size-adjust: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; line-height: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; border-spacing: 0; }
+        img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+        /* Mobile styles */
+        @media only screen and (max-width: 599px) {
+            .mobile-full { width: 100% !important; max-width: 100% !important; display: block !important; }
+            .mobile-padding { padding: 30px 20px !important; }
             .hero-text { font-size: 28px !important; }
         }
+
+        /* Dark mode styles */
+        @media (prefers-color-scheme: dark) {
+            body, .body-bg { background-color: #1a1a1a !important; }
+            .email-container { background-color: #2d2d2d !important; }
+            .light-section { background-color: #2d2d2d !important; background-image: none !important; }
+            .light-text { color: #e5e5e5 !important; }
+            .light-text-secondary { color: #a3a3a3 !important; }
+            .testimonial-section { background-color: #262626 !important; border-color: #404040 !important; }
+            .testimonial-text { color: #e5e5e5 !important; }
+            .testimonial-name { color: #ffffff !important; }
+        }
+
+        /* Gmail dark mode */
+        [data-ogsc] .light-section { background-color: #2d2d2d !important; background-image: none !important; }
+        [data-ogsc] .light-text { color: #e5e5e5 !important; }
+        [data-ogsc] .light-text-secondary { color: #a3a3a3 !important; }
+        [data-ogsc] .testimonial-section { background-color: #262626 !important; }
     </style>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
+    </style>
+    <![endif]-->
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+<body class="body-bg" style="margin: 0; padding: 0; background-color: #f4f4f4;">
 
-    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-        <tr>
-            <td align="center" style="padding: 20px 0;">
+    <center style="width: 100%; background-color: #f4f4f4;" class="body-bg">
 
-                <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff; margin: 0 auto; width: 600px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-family: Helvetica, Arial, sans-serif;">
 
-                    <!-- HERO SECTION WITH IMAGE -->
-                    <tr>
-                        <td align="center" style="background-color: #1a365d;">
-                            <img src="https://techtriage.app/tech-triage-home.png" alt="TechTriage" width="600" style="display: block; width: 100%; height: auto;">
-                        </td>
-                    </tr>
+            <!-- HEADER WITH LOGO AND RADIAL GRADIENT -->
+            <tr>
+                <td align="center" style="background-color: #1e2b45; background: radial-gradient(circle at 50% 0%, #2a3c5e 0%, #0f172a 80%); padding: 45px 20px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td align="center" style="padding-bottom: 25px;">
+                                <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage Logo" width="150" style="display: block; max-width: 150px; height: auto;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center">
+                                <h1 class="hero-text" style="margin: 0; color: #ffffff; font-size: 36px; font-weight: 800; letter-spacing: -1px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">You're Covered.</h1>
+                                <p style="margin: 0; color: #cbd5e1; font-size: 18px; padding-top: 12px; font-weight: 300;">Expert tech support is now in your pocket.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
 
-                    <!-- HEADLINE -->
-                    <tr>
-                        <td align="center" style="background-color: #1a365d; padding: 30px 20px 40px 20px;">
-                            <h1 class="hero-text" style="margin: 0; font-size: 32px; color: #ffffff; font-weight: bold; text-align: center;">
-                                You're Covered.
-                            </h1>
-                            <p style="margin: 8px 0 0 0; font-size: 16px; color: #cbd5e0; text-align: center;">
-                                Expert tech support is now in your pocket
-                            </p>
-                        </td>
-                    </tr>
+            <!-- HERO IMAGE WITH ORANGE BORDER -->
+            <tr>
+                <td align="center" class="light-section" bgcolor="#ffffff" style="border-bottom: 4px solid #e66a00;">
+                    <img src="${IMAGE_BASE_URL}/tech-triage-home.png" alt="TechTriage Support" width="600" style="display: block; width: 100%; max-width: 600px; height: auto;">
+                </td>
+            </tr>
 
-                    <!-- VIEW IN BROWSER -->
-                    <tr>
-                        <td align="right" style="padding: 15px 20px; background-color: #ffffff;">
-                            <a href="https://techtriage.app" style="font-size: 12px; color: #718096; text-decoration: underline;">View in browser</a>
-                        </td>
-                    </tr>
+            <!-- WELCOME TEXT WITH SUBTLE GRID TEXTURE -->
+            <tr>
+                <td align="left" class="light-section" style="background-color: #ffffff; background-image: linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px); background-size: 25px 25px; padding: 50px 40px;">
+                    <p class="light-text" style="margin: 0 0 25px; color: #334155; font-size: 18px; line-height: 1.6;">
+                        Hey <strong>${displayName}</strong>, Welcome to <strong style="color: #e66a00;">TechTriage</strong>!
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: #475569; font-size: 16px; line-height: 1.8;">
+                        Time to experience first hand just how easy it is to get tech help with TechTriage. The best part? No more waiting on hold or explaining the same router issue three times.
+                    </p>
+                </td>
+            </tr>
 
-                    <!-- WELCOME TEXT -->
-                    <tr>
-                        <td class="mobile-padding" style="padding: 10px 40px 30px 40px; background-color: #ffffff;">
-                            <p style="margin: 0 0 15px 0; font-size: 16px; color: #1a202c;">
-                                Hey ${displayName}, Welcome to <a href="https://techtriage.app" style="color: #1a365d; font-weight: bold; text-decoration: underline;">TechTriage</a>!
-                            </p>
-                            <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4a5568;">
-                                Time to experience first hand just how easy it is to get tech help with <a href="https://techtriage.app" style="color: #1a365d; text-decoration: underline;">TechTriage</a>. The best part? No more waiting on hold or explaining the same issue three times.
-                            </p>
-                        </td>
-                    </tr>
+            <!-- STEP 1 CTA WITH DIAGONAL STRIPES AND PILL BADGE -->
+            <tr>
+                <td align="center" style="background-color: #e66a00; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); padding: 60px 30px;">
 
-                    <!-- STEP 1 CTA SECTION -->
-                    <tr>
-                        <td align="center" style="background-color: #f97316; padding: 35px 20px;">
-                            <p style="margin: 0 0 5px 0; font-size: 14px; color: #ffffff; font-weight: bold; letter-spacing: 1px;">
-                                Step 1:
-                            </p>
-                            <h2 style="margin: 0 0 20px 0; font-size: 22px; color: #ffffff; font-weight: normal;">
-                                See how easy it is to get help
-                            </h2>
+                    <div style="display: inline-block; background-color: rgba(0,0,0,0.2); color: #ffffff; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; border-radius: 20px; margin-bottom: 20px;">
+                        Step 1
+                    </div>
 
-                            <table border="0" cellpadding="0" cellspacing="0">
-                                <tr>
-                                    <td align="center" bgcolor="#1a365d" style="border-radius: 4px;">
-                                        <a href="https://techtriage.app" target="_blank" style="padding: 14px 28px; border-radius: 4px; font-family: Helvetica, Arial, sans-serif; font-size: 15px; color: #ffffff; text-decoration: none; font-weight: bold; display: inline-block;">
-                                            Start Your First Request
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
+                    <h2 style="margin: 0 0 35px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 1.2;">See how easy it is<br>to get help</h2>
 
-                            <p style="margin: 18px 0 0 0; font-size: 13px; color: #ffffff;">
-                                Estimated time to complete: <span style="color: #1a365d; font-weight: bold;">3 mins</span>
-                            </p>
-                        </td>
-                    </tr>
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td align="center" bgcolor="#1e2b45" style="border-radius: 50px; box-shadow: 0 8px 20px rgba(30, 43, 69, 0.4);">
+                                <a href="https://techtriage.app" target="_blank" style="display: block; padding: 20px 45px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 18px; border-radius: 50px; border: 2px solid #1e2b45;">Start Your First Request &rarr;</a>
+                            </td>
+                        </tr>
+                    </table>
 
-                    <!-- TESTIMONIAL SECTION -->
-                    <tr>
-                        <td style="padding: 0; background-color: #ffffff;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                                <tr>
-                                    <td valign="top" width="45%" class="stack-column" style="background-color: #1a365d;">
-                                        <img src="https://techtriage.app/tech-triage-home.png" alt="Customer" width="270" style="display: block; width: 100%; height: auto;">
-                                    </td>
-                                    <td valign="middle" width="55%" class="stack-column" style="padding: 30px; background-color: #ffffff;">
-                                        <p style="margin: 0 0 15px 0; font-size: 16px; line-height: 1.5; color: #1a202c;">
-                                            "<span style="background-color: #fef3c7;">I knew that TechTriage was the right choice</span> when I didn't have to spend an hour on hold just to reset my router."
-                                        </p>
-                                        <p style="margin: 0; font-size: 14px; color: #1a202c; font-weight: bold;">
-                                            Sarah Mitchell
-                                        </p>
-                                        <p style="margin: 2px 0 0 0; font-size: 13px; color: #718096;">
-                                            Homeowner <span style="color: #f97316;">&#9679;</span> Austin, TX
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
+                    <p style="margin: 25px 0 0; color: #fff0db; font-size: 14px; font-weight: 500;">
+                        Estimated time to complete: <strong>3 mins</strong>
+                    </p>
+                </td>
+            </tr>
 
-                    <!-- SECONDARY IMAGE -->
-                    <tr>
-                        <td align="center" style="background-color: #f7fafc;">
-                            <img src="https://techtriage.app/tech-triage-logo.png" alt="TechTriage Logo" width="120" style="display: block; padding: 40px 0;">
-                        </td>
-                    </tr>
+            <!-- TESTIMONIAL SECTION -->
+            <tr>
+                <td class="testimonial-section" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 40px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td width="70" valign="top" style="padding-right: 20px;">
+                                <img src="${IMAGE_BASE_URL}/tech-triage-logo.png" alt="Customer" width="70" style="display: block; border-radius: 50%;">
+                            </td>
+                            <td valign="top">
+                                <p class="testimonial-text" style="margin: 0 0 15px; font-family: Georgia, serif; font-style: italic; color: #334155; font-size: 17px; line-height: 1.6;">
+                                    "I knew that <strong style="color: #e66a00;">TechTriage</strong> was the right choice when I didn't have to spend an hour on hold just to reset my router."
+                                </p>
+                                <div>
+                                    <span class="testimonial-name" style="color: #1e2b45; font-weight: bold; font-size: 15px;">Sarah Mitchell</span>
+                                    <span style="color: #94a3b8; font-size: 14px;"> &mdash; Austin, TX</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
 
-                    <!-- HAVE A QUESTION SECTION -->
-                    <tr>
-                        <td align="center" style="background-color: #ffffff; padding: 35px 20px;">
-                            <h2 style="margin: 0 0 20px 0; font-size: 22px; color: #f97316; font-weight: bold;">
-                                Have a question?
-                            </h2>
-                            <p style="margin: 0 0 8px 0; font-size: 15px; color: #4a5568;">
-                                Book a call with a <a href="https://techtriage.app" style="color: #1a365d; text-decoration: underline; font-weight: bold;">Product Expert here</a>
-                            </p>
-                            <p style="margin: 0 0 8px 0; font-size: 15px; color: #4a5568;">
-                                Chat with us at: <a href="https://techtriage.app" style="color: #1a365d; text-decoration: none; font-weight: bold;">techtriage.app</a>
-                            </p>
-                            <p style="margin: 0; font-size: 15px; color: #4a5568;">
-                                <a href="mailto:support@techtriage.app" style="color: #1a365d; text-decoration: underline;">Reply to this email</a> and we'll be in touch
-                            </p>
-                        </td>
-                    </tr>
+            <!-- FOOTER -->
+            <tr>
+                <td align="center" style="background-color: #1e2b45; padding: 40px 20px; border-top: 5px solid #0f172a;">
+                    <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage" width="80" style="display: block; max-width: 80px; height: auto; margin-bottom: 20px;">
 
-                    <!-- SOCIAL ICONS -->
-                    <tr>
-                        <td align="center" style="padding: 25px 20px; background-color: #ffffff; border-top: 1px solid #e2e8f0;">
-                            <table border="0" cellpadding="0" cellspacing="0">
-                                <tr>
-                                    <td style="padding: 0 8px;"><a href="#" style="color: #1a365d; font-size: 20px; text-decoration: none;">&#9679;</a></td>
-                                    <td style="padding: 0 8px;"><a href="#" style="color: #1a365d; font-size: 20px; text-decoration: none;">&#9679;</a></td>
-                                    <td style="padding: 0 8px;"><a href="#" style="color: #1a365d; font-size: 20px; text-decoration: none;">&#9679;</a></td>
-                                    <td style="padding: 0 8px;"><a href="#" style="color: #1a365d; font-size: 20px; text-decoration: none;">&#9679;</a></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
+                    <p style="color: #64748b; font-size: 12px; margin: 0 0 10px;">
+                        &copy; 2025 TechTriage. All rights reserved.
+                    </p>
+                    <p style="margin: 0;">
+                        <a href="#" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Privacy Policy</a>
+                        <span style="color: #475569;">|</span>
+                        <a href="#" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Unsubscribe</a>
+                    </p>
+                </td>
+            </tr>
 
-                    <!-- FOOTER -->
-                    <tr>
-                        <td align="center" style="padding: 20px; background-color: #ffffff;">
-                            <p style="font-size: 12px; color: #718096; line-height: 1.6; margin: 0 0 15px 0;">
-                                <span style="color: #1a365d; font-weight: bold;">TechTriage</span><br>
-                                Expert Tech Support for Your Home<br>
-                                <a href="#" style="color: #1a202c; text-decoration: underline;">Unsubscribe</a> &nbsp; <a href="#" style="color: #1a202c; text-decoration: underline;">Manage preferences</a>
-                            </p>
-                            <img src="https://techtriage.app/tech-triage-logo.png" alt="TechTriage" width="60" style="display: block; margin: 0 auto;">
-                        </td>
-                    </tr>
-
-                </table>
-            </td>
-        </tr>
-    </table>
-
+        </table>
+    </center>
 </body>
 </html>`;
 }

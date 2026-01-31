@@ -4,28 +4,29 @@ import {
   X,
   ArrowRight,
   Shield,
-  Cpu,
   Home,
   Star,
-  Sparkles,
   Video,
   Tv,
   Wifi,
   Phone,
-  Zap,
-  Wrench,
   Lock,
   CheckCircle2,
   Moon,
   Sun,
   LogOut,
   User,
+  Smartphone,
+  Monitor,
+  Printer,
+  Thermometer,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { Logo } from "./components/Logo";
 import { PageView } from "./types";
 import { HowItWorks } from "./components/HowItWorks";
 import { Pricing } from "./components/Pricing";
+import { FAQ } from "./components/FAQ";
 import { SignUp } from "./components/SignUp";
 import { Login } from "./components/Login";
 import { Dashboard } from "./components/Dashboard";
@@ -108,12 +109,6 @@ const Header: React.FC<{
         {/* CENTER: Primary Navigation */}
         <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
           <button
-            onClick={() => handleNav(PageView.HOME)}
-            className={`whitespace-nowrap ${currentView === PageView.HOME ? "text-[#F97316]" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
-          >
-            Product
-          </button>
-          <button
             onClick={() => handleNav(PageView.HOW_IT_WORKS)}
             className={`whitespace-nowrap ${currentView === PageView.HOW_IT_WORKS ? "text-[#F97316]" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
@@ -124,6 +119,12 @@ const Header: React.FC<{
             className={`whitespace-nowrap ${currentView === PageView.PRICING ? "text-[#F97316]" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
           >
             Pricing
+          </button>
+          <button
+            onClick={() => handleNav(PageView.FAQ)}
+            className={`whitespace-nowrap ${currentView === PageView.FAQ ? "text-[#F97316]" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px]`}
+          >
+            FAQs
           </button>
         </nav>
 
@@ -185,7 +186,7 @@ const Header: React.FC<{
                 onClick={() => onNavigate(PageView.SIGNUP)}
                 className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-colors whitespace-nowrap"
               >
-                Start Free Trial
+                Sign Up Free
               </button>
             </>
           )}
@@ -197,7 +198,7 @@ const Header: React.FC<{
             onClick={() => onNavigate(PageView.SIGNUP)}
             className="bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold px-4 py-2 rounded-full text-sm transition-colors"
           >
-            Start Free Trial
+            Sign Up Free
           </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -219,12 +220,6 @@ const Header: React.FC<{
           className={`lg:hidden absolute top-[72px] left-0 w-full ${isDark || isHomePage ? "bg-[#1F2937] border-gray-700" : "bg-white border-gray-200"} border-b p-6 flex flex-col gap-5 shadow-xl`}
         >
           <button
-            onClick={() => handleNav(PageView.HOME)}
-            className={`${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-semibold text-base text-left`}
-          >
-            Product
-          </button>
-          <button
             onClick={() => handleNav(PageView.HOW_IT_WORKS)}
             className={`${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-semibold text-base text-left`}
           >
@@ -235,6 +230,12 @@ const Header: React.FC<{
             className={`${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-semibold text-base text-left`}
           >
             Pricing
+          </button>
+          <button
+            onClick={() => handleNav(PageView.FAQ)}
+            className={`${isDark || isHomePage ? "text-white" : "text-[#1F2937]"} font-semibold text-base text-left`}
+          >
+            FAQs
           </button>
 
           <hr
@@ -314,20 +315,19 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
         {/* Left side - Content */}
         <div className="pt-8 lg:pt-0">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
-            <span className="text-[#F97316] font-bold text-sm">NEW</span>
+            <span className="text-[#F97316] font-bold text-sm">WE GET IT</span>
             <span className="text-white font-medium text-sm">
-              AI-Powered Live Video Support
+              Tech shouldn't be this frustrating
             </span>
             <ArrowRight className="w-4 h-4 text-[#F97316]" />
           </div>
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-            Fix it faster—
+            When tech fails,
             <br />
-            <span className="text-[#F97316]">just show us.</span>
+            <span className="text-[#F97316]">we're here.</span>
           </h1>
           <p className="text-white/80 text-xl lg:text-2xl font-medium leading-relaxed mb-10 max-w-lg">
-            TechTriage connects you to AI + real specialists to troubleshoot
-            safely and remotely. Photo, video, or text—we've got you covered.
+            We've all been there—the Wi-Fi cuts out, the smart TV won't connect, the thermostat's showing hieroglyphics. Get real help in minutes, not hours on hold.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <Button
@@ -335,7 +335,7 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
               onClick={onFreeTrial}
               className="shadow-xl shadow-orange-500/30 text-lg px-10"
             >
-              Start Free Trial
+              Get Started Free
             </Button>
             <Button
               variant="outline"
@@ -369,20 +369,20 @@ const HowItWorksSimple: React.FC = () => {
   const steps = [
     {
       step: "01",
-      title: "Tell us what's wrong",
-      desc: "Start a chat and describe your issue in plain English. No tech jargon required.",
+      title: "Tell us what's happening",
+      desc: "\"My Wi-Fi keeps dropping\" or \"There's a weird error code\"—just describe it like you would to a friend. We speak human.",
       icon: <Phone className="w-7 h-7" />,
     },
     {
       step: "02",
-      title: "Show us the problem",
-      desc: "Upload a photo, share your screen, or start a live video call so we can see exactly what you're dealing with.",
+      title: "Show us (if it helps)",
+      desc: "Snap a photo of that blinking light, share your screen, or hop on video. Sometimes seeing is believing—and fixing.",
       icon: <Video className="w-7 h-7" />,
     },
     {
       step: "03",
-      title: "Get it fixed",
-      desc: "Follow our step-by-step guidance to resolve the issue—or we'll schedule an onsite visit if needed.",
+      title: "Actually get it fixed",
+      desc: "No more Googling for 2 hours. We walk you through it step-by-step until it's working—or we'll send someone who can.",
       icon: <CheckCircle2 className="w-7 h-7" />,
     },
   ];
@@ -399,13 +399,12 @@ const HowItWorksSimple: React.FC = () => {
           <h2
             className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? "text-white" : "text-[#1F2937]"}`}
           >
-            Three steps to peace of mind
+            Help that actually helps
           </h2>
           <p
             className={`text-xl max-w-2xl mx-auto ${isDark ? "text-gray-400" : "text-[#4B5563]"}`}
           >
-            Getting help has never been easier. No appointments, no waiting
-            rooms.
+            No hold music. No "have you tried turning it off and on again." Just clear answers and real solutions.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
@@ -452,8 +451,8 @@ const WhatWeHelpWith: React.FC = () => {
   const problems = [
     {
       icon: <Wifi className="w-8 h-8" />,
-      label: "Wi-Fi & Internet",
-      desc: "Connection issues, slow speeds, dead zones",
+      label: "Wi-Fi & Networking",
+      desc: "Slow speeds, dead zones, connection drops",
     },
     {
       icon: <Tv className="w-8 h-8" />,
@@ -461,34 +460,34 @@ const WhatWeHelpWith: React.FC = () => {
       desc: "Setup, apps, soundbars, remotes",
     },
     {
-      icon: <Cpu className="w-8 h-8" />,
-      label: "Computers",
-      desc: "Slow performance, updates, viruses",
+      icon: <Monitor className="w-8 h-8" />,
+      label: "Computers & Laptops",
+      desc: "Performance, updates, software issues",
     },
     {
       icon: <Home className="w-8 h-8" />,
-      label: "Smart Home",
-      desc: "Devices, hubs, automation",
+      label: "Smart Home Devices",
+      desc: "Alexa, Google Home, Ring, Nest",
+    },
+    {
+      icon: <Smartphone className="w-8 h-8" />,
+      label: "Phones & Tablets",
+      desc: "Setup, syncing, app troubleshooting",
     },
     {
       icon: <Lock className="w-8 h-8" />,
-      label: "Accounts & Passwords",
-      desc: "Recovery, setup, security",
+      label: "Accounts & Security",
+      desc: "Password recovery, 2FA, privacy",
     },
     {
-      icon: <Sparkles className="w-8 h-8" />,
-      label: "Mystery Issues",
-      desc: '"It was working yesterday..."',
+      icon: <Printer className="w-8 h-8" />,
+      label: "Printers & Peripherals",
+      desc: "Setup, connectivity, drivers",
     },
     {
-      icon: <Wrench className="w-8 h-8" />,
-      label: "Appliances",
-      desc: "Error codes, troubleshooting",
-    },
-    {
-      icon: <Zap className="w-8 h-8" />,
-      label: "HVAC & Thermostats",
-      desc: "Programming, connectivity",
+      icon: <Thermometer className="w-8 h-8" />,
+      label: "Smart Thermostats",
+      desc: "Ecobee, Nest, Honeywell setup",
     },
   ];
 
@@ -499,17 +498,17 @@ const WhatWeHelpWith: React.FC = () => {
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-16">
           <span className="inline-block text-[#F97316] font-bold text-sm uppercase tracking-wider mb-4">
-            What We Fix
+            What We Support
           </span>
           <h2
             className={`text-4xl lg:text-5xl font-black mb-6 ${isDark ? "text-white" : "text-[#1F2937]"}`}
           >
-            Everyday tech problems, solved
+            Technology support for your home
           </h2>
           <p
             className={`text-xl max-w-2xl mx-auto ${isDark ? "text-gray-400" : "text-[#4B5563]"}`}
           >
-            From blinking routers to beeping thermostats—we speak your language.
+            From Wi-Fi troubles to smart home setup—we help with the tech that keeps your home running.
           </p>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -558,13 +557,12 @@ const TrustSection: React.FC = () => (
             Why TechTriage
           </span>
           <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight">
-            Real specialists.
+            We've been there.
             <br />
-            Real answers.
+            We get it.
           </h2>
           <p className="text-white/70 text-xl mb-8 leading-relaxed">
-            No stress. No runaround. Just honest help from people who actually
-            know what they're doing.
+            Tech is supposed to make life easier—until it doesn't. We built TechTriage because everyone deserves help that's fast, friendly, and actually useful.
           </p>
           <div className="space-y-6">
             <div className="flex items-start gap-4">
@@ -573,10 +571,10 @@ const TrustSection: React.FC = () => (
               </div>
               <div>
                 <h4 className="font-bold text-white text-lg mb-1">
-                  Safe & Remote-First
+                  Patient & Friendly
                 </h4>
                 <p className="text-white/60">
-                  Troubleshoot from home. No strangers unless you need them.
+                  We explain things clearly and take the time to make sure you understand. Ask as many questions as you need.
                 </p>
               </div>
             </div>
@@ -586,10 +584,10 @@ const TrustSection: React.FC = () => (
               </div>
               <div>
                 <h4 className="font-bold text-white text-lg mb-1">
-                  Your Privacy, Protected
+                  Your Stuff, Your Privacy
                 </h4>
                 <p className="text-white/60">
-                  You control what you share. We never sell your data.
+                  We see what you show us—nothing more. Your data stays yours.
                 </p>
               </div>
             </div>
@@ -599,10 +597,10 @@ const TrustSection: React.FC = () => (
               </div>
               <div>
                 <h4 className="font-bold text-white text-lg mb-1">
-                  Trusted Nationwide
+                  Real Humans Who Care
                 </h4>
                 <p className="text-white/60">
-                  Real people helping real neighbors, coast to coast.
+                  AI is smart, but sometimes you need a real person. We've got both.
                 </p>
               </div>
             </div>
@@ -654,23 +652,23 @@ const TestimonialSection: React.FC = () => {
   const testimonials = [
     {
       quote:
-        "TechTriage has taken a lot of stress off my shoulders. I can troubleshoot from my cell phone. I'm not tied to my office.",
-      name: "Kelly Shelton",
-      role: "Homeowner, St. Louis MO",
+        "My internet was down at 10pm on a Sunday. Instead of waiting until Monday, I was back online in 15 minutes. This is what tech support should be.",
+      name: "David R.",
+      role: "Remote Worker, Denver CO",
       image: "/images/testimonial-1.jpg",
     },
     {
       quote:
-        "The AI diagnosed my HVAC issue in seconds. Saved me $400 on an unnecessary service call!",
-      name: "Marcus Johnson",
-      role: "Property Manager, Austin TX",
+        "I spent 3 hours trying to connect my new smart TV. TechTriage walked me through it in 10 minutes over video chat. So helpful and easy to follow.",
+      name: "Michelle T.",
+      role: "Busy Mom, Chicago IL",
       image: "/images/testimonial-2.jpg",
     },
     {
       quote:
-        "Finally, a tech support that speaks my language. The video calls with real experts are a game-changer.",
-      name: "Sarah Chen",
-      role: "First-time Homeowner, Seattle WA",
+        "The team is patient, kind, and actually explains things in a way I understand. Finally, tech support that works for real people.",
+      name: "Robert K.",
+      role: "Retiree, Phoenix AZ",
       image: "/images/testimonial-3.jpg",
     },
   ];
@@ -684,12 +682,12 @@ const TestimonialSection: React.FC = () => {
           <h2
             className={`text-4xl font-black mb-4 ${isDark ? "text-white" : "text-[#1F2937]"}`}
           >
-            What Our Customers Say
+            People Like You
           </h2>
           <p
             className={`text-lg ${isDark ? "text-gray-400" : "text-gray-600"}`}
           >
-            Real stories from real homeowners
+            Who finally stopped fighting with their tech
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
@@ -747,24 +745,24 @@ const FAQSection: React.FC = () => {
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const faqs = [
     {
-      q: "How fast can I get help?",
-      a: "Most text support sessions connect within minutes. AI photo analysis is instant. Live video sessions typically start within 15 minutes.",
+      q: "How quickly can I get support?",
+      a: "TechTriage Chat responses are typically under a minute. TechTriage Snap photo analysis is instant. TechTriage Live video sessions usually connect within 10-15 minutes during business hours.",
     },
     {
-      q: "What if you can't fix it remotely?",
-      a: "If remote troubleshooting can't solve the issue, we'll help schedule an onsite technician visit at a time that works for you.",
-    },
-    {
-      q: "Is my information private?",
-      a: "Absolutely. You control what you share. Photos, videos, and conversations are never shared without your explicit permission.",
+      q: "What types of issues do you support?",
+      a: "We specialize in consumer technology: Wi-Fi and networking, computers, smart home devices, TVs and streaming, printers, smart thermostats, and general tech troubleshooting. If it connects to your home network or has a screen, we can likely help.",
     },
     {
       q: "Do I need to download an app?",
-      a: "Nope! TechTriage works right in your browser. Just text us, upload a photo, or start a video call—no downloads required.",
+      a: "TechTriage works directly in your web browser—no download required. Our mobile app is coming soon, making it even easier to get help on the go.",
     },
     {
-      q: "What areas do you serve?",
-      a: "We provide remote support nationwide. Onsite visits are currently available in the St. Louis metro area, with more regions coming soon.",
+      q: "What if my issue can't be resolved remotely?",
+      a: "If remote troubleshooting can't resolve your issue, we'll provide a detailed diagnostic report and help coordinate with a trusted local technician. Members receive discounts on onsite service visits.",
+    },
+    {
+      q: "What is your cancellation policy?",
+      a: "You can cancel your TechTriage membership at any time from your account settings. There are no cancellation fees or long-term contracts. Cancellations take effect at the end of your current billing period.",
     },
   ];
 
@@ -835,10 +833,10 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
       </div>
       <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
-          Ready to fix it?
+          Life's too short for tech headaches
         </h2>
         <p className="text-white/90 font-medium max-w-2xl mx-auto mb-10 text-xl lg:text-2xl">
-          Stop Googling. Stop stressing. Get real help in minutes.
+          No more searching for answers at midnight. No more feeling stuck with your own devices. Just real help, when you need it.
         </p>
         <form
           onSubmit={handleSubmit}
@@ -1007,6 +1005,7 @@ const pathToView: Record<string, PageView> = {
   '/': PageView.HOME,
   '/how-it-works': PageView.HOW_IT_WORKS,
   '/pricing': PageView.PRICING,
+  '/faq': PageView.FAQ,
   '/signup': PageView.SIGNUP,
   '/login': PageView.LOGIN,
   '/dashboard': PageView.DASHBOARD,
@@ -1016,6 +1015,7 @@ const viewToPath: Record<PageView, string> = {
   [PageView.HOME]: '/',
   [PageView.HOW_IT_WORKS]: '/how-it-works',
   [PageView.PRICING]: '/pricing',
+  [PageView.FAQ]: '/faq',
   [PageView.SIGNUP]: '/signup',
   [PageView.LOGIN]: '/login',
   [PageView.HISTORY]: '/history',
@@ -1178,6 +1178,8 @@ const App: React.FC = () => {
         return <HowItWorks onStart={handleStart} />;
       case PageView.PRICING:
         return <Pricing onStart={handleStart} onNavigate={navigate} />;
+      case PageView.FAQ:
+        return <FAQ onNavigate={navigate} />;
       case PageView.SIGNUP:
         return (
           <SignUp
