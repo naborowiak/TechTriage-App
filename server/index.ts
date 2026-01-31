@@ -151,13 +151,30 @@ app.get("/api/auth/user/:id", async (req, res) => {
 // Update user profile
 app.put("/api/auth/user/:id", async (req, res) => {
   try {
-    const { firstName, lastName, phone, emailNotifications, sessionGuideEmails } = req.body;
+    const {
+      firstName,
+      lastName,
+      phone,
+      emailNotifications,
+      sessionGuideEmails,
+      // Onboarding fields
+      homeType,
+      techComfort,
+      householdSize,
+      primaryIssues,
+      howHeard,
+    } = req.body;
     const updatedUser = await authService.updateUserProfile(req.params.id, {
       firstName,
       lastName,
       phone,
       emailNotifications,
       sessionGuideEmails,
+      homeType,
+      techComfort,
+      householdSize,
+      primaryIssues,
+      howHeard,
     });
     res.json({ success: true, user: updatedUser });
   } catch (error) {
@@ -979,19 +996,27 @@ async function main() {
       next();
     }, passport.authenticate("google", { scope: ["profile", "email"] }));
 
-    // 2. Handle Callback - redirect back to origin domain dashboard
+    // 2. Handle Callback - redirect to onboarding for new users, dashboard for returning users
     app.get(
       "/api/auth/callback/google",
       passport.authenticate("google", { failureRedirect: "/?error=auth_failed" }),
-      (req, res) => {
+      async (req, res) => {
         const authOrigin = (req.session as any).authOrigin;
         delete (req.session as any).authOrigin;
 
-        // Redirect to dashboard on the stored origin domain if allowed, otherwise relative
+        // Check if user has completed onboarding (has firstName set from onboarding form)
+        const user = req.user as any;
+        const dbUser = user?.id ? await authStorage.getUser(user.id) : null;
+        const hasCompletedOnboarding = dbUser?.homeType || dbUser?.techComfort;
+
+        // Determine redirect path - new users go to onboarding, returning users to dashboard
+        const redirectPath = hasCompletedOnboarding ? '/dashboard' : '/signup?oauth=true';
+
+        // Redirect to stored origin domain if allowed, otherwise relative
         if (authOrigin && isAllowedDomain(authOrigin)) {
-          res.redirect(`https://${authOrigin}/dashboard`);
+          res.redirect(`https://${authOrigin}${redirectPath}`);
         } else {
-          res.redirect("/dashboard");
+          res.redirect(redirectPath);
         }
       },
     );

@@ -128,6 +128,12 @@ export async function updateUserProfile(
     phone?: string;
     emailNotifications?: boolean;
     sessionGuideEmails?: boolean;
+    // Onboarding fields
+    homeType?: string;
+    techComfort?: string;
+    householdSize?: string;
+    primaryIssues?: string[];
+    howHeard?: string;
   }
 ) {
   const [updatedUser] = await db

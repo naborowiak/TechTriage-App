@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -16,6 +16,7 @@ import {
 import { Logo } from "./Logo";
 import { PageView } from "../types";
 import { checkTrialEligibility, startTrial } from "../services/trialService";
+import { useAuth } from "../hooks/useAuth";
 
 interface SignUpProps {
   onStart: () => void;
@@ -139,10 +140,15 @@ export const SignUp: React.FC<SignUpProps> = ({
   onComplete,
   onNavigate,
 }) => {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>("credentials");
+  // Check if this is an OAuth user (redirected from Google auth)
+  const isOAuthFlow = new URLSearchParams(window.location.search).get('oauth') === 'true';
+  const { user: oauthUser, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>(isOAuthFlow ? "profile" : "credentials");
   const [showPassword, setShowPassword] = useState(false);
   const [trialError, setTrialError] = useState<string | null>(null);
   const [isCheckingTrial, setIsCheckingTrial] = useState(false);
+  const [isOAuthUser, setIsOAuthUser] = useState(isOAuthFlow);
   const [formData, setFormData] = useState<FormData>({
     email: initialEmail,
     password: "",
@@ -157,6 +163,43 @@ export const SignUp: React.FC<SignUpProps> = ({
     howHeard: "",
   });
 
+  // Pre-fill form data from OAuth user session
+  useEffect(() => {
+    if (isOAuthFlow && !authLoading && isAuthenticated && oauthUser) {
+      setFormData(prev => ({
+        ...prev,
+        email: oauthUser.email || prev.email,
+        firstName: oauthUser.firstName || prev.firstName,
+        lastName: oauthUser.lastName || prev.lastName,
+      }));
+      setIsOAuthUser(true);
+      // Start trial for OAuth users
+      if (oauthUser.email) {
+        startTrial(oauthUser.email).catch(err => {
+          console.error("Trial start error for OAuth user:", err);
+        });
+      }
+    }
+  }, [isOAuthFlow, authLoading, isAuthenticated, oauthUser]);
+
+  // Show loading state while checking OAuth session
+  if (isOAuthFlow && authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Setting up your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If OAuth flow but not authenticated, redirect to home
+  if (isOAuthFlow && !authLoading && !isAuthenticated) {
+    window.location.href = '/';
+    return null;
+  }
+
   const handleLogoClick = () => {
     if (onNavigate) {
       onNavigate(PageView.HOME);
@@ -164,6 +207,16 @@ export const SignUp: React.FC<SignUpProps> = ({
       window.location.href = "/";
     }
   };
+
+  // Calculate step number - OAuth users skip credentials step
+  const getStepNumber = (step: OnboardingStep): number => {
+    const oauthSteps: OnboardingStep[] = ["profile", "home", "needs", "complete"];
+    const regularSteps: OnboardingStep[] = ["credentials", "profile", "home", "needs", "complete"];
+    const steps = isOAuthUser ? oauthSteps : regularSteps;
+    return steps.indexOf(step) + 1;
+  };
+
+  const totalSteps = isOAuthUser ? 4 : 5;
 
   const updateFormData = (field: keyof FormData, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -225,14 +278,39 @@ export const SignUp: React.FC<SignUpProps> = ({
     console.log("Onboarding complete:", formData);
 
     try {
-      // Register user logic
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData }),
-      });
+      let userId: string | undefined;
 
-      const data = await response.json();
+      if (isOAuthUser && oauthUser?.id) {
+        // OAuth user - update their profile with onboarding data
+        const response = await fetch(`/api/auth/user/${oauthUser.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            phone: formData.phone,
+            homeType: formData.homeType,
+            techComfort: formData.techComfort,
+            householdSize: formData.householdSize,
+            primaryIssues: formData.primaryIssues,
+            howHeard: formData.howHeard,
+          }),
+        });
+
+        const data = await response.json();
+        userId = oauthUser.id;
+        console.log("OAuth user profile updated:", data);
+      } else {
+        // Regular user - register new account
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...formData }),
+        });
+
+        const data = await response.json();
+        userId = data.user?.id;
+      }
 
       localStorage.setItem(
         "techtriage_settings",
@@ -245,7 +323,7 @@ export const SignUp: React.FC<SignUpProps> = ({
 
       if (onComplete) {
         onComplete({
-          id: data.user?.id,
+          id: userId,
           firstName: formData.firstName,
           lastName: formData.lastName || undefined,
           email: formData.email,
@@ -254,9 +332,10 @@ export const SignUp: React.FC<SignUpProps> = ({
         onStart();
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Registration/update error:", error);
       if (onComplete) {
         onComplete({
+          id: isOAuthUser ? oauthUser?.id : undefined,
           firstName: formData.firstName,
           lastName: formData.lastName || undefined,
           email: formData.email,
@@ -295,10 +374,10 @@ export const SignUp: React.FC<SignUpProps> = ({
       {/* Main Card */}
       <div className="w-full max-w-[520px] px-4 pb-12 z-10">
         <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-          {/* Progress Bar (if not step 1) */}
-          {step && step > 1 && (
+          {/* Progress Bar (always show for OAuth users, or if not step 1 for regular users) */}
+          {step && (isOAuthUser || step > 1) && (
             <div className="px-8 pt-8">
-              <ProgressBar step={step} totalSteps={5} />
+              <ProgressBar step={step} totalSteps={totalSteps} />
             </div>
           )}
 
@@ -338,11 +417,11 @@ export const SignUp: React.FC<SignUpProps> = ({
 
   // --- Step Content ---
 
-  // Step 5: Complete
+  // Step 5 (or Step 4 for OAuth): Complete
   if (currentStep === "complete") {
     return (
       <OnboardingLayout
-        step={5}
+        step={getStepNumber("complete")}
         title={<span className="italic">One last thing...</span>}
         subtitle="How did you hear about TechTriage? This helps us reach more people who need help."
       >
@@ -531,19 +610,19 @@ export const SignUp: React.FC<SignUpProps> = ({
     );
   }
 
-  // Step 2: Profile
+  // Step 2 (or Step 1 for OAuth): Profile
   if (currentStep === "profile") {
     return (
       <OnboardingLayout
-        step={2}
-        title="Welcome aboard!"
+        step={getStepNumber("profile")}
+        title={isOAuthUser ? `Welcome, ${formData.firstName || 'there'}!` : "Welcome aboard!"}
         subtitle="Let's set up your account so we can personalize your experience."
       >
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
-                First name
+                First name*
               </label>
               <input
                 type="text"
@@ -555,7 +634,7 @@ export const SignUp: React.FC<SignUpProps> = ({
             </div>
             <div>
               <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
-                Last name
+                Last name*
               </label>
               <input
                 type="text"
@@ -586,7 +665,7 @@ export const SignUp: React.FC<SignUpProps> = ({
           <div className="pt-2 space-y-3">
             <button
               onClick={nextStep}
-              disabled={!formData.firstName}
+              disabled={!formData.firstName || !formData.lastName}
               className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
             >
               Continue <ArrowRight className="w-5 h-5" />
@@ -597,11 +676,11 @@ export const SignUp: React.FC<SignUpProps> = ({
     );
   }
 
-  // Step 3: Home Info
+  // Step 3 (or Step 2 for OAuth): Home Info
   if (currentStep === "home") {
     return (
       <OnboardingLayout
-        step={3}
+        step={getStepNumber("home")}
         title="Tell us about your home"
         subtitle="This helps us give you better recommendations."
       >
@@ -672,15 +751,10 @@ export const SignUp: React.FC<SignUpProps> = ({
           <div className="pt-2 space-y-3">
             <button
               onClick={nextStep}
-              className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
+              disabled={!formData.homeType || !formData.techComfort}
+              className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
             >
               Continue <ArrowRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={nextStep}
-              className="w-full text-gray-400 hover:text-gray-600 text-sm font-medium py-2 transition-colors"
-            >
-              Skip this step
             </button>
           </div>
         </div>
@@ -688,11 +762,11 @@ export const SignUp: React.FC<SignUpProps> = ({
     );
   }
 
-  // Step 4: Needs
+  // Step 4 (or Step 3 for OAuth): Needs
   if (currentStep === "needs") {
     return (
       <OnboardingLayout
-        step={4}
+        step={getStepNumber("needs")}
         title="What brings you here?"
         subtitle="Select the types of tech you typically need help with."
       >
@@ -758,15 +832,10 @@ export const SignUp: React.FC<SignUpProps> = ({
           <div className="pt-2 space-y-3">
             <button
               onClick={nextStep}
-              className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
+              disabled={!formData.householdSize || formData.primaryIssues.length === 0}
+              className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
             >
               Continue <ArrowRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={nextStep}
-              className="w-full text-gray-400 hover:text-gray-600 text-sm font-medium py-2 transition-colors"
-            >
-              Skip this step
             </button>
           </div>
         </div>
