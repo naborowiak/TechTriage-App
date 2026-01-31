@@ -1133,9 +1133,12 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Track if we've already checked OAuth user status to prevent repeated checks
+  const [oauthChecked, setOauthChecked] = useState(false);
+
   // Handle OAuth users - sync session user to dashboardUser and check onboarding status
   useEffect(() => {
-    if (!authLoading && isAuthenticated && sessionUser) {
+    if (!authLoading && isAuthenticated && sessionUser && !oauthChecked) {
       const currentPath = window.location.pathname;
 
       // Create dashboard user object from session
@@ -1148,6 +1151,7 @@ const App: React.FC = () => {
 
       // If on dashboard, set up the user
       if (currentPath === '/dashboard') {
+        setOauthChecked(true);
         setDashboardUser(oauthUser);
         localStorage.setItem('techtriage_user', JSON.stringify(oauthUser));
         setCurrentView(PageView.DASHBOARD);
@@ -1155,6 +1159,7 @@ const App: React.FC = () => {
 
       // If on signup and authenticated, check if they've completed onboarding
       if (currentPath === '/signup' && sessionUser.id) {
+        setOauthChecked(true);
         // Fetch full user profile to check onboarding status
         fetch(`/api/auth/user/${sessionUser.id}`)
           .then(res => res.json())
@@ -1172,7 +1177,7 @@ const App: React.FC = () => {
           });
       }
     }
-  }, [authLoading, isAuthenticated, sessionUser]);
+  }, [authLoading, isAuthenticated, sessionUser, oauthChecked]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -1246,7 +1251,8 @@ const App: React.FC = () => {
     setDashboardView('main');
     localStorage.removeItem('techtriage_user');
     localStorage.removeItem('techtriage_trial');
-    navigate(PageView.HOME);
+    // Also clear OAuth session by redirecting to logout endpoint
+    window.location.href = '/api/auth/logout';
   };
 
   const handleOpenHistory = () => {

@@ -162,19 +162,23 @@ export const SignUp: React.FC<SignUpProps> = ({
     howHeard: "",
   });
 
-  // Handle OAuth users - set up form and step when auth is confirmed
+  // Handle OAuth users - set up form and step when auth is confirmed (runs only once)
+  const [oauthInitialized, setOauthInitialized] = useState(false);
+
   useEffect(() => {
-    if (!authLoading && isAuthenticated && oauthUser) {
-      // User is authenticated via OAuth - set up for onboarding
+    // Only initialize once when auth loads and user is authenticated
+    if (!authLoading && isAuthenticated && oauthUser && !oauthInitialized) {
+      setOauthInitialized(true);
+      setIsOAuthUser(true);
+      // Skip to profile step since they already have credentials via OAuth
+      setCurrentStep("profile");
+      // Pre-fill form data from OAuth user
       setFormData(prev => ({
         ...prev,
         email: oauthUser.email || prev.email,
         firstName: oauthUser.firstName || prev.firstName,
         lastName: oauthUser.lastName || prev.lastName,
       }));
-      setIsOAuthUser(true);
-      // Skip to profile step since they already have credentials via OAuth
-      setCurrentStep("profile");
       // Start trial for OAuth users
       if (oauthUser.email) {
         startTrial(oauthUser.email).catch(err => {
@@ -182,7 +186,7 @@ export const SignUp: React.FC<SignUpProps> = ({
         });
       }
     }
-  }, [authLoading, isAuthenticated, oauthUser]);
+  }, [authLoading, isAuthenticated, oauthUser, oauthInitialized]);
 
   // Show loading state while checking auth
   if (authLoading) {
