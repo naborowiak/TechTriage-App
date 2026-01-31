@@ -10,6 +10,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import nodemailer from "nodemailer";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail } from "./services/emailService";
+import { authStorage } from "./replit_integrations/auth/storage";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -895,17 +896,38 @@ async function main() {
           callbackURL: getCallbackURL(),
           proxy: true,
         },
-        (accessToken, refreshToken, profile, done) => {
-          // Transform Google profile to match expected User format
-          const user = {
-            id: profile.id,
-            username: profile.displayName || profile.emails?.[0]?.value || "",
-            email: profile.emails?.[0]?.value || null,
-            firstName: profile.name?.givenName || null,
-            lastName: profile.name?.familyName || null,
-            profileImageUrl: profile.photos?.[0]?.value || null,
-          };
-          return done(null, user);
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            // Upsert user to database and check if new
+            const { user: dbUser, isNewUser } = await authStorage.upsertUser({
+              id: profile.id,
+              email: profile.emails?.[0]?.value,
+              firstName: profile.name?.givenName,
+              lastName: profile.name?.familyName,
+              profileImageUrl: profile.photos?.[0]?.value,
+            });
+
+            // Send welcome email for new users
+            if (isNewUser && dbUser.email) {
+              sendWelcomeEmail(dbUser.email, dbUser.firstName || undefined).catch((err) => {
+                console.error("[EMAIL] Failed to send welcome email for Google OAuth user:", err);
+              });
+            }
+
+            // Transform to session user format
+            const user = {
+              id: dbUser.id,
+              username: profile.displayName || dbUser.email || "",
+              email: dbUser.email,
+              firstName: dbUser.firstName,
+              lastName: dbUser.lastName,
+              profileImageUrl: dbUser.profileImageUrl,
+            };
+            return done(null, user);
+          } catch (error) {
+            console.error("[GOOGLE AUTH] Error during user upsert:", error);
+            return done(error as Error);
+          }
         },
       ),
     );

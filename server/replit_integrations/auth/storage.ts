@@ -14,9 +14,9 @@ export const authStorage = {
     firstName?: string;
     lastName?: string;
     profileImageUrl?: string;
-  }): Promise<User> {
+  }): Promise<{ user: User; isNewUser: boolean }> {
     const existingUser = await this.getUser(userData.id);
-    
+
     if (existingUser) {
       await db
         .update(usersTable)
@@ -28,7 +28,7 @@ export const authStorage = {
           updatedAt: new Date(),
         })
         .where(eq(usersTable.id, userData.id));
-      return (await this.getUser(userData.id))!;
+      return { user: (await this.getUser(userData.id))!, isNewUser: false };
     } else {
       const newUser: InsertUser = {
         id: userData.id,
@@ -38,7 +38,7 @@ export const authStorage = {
         profileImageUrl: userData.profileImageUrl || null,
       };
       await db.insert(usersTable).values(newUser);
-      return (await this.getUser(userData.id))!;
+      return { user: (await this.getUser(userData.id))!, isNewUser: true };
     }
   },
 };
