@@ -39,6 +39,9 @@ import { Dashboard } from "./components/Dashboard";
 import { SessionHistory } from "./components/SessionHistory";
 import { Settings } from "./components/Settings";
 import { BillingManagement } from "./components/BillingManagement";
+import { PrivacyPolicy } from "./components/PrivacyPolicy";
+import { TermsOfService } from "./components/TermsOfService";
+import { CancellationPolicy } from "./components/CancellationPolicy";
 import { useTheme } from "./context/ThemeContext";
 import { useAuth } from "./hooks/useAuth";
 import { LiveSupport } from "./components/LiveSupport";
@@ -938,123 +941,60 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
   );
 };
 
-const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
-  onNavigate,
-}) => {
-  const handleNav = (view: PageView) => {
-    onNavigate(view);
-    window.scrollTo(0, 0);
-  };
-
-  // Map link names to navigation actions
-  const getLinkAction = (item: string): (() => void) | null => {
-    const navMap: Record<string, () => void> = {
-      Pricing: () => handleNav(PageView.PRICING),
-      "Text Support": () => handleNav(PageView.PRICING),
-      "AI Photo Triage": () => handleNav(PageView.PRICING),
-      "Live Video Help": () => handleNav(PageView.PRICING),
-      "Onsite Visits": () => handleNav(PageView.PRICING),
-      Support: () => handleNav(PageView.HOW_IT_WORKS),
-    };
-    return navMap[item] || null;
-  };
-
-  const links = {
-    "What We Fix": [
-      "Wi-Fi Issues",
-      "TV & Streaming",
-      "Computers",
-      "Smart Home",
-      "Appliances",
-      "HVAC",
-    ],
-    "Support Levels": [
-      "Text Support",
-      "AI Photo Triage",
-      "Live Video Help",
-      "Onsite Visits",
-    ],
-    Resources: [
-      "Pricing",
-      "How It Works",
-      "Safety Center",
-      "Blog",
-      "Podcast",
-      "Support",
-    ],
-    Company: [
-      "Our Story",
-      "Our Team",
-      "Press",
-      "Careers",
-      "Contact",
-      "Privacy",
-    ],
-  };
+const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
+  const handleNav = (view: PageView) => { onNavigate(view); window.scrollTo(0, 0); };
 
   return (
-    <footer className="bg-[#1F2937] pt-20 pb-10">
+    <footer className="bg-[#1F2937] text-white pt-20 pb-10 border-t border-white/10">
       <div className="container mx-auto px-6">
-        <div className="mb-12">
-          <button onClick={() => handleNav(PageView.HOME)}>
-            <Logo variant="light" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
-          {Object.entries(links).map(([cat, items]) => (
-            <div key={cat}>
-              <h4 className="font-bold text-white mb-6 text-base">{cat}</h4>
-              <ul className="space-y-3">
-                {items.map((item) => {
-                  const action = getLinkAction(item);
-                  // Special case for "How It Works"
-                  if (item === "How It Works") {
-                    return (
-                      <li key={item}>
-                        <button
-                          onClick={() => handleNav(PageView.HOW_IT_WORKS)}
-                          className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors"
-                        >
-                          {item}
-                        </button>
-                      </li>
-                    );
-                  }
-                  return (
-                    <li key={item}>
-                      {action ? (
-                        <button
-                          onClick={action}
-                          className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors"
-                        >
-                          {item}
-                        </button>
-                      ) : (
-                        <span className="text-white/60 hover:text-[#F97316] text-base font-medium transition-colors cursor-pointer">
-                          {item}
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-white/40 text-sm font-medium">
-            © 2026 TechTriage Inc. All rights reserved.
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+          {/* Brand Column */}
+          <div className="col-span-2 md:col-span-1">
+            <button onClick={() => handleNav(PageView.HOME)} className="mb-6 block">
+              <Logo variant="light" />
+            </button>
+            <p className="text-white/60 text-sm leading-relaxed mb-6">
+              Instant AI technical support for your home. We fix Wi-Fi, smart devices, and appliances in minutes.
+            </p>
           </div>
-          <div className="flex gap-6 text-white/40 text-sm font-medium">
-            <span className="hover:text-white transition-colors cursor-pointer">
-              Privacy Policy
-            </span>
-            <span className="hover:text-white transition-colors cursor-pointer">
-              Terms of Service
-            </span>
-            <span className="hover:text-white transition-colors cursor-pointer">
-              Accessibility
-            </span>
+
+          {/* Product Column */}
+          <div>
+            <h4 className="font-bold mb-6">Product</h4>
+            <ul className="space-y-4 text-sm text-white/60">
+              <li><button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className="hover:text-[#F97316] transition-colors">How It Works</button></li>
+              <li><button onClick={() => handleNav(PageView.PRICING)} className="hover:text-[#F97316] transition-colors">Pricing & Plans</button></li>
+              <li><button onClick={() => handleNav(PageView.FAQ)} className="hover:text-[#F97316] transition-colors">Common Questions</button></li>
+            </ul>
+          </div>
+
+          {/* Support Column */}
+          <div>
+            <h4 className="font-bold mb-6">Support</h4>
+            <ul className="space-y-4 text-sm text-white/60">
+              <li><button onClick={() => handleNav(PageView.LOGIN)} className="hover:text-[#F97316] transition-colors">Member Login</button></li>
+              <li><button onClick={() => handleNav(PageView.SIGNUP)} className="hover:text-[#F97316] transition-colors">Start Free Trial</button></li>
+              <li><span className="text-white/40 cursor-default">Help Center (Coming Soon)</span></li>
+            </ul>
+          </div>
+
+          {/* Legal Column */}
+          <div>
+            <h4 className="font-bold mb-6">Legal</h4>
+            <ul className="space-y-4 text-sm text-white/60">
+              <li><button onClick={() => handleNav(PageView.PRIVACY)} className="hover:text-[#F97316] transition-colors">Privacy Policy</button></li>
+              <li><button onClick={() => handleNav(PageView.TERMS)} className="hover:text-[#F97316] transition-colors">Terms of Service</button></li>
+              <li><button onClick={() => handleNav(PageView.CANCELLATION)} className="hover:text-[#F97316] transition-colors">Cancellation Policy</button></li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
+          <div>© 2026 TechTriage Inc. All rights reserved.</div>
+          <div className="flex gap-6">
+            <button onClick={() => handleNav(PageView.CANCELLATION)} className="hover:text-white transition-colors">Cancellation Policy</button>
+            <button onClick={() => handleNav(PageView.PRIVACY)} className="hover:text-white transition-colors">Privacy</button>
           </div>
         </div>
       </div>
@@ -1071,6 +1011,9 @@ const pathToView: Record<string, PageView> = {
   '/signup': PageView.SIGNUP,
   '/login': PageView.LOGIN,
   '/dashboard': PageView.DASHBOARD,
+  '/privacy': PageView.PRIVACY,
+  '/terms': PageView.TERMS,
+  '/cancellation': PageView.CANCELLATION,
 };
 
 const viewToPath: Record<PageView, string> = {
@@ -1083,6 +1026,9 @@ const viewToPath: Record<PageView, string> = {
   [PageView.HISTORY]: '/history',
   [PageView.SAFETY]: '/safety',
   [PageView.DASHBOARD]: '/dashboard',
+  [PageView.PRIVACY]: '/privacy',
+  [PageView.TERMS]: '/terms',
+  [PageView.CANCELLATION]: '/cancellation',
 };
 
 // Get initial view from URL
@@ -1322,6 +1268,12 @@ const App: React.FC = () => {
         );
       case PageView.LOGIN:
         return <Login onNavigate={navigate} onLogin={handleSignupComplete} />;
+      case PageView.PRIVACY:
+        return <PrivacyPolicy onBack={() => navigate(PageView.HOME)} />;
+      case PageView.TERMS:
+        return <TermsOfService onBack={() => navigate(PageView.HOME)} />;
+      case PageView.CANCELLATION:
+        return <CancellationPolicy onBack={() => navigate(PageView.HOME)} />;
       case PageView.DASHBOARD:
         if (dashboardUser) {
           // Determine what content to show inside dashboard

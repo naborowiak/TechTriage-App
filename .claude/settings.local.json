@@ -23,7 +23,10 @@
       "Bash(ls:*)",
       "Bash(xxd:*)",
       "Bash(kill:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git pull:*)",
+      "Bash(git status:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

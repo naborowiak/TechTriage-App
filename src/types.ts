@@ -32,7 +32,10 @@ export enum PageView {
   LOGIN = 'login',
   HISTORY = 'history',
   SAFETY = 'safety',
-  DASHBOARD = 'dashboard'
+  DASHBOARD = 'dashboard',
+  PRIVACY = 'privacy',
+  TERMS = 'terms',
+  CANCELLATION = 'cancellation'
 }
 
 export interface PricingTier {
