@@ -704,7 +704,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
           className={`bg-[#1F2937] text-white rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-3 font-bold pointer-events-auto hover:bg-[#374151] ${
             isAuthenticated
               ? 'px-8 py-5 text-lg'
-              : 'hidden sm:flex px-6 py-4 text-base animate-pulse hover:animate-none ring-4 ring-[#F97316]/30'
+              : 'hidden sm:flex px-6 py-4 text-base animate-pulse hover:animate-none ring-4 ring-[#F97316]/90'
           }`}
         >
           <MessageSquare className={isAuthenticated ? 'w-6 h-6' : 'w-5 h-5'} />
