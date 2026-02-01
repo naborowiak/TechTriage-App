@@ -15,6 +15,9 @@ export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if user is entering a Gmail address
+  const isGmailAddress = email.toLowerCase().endsWith('@gmail.com');
+
   const handleGoogleLogin = () => {
     window.location.href = '/auth/google';
   };
@@ -40,6 +43,7 @@ export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Required to establish session cookie
         body: JSON.stringify({ email, password }),
       });
 
@@ -135,6 +139,22 @@ export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                   <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Gmail suggestion */}
+              {isGmailAddress && !error && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-blue-800 text-sm mb-2">
+                    <strong>Tip:</strong> Using a Gmail account? You can sign in faster with Google.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="text-blue-600 font-medium text-sm hover:underline"
+                  >
+                    Sign in with Google instead →
+                  </button>
                 </div>
               )}
 

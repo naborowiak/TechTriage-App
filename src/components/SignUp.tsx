@@ -386,6 +386,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         const response = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include", // Required to establish session cookie
           body: JSON.stringify({ ...formData }),
         });
 
@@ -554,6 +555,22 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   Please use a different email or contact support.
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* Gmail suggestion */}
+          {formData.email.toLowerCase().endsWith('@gmail.com') && !trialError && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-blue-800 text-sm mb-2">
+                <strong>Tip:</strong> Using a Gmail account? You can sign up faster with Google.
+              </p>
+              <button
+                type="button"
+                onClick={() => (window.location.href = "/auth/google")}
+                className="text-blue-600 font-medium text-sm hover:underline"
+              >
+                Sign up with Google instead →
+              </button>
             </div>
           )}
 

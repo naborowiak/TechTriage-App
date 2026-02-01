@@ -175,7 +175,25 @@ app.post("/api/auth/register", async (req, res) => {
       console.error("[EMAIL] Failed to send welcome email:", err);
     });
 
-    res.json({ success: true, user: result.user });
+    // Create session user object (matching OAuth format)
+    const sessionUser = {
+      id: result.user.id,
+      username: result.user.email || "",
+      email: result.user.email,
+      firstName: result.user.firstName,
+      lastName: result.user.lastName,
+      profileImageUrl: null,
+    };
+
+    // Establish Passport session (same as OAuth/login flow)
+    req.login(sessionUser, (err) => {
+      if (err) {
+        console.error("Session creation error after registration:", err);
+        // Still return success since user was created, just without session
+        return res.json({ success: true, user: result.user });
+      }
+      res.json({ success: true, user: result.user });
+    });
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ error: "Registration failed. Please try again." });

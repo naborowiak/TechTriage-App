@@ -229,26 +229,28 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
               Back to Dashboard
             </button>
           )}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full text-white/80 text-sm mb-6">
-            <Shield className="w-4 h-4 text-[#F97316]" />
-            Trusted by 10,000+ homeowners
+          <div className="inline-flex items-center gap-2 bg-[#F97316]/20 backdrop-blur px-4 py-2 rounded-full text-white/80 text-sm mb-6 border border-[#F97316]/30">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span className="font-semibold">AI support available 24/7</span>
           </div>
           <h1 className="text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
-            Expert Tech Support,<br />
-            <span className="text-[#F97316]">Without the House Call</span>
+            Fix Your Tech Issues<br />
+            <span className="text-[#F97316]">In Minutes, Not Hours</span>
           </h1>
           <p className="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
-            Get instant help with Wi-Fi, smart home, appliances, and more.
-            AI-powered diagnostics plus real human experts when you need them.
+            Wi-Fi down? Smart TV acting up? Describe your problem, snap a photo, or start a video walkthrough—our AI guides you to a fix instantly.
           </p>
           <div className="flex flex-wrap justify-center gap-6 text-white/60 text-sm">
             <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#F97316]" />
-              Average response: 30 seconds
+              <Zap className="w-4 h-4 text-[#F97316]" />
+              AI-powered diagnostics
             </span>
             <span className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[#F97316]" />
-              90% of issues solved remotely
+              <Clock className="w-4 h-4 text-[#F97316]" />
+              No appointments needed
             </span>
             <span className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-[#F97316]" />
