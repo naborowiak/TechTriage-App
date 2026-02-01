@@ -1069,7 +1069,7 @@ const App: React.FC = () => {
   const chatRef = useRef<ChatWidgetHandle>(null);
 
   // Get auth state from session (for OAuth users)
-  const { user: sessionUser, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user: sessionUser, isAuthenticated, isLoading: authLoading, refetch: refetchAuth } = useAuth();
 
   // Check if user should see dashboard on initial load
   useEffect(() => {
@@ -1186,8 +1186,11 @@ const App: React.FC = () => {
   const handleSignupComplete = useCallback((user: DashboardUser) => {
     setDashboardUser(user);
     localStorage.setItem('techtriage_user', JSON.stringify(user));
+    // Refetch auth state to sync session with global auth context
+    // This ensures ChatWidget and Header recognize the user as authenticated
+    refetchAuth();
     navigate(PageView.DASHBOARD);
-  }, [navigate]);
+  }, [navigate, refetchAuth]);
 
   // Dashboard handlers (memoized to prevent unnecessary re-renders)
   const handleDashboardChat = useCallback(() => {
