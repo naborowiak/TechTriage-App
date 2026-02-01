@@ -512,29 +512,34 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* Final CTA */}
-      <div className="bg-[#1F2937] py-20">
-        <div className="container mx-auto px-6 max-w-3xl text-center">
-          <h2 className="text-3xl font-black text-white mb-4">
+      <div className="bg-gradient-to-br from-[#F97316] to-[#EA580C] py-20 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10 z-0">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+        </div>
+        <div className="container mx-auto px-6 max-w-3xl text-center relative z-10">
+          <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
             Ready for Stress-Free Tech Support?
           </h2>
-          <p className="text-white/70 mb-8 max-w-xl mx-auto">
+          <p className="text-white/90 mb-8 max-w-xl mx-auto">
             Join thousands of homeowners who've ditched the hold music and expensive service calls. It's free to get started.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => onNavigate(PageView.SIGNUP)}
-              className="bg-[#F97316] hover:bg-[#EA580C] text-white font-bold px-10 py-4 rounded-full transition-all shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30 flex items-center justify-center gap-2"
+              className="bg-[#1F2937] hover:bg-[#111827] text-white font-bold px-10 py-4 rounded-full transition-all shadow-xl hover:shadow-2xl flex items-center justify-center gap-2"
             >
               Get Started Free <ArrowRight className="w-5 h-5" />
             </button>
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="border-2 border-white/30 text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-colors"
+              className="border-2 border-white/80 text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-colors"
             >
               Compare Plans
             </button>
           </div>
-          <p className="text-white/50 text-sm mt-6">
+          <p className="text-white/80 text-sm mt-6">
             Powered by Smart Tek Labs
           </p>
         </div>

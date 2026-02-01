@@ -307,7 +307,7 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
   onFreeTrial,
   onPricing,
 }) => (
-  <section className="relative pt-[72px] min-h-[700px] lg:min-h-[800px] overflow-hidden">
+  <section className="relative pt-[72px] min-h-screen overflow-hidden">
     {/* Background hero image */}
     <div
       className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -318,7 +318,7 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
     </div>
 
     <div className="container mx-auto px-6 lg:px-12 relative z-10">
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[600px] lg:min-h-[700px]">
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[calc(100vh-72px)]">
         {/* Left side - Content */}
         <div className="pt-8 lg:pt-0">
           <div className="inline-flex items-center gap-2 bg-[#F97316]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-[#F97316]/30">
