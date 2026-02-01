@@ -1,13 +1,49 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { MessageSquare, X, Send, Image as ImageIcon, Video, Maximize2, Download, Camera, Library, MoreHorizontal, LifeBuoy, User } from 'lucide-react';
+import { MessageSquare, X, Send, Image as ImageIcon, Video, Maximize2, Download, Camera, Library, MoreHorizontal, LifeBuoy, User, ArrowRight } from 'lucide-react';
 import { ChatMessage, UserRole } from '../types';
 import { sendMessageToGemini, sendMessageAsLiveAgent } from '../services/geminiService';
 import { LiveSupport } from './LiveSupport';
+import { useAuth } from '../hooks/useAuth';
 
 export interface ChatWidgetHandle {
   open: (initialMessage?: string) => void;
   openAsLiveAgent: () => void;
 }
+
+// Canned responses for non-logged in users (sales/conversion focused)
+const CANNED_RESPONSES: Record<string, { text: string; followUp?: string[] }> = {
+  pricing: {
+    text: "Great question! We have three plans:\n\n• **Chat (Free)** - 5 AI chat sessions/month\n• **Home ($25/mo)** - Unlimited chat + photo diagnosis\n• **Pro ($59/mo)** - Everything unlimited + multi-home support\n\nWould you like to see the full pricing details?",
+    followUp: ["View pricing", "Sign up free", "What's included?"]
+  },
+  help: {
+    text: "I can help point you in the right direction! Our service helps with:\n\n• Wi-Fi & networking issues\n• Smart home setup\n• TV & streaming problems\n• Computer troubleshooting\n• And much more!\n\nSign up for free to start a triage session with our AI.",
+    followUp: ["Sign up free", "How it works", "View pricing"]
+  },
+  howItWorks: {
+    text: "Here's how TechTriage works:\n\n1. **Describe** your problem in chat\n2. **Snap** a photo if it helps\n3. **Get** AI-powered solutions instantly\n\nFor complex issues, you can also start a live video session with our AI assistant.",
+    followUp: ["Sign up free", "View pricing", "What can you help with?"]
+  },
+  default: {
+    text: "Thanks for your interest in TechTriage! To get personalized AI support for your tech issues, you'll need to create a free account.\n\nIt only takes a minute, and you'll get 5 free chat sessions to try it out!",
+    followUp: ["Sign up free", "View pricing", "How it works"]
+  }
+};
+
+// Match user input to canned response
+const getCannedResponse = (input: string): { text: string; followUp?: string[] } => {
+  const lower = input.toLowerCase();
+  if (lower.includes('price') || lower.includes('cost') || lower.includes('plan') || lower.includes('subscription')) {
+    return CANNED_RESPONSES.pricing;
+  }
+  if (lower.includes('how') && (lower.includes('work') || lower.includes('use'))) {
+    return CANNED_RESPONSES.howItWorks;
+  }
+  if (lower.includes('help') || lower.includes('support') || lower.includes('fix') || lower.includes('broken') || lower.includes('issue') || lower.includes('problem')) {
+    return CANNED_RESPONSES.help;
+  }
+  return CANNED_RESPONSES.default;
+};
 
 // Generate a unique session ID
 const generateSessionId = (): string => {
@@ -78,7 +114,11 @@ const logInteraction = async (data: {
   }
 };
 
-export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
+interface ChatWidgetProps {
+  onNavigate?: (view: string) => void;
+}
+
+export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNavigate }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLiveVideoActive, setIsLiveVideoActive] = useState(false);
@@ -87,6 +127,9 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
   const [input, setInput] = useState('');
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+
+  // Check if user is authenticated
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Live agent mode state
   const [isLiveAgentMode, setIsLiveAgentMode] = useState(false);
@@ -100,28 +143,43 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
   const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load persisted messages on mount
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    try {
-      const saved = localStorage.getItem('techtriage_chat_messages');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Check if messages are less than 24 hours old
-        const lastMsg = parsed[parsed.length - 1];
-        if (lastMsg && Date.now() - lastMsg.timestamp < 24 * 60 * 60 * 1000) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load messages:', e);
-    }
-    return [{
-      id: 'welcome',
-      role: UserRole.MODEL,
-      text: "Hi there! How can I help you today?",
-      timestamp: Date.now()
-    }];
+  // Get initial welcome message based on auth state
+  const getWelcomeMessage = (authenticated: boolean): ChatMessage => ({
+    id: 'welcome',
+    role: UserRole.MODEL,
+    text: authenticated
+      ? "Hi there! How can I help you today?"
+      : "Hi! I'm here to help you learn about TechTriage. What would you like to know?",
+    timestamp: Date.now()
   });
+
+  // Load persisted messages on mount (only for authenticated users)
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    // For non-authenticated users, always start fresh with sales-focused message
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('techtriage_chat_messages');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // Check if messages are less than 24 hours old
+          const lastMsg = parsed[parsed.length - 1];
+          if (lastMsg && Date.now() - lastMsg.timestamp < 24 * 60 * 60 * 1000) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load messages:', e);
+      }
+    }
+    return [getWelcomeMessage(false)];
+  });
+
+  // Update welcome message when auth state changes
+  useEffect(() => {
+    if (!authLoading && messages.length === 1 && messages[0].id === 'welcome') {
+      setMessages([getWelcomeMessage(isAuthenticated)]);
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Persist messages to localStorage
   useEffect(() => {
@@ -248,6 +306,27 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
     localStorage.removeItem('techtriage_chat_messages');
   };
 
+  // Handle navigation for canned response buttons
+  const handleCannedAction = (action: string) => {
+    if (action === 'Sign up free') {
+      if (onNavigate) {
+        onNavigate('signup');
+      } else {
+        window.location.href = '/signup';
+      }
+    } else if (action === 'View pricing') {
+      if (onNavigate) {
+        onNavigate('pricing');
+      } else {
+        window.location.href = '/pricing';
+      }
+    } else if (action === 'How it works') {
+      handleSend('How does TechTriage work?');
+    } else if (action === "What's included?" || action === 'What can you help with?') {
+      handleSend('What can you help with?');
+    }
+  };
+
   const handleSend = async (messageOverride?: string) => {
     const textToSend = typeof messageOverride === 'string' ? messageOverride : input;
     if ((!textToSend.trim() && !selectedImage) || isLoading) return;
@@ -266,7 +345,25 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
     setSelectedImage(undefined);
     setIsLoading(true);
 
-    // Log user message
+    // For non-authenticated users, use canned responses (no AI)
+    if (!isAuthenticated) {
+      // Simulate brief delay for natural feel
+      setTimeout(() => {
+        const response = getCannedResponse(textToSend);
+        const aiMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: UserRole.MODEL,
+          text: response.text,
+          timestamp: Date.now(),
+          cannedFollowUp: response.followUp
+        };
+        setMessages(prev => [...prev, aiMsg]);
+        setIsLoading(false);
+      }, 500 + Math.random() * 500);
+      return;
+    }
+
+    // Log user message (authenticated users only)
     logInteraction({
       sessionId,
       userId,
@@ -401,26 +498,43 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
             <div className="text-xs text-center text-gray-400 font-medium py-2">Today</div>
 
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex w-full ${msg.role === UserRole.USER ? 'justify-end' : 'justify-start items-end gap-2'}`}>
-                {msg.role === UserRole.MODEL && (
-                  msg.agentName ? (
-                    <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={msg.agentName.charAt(0)} />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-brand-900 flex items-center justify-center text-cta-500 shrink-0 mb-1 overflow-hidden">
-                      <BotAvatar className="w-4 h-4" />
+              <div key={msg.id}>
+                <div className={`flex w-full ${msg.role === UserRole.USER ? 'justify-end' : 'justify-start items-end gap-2'}`}>
+                  {msg.role === UserRole.MODEL && (
+                    msg.agentName ? (
+                      <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={msg.agentName.charAt(0)} />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-brand-900 flex items-center justify-center text-cta-500 shrink-0 mb-1 overflow-hidden">
+                        <BotAvatar className="w-4 h-4" />
+                      </div>
+                    )
+                  )}
+                  <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm leading-relaxed shadow-sm ${
+                    msg.role === UserRole.USER ? 'bg-brand-900 text-white rounded-tr-sm' : 'bg-white text-brand-900 rounded-tl-sm border border-gray-100'
+                  }`}>
+                    {msg.image && <img src={msg.image} className="w-full h-auto rounded-lg mb-3 border border-gray-100" />}
+                    <div className="whitespace-pre-wrap">{msg.text}</div>
+                    <div className={`text-[10px] mt-1 ${msg.role === UserRole.USER ? 'text-white/50' : 'text-gray-400'}`}>
+                      {msg.role === UserRole.MODEL ? `${msg.agentName || 'TechTriage Bot'} • ` : ''}
+                      {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </div>
-                  )
-                )}
-                <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm leading-relaxed shadow-sm ${
-                  msg.role === UserRole.USER ? 'bg-brand-900 text-white rounded-tr-sm' : 'bg-white text-brand-900 rounded-tl-sm border border-gray-100'
-                }`}>
-                  {msg.image && <img src={msg.image} className="w-full h-auto rounded-lg mb-3 border border-gray-100" />}
-                  <div className="whitespace-pre-wrap">{msg.text}</div>
-                  <div className={`text-[10px] mt-1 ${msg.role === UserRole.USER ? 'text-white/50' : 'text-gray-400'}`}>
-                    {msg.role === UserRole.MODEL ? `${msg.agentName || 'TechTriage Bot'} • ` : ''}
-                    {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </div>
                 </div>
+                {/* Canned follow-up buttons for non-authenticated users */}
+                {msg.cannedFollowUp && msg.cannedFollowUp.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                    {msg.cannedFollowUp.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleCannedAction(action)}
+                        className="bg-white border border-[#F97316] text-[#1F2937] hover:bg-[#F97316]/10 px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1"
+                      >
+                        {action}
+                        {(action === 'Sign up free' || action === 'View pricing') && <ArrowRight className="w-3 h-3" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
 
@@ -463,28 +577,57 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
 
             {messages.length < 3 && !isLoading && !isLiveAgentMode && !isConnectingToAgent && (
               <div className="flex flex-wrap gap-2 mt-4 ml-8">
-                 <button onClick={handleSpeakToExpert} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                   Speak to an expert
-                 </button>
-                 <button onClick={() => handleSend("What are your pricing plans?")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                   Pricing
-                 </button>
-                 <button onClick={() => handleSend("I have a broken device and need to start a triage session.")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                   Start Triage
-                 </button>
+                {isAuthenticated ? (
+                  <>
+                    <button onClick={handleSpeakToExpert} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                      Speak to an expert
+                    </button>
+                    <button onClick={() => handleSend("What are your pricing plans?")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                      Pricing
+                    </button>
+                    <button onClick={() => handleSend("I have a broken device and need to start a triage session.")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                      Start Triage
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => handleSend("What are your pricing plans?")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                      Pricing
+                    </button>
+                    <button onClick={() => handleSend("How does TechTriage work?")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                      How it works
+                    </button>
+                    <button onClick={() => handleCannedAction('Sign up free')} className="bg-cta-500 text-white hover:bg-cta-600 px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1">
+                      Sign up free <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {!isSessionEnded && (
+          {/* Video button - only for authenticated users */}
+          {!isSessionEnded && isAuthenticated && (
             <div className="px-4 py-2 bg-gray-50">
               <button
                 onClick={() => setIsLiveVideoActive(true)}
                 className="w-full bg-cta-500 hover:bg-cta-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold shadow-sm transition-all"
               >
                 <Video className="w-4 h-4" /> Initiate Live Video Feed
+              </button>
+            </div>
+          )}
+
+          {/* Sign up CTA for non-authenticated users */}
+          {!isSessionEnded && !isAuthenticated && (
+            <div className="px-4 py-2 bg-gradient-to-r from-[#F97316] to-[#EA580C]">
+              <button
+                onClick={() => handleCannedAction('Sign up free')}
+                className="w-full bg-white hover:bg-gray-100 text-[#F97316] py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold shadow-sm transition-all"
+              >
+                Sign Up Free to Get AI Support <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -504,7 +647,8 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
                 </div>
               )}
 
-             {showImageMenu && (
+             {/* Image menu - only for authenticated users */}
+             {showImageMenu && isAuthenticated && (
                 <div ref={menuRef} className="absolute bottom-16 left-4 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-50 w-48 animate-fade-in-up">
                   <button onClick={() => cameraInputRef.current?.click()} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-all text-brand-900 text-sm font-medium">
                      <Camera className="w-4 h-4 text-gray-500" /> Take Photo
@@ -521,15 +665,20 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder={isLiveAgentMode ? `Message ${currentAgent?.first}...` : "Type a message..."}
+                    placeholder={isAuthenticated
+                      ? (isLiveAgentMode ? `Message ${currentAgent?.first}...` : "Type a message...")
+                      : "Ask about TechTriage..."}
                     className="w-full bg-gray-50 border-none rounded-full px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-cta-500/50 pr-10 text-brand-900 placeholder:text-gray-400"
                   />
-                  <button
-                    onClick={() => setShowImageMenu(!showImageMenu)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-900 transition-colors"
-                  >
-                    <ImageIcon className="w-5 h-5" />
-                  </button>
+                  {/* Image button - only for authenticated users */}
+                  {isAuthenticated && (
+                    <button
+                      onClick={() => setShowImageMenu(!showImageMenu)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-900 transition-colors"
+                    >
+                      <ImageIcon className="w-5 h-5" />
+                    </button>
+                  )}
               </div>
 
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -547,14 +696,19 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, object>((_, ref) => {
         </div>
       )}
 
+      {/* Chat bubble - hidden on mobile for non-auth users (covers CTAs), enhanced on desktop */}
       {!isOpen && (
         <button
           aria-label="Open Chat"
           onClick={() => setIsOpen(true)}
-          className="bg-[#1F2937] text-white px-8 py-5 rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-3 font-bold text-lg pointer-events-auto hover:bg-[#374151]"
+          className={`bg-[#1F2937] text-white rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-3 font-bold pointer-events-auto hover:bg-[#374151] ${
+            isAuthenticated
+              ? 'px-8 py-5 text-lg'
+              : 'hidden sm:flex px-6 py-4 text-base animate-pulse hover:animate-none ring-4 ring-[#F97316]/30'
+          }`}
         >
-          <MessageSquare className="w-6 h-6" />
-          Need Help?
+          <MessageSquare className={isAuthenticated ? 'w-6 h-6' : 'w-5 h-5'} />
+          {isAuthenticated ? 'Need Help?' : 'Questions?'}
         </button>
       )}
     </div>

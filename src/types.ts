@@ -12,6 +12,7 @@ export interface ChatMessage {
   isError?: boolean;
   timestamp: number;
   agentName?: string;
+  cannedFollowUp?: string[]; // For non-authenticated user canned responses
 }
 
 export interface SavedSession {
