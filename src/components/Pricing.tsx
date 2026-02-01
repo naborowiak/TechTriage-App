@@ -117,14 +117,12 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       icon: MessageSquare,
       features: [
         '5 AI chat sessions per month',
+        '2 TechTriage Snap photo analyses',
+        '1 TechTriage Live video session',
         'Access to knowledge base',
         'Basic troubleshooting guides',
-        'Email support',
       ],
-      limitations: [
-        'No photo diagnosis',
-        'No live video support',
-      ],
+      trialNote: 'Photo & video are one-time trial credits',
       cta: 'Sign Up Free',
       ctaStyle: 'outlined',
     },
@@ -412,13 +410,12 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <span className="text-[#374151]">{feature}</span>
                     </li>
                   ))}
-                  {plan.limitations?.map((limitation, j) => (
-                    <li key={`limit-${j}`} className="flex items-start gap-3 text-sm text-gray-400">
-                      <span className="w-5 h-5 shrink-0 mt-0.5 text-center">—</span>
-                      <span>{limitation}</span>
-                    </li>
-                  ))}
                 </ul>
+                {'trialNote' in plan && plan.trialNote && (
+                  <p className="mt-4 text-xs text-gray-400 italic text-center">
+                    {plan.trialNote}
+                  </p>
+                )}
               </div>
             ))}
           </div>

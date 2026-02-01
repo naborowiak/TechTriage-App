@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Camera, Video, Clock, User, ChevronRight, Sparkles, Shield, History, Settings, LogOut, Menu, AlertTriangle, CreditCard } from 'lucide-react';
 import { Logo } from './Logo';
 import { getTrialStatus } from '../services/trialService';
+import { useSubscription } from '../hooks/useSubscription';
 
 interface DashboardProps {
   user: {
@@ -36,21 +37,41 @@ const ActionCard: React.FC<{
   buttonText: string;
   onClick: () => void;
   highlight?: boolean;
-}> = ({ icon, title, description, buttonText, onClick, highlight }) => (
-  <div className={`bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg hover:-translate-y-1 ${
-    highlight ? 'border-[#F97316] shadow-lg shadow-orange-100' : 'border-gray-100'
+  badge?: string | number;
+  disabled?: boolean;
+}> = ({ icon, title, description, buttonText, onClick, highlight, badge, disabled }) => (
+  <div className={`bg-white rounded-2xl p-6 border-2 transition-all ${
+    disabled
+      ? 'opacity-60 cursor-not-allowed border-gray-200'
+      : 'hover:shadow-lg hover:-translate-y-1 ' + (highlight ? 'border-[#F97316] shadow-lg shadow-orange-100' : 'border-gray-100')
   }`}>
-    <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${
-      highlight ? 'bg-[#F97316] text-white' : 'bg-gray-100 text-[#1F2937]'
-    }`}>
-      {icon}
+    <div className="flex items-start justify-between mb-4">
+      <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+        highlight ? 'bg-[#F97316] text-white' : 'bg-gray-100 text-[#1F2937]'
+      }`}>
+        {icon}
+      </div>
+      {badge !== undefined && (
+        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+          badge === 0 || badge === 'Used'
+            ? 'bg-red-100 text-red-600'
+            : badge === 'unlimited' || badge === 'Unlimited'
+            ? 'bg-green-100 text-green-600'
+            : 'bg-orange-100 text-[#F97316]'
+        }`}>
+          {badge === 'unlimited' ? 'Unlimited' : typeof badge === 'number' ? `${badge} left` : badge}
+        </span>
+      )}
     </div>
     <h3 className="text-xl font-bold text-[#1F2937] mb-2">{title}</h3>
     <p className="text-gray-500 mb-4 leading-relaxed">{description}</p>
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={`w-full py-3 px-4 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-        highlight
+        disabled
+          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          : highlight
           ? 'bg-[#F97316] hover:bg-[#EA580C] text-white'
           : 'bg-[#1F2937] hover:bg-[#374151] text-white'
       }`}
@@ -85,6 +106,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [trialInfo, setTrialInfo] = useState<TrialInfo>({ isActive: false });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // Get subscription status and usage
+  const { getRemainingUses, canUseFeature } = useSubscription(user.id);
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -271,20 +295,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 buttonText="Start Chatting"
                 onClick={onStartChat}
                 highlight
+                badge={getRemainingUses('chat')}
               />
               <ActionCard
                 icon={<Camera className="w-7 h-7" />}
                 title="Upload a Photo"
                 description="Take a picture of the problem - error codes, devices, anything. We'll analyze it instantly."
-                buttonText="Upload Image"
+                buttonText={canUseFeature('photo') ? "Upload Image" : "Upgrade to Use"}
                 onClick={onUploadImage}
+                badge={getRemainingUses('photo')}
+                disabled={!canUseFeature('photo')}
               />
               <ActionCard
                 icon={<Video className="w-7 h-7" />}
                 title="Live Video Session"
                 description="Show us in real-time what's happening. Perfect for complex issues that need hands-on guidance."
-                buttonText="Start Video"
+                buttonText={canUseFeature('live') ? "Start Video" : "Upgrade to Use"}
                 onClick={onStartVideo}
+                badge={getRemainingUses('live')}
+                disabled={!canUseFeature('live')}
               />
             </div>
 

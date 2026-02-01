@@ -133,6 +133,87 @@ const benefits = [
   },
 ];
 
+// Layout wrapper component - defined outside SignUp to prevent re-renders
+interface OnboardingLayoutProps {
+  children: React.ReactNode;
+  step?: number;
+  totalSteps: number;
+  title: React.ReactNode;
+  subtitle?: string;
+  showProgressBar: boolean;
+  onLogoClick: () => void;
+}
+
+const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
+  children,
+  step,
+  totalSteps,
+  title,
+  subtitle,
+  showProgressBar,
+  onLogoClick,
+}) => (
+  <div
+    className="min-h-screen relative flex flex-col items-center"
+    style={{
+      backgroundColor: "#F9FAFB",
+      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`,
+    }}
+  >
+    {/* Header / Logo */}
+    <div className="w-full pt-8 pb-6 flex justify-center z-10">
+      <button
+        onClick={onLogoClick}
+        className="focus:outline-none hover:opacity-80 transition-opacity"
+      >
+        <Logo variant="dark" />
+      </button>
+    </div>
+
+    {/* Main Card */}
+    <div className="w-full max-w-[520px] px-4 pb-12 z-10">
+      <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+        {/* Progress Bar */}
+        {step && showProgressBar && (
+          <div className="px-8 pt-8">
+            <ProgressBar step={step} totalSteps={totalSteps} />
+          </div>
+        )}
+
+        <div className="p-8 sm:p-10">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl sm:text-4xl font-black text-[#1F2937] leading-tight mb-3">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-gray-500 text-lg leading-relaxed">
+                {subtitle}
+              </p>
+            )}
+          </div>
+
+          {children}
+        </div>
+      </div>
+
+      {/* Footer Links */}
+      <div className="mt-8 text-center space-y-4">
+        <p className="text-sm text-gray-400">
+          &copy; {new Date().getFullYear()} TechTriage. All rights reserved.
+        </p>
+        <div className="flex justify-center gap-6 text-sm text-gray-500 font-medium">
+          <a href="#" className="hover:text-[#F97316] transition-colors">
+            Terms of Service
+          </a>
+          <a href="#" className="hover:text-[#F97316] transition-colors">
+            Privacy Policy
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export const SignUp = memo<SignUpProps>(function SignUp({
   onStart,
   initialEmail = "",
@@ -346,75 +427,6 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     }
   };
 
-  // --- Layout Wrappers ---
-
-  const OnboardingLayout: React.FC<{
-    children: React.ReactNode;
-    step?: number;
-    title: React.ReactNode;
-    subtitle?: string;
-  }> = ({ children, step, title, subtitle }) => (
-    <div
-      className="min-h-screen relative flex flex-col items-center"
-      style={{
-        backgroundColor: "#F9FAFB",
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`,
-      }}
-    >
-      {/* Header / Logo */}
-      <div className="w-full pt-8 pb-6 flex justify-center z-10">
-        <button
-          onClick={handleLogoClick}
-          className="focus:outline-none hover:opacity-80 transition-opacity"
-        >
-          <Logo variant="dark" />
-        </button>
-      </div>
-
-      {/* Main Card */}
-      <div className="w-full max-w-[520px] px-4 pb-12 z-10">
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-          {/* Progress Bar (always show for OAuth users, or if not step 1 for regular users) */}
-          {step && (isOAuthUser || step > 1) && (
-            <div className="px-8 pt-8">
-              <ProgressBar step={step} totalSteps={totalSteps} />
-            </div>
-          )}
-
-          <div className="p-8 sm:p-10">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl sm:text-4xl font-black text-[#1F2937] leading-tight mb-3">
-                {title}
-              </h1>
-              {subtitle && (
-                <p className="text-gray-500 text-lg leading-relaxed">
-                  {subtitle}
-                </p>
-              )}
-            </div>
-
-            {children}
-          </div>
-        </div>
-
-        {/* Footer Links */}
-        <div className="mt-8 text-center space-y-4">
-          <p className="text-sm text-gray-400">
-            &copy; {new Date().getFullYear()} TechTriage. All rights reserved.
-          </p>
-          <div className="flex justify-center gap-6 text-sm text-gray-500 font-medium">
-            <a href="#" className="hover:text-[#F97316] transition-colors">
-              Terms of Service
-            </a>
-            <a href="#" className="hover:text-[#F97316] transition-colors">
-              Privacy Policy
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   // --- Step Content ---
 
   // Step 5 (or Step 4 for OAuth): Complete
@@ -422,6 +434,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     return (
       <OnboardingLayout
         step={getStepNumber("complete")}
+        totalSteps={totalSteps}
+        showProgressBar={isOAuthUser || getStepNumber("complete") > 1}
+        onLogoClick={handleLogoClick}
         title={<span className="italic">One last thing...</span>}
         subtitle="How did you hear about TechTriage? This helps us reach more people who need help."
       >
@@ -480,6 +495,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     return (
       <OnboardingLayout
         step={1}
+        totalSteps={totalSteps}
+        showProgressBar={isOAuthUser || 1 > 1}
+        onLogoClick={handleLogoClick}
         title={
           <>
             Tech help made <span className="text-[#F97316] italic">simple</span>
@@ -615,6 +633,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     return (
       <OnboardingLayout
         step={getStepNumber("profile")}
+        totalSteps={totalSteps}
+        showProgressBar={isOAuthUser || getStepNumber("profile") > 1}
+        onLogoClick={handleLogoClick}
         title={isOAuthUser ? `Welcome, ${formData.firstName || 'there'}!` : "Welcome aboard!"}
         subtitle="Let's set up your account so we can personalize your experience."
       >
@@ -681,6 +702,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     return (
       <OnboardingLayout
         step={getStepNumber("home")}
+        totalSteps={totalSteps}
+        showProgressBar={isOAuthUser || getStepNumber("home") > 1}
+        onLogoClick={handleLogoClick}
         title="Tell us about your home"
         subtitle="This helps us give you better recommendations."
       >
@@ -767,6 +791,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     return (
       <OnboardingLayout
         step={getStepNumber("needs")}
+        totalSteps={totalSteps}
+        showProgressBar={isOAuthUser || getStepNumber("needs") > 1}
+        onLogoClick={handleLogoClick}
         title="What brings you here?"
         subtitle="Select the types of tech you typically need help with."
       >

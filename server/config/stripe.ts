@@ -1,14 +1,14 @@
 // Stripe configuration for TechTriage subscription plans
 
-// Price IDs from Stripe Dashboard (set via environment variables)
+// Price IDs from Stripe Dashboard
 export const STRIPE_PRICES = {
   home: {
-    monthly: process.env.STRIPE_PRICE_HOME_MONTHLY || '',
-    annual: process.env.STRIPE_PRICE_HOME_ANNUAL || '',
+    monthly: 'price_1SvwfjHcv0NiVMuKGDVU6oKu',  // $25/month
+    annual: 'price_1SvwfjHcv0NiVMuKV0AMJZxC',   // $228/year ($19/mo)
   },
   pro: {
-    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
-    annual: process.env.STRIPE_PRICE_PRO_ANNUAL || '',
+    monthly: 'price_1SvwhfHcv0NiVMuKXauBRlcX',  // $59/month
+    annual: 'price_1Svwi6Hcv0NiVMuKFgbK5GSK',   // $588/year ($49/mo)
   },
 } as const;
 
@@ -38,8 +38,8 @@ export function getBillingIntervalFromPriceId(priceId: string): 'monthly' | 'ann
 export const PLAN_LIMITS = {
   free: {
     chatSessions: 5,
-    photoAnalyses: 0,
-    liveSessions: 0,
+    photoAnalyses: 2,  // Trial taste: 2 photo analyses
+    liveSessions: 1,   // Trial taste: 1 live session
     multiHome: false,
     maxHomes: 1,
   },

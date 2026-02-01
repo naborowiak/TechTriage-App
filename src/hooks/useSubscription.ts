@@ -43,7 +43,7 @@ const defaultState: SubscriptionState = {
   status: 'active',
   billingInterval: null,
   usage: { chatSessions: 0, photoAnalyses: 0, liveSessions: 0 },
-  limits: { chatSessions: 5, photoAnalyses: 0, liveSessions: 0 },
+  limits: { chatSessions: 5, photoAnalyses: 2, liveSessions: 1 },  // Trial limits
   currentPeriodEnd: null,
   cancelAtPeriodEnd: false,
   trialEnd: null,
@@ -74,7 +74,7 @@ export function useSubscription(userId: string | undefined) {
           status: data.status || 'active',
           billingInterval: data.billingInterval || null,
           usage: data.usage || { chatSessions: 0, photoAnalyses: 0, liveSessions: 0 },
-          limits: data.limits || { chatSessions: 5, photoAnalyses: 0, liveSessions: 0 },
+          limits: data.limits || { chatSessions: 5, photoAnalyses: 2, liveSessions: 1 },
           currentPeriodEnd: data.currentPeriodEnd
             ? new Date(data.currentPeriodEnd)
             : null,
