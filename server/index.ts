@@ -145,7 +145,11 @@ app.post("/api/auth/register", async (req, res) => {
       howHeard,
     } = req.body;
 
+    console.log("[REGISTER] Received registration request for:", email);
+    console.log("[REGISTER] Password provided:", !!password, "Length:", password?.length);
+
     if (!email || !password) {
+      console.log("[REGISTER] Missing email or password - email:", !!email, "password:", !!password);
       return res.status(400).json({ error: "Email and password are required" });
     }
 
@@ -205,7 +209,11 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("[LOGIN] Login attempt for:", email);
+    console.log("[LOGIN] Password provided:", !!password, "Length:", password?.length);
+
     if (!email || !password) {
+      console.log("[LOGIN] Missing credentials - email:", !!email, "password:", !!password);
       return res.status(400).json({ error: "Email and password are required" });
     }
 

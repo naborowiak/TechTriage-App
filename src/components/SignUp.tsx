@@ -357,6 +357,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
 
   const handleComplete = async () => {
     console.log("Onboarding complete:", formData);
+    console.log("[SIGNUP] Password in formData:", !!formData.password, "Length:", formData.password?.length);
 
     try {
       let userId: string | undefined;
@@ -383,6 +384,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         console.log("OAuth user profile updated:", data);
       } else {
         // Regular user - register new account
+        console.log("[SIGNUP] Sending registration request with email:", formData.email);
+        console.log("[SIGNUP] Password being sent:", !!formData.password, "Length:", formData.password?.length);
+
         const response = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -391,7 +395,15 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         });
 
         const data = await response.json();
+        console.log("[SIGNUP] Registration response:", data);
+        console.log("[SIGNUP] Response success:", data.success);
+        console.log("[SIGNUP] Response user:", data.user);
+        console.log("[SIGNUP] Response user.id:", data.user?.id);
         userId = data.user?.id;
+
+        if (!userId) {
+          console.error("[SIGNUP] WARNING: No user ID returned from registration!");
+        }
       }
 
       localStorage.setItem(

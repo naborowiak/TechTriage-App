@@ -19,6 +19,9 @@ export async function registerUser(data: {
   primaryIssues?: string[];
   howHeard?: string;
 }) {
+  console.log("[AUTH SERVICE] registerUser called for:", data.email);
+  console.log("[AUTH SERVICE] Password received:", !!data.password, "Length:", data.password?.length);
+
   // Check if user already exists
   const existingUser = await db
     .select()
@@ -27,28 +30,48 @@ export async function registerUser(data: {
     .limit(1);
 
   if (existingUser.length > 0) {
+    console.log("[AUTH SERVICE] User already exists:", data.email);
     return { success: false, error: "An account with this email already exists." };
   }
 
   // Hash password
+  console.log("[AUTH SERVICE] Hashing password...");
   const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
+  console.log("[AUTH SERVICE] Password hashed, hash length:", passwordHash.length);
 
   // Create user
-  const [newUser] = await db
-    .insert(usersTable)
-    .values({
-      email: data.email.toLowerCase(),
-      passwordHash,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      homeType: data.homeType,
-      techComfort: data.techComfort,
-      householdSize: data.householdSize,
-      primaryIssues: data.primaryIssues,
-      howHeard: data.howHeard,
-    })
-    .returning();
+  console.log("[AUTH SERVICE] Inserting user with values:", {
+    email: data.email.toLowerCase(),
+    passwordHash: passwordHash ? `[HASH: ${passwordHash.length} chars]` : 'MISSING!',
+    firstName: data.firstName,
+  });
+
+  let newUser;
+  try {
+    const result = await db
+      .insert(usersTable)
+      .values({
+        email: data.email.toLowerCase(),
+        passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        homeType: data.homeType,
+        techComfort: data.techComfort,
+        householdSize: data.householdSize,
+        primaryIssues: data.primaryIssues,
+        howHeard: data.howHeard,
+      })
+      .returning();
+    newUser = result[0];
+  } catch (dbError) {
+    console.error("[AUTH SERVICE] Database INSERT error:", dbError);
+    throw dbError;
+  }
+
+  console.log("[AUTH SERVICE] User created with ID:", newUser.id);
+  console.log("[AUTH SERVICE] User passwordHash stored:", !!newUser.passwordHash);
+  console.log("[AUTH SERVICE] Returned user object keys:", Object.keys(newUser));
 
   return {
     success: true,
@@ -63,6 +86,8 @@ export async function registerUser(data: {
 
 // User Login
 export async function loginUser(email: string, password: string) {
+  console.log("[AUTH SERVICE] loginUser called for:", email);
+
   // Find user by email
   const [user] = await db
     .select()
@@ -71,16 +96,27 @@ export async function loginUser(email: string, password: string) {
     .limit(1);
 
   if (!user) {
+    console.log("[AUTH SERVICE] User not found:", email);
     return { success: false, error: "Invalid email or password." };
   }
 
+  console.log("[AUTH SERVICE] User found, ID:", user.id);
+  console.log("[AUTH SERVICE] User has passwordHash:", !!user.passwordHash);
+  console.log("[AUTH SERVICE] User object keys:", Object.keys(user));
+  console.log("[AUTH SERVICE] Raw passwordHash value type:", typeof user.passwordHash);
+  console.log("[AUTH SERVICE] passwordHash length:", user.passwordHash?.length);
+
   // Check if user has a password (OAuth users don't)
   if (!user.passwordHash) {
+    console.log("[AUTH SERVICE] No passwordHash - OAuth user");
     return { success: false, error: "Please log in using your social account." };
   }
 
   // Verify password
+  console.log("[AUTH SERVICE] Comparing passwords...");
   const isValid = await bcrypt.compare(password, user.passwordHash);
+  console.log("[AUTH SERVICE] Password valid:", isValid);
+
   if (!isValid) {
     return { success: false, error: "Invalid email or password." };
   }
