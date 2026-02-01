@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, memo } from 'react';
 import { Eye, EyeOff, AlertCircle, Shield, Zap, Clock } from 'lucide-react';
 import { Logo } from './Logo';
 import { PageView } from '../types';
@@ -8,7 +8,7 @@ interface LoginProps {
   onLogin?: (user: { id?: string; firstName: string; lastName?: string; email: string }) => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
+export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -242,4 +242,4 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
       </div>
     </section>
   );
-};
+});

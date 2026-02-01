@@ -579,9 +579,10 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({ onClose, userId, userE
         inputAnalyser.connect(scriptProcessor);
         scriptProcessor.connect(inputAudioContext.destination);
 
-        // Connect to WebSocket backend
+        // Connect to WebSocket backend with userId for access control
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/live`;
+        const baseWsUrl = `${protocol}//${window.location.host}/live`;
+        const wsUrl = userId ? `${baseWsUrl}?userId=${encodeURIComponent(userId)}` : baseWsUrl;
         console.log(`Connecting to WebSocket: ${wsUrl}`);
 
         ws = new WebSocket(wsUrl);

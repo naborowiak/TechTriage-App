@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Camera, Video, Clock, User, ChevronRight, Sparkles, Shield, History, Settings, LogOut, Menu, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Camera, Video, Clock, User, ChevronRight, Sparkles, Shield, History, Settings, LogOut, Menu, AlertTriangle, CreditCard } from 'lucide-react';
 import { Logo } from './Logo';
 import { getTrialStatus } from '../services/trialService';
 
 interface DashboardProps {
   user: {
+    id?: string;
     firstName: string;
     lastName?: string;
     email: string;
@@ -15,8 +16,9 @@ interface DashboardProps {
   onLogout: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
+  onOpenBilling?: () => void;
   onBackToDashboard?: () => void;
-  activeView?: 'main' | 'history' | 'settings';
+  activeView?: 'main' | 'history' | 'settings' | 'billing';
   children?: React.ReactNode;
   onUpdateUser?: (user: { firstName: string; lastName?: string; email: string }) => void;
 }
@@ -74,6 +76,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onLogout,
   onOpenHistory,
   onOpenSettings,
+  onOpenBilling,
   onBackToDashboard,
   activeView = 'main',
   children,
@@ -171,6 +174,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <Settings className="w-5 h-5" />
             Settings
           </button>
+          {onOpenBilling && (
+            <button
+              onClick={() => { setSidebarOpen(false); onOpenBilling(); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                activeView === 'billing' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <CreditCard className="w-5 h-5" />
+              Billing
+            </button>
+          )}
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">

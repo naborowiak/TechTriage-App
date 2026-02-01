@@ -11,6 +11,14 @@ import nodemailer from "nodemailer";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail } from "./services/emailService";
 import { authStorage } from "./replit_integrations/auth/storage";
+import * as stripeService from "./services/stripeService";
+import {
+  loadSubscription,
+  requireFeature,
+  incrementUsage,
+  checkFeatureAccess,
+} from "./middleware/subscriptionMiddleware";
+import { STRIPE_PRICES, PLAN_LIMITS } from "./config/stripe";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -21,6 +29,77 @@ app.use(
     credentials: true,
   }),
 );
+
+// Stripe webhook endpoint - MUST be before express.json() middleware
+// because Stripe requires the raw body for signature verification
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"] as string;
+
+    if (!sig) {
+      return res.status(400).json({ error: "Missing stripe-signature header" });
+    }
+
+    try {
+      const event = stripeService.constructWebhookEvent(req.body, sig);
+
+      // Check for duplicate event (idempotency)
+      const isProcessed = await stripeService.isEventProcessed(event.id);
+      if (isProcessed) {
+        return res.json({ received: true, duplicate: true });
+      }
+
+      // Record the event
+      await stripeService.recordWebhookEvent(event.id, event.type, event.data);
+
+      // Handle the event
+      try {
+        switch (event.type) {
+          case "checkout.session.completed":
+            await stripeService.handleCheckoutCompleted(
+              event.data.object as any
+            );
+            break;
+          case "customer.subscription.created":
+          case "customer.subscription.updated":
+            await stripeService.handleSubscriptionUpdated(
+              event.data.object as any
+            );
+            break;
+          case "customer.subscription.deleted":
+            await stripeService.handleSubscriptionDeleted(
+              event.data.object as any
+            );
+            break;
+          case "invoice.payment_succeeded":
+            await stripeService.handlePaymentSucceeded(event.data.object as any);
+            break;
+          case "invoice.payment_failed":
+            await stripeService.handlePaymentFailed(event.data.object as any);
+            break;
+          default:
+            console.log(`[STRIPE] Unhandled event type: ${event.type}`);
+        }
+
+        await stripeService.markEventProcessed(event.id);
+        res.json({ received: true });
+      } catch (err) {
+        console.error("[STRIPE] Error processing webhook:", err);
+        await stripeService.markEventProcessed(
+          event.id,
+          err instanceof Error ? err.message : "Unknown error"
+        );
+        res.status(500).json({ error: "Webhook processing failed" });
+      }
+    } catch (err) {
+      console.error("[STRIPE] Webhook signature verification failed:", err);
+      return res.status(400).json({ error: "Invalid signature" });
+    }
+  }
+);
+
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
@@ -118,7 +197,24 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ error: result.error });
     }
 
-    res.json({ success: true, user: result.user });
+    // Create session user object (matching OAuth format)
+    const sessionUser = {
+      id: result.user.id,
+      username: result.user.email || "",
+      email: result.user.email,
+      firstName: result.user.firstName,
+      lastName: result.user.lastName,
+      profileImageUrl: result.user.profileImageUrl,
+    };
+
+    // Establish Passport session (same as OAuth flow)
+    req.login(sessionUser, (err) => {
+      if (err) {
+        console.error("Session creation error:", err);
+        return res.status(500).json({ error: "Failed to create session" });
+      }
+      res.json({ success: true, user: result.user });
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Login failed. Please try again." });
@@ -198,10 +294,39 @@ app.delete("/api/auth/user/:id", async (req, res) => {
 // Support Sessions API Endpoints
 // ============================================
 
-// Save a support session
-app.post("/api/sessions", async (req, res) => {
+// Save a support session (with usage tracking)
+app.post("/api/sessions", loadSubscription, async (req, res) => {
   try {
     const { userId, sessionType, title, summary, transcript } = req.body;
+
+    // Check feature access based on session type
+    const featureMap: Record<string, "chat" | "photo" | "live"> = {
+      chat: "chat",
+      photo: "photo",
+      video: "live",
+    };
+    const feature = featureMap[sessionType] || "chat";
+
+    // Check if user has access (for non-authenticated saves, skip)
+    if (req.subscription && userId) {
+      const canUse = {
+        chat: req.subscription.canUseChat,
+        photo: req.subscription.canUsePhoto,
+        live: req.subscription.canUseLive,
+      }[feature];
+
+      if (!canUse) {
+        return res.status(403).json({
+          error: "Feature limit reached",
+          code: "LIMIT_REACHED",
+          feature,
+          tier: req.subscription.tier,
+          usage: req.subscription.usage,
+          limits: req.subscription.limits,
+        });
+      }
+    }
+
     const session = await authService.saveSession({
       userId,
       sessionType,
@@ -209,6 +334,20 @@ app.post("/api/sessions", async (req, res) => {
       summary,
       transcript,
     });
+
+    // Increment usage after successful save
+    if (userId) {
+      const usageMap: Record<string, "chatSessions" | "photoAnalyses" | "liveSessions"> = {
+        chat: "chatSessions",
+        photo: "photoAnalyses",
+        video: "liveSessions",
+      };
+      const usageField = usageMap[sessionType];
+      if (usageField) {
+        await incrementUsage(userId, usageField);
+      }
+    }
+
     res.json({ success: true, session });
   } catch (error) {
     console.error("Save session error:", error);
@@ -459,6 +598,109 @@ app.post("/api/audit/chat", (req, res) => {
   }, null, 2));
 
   res.json({ logged: true });
+});
+
+// ============================================
+// Stripe Subscription API Endpoints
+// ============================================
+
+// Create a checkout session for subscription
+app.post("/api/stripe/create-checkout-session", async (req, res) => {
+  try {
+    const { userId, priceId, successUrl, cancelUrl } = req.body;
+
+    if (!userId || !priceId) {
+      return res.status(400).json({ error: "userId and priceId are required" });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const result = await stripeService.createCheckoutSession(
+      userId,
+      priceId,
+      successUrl || `${baseUrl}/dashboard?upgraded=true`,
+      cancelUrl || `${baseUrl}/pricing`
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Checkout session error:", error);
+    res.status(500).json({ error: "Failed to create checkout session" });
+  }
+});
+
+// Create a customer portal session
+app.post("/api/stripe/create-portal-session", async (req, res) => {
+  try {
+    const { userId, returnUrl } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const result = await stripeService.createPortalSession(
+      userId,
+      returnUrl || `${baseUrl}/dashboard`
+    );
+
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Portal session error:", error);
+    res.status(500).json({ error: "Failed to create portal session" });
+  }
+});
+
+// Get subscription status
+app.get("/api/subscription/status/:userId", async (req, res) => {
+  try {
+    const result = await stripeService.getSubscriptionStatus(req.params.userId);
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Get subscription status error:", error);
+    res.status(500).json({ error: "Failed to get subscription status" });
+  }
+});
+
+// Cancel subscription
+app.post("/api/subscription/cancel", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const result = await stripeService.cancelSubscription(userId);
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Cancel subscription error:", error);
+    res.status(500).json({ error: "Failed to cancel subscription" });
+  }
+});
+
+// Reactivate subscription
+app.post("/api/subscription/reactivate", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const result = await stripeService.reactivateSubscription(userId);
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Reactivate subscription error:", error);
+    res.status(500).json({ error: "Failed to reactivate subscription" });
+  }
+});
+
+// Get Stripe price configuration (for frontend)
+app.get("/api/stripe/prices", (_req, res) => {
+  res.json({
+    prices: STRIPE_PRICES,
+    limits: PLAN_LIMITS,
+  });
 });
 
 // Email transporter configuration
@@ -1080,8 +1322,40 @@ async function main() {
 
   const wss = new WebSocketServer({ server, path: "/live" });
 
-  wss.on("connection", (ws) => {
+  wss.on("connection", async (ws, req) => {
     console.log("New WebSocket connection for live session");
+
+    // Parse userId from query string for access control
+    const url = new URL(req.url || "", `http://${req.headers.host}`);
+    const userId = url.searchParams.get("userId");
+
+    if (userId) {
+      // Check if user has access to live sessions
+      const accessCheck = await checkFeatureAccess(userId, "live");
+      if (!accessCheck.allowed) {
+        console.log(`[LIVE] Access denied for user ${userId}: ${accessCheck.reason}`);
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: accessCheck.reason,
+            message:
+              accessCheck.reason === "LIMIT_REACHED"
+                ? "You've used all your live support sessions for this billing period."
+                : "Live support is not available on your current plan.",
+            tier: accessCheck.tier,
+            usage: accessCheck.usage,
+            limits: accessCheck.limits,
+          })
+        );
+        ws.close();
+        return;
+      }
+
+      // Increment usage when connection is established
+      await incrementUsage(userId, "liveSessions");
+      console.log(`[LIVE] Session started for user ${userId}`);
+    }
+
     setupGeminiLive(ws);
   });
 

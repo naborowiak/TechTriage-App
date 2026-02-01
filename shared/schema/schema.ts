@@ -1,5 +1,12 @@
-import { pgTable, varchar, text, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, timestamp, boolean, jsonb, integer } from "drizzle-orm/pg-core";
 import { v4 as uuidv4 } from "uuid";
+
+// Subscription tier and billing interval types
+export const subscriptionTierEnum = ['free', 'home', 'pro'] as const;
+export type SubscriptionTier = typeof subscriptionTierEnum[number];
+
+export const billingIntervalEnum = ['monthly', 'annual'] as const;
+export type BillingInterval = typeof billingIntervalEnum[number];
 
 // Users table - stores user account information
 export const usersTable = pgTable("users", {
@@ -17,6 +24,7 @@ export const usersTable = pgTable("users", {
   howHeard: varchar("how_heard", { length: 100 }),
   emailNotifications: boolean("email_notifications").default(true),
   sessionGuideEmails: boolean("session_guide_emails").default(true),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }).unique(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -55,6 +63,66 @@ export const sessionsTable = pgTable("sessions", {
   expire: timestamp("expire").notNull(),
 });
 
+// Subscriptions table - tracks user subscription state
+export const subscriptionsTable = pgTable("subscriptions", {
+  id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+  userId: varchar("user_id", { length: 255 }).notNull().references(() => usersTable.id).unique(),
+
+  // Stripe identifiers
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }).unique(),
+  stripePriceId: varchar("stripe_price_id", { length: 255 }),
+
+  // Subscription state
+  tier: varchar("tier", { length: 20 }).notNull().default('free'), // 'free' | 'home' | 'pro'
+  billingInterval: varchar("billing_interval", { length: 20 }), // 'monthly' | 'annual'
+  status: varchar("status", { length: 50 }).notNull().default('active'), // 'active' | 'past_due' | 'canceled' | 'incomplete' | 'trialing'
+
+  // Billing period tracking
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+
+  // Cancellation tracking
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  canceledAt: timestamp("canceled_at"),
+
+  // Trial tracking
+  trialStart: timestamp("trial_start"),
+  trialEnd: timestamp("trial_end"),
+
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Usage tracking table - tracks feature usage per billing period
+export const usageTable = pgTable("usage", {
+  id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
+  userId: varchar("user_id", { length: 255 }).notNull().references(() => usersTable.id),
+
+  // Period this usage belongs to
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+
+  // Usage counts
+  chatSessions: integer("chat_sessions").notNull().default(0),
+  photoAnalyses: integer("photo_analyses").notNull().default(0),
+  liveSessions: integer("live_sessions").notNull().default(0),
+
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Webhook events table - for idempotency and debugging
+export const webhookEventsTable = pgTable("webhook_events", {
+  id: varchar("id", { length: 255 }).primaryKey(), // Use Stripe event ID
+  eventType: varchar("event_type", { length: 100 }).notNull(),
+  processed: boolean("processed").notNull().default(false),
+  payload: jsonb("payload").$type<object>(),
+  error: text("error"),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Type exports
 export type User = typeof usersTable.$inferSelect;
 export type InsertUser = typeof usersTable.$inferInsert;
@@ -62,3 +130,9 @@ export type Trial = typeof trialsTable.$inferSelect;
 export type InsertTrial = typeof trialsTable.$inferInsert;
 export type SupportSession = typeof supportSessionsTable.$inferSelect;
 export type InsertSupportSession = typeof supportSessionsTable.$inferInsert;
+export type Subscription = typeof subscriptionsTable.$inferSelect;
+export type InsertSubscription = typeof subscriptionsTable.$inferInsert;
+export type Usage = typeof usageTable.$inferSelect;
+export type InsertUsage = typeof usageTable.$inferInsert;
+export type WebhookEvent = typeof webhookEventsTable.$inferSelect;
+export type InsertWebhookEvent = typeof webhookEventsTable.$inferInsert;

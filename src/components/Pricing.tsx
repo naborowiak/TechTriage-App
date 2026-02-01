@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Check, ArrowRight, ChevronDown, MessageSquare, Camera, Video, Shield, Clock, Home, Users, Zap } from 'lucide-react';
+import { Check, ArrowRight, ChevronDown, MessageSquare, Camera, Video, Shield, Clock, Home, Users, Zap, Loader2 } from 'lucide-react';
 import { PageView } from '../types';
+import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
+import { useAuth } from '../hooks/useAuth';
 
 interface PricingProps {
   onStart: () => void;
@@ -10,6 +12,99 @@ interface PricingProps {
 export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   const [isAnnual, setIsAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
+
+  const { user, isLoading: authLoading } = useAuth();
+  const { tier: currentTier, prices, startCheckout, isLoading: subLoading } = useSubscription(user?.id);
+
+  // Map plan names to tier identifiers
+  const planToTier: Record<string, SubscriptionTier> = {
+    'Chat': 'free',
+    'Home': 'home',
+    'Pro': 'pro',
+  };
+
+  // Handle plan selection
+  const handlePlanSelect = async (planName: string) => {
+    const tier = planToTier[planName];
+
+    // If it's the free plan, just navigate to signup
+    if (tier === 'free') {
+      onNavigate(PageView.SIGNUP);
+      return;
+    }
+
+    // If user is not logged in, navigate to signup first
+    if (!user) {
+      onNavigate(PageView.SIGNUP);
+      return;
+    }
+
+    // If user is already on this tier, do nothing
+    if (currentTier === tier) {
+      return;
+    }
+
+    // Start checkout for paid plans
+    if (!prices) {
+      console.error('Stripe prices not loaded');
+      return;
+    }
+
+    setIsCheckingOut(planName);
+    try {
+      const priceId = isAnnual
+        ? prices[tier as 'home' | 'pro'].annual
+        : prices[tier as 'home' | 'pro'].monthly;
+
+      if (!priceId) {
+        console.error('Price ID not configured for', tier, isAnnual ? 'annual' : 'monthly');
+        alert('Payment is not configured yet. Please contact support.');
+        return;
+      }
+
+      await startCheckout(priceId);
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Failed to start checkout. Please try again.');
+    } finally {
+      setIsCheckingOut(null);
+    }
+  };
+
+  // Get button text based on current state
+  const getButtonText = (planName: string, originalCta: string) => {
+    const tier = planToTier[planName];
+
+    if (isCheckingOut === planName) {
+      return 'Redirecting...';
+    }
+
+    if (user && currentTier === tier) {
+      return 'Current Plan';
+    }
+
+    if (user && tier !== 'free') {
+      // User is logged in and looking at a paid plan
+      if (currentTier === 'free') {
+        return 'Upgrade Now';
+      }
+      if (currentTier === 'home' && tier === 'pro') {
+        return 'Upgrade to Pro';
+      }
+      if (currentTier === 'pro' && tier === 'home') {
+        return 'Downgrade';
+      }
+    }
+
+    return originalCta;
+  };
+
+  // Check if button should be disabled
+  const isButtonDisabled = (planName: string) => {
+    const tier = planToTier[planName];
+    return (user && currentTier === tier) || isCheckingOut !== null || authLoading || subLoading;
+  };
 
   const plans = [
     {
@@ -227,12 +322,19 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
               <div
                 key={i}
                 className={`bg-white rounded-3xl p-8 relative transition-all ${
-                  plan.highlight
+                  user && currentTier === planToTier[plan.name]
+                    ? 'ring-2 ring-green-500 shadow-2xl scale-[1.02] md:scale-105'
+                    : plan.highlight
                     ? 'ring-2 ring-[#F97316] shadow-2xl scale-[1.02] md:scale-105'
                     : 'shadow-lg hover:shadow-xl'
                 }`}
               >
-                {plan.highlight && (
+                {user && currentTier === planToTier[plan.name] && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
+                    YOUR PLAN
+                  </div>
+                )}
+                {plan.highlight && !(user && currentTier === planToTier[plan.name]) && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#F97316] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
                     MOST POPULAR
                   </div>
@@ -283,16 +385,22 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                 </p>
 
                 <button
-                  onClick={() => onNavigate(PageView.SIGNUP)}
-                  className={`w-full py-4 rounded-full font-bold text-base transition-all mb-6 ${
-                    plan.ctaStyle === 'primary'
+                  onClick={() => handlePlanSelect(plan.name)}
+                  disabled={isButtonDisabled(plan.name)}
+                  className={`w-full py-4 rounded-full font-bold text-base transition-all mb-6 flex items-center justify-center gap-2 ${
+                    isButtonDisabled(plan.name) && user && currentTier === planToTier[plan.name]
+                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                      : isButtonDisabled(plan.name)
+                      ? 'opacity-50 cursor-wait'
+                      : plan.ctaStyle === 'primary'
                       ? 'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30'
                       : plan.ctaStyle === 'outlined'
                       ? 'border-2 border-[#1F2937] text-[#1F2937] hover:bg-[#1F2937] hover:text-white'
                       : 'bg-[#1F2937] hover:bg-[#374151] text-white'
                   }`}
                 >
-                  {plan.cta}
+                  {isCheckingOut === plan.name && <Loader2 className="w-5 h-5 animate-spin" />}
+                  {getButtonText(plan.name, plan.cta)}
                 </button>
 
                 <ul className="space-y-3">

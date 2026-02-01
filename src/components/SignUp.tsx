@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -133,13 +133,13 @@ const benefits = [
   },
 ];
 
-export const SignUp: React.FC<SignUpProps> = ({
+export const SignUp = memo<SignUpProps>(function SignUp({
   onStart,
   initialEmail = "",
   // onSpeakToExpert, // Removed to fix TS6133 error
   onComplete,
   onNavigate,
-}) => {
+}) {
   // Check auth state - user might be OAuth authenticated
   const { user: oauthUser, isAuthenticated, isLoading: authLoading } = useAuth();
 
@@ -844,4 +844,4 @@ export const SignUp: React.FC<SignUpProps> = ({
   }
 
   return null;
-};
+});

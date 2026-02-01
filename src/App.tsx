@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Menu,
   X,
@@ -38,6 +38,7 @@ import { Login } from "./components/Login";
 import { Dashboard } from "./components/Dashboard";
 import { SessionHistory } from "./components/SessionHistory";
 import { Settings } from "./components/Settings";
+import { BillingManagement } from "./components/BillingManagement";
 import { useTheme } from "./context/ThemeContext";
 import { useAuth } from "./hooks/useAuth";
 import { LiveSupport } from "./components/LiveSupport";
@@ -1111,7 +1112,7 @@ const getStoredUser = (): DashboardUser | null => {
   return null;
 };
 
-type DashboardView = 'main' | 'history' | 'settings';
+type DashboardView = 'main' | 'history' | 'settings' | 'billing';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);
@@ -1191,91 +1192,99 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Custom navigate function that updates URL
-  const navigate = (view: PageView) => {
+  // Custom navigate function that updates URL (memoized to prevent child re-renders)
+  const navigate = useCallback((view: PageView) => {
     const path = viewToPath[view] || '/';
     if (window.location.pathname !== path) {
       window.history.pushState({ view }, '', path);
     }
     setCurrentView(view);
     window.scrollTo(0, 0);
-  };
+  }, []);
 
-  const handleStart = () => {
+  const handleStart = useCallback(() => {
     chatRef.current?.open("I'd like to start a free trial.");
-  };
+  }, []);
 
-  const handleSpeakToExpert = () => {
+  const handleSpeakToExpert = useCallback(() => {
     chatRef.current?.openAsLiveAgent();
-  };
+  }, []);
 
-  const handleFreeTrial = () => {
+  const handleFreeTrial = useCallback(() => {
     navigate(PageView.SIGNUP);
-  };
+  }, [navigate]);
 
-  const handleNavigateToSignup = (email?: string | React.MouseEvent) => {
+  const handleNavigateToSignup = useCallback((email?: string | React.MouseEvent) => {
     // Filter out MouseEvent objects (when called from onClick without args)
     if (email && typeof email === "string") {
       setCapturedEmail(email);
     }
     navigate(PageView.SIGNUP);
-  };
+  }, [navigate]);
 
-  const handleNavigateToPricing = () => {
+  const handleNavigateToPricing = useCallback(() => {
     navigate(PageView.PRICING);
-  };
+  }, [navigate]);
 
-  // Handle signup completion - store user and go to dashboard
-  const handleSignupComplete = (user: DashboardUser) => {
+  // Handle signup completion - store user and go to dashboard (memoized for Login/SignUp)
+  const handleSignupComplete = useCallback((user: DashboardUser) => {
     setDashboardUser(user);
     localStorage.setItem('techtriage_user', JSON.stringify(user));
     navigate(PageView.DASHBOARD);
-  };
+  }, [navigate]);
 
-  // Dashboard handlers
-  const handleDashboardChat = () => {
+  // Dashboard handlers (memoized to prevent unnecessary re-renders)
+  const handleDashboardChat = useCallback(() => {
     chatRef.current?.open();
-  };
+  }, []);
 
-  const handleDashboardUploadImage = () => {
+  const handleDashboardUploadImage = useCallback(() => {
     // Open chat with image upload intent
     chatRef.current?.open("I'd like to upload a photo of my issue for analysis.");
-  };
+  }, []);
 
-  const handleDashboardStartVideo = () => {
+  const handleDashboardStartVideo = useCallback(() => {
     setShowLiveSupport(true);
-  };
+  }, []);
 
-  const handleDashboardLogout = () => {
+  const handleDashboardLogout = useCallback(() => {
     setDashboardUser(null);
     setDashboardView('main');
     localStorage.removeItem('techtriage_user');
     localStorage.removeItem('techtriage_trial');
     // Also clear OAuth session by redirecting to logout endpoint
     window.location.href = '/api/auth/logout';
-  };
+  }, []);
 
-  const handleOpenHistory = () => {
+  const handleOpenHistory = useCallback(() => {
     setDashboardView('history');
-  };
+  }, []);
 
-  const handleOpenSettings = () => {
+  const handleOpenSettings = useCallback(() => {
     setDashboardView('settings');
-  };
+  }, []);
 
-  const handleBackToDashboard = () => {
+  const handleOpenBilling = useCallback(() => {
+    setDashboardView('billing');
+  }, []);
+
+  const handleBackToDashboard = useCallback(() => {
     setDashboardView('main');
-  };
+  }, []);
 
-  const handleUpdateUser = (updatedUser: DashboardUser) => {
+  const handleUpdateUser = useCallback((updatedUser: DashboardUser) => {
     setDashboardUser(updatedUser);
-  };
+  }, []);
+
+  const handleCloseLiveSupport = useCallback(() => {
+    setShowLiveSupport(false);
+  }, []);
 
   // Show live support fullscreen if active
   if (showLiveSupport) {
     return (
       <LiveSupport
-        onClose={() => setShowLiveSupport(false)}
+        onClose={handleCloseLiveSupport}
         userId={dashboardUser?.id}
         userEmail={dashboardUser?.email}
         userName={dashboardUser ? `${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim() : undefined}
@@ -1323,6 +1332,10 @@ const App: React.FC = () => {
                 embedded
               />
             );
+          } else if (dashboardView === 'billing' && dashboardUser.id) {
+            dashboardContent = (
+              <BillingManagement userId={dashboardUser.id} />
+            );
           }
 
           return (
@@ -1334,6 +1347,7 @@ const App: React.FC = () => {
               onLogout={handleDashboardLogout}
               onOpenHistory={handleOpenHistory}
               onOpenSettings={handleOpenSettings}
+              onOpenBilling={handleOpenBilling}
               onBackToDashboard={handleBackToDashboard}
               activeView={dashboardView}
               onUpdateUser={handleUpdateUser}
