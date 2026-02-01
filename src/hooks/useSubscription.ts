@@ -118,6 +118,23 @@ export function useSubscription(userId: string | undefined) {
     fetchPrices();
   }, [fetchStatus, fetchPrices]);
 
+  // Handle upgraded=true query param (after successful checkout)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('upgraded') === 'true') {
+      // Remove the param from URL to prevent re-triggering
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+
+      // Refetch subscription status after a brief delay to allow webhook processing
+      const timer = setTimeout(() => {
+        fetchStatus();
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [fetchStatus]);
+
   // Start checkout flow
   const startCheckout = async (priceId: string) => {
     if (!userId) {

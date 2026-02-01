@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { CreditCard, Calendar, ArrowUpRight, Check, AlertTriangle, Loader2, Zap, MessageSquare, Camera, Video } from 'lucide-react';
+import { CreditCard, Calendar, ArrowUpRight, Check, AlertTriangle, Loader2, Zap, MessageSquare, Camera, Video, RefreshCw } from 'lucide-react';
 import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
 
 interface BillingManagementProps {
   userId: string;
+  onViewPlans?: () => void;
 }
 
 const tierNames: Record<SubscriptionTier, string> = {
@@ -18,7 +19,7 @@ const tierColors: Record<SubscriptionTier, string> = {
   pro: 'bg-purple-100 text-purple-700',
 };
 
-export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) => {
+export const BillingManagement: React.FC<BillingManagementProps> = ({ userId, onViewPlans }) => {
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isReactivating, setIsReactivating] = useState(false);
@@ -41,7 +42,16 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
     getDaysUntilRenewal,
     canUseFeature,
     getRemainingUses,
+    refetch,
   } = useSubscription(userId);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshStatus = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const handleManageBilling = async () => {
     setIsPortalLoading(true);
@@ -126,6 +136,14 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
                   Past Due
                 </span>
               )}
+              <button
+                onClick={handleRefreshStatus}
+                disabled={isRefreshing}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                title="Refresh subscription status"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
             </div>
             <p className="text-gray-600">
               {tier === 'free'
@@ -273,13 +291,13 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
           <p className="text-white/80 mb-4">
             Get unlimited chat, photo diagnosis, and live video support with the Home or Pro plan.
           </p>
-          <a
-            href="/pricing"
+          <button
+            onClick={onViewPlans}
             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[#F97316] rounded-lg font-bold hover:bg-gray-100 transition-colors"
           >
             View Plans
             <ArrowUpRight className="w-4 h-4" />
-          </a>
+          </button>
         </div>
       )}
 

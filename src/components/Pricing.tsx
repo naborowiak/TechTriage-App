@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, ArrowRight, ChevronDown, MessageSquare, Camera, Video, Shield, Clock, Home, Users, Zap, Loader2 } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, ChevronDown, MessageSquare, Camera, Video, Shield, Clock, Home, Users, Zap, Loader2 } from 'lucide-react';
 import { PageView } from '../types';
 import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
 import { useAuth } from '../hooks/useAuth';
@@ -219,6 +219,16 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       {/* Hero Section */}
       <div className="bg-gradient-to-b from-[#1F2937] to-[#374151] py-20 text-center">
         <div className="container mx-auto px-6 max-w-4xl">
+          {/* Back to Dashboard link for logged-in users */}
+          {user && (
+            <button
+              onClick={() => onNavigate(PageView.DASHBOARD)}
+              className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm font-medium mb-6 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </button>
+          )}
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full text-white/80 text-sm mb-6">
             <Shield className="w-4 h-4 text-[#F97316]" />
             Trusted by 10,000+ homeowners

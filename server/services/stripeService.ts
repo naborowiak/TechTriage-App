@@ -124,13 +124,116 @@ export async function createPortalSession(
   return { url: session.url };
 }
 
+// Sync subscription from Stripe (fallback when webhook didn't fire)
+export async function syncSubscriptionFromStripe(userId: string): Promise<boolean> {
+  // Get user's Stripe customer ID
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  if (!user?.stripeCustomerId) {
+    return false;
+  }
+
+  try {
+    // Fetch all active subscriptions for this customer from Stripe
+    const subscriptions = await stripe.subscriptions.list({
+      customer: user.stripeCustomerId,
+      status: 'all',
+      limit: 1,
+    });
+
+    if (subscriptions.data.length === 0) {
+      return false;
+    }
+
+    const stripeSubscription = subscriptions.data[0];
+
+    // Only sync if subscription is active or trialing
+    if (!['active', 'trialing'].includes(stripeSubscription.status)) {
+      return false;
+    }
+
+    const priceId = stripeSubscription.items.data[0]?.price.id;
+    const tier = getTierFromPriceId(priceId) || 'home';
+    const billingInterval = getBillingIntervalFromPriceId(priceId) || 'monthly';
+
+    // Check if subscription record exists
+    const [existingSub] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.userId, userId))
+      .limit(1);
+
+    const subscriptionData = {
+      stripeCustomerId: user.stripeCustomerId,
+      stripeSubscriptionId: stripeSubscription.id,
+      stripePriceId: priceId,
+      tier,
+      billingInterval,
+      status: stripeSubscription.status,
+      currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+      currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
+      trialStart: stripeSubscription.trial_start
+        ? new Date(stripeSubscription.trial_start * 1000)
+        : null,
+      trialEnd: stripeSubscription.trial_end
+        ? new Date(stripeSubscription.trial_end * 1000)
+        : null,
+      cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+      updatedAt: new Date(),
+    };
+
+    if (existingSub) {
+      await db
+        .update(subscriptionsTable)
+        .set(subscriptionData)
+        .where(eq(subscriptionsTable.userId, userId));
+    } else {
+      await db.insert(subscriptionsTable).values({
+        userId,
+        ...subscriptionData,
+      });
+    }
+
+    // Initialize usage record for the period
+    await initializeUsageRecord(
+      userId,
+      new Date(stripeSubscription.current_period_start * 1000),
+      new Date(stripeSubscription.current_period_end * 1000)
+    );
+
+    console.log(`[STRIPE] Synced subscription from Stripe for user ${userId}: ${tier}`);
+    return true;
+  } catch (error) {
+    console.error(`[STRIPE] Failed to sync subscription from Stripe:`, error);
+    return false;
+  }
+}
+
 // Get subscription status for a user
 export async function getSubscriptionStatus(userId: string) {
-  const [subscription] = await db
+  let [subscription] = await db
     .select()
     .from(subscriptionsTable)
     .where(eq(subscriptionsTable.userId, userId))
     .limit(1);
+
+  // If no subscription or still on free tier, try to sync from Stripe
+  // This handles cases where the webhook didn't fire
+  if (!subscription || subscription.tier === 'free') {
+    const synced = await syncSubscriptionFromStripe(userId);
+    if (synced) {
+      // Re-fetch after sync
+      [subscription] = await db
+        .select()
+        .from(subscriptionsTable)
+        .where(eq(subscriptionsTable.userId, userId))
+        .limit(1);
+    }
+  }
 
   const tier = (subscription?.tier || 'free') as keyof typeof PLAN_LIMITS;
   const limits = PLAN_LIMITS[tier];

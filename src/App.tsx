@@ -1334,7 +1334,10 @@ const App: React.FC = () => {
             );
           } else if (dashboardView === 'billing' && dashboardUser.id) {
             dashboardContent = (
-              <BillingManagement userId={dashboardUser.id} />
+              <BillingManagement
+                userId={dashboardUser.id}
+                onViewPlans={() => navigate(PageView.PRICING)}
+              />
             );
           }
 
