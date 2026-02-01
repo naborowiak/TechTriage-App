@@ -1134,41 +1134,42 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Track if we've already checked OAuth user status to prevent repeated checks
-  const [oauthChecked, setOauthChecked] = useState(false);
+  // Track if we've already checked session user status to prevent repeated checks
+  const [sessionChecked, setSessionChecked] = useState(false);
 
-  // Handle OAuth users - sync session user to dashboardUser and check onboarding status
+  // Sync session user to dashboardUser for ALL authenticated users (OAuth and email/password)
+  // This ensures dashboardUser always has the id from the session
   useEffect(() => {
-    if (!authLoading && isAuthenticated && sessionUser && !oauthChecked) {
+    if (!authLoading && isAuthenticated && sessionUser && !sessionChecked) {
       const currentPath = window.location.pathname;
 
       // Create dashboard user object from session
-      const oauthUser: DashboardUser = {
+      const syncedUser: DashboardUser = {
         id: sessionUser.id,
         firstName: sessionUser.firstName || sessionUser.username || 'User',
         lastName: sessionUser.lastName || undefined,
         email: sessionUser.email || '',
       };
 
-      // If on dashboard, set up the user
+      // If on dashboard, sync the user (ensures id is present)
       if (currentPath === '/dashboard') {
-        setOauthChecked(true);
-        setDashboardUser(oauthUser);
-        localStorage.setItem('techtriage_user', JSON.stringify(oauthUser));
+        setSessionChecked(true);
+        setDashboardUser(syncedUser);
+        localStorage.setItem('techtriage_user', JSON.stringify(syncedUser));
         setCurrentView(PageView.DASHBOARD);
       }
 
       // If on signup and authenticated, check if they've completed onboarding
       if (currentPath === '/signup' && sessionUser.id) {
-        setOauthChecked(true);
+        setSessionChecked(true);
         // Fetch full user profile to check onboarding status
         fetch(`/api/auth/user/${sessionUser.id}`)
           .then(res => res.json())
           .then(data => {
             // If user has completed onboarding (has homeType or techComfort), go to dashboard
             if (data.homeType || data.techComfort) {
-              setDashboardUser(oauthUser);
-              localStorage.setItem('techtriage_user', JSON.stringify(oauthUser));
+              setDashboardUser(syncedUser);
+              localStorage.setItem('techtriage_user', JSON.stringify(syncedUser));
               navigate(PageView.DASHBOARD);
             }
             // Otherwise, let them continue with onboarding in SignUp component
@@ -1178,7 +1179,16 @@ const App: React.FC = () => {
           });
       }
     }
-  }, [authLoading, isAuthenticated, sessionUser, oauthChecked]);
+  }, [authLoading, isAuthenticated, sessionUser, sessionChecked]);
+
+  // Additional sync: If dashboardUser exists but lacks id, and we have session, sync the id
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && sessionUser?.id && dashboardUser && !dashboardUser.id) {
+      const updatedUser = { ...dashboardUser, id: sessionUser.id };
+      setDashboardUser(updatedUser);
+      localStorage.setItem('techtriage_user', JSON.stringify(updatedUser));
+    }
+  }, [authLoading, isAuthenticated, sessionUser, dashboardUser]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
