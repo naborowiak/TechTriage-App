@@ -13,6 +13,9 @@ export const usersTable = pgTable("users", {
   id: varchar("id", { length: 255 }).primaryKey().$defaultFn(() => uuidv4()),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }), // null for OAuth users
+  emailVerified: boolean("email_verified").default(false),
+  verificationToken: varchar("verification_token", { length: 255 }),
+  verificationTokenExpires: timestamp("verification_token_expires"),
   firstName: varchar("first_name", { length: 255 }),
   lastName: varchar("last_name", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
@@ -23,8 +26,9 @@ export const usersTable = pgTable("users", {
   primaryIssues: jsonb("primary_issues").$type<string[]>(),
   howHeard: varchar("how_heard", { length: 100 }),
   emailNotifications: boolean("email_notifications").default(true),
-  sessionGuideEmails: boolean("session_guide_emails").default(true),
+  sessionGuideEmails: boolean("sessieon_guide_emails").default(true),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }).unique(),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

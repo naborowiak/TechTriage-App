@@ -9,7 +9,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import nodemailer from "nodemailer";
 import * as authService from "./services/authService";
-import { sendWelcomeEmail } from "./services/emailService";
+import { sendWelcomeEmail, sendVerificationEmail } from "./services/emailService";
 import { authStorage } from "./replit_integrations/auth/storage";
 import * as stripeService from "./services/stripeService";
 import {
@@ -174,29 +174,23 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(400).json({ error: result.error });
     }
 
-    // Send welcome email in the background (don't block the response)
-    sendWelcomeEmail(email, firstName).catch((err) => {
-      console.error("[EMAIL] Failed to send welcome email:", err);
-    });
+    // Send verification email (not welcome email - that comes after verification)
+    if (result.verificationToken) {
+      sendVerificationEmail(email, firstName, result.verificationToken).catch((err) => {
+        console.error("[EMAIL] Failed to send verification email:", err);
+      });
+    }
 
-    // Create session user object (matching OAuth format)
-    const sessionUser = {
-      id: result.user.id,
-      username: result.user.email || "",
-      email: result.user.email,
-      firstName: result.user.firstName,
-      lastName: result.user.lastName,
-      profileImageUrl: null,
-    };
-
-    // Establish Passport session (same as OAuth/login flow)
-    req.login(sessionUser, (err) => {
-      if (err) {
-        console.error("Session creation error after registration:", err);
-        // Still return success since user was created, just without session
-        return res.json({ success: true, user: result.user });
-      }
-      res.json({ success: true, user: result.user });
+    // Don't log the user in - they need to verify their email first
+    res.json({
+      success: true,
+      message: "Please check your email to verify your account.",
+      needsVerification: true,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        firstName: result.user.firstName,
+      },
     });
   } catch (error) {
     console.error("Registration error:", error);

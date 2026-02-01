@@ -26,7 +26,8 @@
       "Bash(xargs:*)",
       "Bash(git pull:*)",
       "Bash(git status:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(env)"
     ]
   }
 }

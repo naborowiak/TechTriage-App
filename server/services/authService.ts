@@ -1,10 +1,17 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { db } from "../db";
 import { usersTable, trialsTable, supportSessionsTable } from "../../shared/schema/schema";
 import { eq, and, gt } from "drizzle-orm";
 
 const SALT_ROUNDS = 10;
 const TRIAL_DURATION_HOURS = 24;
+const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
+
+// Generate a secure random verification token
+export function generateVerificationToken(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
 
 // User Registration
 export async function registerUser(data: {
@@ -39,11 +46,18 @@ export async function registerUser(data: {
   const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
   console.log("[AUTH SERVICE] Password hashed, hash length:", passwordHash.length);
 
+  // Generate verification token
+  const verificationToken = generateVerificationToken();
+  const verificationTokenExpires = new Date(
+    Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000
+  );
+
   // Create user
   console.log("[AUTH SERVICE] Inserting user with values:", {
     email: data.email.toLowerCase(),
     passwordHash: passwordHash ? `[HASH: ${passwordHash.length} chars]` : 'MISSING!',
     firstName: data.firstName,
+    emailVerified: false,
   });
 
   let newUser;
@@ -53,6 +67,9 @@ export async function registerUser(data: {
       .values({
         email: data.email.toLowerCase(),
         passwordHash,
+        emailVerified: false,
+        verificationToken,
+        verificationTokenExpires,
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
@@ -71,7 +88,7 @@ export async function registerUser(data: {
 
   console.log("[AUTH SERVICE] User created with ID:", newUser.id);
   console.log("[AUTH SERVICE] User passwordHash stored:", !!newUser.passwordHash);
-  console.log("[AUTH SERVICE] Returned user object keys:", Object.keys(newUser));
+  console.log("[AUTH SERVICE] Verification token generated for user");
 
   return {
     success: true,
@@ -80,7 +97,9 @@ export async function registerUser(data: {
       email: newUser.email,
       firstName: newUser.firstName,
       lastName: newUser.lastName,
+      emailVerified: newUser.emailVerified,
     },
+    verificationToken,
   };
 }
 
@@ -112,6 +131,17 @@ export async function loginUser(email: string, password: string) {
     return { success: false, error: "Please log in using your social account." };
   }
 
+  // Check if email is verified (only for email/password users)
+  if (!user.emailVerified) {
+    console.log("[AUTH SERVICE] Email not verified for:", email);
+    return {
+      success: false,
+      error: "Please verify your email before logging in.",
+      needsVerification: true,
+      email: user.email,
+    };
+  }
+
   // Verify password
   console.log("[AUTH SERVICE] Comparing passwords...");
   const isValid = await bcrypt.compare(password, user.passwordHash);
@@ -129,6 +159,112 @@ export async function loginUser(email: string, password: string) {
       firstName: user.firstName,
       lastName: user.lastName,
       profileImageUrl: user.profileImageUrl,
+      emailVerified: user.emailVerified,
+    },
+  };
+}
+
+// Verify email with token
+export async function verifyEmail(token: string) {
+  console.log("[AUTH SERVICE] verifyEmail called");
+
+  // Find user by verification token
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.verificationToken, token))
+    .limit(1);
+
+  if (!user) {
+    console.log("[AUTH SERVICE] Invalid verification token");
+    return { success: false, error: "Invalid or expired verification link." };
+  }
+
+  // Check if token has expired
+  if (user.verificationTokenExpires && user.verificationTokenExpires < new Date()) {
+    console.log("[AUTH SERVICE] Verification token expired");
+    return { success: false, error: "Verification link has expired. Please request a new one." };
+  }
+
+  // Check if already verified
+  if (user.emailVerified) {
+    console.log("[AUTH SERVICE] Email already verified");
+    return { success: true, alreadyVerified: true, user: { id: user.id, email: user.email } };
+  }
+
+  // Mark email as verified and clear token
+  const [updatedUser] = await db
+    .update(usersTable)
+    .set({
+      emailVerified: true,
+      verificationToken: null,
+      verificationTokenExpires: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(usersTable.id, user.id))
+    .returning();
+
+  console.log("[AUTH SERVICE] Email verified for user:", user.email);
+
+  return {
+    success: true,
+    user: {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+    },
+  };
+}
+
+// Resend verification email
+export async function resendVerification(email: string) {
+  console.log("[AUTH SERVICE] resendVerification called for:", email);
+
+  // Find user by email
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email.toLowerCase()))
+    .limit(1);
+
+  if (!user) {
+    console.log("[AUTH SERVICE] User not found for resend verification");
+    // Don't reveal if user exists or not for security
+    return { success: true, message: "If an account exists, a verification email has been sent." };
+  }
+
+  // Check if already verified
+  if (user.emailVerified) {
+    console.log("[AUTH SERVICE] Email already verified, no resend needed");
+    return { success: false, error: "Email is already verified." };
+  }
+
+  // Generate new verification token
+  const verificationToken = generateVerificationToken();
+  const verificationTokenExpires = new Date(
+    Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000
+  );
+
+  // Update user with new token
+  await db
+    .update(usersTable)
+    .set({
+      verificationToken,
+      verificationTokenExpires,
+      updatedAt: new Date(),
+    })
+    .where(eq(usersTable.id, user.id));
+
+  console.log("[AUTH SERVICE] New verification token generated for:", email);
+
+  return {
+    success: true,
+    verificationToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
     },
   };
 }
