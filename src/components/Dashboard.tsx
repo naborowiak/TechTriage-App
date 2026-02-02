@@ -1,8 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { MessageSquare, Camera, Video, Clock, User, ChevronRight, Sparkles, Shield, History, Settings, LogOut, Menu, AlertTriangle, CreditCard } from 'lucide-react';
-import { Logo } from './Logo';
-import { getTrialStatus } from '../services/trialService';
-import { useSubscription } from '../hooks/useSubscription';
+import React, { useState, useEffect } from "react";
+import {
+  MessageSquare,
+  Camera,
+  Video,
+  Clock,
+  User,
+  ChevronRight,
+  Sparkles,
+  Shield,
+  History,
+  Settings,
+  LogOut,
+  Menu,
+  AlertTriangle,
+  CreditCard,
+  FolderOpen,
+} from "lucide-react";
+import { Logo } from "./Logo";
+import { getTrialStatus } from "../services/trialService";
+import { useSubscription } from "../hooks/useSubscription";
 
 interface DashboardProps {
   user: {
@@ -13,21 +29,33 @@ interface DashboardProps {
   };
   onStartChat: () => void;
   onUploadImage: () => void;
-  onStartVideo: () => void;
+  onStartVideo: (caseId?: string) => void;
   onLogout: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
   onOpenBilling?: () => void;
   onBackToDashboard?: () => void;
-  activeView?: 'main' | 'history' | 'settings' | 'billing';
+  activeView?: "main" | "history" | "settings" | "billing";
   children?: React.ReactNode;
-  onUpdateUser?: (user: { firstName: string; lastName?: string; email: string }) => void;
+  onUpdateUser?: (user: {
+    firstName: string;
+    lastName?: string;
+    email: string;
+  }) => void;
 }
 
 interface TrialInfo {
   isActive: boolean;
   remainingHours?: number;
   remainingMinutes?: number;
+}
+
+interface Case {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  aiSummary?: string;
 }
 
 const ActionCard: React.FC<{
@@ -39,27 +67,49 @@ const ActionCard: React.FC<{
   highlight?: boolean;
   badge?: string | number;
   disabled?: boolean;
-}> = ({ icon, title, description, buttonText, onClick, highlight, badge, disabled }) => (
-  <div className={`bg-white rounded-2xl p-6 border-2 transition-all ${
-    disabled
-      ? 'opacity-60 cursor-not-allowed border-gray-200'
-      : 'hover:shadow-lg hover:-translate-y-1 ' + (highlight ? 'border-[#F97316] shadow-lg shadow-orange-100' : 'border-gray-100')
-  }`}>
+}> = ({
+  icon,
+  title,
+  description,
+  buttonText,
+  onClick,
+  highlight,
+  badge,
+  disabled,
+}) => (
+  <div
+    className={`bg-white rounded-2xl p-6 border-2 transition-all ${
+      disabled
+        ? "opacity-60 cursor-not-allowed border-gray-200"
+        : "hover:shadow-lg hover:-translate-y-1 " +
+          (highlight
+            ? "border-[#F97316] shadow-lg shadow-orange-100"
+            : "border-gray-100")
+    }`}
+  >
     <div className="flex items-start justify-between mb-4">
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-        highlight ? 'bg-[#F97316] text-white' : 'bg-gray-100 text-[#1F2937]'
-      }`}>
+      <div
+        className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+          highlight ? "bg-[#F97316] text-white" : "bg-gray-100 text-[#1F2937]"
+        }`}
+      >
         {icon}
       </div>
       {badge !== undefined && (
-        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-          badge === 0 || badge === 'Used'
-            ? 'bg-red-100 text-red-600'
-            : badge === 'unlimited' || badge === 'Unlimited'
-            ? 'bg-green-100 text-green-600'
-            : 'bg-orange-100 text-[#F97316]'
-        }`}>
-          {badge === 'unlimited' ? 'Unlimited' : typeof badge === 'number' ? `${badge} left` : badge}
+        <span
+          className={`text-xs font-bold px-2 py-1 rounded-full ${
+            badge === 0 || badge === "Used"
+              ? "bg-red-100 text-red-600"
+              : badge === "unlimited" || badge === "Unlimited"
+                ? "bg-green-100 text-green-600"
+                : "bg-orange-100 text-[#F97316]"
+          }`}
+        >
+          {badge === "unlimited"
+            ? "Unlimited"
+            : typeof badge === "number"
+              ? `${badge} left`
+              : badge}
         </span>
       )}
     </div>
@@ -70,10 +120,10 @@ const ActionCard: React.FC<{
       disabled={disabled}
       className={`w-full py-3 px-4 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all ${
         disabled
-          ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
           : highlight
-          ? 'bg-[#F97316] hover:bg-[#EA580C] text-white'
-          : 'bg-[#1F2937] hover:bg-[#374151] text-white'
+            ? "bg-[#F97316] hover:bg-[#EA580C] text-white"
+            : "bg-[#1F2937] hover:bg-[#374151] text-white"
       }`}
     >
       {buttonText}
@@ -99,13 +149,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenSettings,
   onOpenBilling,
   onBackToDashboard,
-  activeView = 'main',
+  activeView = "main",
   children,
-  onUpdateUser: _onUpdateUser
+  onUpdateUser: _onUpdateUser,
 }) => {
   const [trialInfo, setTrialInfo] = useState<TrialInfo>({ isActive: false });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [cases, setCases] = useState<Case[]>([]);
 
   // Get subscription status and usage
   const { getRemainingUses, canUseFeature } = useSubscription(user.id);
@@ -119,31 +170,73 @@ export const Dashboard: React.FC<DashboardProps> = ({
     onLogout();
   };
 
+  // Fetch trial status
   useEffect(() => {
     const fetchTrialStatus = async () => {
       const status = await getTrialStatus(user.email);
       setTrialInfo({
         isActive: status.isActive,
         remainingHours: status.remainingHours,
-        remainingMinutes: status.remainingMinutes
+        remainingMinutes: status.remainingMinutes,
       });
     };
 
     fetchTrialStatus();
-
-    // Update trial status every minute
     const interval = setInterval(fetchTrialStatus, 60000);
     return () => clearInterval(interval);
   }, [user.email]);
+
+  // Fetch Cases
+  useEffect(() => {
+    if (user?.id) {
+      fetch("/api/cases")
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error("Failed to fetch");
+        })
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setCases(data);
+          }
+        })
+        .catch((err) => console.error("Failed to load cases:", err));
+    }
+  }, [user?.id]);
+
+  // Handler to create a case before starting video
+  const handleStartLiveSession = async () => {
+    try {
+      // Create a case "folder" for this session
+      const response = await fetch("/api/cases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Live Support Session - " + new Date().toLocaleDateString(),
+        }),
+      });
+
+      const newCase = await response.json();
+      console.log("Created Case:", newCase.id);
+
+      // Now start the video UI, passing the caseId so we can save the recording later
+      onStartVideo(newCase.id);
+    } catch (e) {
+      console.error("Error creating case:", e);
+      // Fallback: start video without case tracking if DB fails
+      onStartVideo();
+    }
+  };
 
   const tips = [
     "For the best results, make sure your photos are well-lit and show the entire device or error message.",
     "Our AI can read error codes and model numbers - just show them clearly in your image!",
     "Live video sessions let our specialists see exactly what you're dealing with in real-time.",
-    "Not sure what's wrong? Just describe it - our AI is trained to understand everyday language."
+    "Not sure what's wrong? Just describe it - our AI is trained to understand everyday language.",
   ];
 
-  const [currentTip] = useState(() => tips[Math.floor(Math.random() * tips.length)]);
+  const [currentTip] = useState(
+    () => tips[Math.floor(Math.random() * tips.length)],
+  );
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
@@ -156,43 +249,64 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-[#1F2937] z-50 transform transition-transform lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <aside
+        className={`fixed top-0 left-0 h-full w-64 bg-[#1F2937] z-50 transform transition-transform lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="p-6 border-b border-white/10">
           <Logo variant="light" />
         </div>
 
         <nav className="p-4 space-y-1">
           <button
-            onClick={() => { setSidebarOpen(false); if (activeView !== 'main' && onBackToDashboard) onBackToDashboard(); }}
+            onClick={() => {
+              setSidebarOpen(false);
+              if (activeView !== "main" && onBackToDashboard)
+                onBackToDashboard();
+            }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              activeView === 'main' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              activeView === "main"
+                ? "bg-white/10 text-white font-medium"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
             }`}
           >
             <User className="w-5 h-5" />
             Dashboard
           </button>
           <button
-            onClick={() => { setSidebarOpen(false); onStartChat(); }}
+            onClick={() => {
+              setSidebarOpen(false);
+              onStartChat();
+            }}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
           >
             <MessageSquare className="w-5 h-5" />
             Chat Support
           </button>
           <button
-            onClick={() => { setSidebarOpen(false); onOpenHistory(); }}
+            onClick={() => {
+              setSidebarOpen(false);
+              onOpenHistory();
+            }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              activeView === 'history' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              activeView === "history"
+                ? "bg-white/10 text-white font-medium"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
             }`}
           >
             <History className="w-5 h-5" />
             Session History
           </button>
           <button
-            onClick={() => { setSidebarOpen(false); onOpenSettings(); }}
+            onClick={() => {
+              setSidebarOpen(false);
+              onOpenSettings();
+            }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              activeView === 'settings' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              activeView === "settings"
+                ? "bg-white/10 text-white font-medium"
+                : "text-white/70 hover:bg-white/5 hover:text-white"
             }`}
           >
             <Settings className="w-5 h-5" />
@@ -200,9 +314,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </button>
           {onOpenBilling && (
             <button
-              onClick={() => { setSidebarOpen(false); onOpenBilling(); }}
+              onClick={() => {
+                setSidebarOpen(false);
+                onOpenBilling();
+              }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                activeView === 'billing' ? 'bg-white/10 text-white font-medium' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                activeView === "billing"
+                  ? "bg-white/10 text-white font-medium"
+                  : "text-white/70 hover:bg-white/5 hover:text-white"
               }`}
             >
               <CreditCard className="w-5 h-5" />
@@ -244,14 +363,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-200">
                 <Clock className="w-4 h-4 text-[#F97316]" />
                 <span className="text-sm font-medium text-[#1F2937]">
-                  Trial: {trialInfo.remainingHours}h {trialInfo.remainingMinutes}m remaining
+                  Trial: {trialInfo.remainingHours}h{" "}
+                  {trialInfo.remainingMinutes}m remaining
                 </span>
               </div>
             )}
 
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right">
-                <div className="text-sm font-medium text-[#1F2937]">{user.firstName} {user.lastName}</div>
+                <div className="text-sm font-medium text-[#1F2937]">
+                  {user.firstName} {user.lastName}
+                </div>
                 <div className="text-xs text-gray-500">{user.email}</div>
               </div>
               <div className="w-10 h-10 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold">
@@ -272,7 +394,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 Welcome, {user.firstName}!
               </h1>
               <p className="text-lg text-gray-500">
-                How can we help you today? Choose an option below to get started.
+                How can we help you today? Choose an option below to get
+                started.
               </p>
             </div>
 
@@ -281,7 +404,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="sm:hidden flex items-center gap-2 px-4 py-3 mb-6 bg-orange-50 rounded-xl border border-orange-200">
                 <Clock className="w-5 h-5 text-[#F97316]" />
                 <span className="text-sm font-medium text-[#1F2937]">
-                  Free Trial: {trialInfo.remainingHours}h {trialInfo.remainingMinutes}m remaining
+                  Free Trial: {trialInfo.remainingHours}h{" "}
+                  {trialInfo.remainingMinutes}m remaining
                 </span>
               </div>
             )}
@@ -295,45 +419,107 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 buttonText="Start Chatting"
                 onClick={onStartChat}
                 highlight
-                badge={getRemainingUses('chat')}
+                badge={getRemainingUses("chat")}
               />
               <ActionCard
                 icon={<Camera className="w-7 h-7" />}
                 title="Upload a Photo"
                 description="Take a picture of the problem - error codes, devices, anything. We'll analyze it instantly."
-                buttonText={canUseFeature('photo') ? "Upload Image" : "Upgrade to Use"}
+                buttonText={
+                  canUseFeature("photo") ? "Upload Image" : "Upgrade to Use"
+                }
                 onClick={onUploadImage}
-                badge={getRemainingUses('photo')}
-                disabled={!canUseFeature('photo')}
+                badge={getRemainingUses("photo")}
+                disabled={!canUseFeature("photo")}
               />
               <ActionCard
                 icon={<Video className="w-7 h-7" />}
                 title="Live Video Session"
                 description="Show us in real-time what's happening. Perfect for complex issues that need hands-on guidance."
-                buttonText={canUseFeature('live') ? "Start Video" : "Upgrade to Use"}
-                onClick={onStartVideo}
-                badge={getRemainingUses('live')}
-                disabled={!canUseFeature('live')}
+                buttonText={
+                  canUseFeature("live") ? "Start Video" : "Upgrade to Use"
+                }
+                // Updated to use the new handler
+                onClick={handleStartLiveSession}
+                badge={getRemainingUses("live")}
+                disabled={!canUseFeature("live")}
               />
             </div>
 
+            {/* Active/Recent Cases Section */}
+            {cases.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-[#1F2937]">
+                    Your Cases
+                  </h2>
+                  <button
+                    onClick={onOpenHistory}
+                    className="text-sm text-[#F97316] font-medium hover:underline"
+                  >
+                    View All
+                  </button>
+                </div>
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                  {cases.slice(0, 3).map((c) => (
+                    <div
+                      key={c.id}
+                      className="p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer"
+                      onClick={onOpenHistory}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-[#F97316]">
+                          <FolderOpen className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-[#1F2937]">
+                            {c.title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span>
+                              {new Date(c.createdAt).toLocaleDateString()}
+                            </span>
+                            <span>•</span>
+                            <span
+                              className={`capitalize ${c.status === "open" ? "text-green-600" : "text-gray-500"}`}
+                            >
+                              {c.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-300" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quick tip */}
             <div className="mb-8">
-              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Tip</h2>
+              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">
+                Quick Tip
+              </h2>
               <QuickTip tip={currentTip} />
             </div>
 
             {/* How it works reminder */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100">
-              <h2 className="text-lg font-bold text-[#1F2937] mb-4">How TechTriage Works</h2>
+              <h2 className="text-lg font-bold text-[#1F2937] mb-4">
+                How TechTriage Works
+              </h2>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                     1
                   </div>
                   <div>
-                    <div className="font-semibold text-[#1F2937]">Describe or Show</div>
-                    <div className="text-sm text-gray-500">Tell us what's wrong or upload a photo</div>
+                    <div className="font-semibold text-[#1F2937]">
+                      Describe or Show
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Tell us what's wrong or upload a photo
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -341,8 +527,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     2
                   </div>
                   <div>
-                    <div className="font-semibold text-[#1F2937]">Get Diagnosis</div>
-                    <div className="text-sm text-gray-500">Our AI analyzes and identifies the issue</div>
+                    <div className="font-semibold text-[#1F2937]">
+                      Get Diagnosis
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Our AI analyzes and identifies the issue
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -351,7 +541,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                   <div>
                     <div className="font-semibold text-[#1F2937]">Fix It</div>
-                    <div className="text-sm text-gray-500">Follow our step-by-step guidance</div>
+                    <div className="text-sm text-gray-500">
+                      Follow our step-by-step guidance
+                    </div>
                   </div>
                 </div>
               </div>
@@ -360,7 +552,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {/* Safety note */}
             <div className="mt-6 flex items-center gap-3 text-sm text-gray-500">
               <Shield className="w-5 h-5 text-[#F97316]" />
-              <span>Your data is encrypted and never shared. We prioritize your privacy and safety.</span>
+              <span>
+                Your data is encrypted and never shared. We prioritize your
+                privacy and safety.
+              </span>
             </div>
           </div>
         )}
@@ -376,11 +571,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div>
                 <h3 className="text-lg font-bold text-[#1F2937]">Sign Out?</h3>
-                <p className="text-sm text-gray-500">Are you sure you want to sign out?</p>
+                <p className="text-sm text-gray-500">
+                  Are you sure you want to sign out?
+                </p>
               </div>
             </div>
             <p className="text-gray-600 mb-6">
-              Your session history and settings will be saved for when you return.
+              Your session history and settings will be saved for when you
+              return.
             </p>
             <div className="flex gap-3">
               <button

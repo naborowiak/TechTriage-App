@@ -6,11 +6,13 @@ import { WebSocketServer, WebSocket } from "ws";
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import session from "express-session";
 import passport from "passport";
+import casesRouter from "./routes/cases";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import nodemailer from "nodemailer";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail, sendVerificationEmail } from "./services/emailService";
 import { authStorage } from "./replit_integrations/auth/storage";
+
 import * as stripeService from "./services/stripeService";
 import {
   loadSubscription,
@@ -118,7 +120,8 @@ app.post("/api/test-email", async (req, res) => {
 
   try {
     const result = await sendWelcomeEmail(email, "Test User");
-    res.json({ success: true, ...result });
+    // FIX: Just return the result directly to avoid 'success' duplication error
+    res.json(result);
   } catch (error) {
     console.error("[EMAIL TEST] Error:", error);
     res.status(500).json({ error: String(error) });
@@ -170,13 +173,18 @@ app.post("/api/auth/register", async (req, res) => {
       howHeard,
     });
 
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
+    if (!result.success || !result.user) {
+      return res.status(400).json({ error: result.error || "Registration failed" });
     }
 
     // Send verification email (not welcome email - that comes after verification)
     if (result.verificationToken) {
-      sendVerificationEmail(email, firstName, result.verificationToken).catch((err) => {
+      // FIX: Correct argument order (email, token, firstName) and ensure firstName is string | undefined
+      sendVerificationEmail(
+        email, 
+        result.verificationToken, 
+        firstName || undefined
+      ).catch((err) => {
         console.error("[EMAIL] Failed to send verification email:", err);
       });
     }
@@ -213,8 +221,9 @@ app.post("/api/auth/login", async (req, res) => {
 
     const result = await authService.loginUser(email, password);
 
-    if (!result.success) {
-      return res.status(401).json({ error: result.error });
+    // FIX: Check !result.user to satisfy TypeScript 'possibly undefined' error
+    if (!result.success || !result.user) {
+      return res.status(401).json({ error: result.error || "Login failed" });
     }
 
     // Create session user object (matching OAuth format)
@@ -238,6 +247,67 @@ app.post("/api/auth/login", async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Login failed. Please try again." });
+  }
+});
+
+// Verify email with token
+app.post("/api/auth/verify-email", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Verification token is required" });
+    }
+
+    const result = await authService.verifyEmail(token);
+
+    if (!result.success || !result.user) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // New: Send welcome email now that they are verified
+    sendWelcomeEmail(result.user.email, result.user.firstName || undefined).catch(err => 
+      console.error("[EMAIL] Failed to send welcome email:", err)
+    );
+
+    res.json({ success: true, user: result.user });
+  } catch (error) {
+    console.error("Email verification error:", error);
+    res.status(500).json({ error: "Email verification failed. Please try again." });
+  }
+});
+
+// Resend verification email
+app.post("/api/auth/resend-verification", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const result = await authService.resendVerification(email);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    // Send the verification email
+    if (result.verificationToken) {
+      // FIX: Correct argument order (email, token, firstName) and handle nulls
+      sendVerificationEmail(
+        email, 
+        result.verificationToken, 
+        result.user?.firstName || undefined
+      ).catch((err) => {
+        console.error("[EMAIL] Failed to send verification email:", err);
+      });
+    }
+
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    console.error("Resend verification error:", error);
+    res.status(500).json({ error: "Failed to resend verification email. Please try again." });
   }
 });
 
@@ -638,7 +708,7 @@ app.post("/api/stripe/create-checkout-session", async (req, res) => {
       userId,
       priceId,
       successUrl || `${baseUrl}/dashboard?upgraded=true`,
-      cancelUrl || `${baseUrl}/pricing`
+      cancelUrl || `${baseUrl}/pricing`,
     );
 
     res.json(result);
@@ -660,7 +730,7 @@ app.post("/api/stripe/create-portal-session", async (req, res) => {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const result = await stripeService.createPortalSession(
       userId,
-      returnUrl || `${baseUrl}/dashboard`
+      returnUrl || `${baseUrl}/dashboard`,
     );
 
     res.json(result);
@@ -774,7 +844,9 @@ app.post("/api/send-session-guide", async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"TechTriage Support" <support@techtriage.com>',
+      from:
+        process.env.SMTP_FROM ||
+        '"TechTriage Support" <support@techtriage.com>',
       to: email,
       subject: `Your TechTriage Session Guide - ${dateStr}`,
       html: `
@@ -972,8 +1044,16 @@ async function setupGeminiLive(ws: WebSocket) {
                 }
                 // Send text as fallback if no outputTranscript is available
                 // Filter out obvious thinking/reasoning markers
-                if (part.text && !part.text.startsWith("**") && !part.text.includes("I'm ") && part.text.length > 5) {
-                  console.log("AI text (fallback):", part.text.substring(0, 100));
+                if (
+                  part.text &&
+                  !part.text.startsWith("**") &&
+                  !part.text.includes("I'm ") &&
+                  part.text.length > 5
+                ) {
+                  console.log(
+                    "AI text (fallback):",
+                    part.text.substring(0, 100),
+                  );
                   ws.send(
                     JSON.stringify({
                       type: "aiTranscript",
@@ -986,7 +1066,10 @@ async function setupGeminiLive(ws: WebSocket) {
 
             // Handle AI's spoken transcript (what the AI actually says) - preferred method
             if (message.serverContent?.outputTranscript) {
-              console.log("AI spoken transcript:", message.serverContent.outputTranscript);
+              console.log(
+                "AI spoken transcript:",
+                message.serverContent.outputTranscript,
+              );
               ws.send(
                 JSON.stringify({
                   type: "aiTranscript",
@@ -1005,7 +1088,10 @@ async function setupGeminiLive(ws: WebSocket) {
 
             // Handle user speech transcription
             if (message.serverContent?.inputTranscript) {
-              console.log("User transcript:", message.serverContent.inputTranscript);
+              console.log(
+                "User transcript:",
+                message.serverContent.inputTranscript,
+              );
               ws.send(
                 JSON.stringify({
                   type: "userTranscript",
@@ -1146,7 +1232,8 @@ async function main() {
     // --- GOOGLE AUTH SETUP START ---
     app.use(
       session({
-        secret: process.env.SESSION_SECRET || "techtriage_dev_secret_change_in_prod",
+        secret:
+          process.env.SESSION_SECRET || "techtriage_dev_secret_change_in_prod",
         resave: false,
         saveUninitialized: false,
         cookie: {
@@ -1213,12 +1300,22 @@ async function main() {
               profileImageUrl: profile.photos?.[0]?.value,
             });
 
-            console.log("[GOOGLE AUTH] User upserted successfully:", { id: dbUser.id, email: dbUser.email, isNewUser });
+            console.log("[GOOGLE AUTH] User upserted successfully:", {
+              id: dbUser.id,
+              email: dbUser.email,
+              isNewUser,
+            });
 
             // Send welcome email for new users
             if (isNewUser && dbUser.email) {
-              sendWelcomeEmail(dbUser.email, dbUser.firstName || undefined).catch((err) => {
-                console.error("[EMAIL] Failed to send welcome email for Google OAuth user:", err);
+              sendWelcomeEmail(
+                dbUser.email,
+                dbUser.firstName || undefined,
+              ).catch((err) => {
+                console.error(
+                  "[EMAIL] Failed to send welcome email for Google OAuth user:",
+                  err,
+                );
               });
             }
 
@@ -1249,19 +1346,25 @@ async function main() {
     passport.deserializeUser((obj: any, done) => done(null, obj));
 
     // 1. Start Login - store origin domain before redirecting to Google
-    app.get("/auth/google", (req, res, next) => {
-      // Store the origin domain so we can redirect back after auth
-      const host = req.get("host") || "";
-      if (isAllowedDomain(host)) {
-        (req.session as any).authOrigin = host;
-      }
-      next();
-    }, passport.authenticate("google", { scope: ["profile", "email"] }));
+    app.get(
+      "/auth/google",
+      (req, res, next) => {
+        // Store the origin domain so we can redirect back after auth
+        const host = req.get("host") || "";
+        if (isAllowedDomain(host)) {
+          (req.session as any).authOrigin = host;
+        }
+        next();
+      },
+      passport.authenticate("google", { scope: ["profile", "email"] }),
+    );
 
     // 2. Handle Callback - redirect to onboarding for new users, dashboard for returning users
     app.get(
       "/api/auth/callback/google",
-      passport.authenticate("google", { failureRedirect: "/?error=auth_failed" }),
+      passport.authenticate("google", {
+        failureRedirect: "/?error=auth_failed",
+      }),
       async (req, res) => {
         const authOrigin = (req.session as any).authOrigin;
         delete (req.session as any).authOrigin;
@@ -1272,7 +1375,9 @@ async function main() {
         const hasCompletedOnboarding = dbUser?.homeType || dbUser?.techComfort;
 
         // Determine redirect path - new users go to onboarding, returning users to dashboard
-        const redirectPath = hasCompletedOnboarding ? '/dashboard' : '/signup?oauth=true';
+        const redirectPath = hasCompletedOnboarding
+          ? "/dashboard"
+          : "/signup?oauth=true";
 
         // Redirect to stored origin domain if allowed, otherwise relative
         if (authOrigin && isAllowedDomain(authOrigin)) {
@@ -1317,6 +1422,8 @@ async function main() {
     });
     // --- GOOGLE AUTH SETUP END ---
     console.log("Auth setup complete");
+    // Mount the cases router
+    app.use("/api/cases", casesRouter);
   } catch (error) {
     console.error("Auth setup failed:", error);
   }
@@ -1353,7 +1460,9 @@ async function main() {
       // Check if user has access to live sessions
       const accessCheck = await checkFeatureAccess(userId, "live");
       if (!accessCheck.allowed) {
-        console.log(`[LIVE] Access denied for user ${userId}: ${accessCheck.reason}`);
+        console.log(
+          `[LIVE] Access denied for user ${userId}: ${accessCheck.reason}`,
+        );
         ws.send(
           JSON.stringify({
             type: "error",
@@ -1365,7 +1474,7 @@ async function main() {
             tier: accessCheck.tier,
             usage: accessCheck.usage,
             limits: accessCheck.limits,
-          })
+          }),
         );
         ws.close();
         return;

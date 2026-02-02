@@ -1,26 +1,16 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// Email transporter configuration
-const createEmailTransporter = () => {
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: process.env.SMTP_SECURE === "true",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-  }
-
-  console.log("[EMAIL] No SMTP config found - email sending will be simulated");
-  return null;
-};
+// Initialize Resend with API Key
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 // Base URL for images and app
 const IMAGE_BASE_URL = "https://tech-triage-site.replit.app";
 const APP_BASE_URL = process.env.APP_URL || "https://tech-triage-site.replit.app";
+
+// Default sender (Use onboarding@resend.dev for testing until you verify your domain)
+const DEFAULT_SENDER = "onboarding@resend.dev"; 
+const EMAIL_FROM = process.env.EMAIL_FROM || `TechTriage <${DEFAULT_SENDER}>`;
 
 // Generate the welcome email HTML
 function getWelcomeEmailHtml(firstName: string): string {
@@ -66,19 +56,13 @@ function getWelcomeEmailHtml(firstName: string): string {
         [data-ogsc] .light-text-secondary { color: #a3a3a3 !important; }
         [data-ogsc] .testimonial-section { background-color: #262626 !important; }
     </style>
-    <!--[if mso]>
-    <style type="text/css">
-        body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
-    </style>
-    <![endif]-->
-</head>
+    </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: #f4f4f4;">
 
     <center style="width: 100%; background-color: #f4f4f4;" class="body-bg">
 
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-family: Helvetica, Arial, sans-serif;">
 
-            <!-- HEADER WITH LOGO AND RADIAL GRADIENT -->
             <tr>
                 <td align="center" style="background-color: #1e2b45; background: radial-gradient(circle at 50% 0%, #2a3c5e 0%, #0f172a 80%); padding: 45px 20px;">
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -97,14 +81,12 @@ function getWelcomeEmailHtml(firstName: string): string {
                 </td>
             </tr>
 
-            <!-- HERO IMAGE WITH ORANGE BORDER -->
             <tr>
                 <td align="center" class="light-section" bgcolor="#ffffff" style="border-bottom: 4px solid #e66a00;">
                     <img src="${IMAGE_BASE_URL}/tech-triage-home.png" alt="TechTriage Support" width="600" style="display: block; width: 100%; max-width: 600px; height: auto;">
                 </td>
             </tr>
 
-            <!-- WELCOME TEXT WITH SUBTLE GRID TEXTURE -->
             <tr>
                 <td align="left" class="light-section" style="background-color: #ffffff; background-image: linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px); background-size: 25px 25px; padding: 50px 40px;">
                     <p class="light-text" style="margin: 0 0 25px; color: #334155; font-size: 18px; line-height: 1.6;">
@@ -116,7 +98,6 @@ function getWelcomeEmailHtml(firstName: string): string {
                 </td>
             </tr>
 
-            <!-- STEP 1 CTA WITH DIAGONAL STRIPES AND PILL BADGE -->
             <tr>
                 <td align="center" style="background-color: #e66a00; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); padding: 60px 30px;">
 
@@ -140,7 +121,6 @@ function getWelcomeEmailHtml(firstName: string): string {
                 </td>
             </tr>
 
-            <!-- TESTIMONIAL SECTION -->
             <tr>
                 <td class="testimonial-section" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 40px;">
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -162,7 +142,6 @@ function getWelcomeEmailHtml(firstName: string): string {
                 </td>
             </tr>
 
-            <!-- FOOTER -->
             <tr>
                 <td align="center" style="background-color: #1e2b45; padding: 40px 20px; border-top: 5px solid #0f172a;">
                     <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage" width="80" style="display: block; max-width: 80px; height: auto; margin-bottom: 20px;">
@@ -182,35 +161,6 @@ function getWelcomeEmailHtml(firstName: string): string {
     </center>
 </body>
 </html>`;
-}
-
-// Send welcome email to a new user
-export async function sendWelcomeEmail(email: string, firstName?: string): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-  console.log(`[EMAIL] Sending welcome email to ${email}`);
-
-  const transporter = createEmailTransporter();
-
-  if (!transporter) {
-    // Simulate email sending in development
-    console.log("[EMAIL] Simulated welcome email send to:", email);
-    console.log("[EMAIL] Subject: Welcome to TechTriage!");
-    return { success: true, simulated: true };
-  }
-
-  try {
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"TechTriage" <support@techtriage.app>',
-      to: email,
-      subject: "Welcome to TechTriage - You're Covered!",
-      html: getWelcomeEmailHtml(firstName || ""),
-    });
-
-    console.log("[EMAIL] Welcome email successfully sent to:", email);
-    return { success: true };
-  } catch (error) {
-    console.error("[EMAIL] Failed to send welcome email:", error);
-    return { success: false, error: String(error) };
-  }
 }
 
 // Generate the verification email HTML
@@ -253,19 +203,13 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
         [data-ogsc] .light-text { color: #e5e5e5 !important; }
         [data-ogsc] .light-text-secondary { color: #a3a3a3 !important; }
     </style>
-    <!--[if mso]>
-    <style type="text/css">
-        body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
-    </style>
-    <![endif]-->
-</head>
+    </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: #f4f4f4;">
 
     <center style="width: 100%; background-color: #f4f4f4;" class="body-bg">
 
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-family: Helvetica, Arial, sans-serif;">
 
-            <!-- HEADER WITH LOGO -->
             <tr>
                 <td align="center" style="background-color: #1e2b45; background: radial-gradient(circle at 50% 0%, #2a3c5e 0%, #0f172a 80%); padding: 45px 20px;">
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -284,7 +228,6 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
                 </td>
             </tr>
 
-            <!-- VERIFICATION MESSAGE -->
             <tr>
                 <td align="left" class="light-section" style="background-color: #ffffff; background-image: linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px); background-size: 25px 25px; padding: 50px 40px;">
                     <p class="light-text" style="margin: 0 0 25px; color: #334155; font-size: 18px; line-height: 1.6;">
@@ -299,7 +242,6 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
                 </td>
             </tr>
 
-            <!-- CTA BUTTON -->
             <tr>
                 <td align="center" style="background-color: #e66a00; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); padding: 50px 30px;">
                     <table border="0" cellpadding="0" cellspacing="0">
@@ -319,7 +261,6 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
                 </td>
             </tr>
 
-            <!-- FOOTER -->
             <tr>
                 <td align="center" style="background-color: #1e2b45; padding: 40px 20px; border-top: 5px solid #0f172a;">
                     <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage" width="80" style="display: block; max-width: 80px; height: auto; margin-bottom: 20px;">
@@ -341,33 +282,71 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
 </html>`;
 }
 
-// Send verification email to a new user
-export async function sendVerificationEmail(
+// Send welcome email to a new user
+export async function sendWelcomeEmail(
   email: string,
-  firstName: string | undefined,
-  token: string
+  firstName?: string
 ): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-  console.log(`[EMAIL] Sending verification email to ${email}`);
+  console.log(`[EMAIL] Sending welcome email to ${email}`);
 
-  const verificationUrl = `${APP_BASE_URL}/verify-email?token=${token}`;
-  const transporter = createEmailTransporter();
-
-  if (!transporter) {
-    // Simulate email sending in development
-    console.log("[EMAIL] Simulated verification email send to:", email);
-    console.log("[EMAIL] Verification URL:", verificationUrl);
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log("[EMAIL] Simulated welcome email send to:", email);
     return { success: true, simulated: true };
   }
 
   try {
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"TechTriage" <support@techtriage.app>',
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Welcome to TechTriage - You're Covered!",
+      html: getWelcomeEmailHtml(firstName || ""),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Welcome email sent via Resend:", data.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send welcome email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// Send verification email to a new user
+export async function sendVerificationEmail(
+  email: string,
+  token: string,
+  firstName?: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending verification email to ${email}`);
+
+  const verificationUrl = `${APP_BASE_URL}/verify-email?token=${token}`;
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}`);
+    console.log(`[EMAIL] Verification URL: ${verificationUrl}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
       to: email,
       subject: "Verify Your Email - TechTriage",
       html: getVerificationEmailHtml(firstName || "", verificationUrl),
     });
 
-    console.log("[EMAIL] Verification email successfully sent to:", email);
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Verification email sent via Resend:", data.id);
     return { success: true };
   } catch (error) {
     console.error("[EMAIL] Failed to send verification email:", error);
