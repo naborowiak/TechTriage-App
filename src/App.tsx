@@ -45,6 +45,7 @@ import { CancellationPolicy } from "./components/CancellationPolicy";
 import { useTheme } from "./context/ThemeContext";
 import { useAuth } from "./hooks/useAuth";
 import { LiveSupport } from "./components/LiveSupport";
+import { VerifyEmail } from "./components/VerifyEmail";
 
 const Button: React.FC<{
   children: React.ReactNode;
@@ -339,7 +340,8 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
             <span className="text-[#F97316]">in minutes, not hours.</span>
           </h1>
           <p className="text-white/80 text-xl lg:text-2xl font-medium leading-relaxed mb-10 max-w-lg">
-            Wi-Fi down? Smart TV acting up? Describe your problem, snap a photo, or start a video walkthrough—our AI guides you to a fix instantly.
+            Wi-Fi down? Smart TV acting up? Describe your problem, snap a photo,
+            or start a video walkthrough—our AI guides you to a fix instantly.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <Button
@@ -382,7 +384,7 @@ const HowItWorksSimple: React.FC = () => {
     {
       step: "01",
       title: "Tell us what's happening",
-      desc: "\"My Wi-Fi keeps dropping\" or \"There's a weird error code\"—just describe it like you would to a friend. Our AI speaks human.",
+      desc: '"My Wi-Fi keeps dropping" or "There\'s a weird error code"—just describe it like you would to a friend. Our AI speaks human.',
       icon: <MessageSquare className="w-7 h-7" />,
     },
     {
@@ -416,7 +418,8 @@ const HowItWorksSimple: React.FC = () => {
           <p
             className={`text-xl max-w-2xl mx-auto ${isDark ? "text-gray-400" : "text-[#4B5563]"}`}
           >
-            No hold music. No "have you tried turning it off and on again." Just clear answers and real solutions.
+            No hold music. No "have you tried turning it off and on again." Just
+            clear answers and real solutions.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
@@ -520,7 +523,8 @@ const WhatWeHelpWith: React.FC = () => {
           <p
             className={`text-xl max-w-2xl mx-auto ${isDark ? "text-gray-400" : "text-[#4B5563]"}`}
           >
-            From Wi-Fi troubles to smart home setup—we help with the tech that keeps your home running.
+            From Wi-Fi troubles to smart home setup—we help with the tech that
+            keeps your home running.
           </p>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -562,16 +566,41 @@ const WhatWeHelpWith: React.FC = () => {
 
 const WhyTechTriage: React.FC = () => {
   const traditionalPains = [
-    { icon: <Phone className="w-5 h-5" />, text: "Press 1 for billing, 2 for..." },
-    { icon: <Clock className="w-5 h-5" />, text: "Your wait time is 47 minutes" },
-    { icon: <PhoneOff className="w-5 h-5" />, text: "Call disconnected. Start over." },
+    {
+      icon: <Phone className="w-5 h-5" />,
+      text: "Press 1 for billing, 2 for...",
+    },
+    {
+      icon: <Clock className="w-5 h-5" />,
+      text: "Your wait time is 47 minutes",
+    },
+    {
+      icon: <PhoneOff className="w-5 h-5" />,
+      text: "Call disconnected. Start over.",
+    },
   ];
 
   const techTriageSolutions = [
-    { icon: <MessageSquare className="w-5 h-5" />, label: "Chat", desc: "AI troubleshooting" },
-    { icon: <Camera className="w-5 h-5" />, label: "Snap", desc: "Photo diagnosis" },
-    { icon: <Video className="w-5 h-5" />, label: "Video", desc: "AI walkthrough" },
-    { icon: <Wrench className="w-5 h-5" />, label: "Onsite", desc: "If needed" },
+    {
+      icon: <MessageSquare className="w-5 h-5" />,
+      label: "Chat",
+      desc: "AI troubleshooting",
+    },
+    {
+      icon: <Camera className="w-5 h-5" />,
+      label: "Snap",
+      desc: "Photo diagnosis",
+    },
+    {
+      icon: <Video className="w-5 h-5" />,
+      label: "Video",
+      desc: "AI walkthrough",
+    },
+    {
+      icon: <Wrench className="w-5 h-5" />,
+      label: "Onsite",
+      desc: "If needed",
+    },
   ];
 
   const benefits = [
@@ -604,7 +633,8 @@ const WhyTechTriage: React.FC = () => {
             Tech support that actually works
           </h2>
           <p className="text-white/70 text-xl max-w-2xl mx-auto">
-            We built TechTriage because everyone deserves help that's instant, clear, and doesn't waste your time.
+            We built TechTriage because everyone deserves help that's instant,
+            clear, and doesn't waste your time.
           </p>
         </div>
 
@@ -618,15 +648,22 @@ const WhyTechTriage: React.FC = () => {
                 <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
                   <PhoneOff className="w-6 h-6 text-red-400" />
                 </div>
-                <h3 className="text-xl font-bold text-white/60">Traditional Support</h3>
+                <h3 className="text-xl font-bold text-white/60">
+                  Traditional Support
+                </h3>
               </div>
               <div className="space-y-4">
                 {traditionalPains.map((pain, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/5"
+                  >
                     <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400">
                       {pain.icon}
                     </div>
-                    <span className="text-white/50 font-medium">{pain.text}</span>
+                    <span className="text-white/50 font-medium">
+                      {pain.text}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -651,11 +688,16 @@ const WhyTechTriage: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {techTriageSolutions.map((solution, i) => (
-                  <div key={i} className="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-[#F97316]/50 transition-colors">
+                  <div
+                    key={i}
+                    className="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-[#F97316]/50 transition-colors"
+                  >
                     <div className="w-10 h-10 bg-[#F97316]/20 rounded-lg flex items-center justify-center text-[#F97316] mb-3">
                       {solution.icon}
                     </div>
-                    <div className="font-bold text-white mb-1">{solution.label}</div>
+                    <div className="font-bold text-white mb-1">
+                      {solution.label}
+                    </div>
                     <div className="text-white/50 text-sm">{solution.desc}</div>
                   </div>
                 ))}
@@ -680,7 +722,9 @@ const WhyTechTriage: React.FC = () => {
               <div className="w-16 h-16 bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
                 {benefit.icon}
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">{benefit.title}</h3>
+              <h3 className="text-xl font-bold text-white mb-3">
+                {benefit.title}
+              </h3>
               <p className="text-white/60 leading-relaxed">{benefit.desc}</p>
             </div>
           ))}
@@ -690,19 +734,27 @@ const WhyTechTriage: React.FC = () => {
         <div className="mt-16 pt-12 border-t border-white/10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-3xl font-black text-[#F97316] mb-2">Instant</div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">
+                Instant
+              </div>
               <div className="text-white/50 text-sm">AI response time</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#F97316] mb-2">Minutes</div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">
+                Minutes
+              </div>
               <div className="text-white/50 text-sm">Typical resolution</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#F97316] mb-2">Most</div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">
+                Most
+              </div>
               <div className="text-white/50 text-sm">Issues fixed remotely</div>
             </div>
             <div>
-              <div className="text-3xl font-black text-[#F97316] mb-2">24/7</div>
+              <div className="text-3xl font-black text-[#F97316] mb-2">
+                24/7
+              </div>
               <div className="text-white/50 text-sm">AI availability</div>
             </div>
           </div>
@@ -901,7 +953,8 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
           Life's too short for tech headaches
         </h2>
         <p className="text-white/90 font-medium max-w-2xl mx-auto mb-10 text-xl lg:text-2xl">
-          No more searching for answers at midnight. No more feeling stuck with your own devices. Just instant AI-powered help, whenever you need it.
+          No more searching for answers at midnight. No more feeling stuck with
+          your own devices. Just instant AI-powered help, whenever you need it.
         </p>
         <form
           onSubmit={handleSubmit}
@@ -941,8 +994,13 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
   );
 };
 
-const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
-  const handleNav = (view: PageView) => { onNavigate(view); window.scrollTo(0, 0); };
+const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
+  onNavigate,
+}) => {
+  const handleNav = (view: PageView) => {
+    onNavigate(view);
+    window.scrollTo(0, 0);
+  };
 
   return (
     <footer className="bg-[#1F2937] text-white pt-20 pb-10 border-t border-white/10">
@@ -950,11 +1008,15 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-1">
-            <button onClick={() => handleNav(PageView.HOME)} className="mb-6 block">
+            <button
+              onClick={() => handleNav(PageView.HOME)}
+              className="mb-6 block"
+            >
               <Logo variant="light" />
             </button>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
-              Instant AI technical support for your home. We fix Wi-Fi, smart devices, and appliances in minutes.
+              Instant AI technical support for your home. We fix Wi-Fi, smart
+              devices, and appliances in minutes.
             </p>
           </div>
 
@@ -962,9 +1024,30 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
           <div>
             <h4 className="font-bold mb-6">Product</h4>
             <ul className="space-y-4 text-sm text-white/60">
-              <li><button onClick={() => handleNav(PageView.HOW_IT_WORKS)} className="hover:text-[#F97316] transition-colors">How It Works</button></li>
-              <li><button onClick={() => handleNav(PageView.PRICING)} className="hover:text-[#F97316] transition-colors">Pricing & Plans</button></li>
-              <li><button onClick={() => handleNav(PageView.FAQ)} className="hover:text-[#F97316] transition-colors">Common Questions</button></li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.HOW_IT_WORKS)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  How It Works
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.PRICING)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  Pricing & Plans
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.FAQ)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  Common Questions
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -972,9 +1055,27 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
           <div>
             <h4 className="font-bold mb-6">Support</h4>
             <ul className="space-y-4 text-sm text-white/60">
-              <li><button onClick={() => handleNav(PageView.LOGIN)} className="hover:text-[#F97316] transition-colors">Member Login</button></li>
-              <li><button onClick={() => handleNav(PageView.SIGNUP)} className="hover:text-[#F97316] transition-colors">Start Free Trial</button></li>
-              <li><span className="text-white/40 cursor-default">Help Center (Coming Soon)</span></li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.LOGIN)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  Member Login
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.SIGNUP)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  Start Free Trial
+                </button>
+              </li>
+              <li>
+                <span className="text-white/40 cursor-default">
+                  Help Center (Coming Soon)
+                </span>
+              </li>
             </ul>
           </div>
 
@@ -982,9 +1083,30 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
           <div>
             <h4 className="font-bold mb-6">Legal</h4>
             <ul className="space-y-4 text-sm text-white/60">
-              <li><button onClick={() => handleNav(PageView.PRIVACY)} className="hover:text-[#F97316] transition-colors">Privacy Policy</button></li>
-              <li><button onClick={() => handleNav(PageView.TERMS)} className="hover:text-[#F97316] transition-colors">Terms of Service</button></li>
-              <li><button onClick={() => handleNav(PageView.CANCELLATION)} className="hover:text-[#F97316] transition-colors">Cancellation Policy</button></li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.PRIVACY)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.TERMS)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  Terms of Service
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.CANCELLATION)}
+                  className="hover:text-[#F97316] transition-colors"
+                >
+                  Cancellation Policy
+                </button>
+              </li>
             </ul>
           </div>
         </div>
@@ -993,8 +1115,18 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
           <div>© 2026 TechTriage Inc. All rights reserved.</div>
           <div className="flex gap-6">
-            <button onClick={() => handleNav(PageView.CANCELLATION)} className="hover:text-white transition-colors">Cancellation Policy</button>
-            <button onClick={() => handleNav(PageView.PRIVACY)} className="hover:text-white transition-colors">Privacy</button>
+            <button
+              onClick={() => handleNav(PageView.CANCELLATION)}
+              className="hover:text-white transition-colors"
+            >
+              Cancellation Policy
+            </button>
+            <button
+              onClick={() => handleNav(PageView.PRIVACY)}
+              className="hover:text-white transition-colors"
+            >
+              Privacy
+            </button>
           </div>
         </div>
       </div>
@@ -1004,31 +1136,33 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate
 
 // URL path to PageView mapping
 const pathToView: Record<string, PageView> = {
-  '/': PageView.HOME,
-  '/how-it-works': PageView.HOW_IT_WORKS,
-  '/pricing': PageView.PRICING,
-  '/faq': PageView.FAQ,
-  '/signup': PageView.SIGNUP,
-  '/login': PageView.LOGIN,
-  '/dashboard': PageView.DASHBOARD,
-  '/privacy': PageView.PRIVACY,
-  '/terms': PageView.TERMS,
-  '/cancellation': PageView.CANCELLATION,
+  "/": PageView.HOME,
+  "/how-it-works": PageView.HOW_IT_WORKS,
+  "/pricing": PageView.PRICING,
+  "/faq": PageView.FAQ,
+  "/signup": PageView.SIGNUP,
+  "/login": PageView.LOGIN,
+  "/dashboard": PageView.DASHBOARD,
+  "/privacy": PageView.PRIVACY,
+  "/terms": PageView.TERMS,
+  "/cancellation": PageView.CANCELLATION,
+  '/verify-email': PageView.VERIFY_EMAIL,
 };
 
 const viewToPath: Record<PageView, string> = {
-  [PageView.HOME]: '/',
-  [PageView.HOW_IT_WORKS]: '/how-it-works',
-  [PageView.PRICING]: '/pricing',
-  [PageView.FAQ]: '/faq',
-  [PageView.SIGNUP]: '/signup',
-  [PageView.LOGIN]: '/login',
-  [PageView.HISTORY]: '/history',
-  [PageView.SAFETY]: '/safety',
-  [PageView.DASHBOARD]: '/dashboard',
-  [PageView.PRIVACY]: '/privacy',
-  [PageView.TERMS]: '/terms',
-  [PageView.CANCELLATION]: '/cancellation',
+  [PageView.HOME]: "/",
+  [PageView.HOW_IT_WORKS]: "/how-it-works",
+  [PageView.PRICING]: "/pricing",
+  [PageView.FAQ]: "/faq",
+  [PageView.SIGNUP]: "/signup",
+  [PageView.LOGIN]: "/login",
+  [PageView.HISTORY]: "/history",
+  [PageView.SAFETY]: "/safety",
+  [PageView.DASHBOARD]: "/dashboard",
+  [PageView.PRIVACY]: "/privacy",
+  [PageView.TERMS]: "/terms",
+  [PageView.CANCELLATION]: "/cancellation",
+  [PageView.VERIFY_EMAIL]: '/verify-email', 
 };
 
 // Get initial view from URL
@@ -1048,33 +1182,40 @@ interface DashboardUser {
 // Get stored dashboard user
 const getStoredUser = (): DashboardUser | null => {
   try {
-    const stored = localStorage.getItem('techtriage_user');
+    const stored = localStorage.getItem("techtriage_user");
     if (stored) {
       return JSON.parse(stored);
     }
   } catch (e) {
-    console.error('Failed to get stored user:', e);
+    console.error("Failed to get stored user:", e);
   }
   return null;
 };
 
-type DashboardView = 'main' | 'history' | 'settings' | 'billing';
+type DashboardView = "main" | "history" | "settings" | "billing";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);
   const [capturedEmail, setCapturedEmail] = useState("");
-  const [dashboardUser, setDashboardUser] = useState<DashboardUser | null>(getStoredUser);
+  const [dashboardUser, setDashboardUser] = useState<DashboardUser | null>(
+    getStoredUser,
+  );
   const [showLiveSupport, setShowLiveSupport] = useState(false);
-  const [dashboardView, setDashboardView] = useState<DashboardView>('main');
+  const [dashboardView, setDashboardView] = useState<DashboardView>("main");
   const chatRef = useRef<ChatWidgetHandle>(null);
 
   // Get auth state from session (for OAuth users)
-  const { user: sessionUser, isAuthenticated, isLoading: authLoading, refetch: refetchAuth } = useAuth();
+  const {
+    user: sessionUser,
+    isAuthenticated,
+    isLoading: authLoading,
+    refetch: refetchAuth,
+  } = useAuth();
 
   // Check if user should see dashboard on initial load
   useEffect(() => {
     const storedUser = getStoredUser();
-    if (storedUser && window.location.pathname === '/dashboard') {
+    if (storedUser && window.location.pathname === "/dashboard") {
       setDashboardUser(storedUser);
       setCurrentView(PageView.DASHBOARD);
     }
@@ -1092,36 +1233,39 @@ const App: React.FC = () => {
       // Create dashboard user object from session
       const syncedUser: DashboardUser = {
         id: sessionUser.id,
-        firstName: sessionUser.firstName || sessionUser.username || 'User',
+        firstName: sessionUser.firstName || sessionUser.username || "User",
         lastName: sessionUser.lastName || undefined,
-        email: sessionUser.email || '',
+        email: sessionUser.email || "",
       };
 
       // If on dashboard, sync the user (ensures id is present)
-      if (currentPath === '/dashboard') {
+      if (currentPath === "/dashboard") {
         setSessionChecked(true);
         setDashboardUser(syncedUser);
-        localStorage.setItem('techtriage_user', JSON.stringify(syncedUser));
+        localStorage.setItem("techtriage_user", JSON.stringify(syncedUser));
         setCurrentView(PageView.DASHBOARD);
       }
 
       // If on signup and authenticated, check if they've completed onboarding
-      if (currentPath === '/signup' && sessionUser.id) {
+      if (currentPath === "/signup" && sessionUser.id) {
         setSessionChecked(true);
         // Fetch full user profile to check onboarding status
         fetch(`/api/auth/user/${sessionUser.id}`)
-          .then(res => res.json())
-          .then(data => {
+          .then((res) => res.json())
+          .then((data) => {
             // If user has completed onboarding (has homeType or techComfort), go to dashboard
             if (data.homeType || data.techComfort) {
               setDashboardUser(syncedUser);
-              localStorage.setItem('techtriage_user', JSON.stringify(syncedUser));
+              localStorage.setItem(
+                "techtriage_user",
+                JSON.stringify(syncedUser),
+              );
               navigate(PageView.DASHBOARD);
             }
             // Otherwise, let them continue with onboarding in SignUp component
           })
-          .catch(err => {
-            console.error('Error checking user profile:', err);
+          .catch((err) => {
+            console.error("Error checking user profile:", err);
           });
       }
     }
@@ -1129,10 +1273,16 @@ const App: React.FC = () => {
 
   // Additional sync: If dashboardUser exists but lacks id, and we have session, sync the id
   useEffect(() => {
-    if (!authLoading && isAuthenticated && sessionUser?.id && dashboardUser && !dashboardUser.id) {
+    if (
+      !authLoading &&
+      isAuthenticated &&
+      sessionUser?.id &&
+      dashboardUser &&
+      !dashboardUser.id
+    ) {
       const updatedUser = { ...dashboardUser, id: sessionUser.id };
       setDashboardUser(updatedUser);
-      localStorage.setItem('techtriage_user', JSON.stringify(updatedUser));
+      localStorage.setItem("techtriage_user", JSON.stringify(updatedUser));
     }
   }, [authLoading, isAuthenticated, sessionUser, dashboardUser]);
 
@@ -1144,15 +1294,15 @@ const App: React.FC = () => {
       setCurrentView(view);
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   // Custom navigate function that updates URL (memoized to prevent child re-renders)
   const navigate = useCallback((view: PageView) => {
-    const path = viewToPath[view] || '/';
+    const path = viewToPath[view] || "/";
     if (window.location.pathname !== path) {
-      window.history.pushState({ view }, '', path);
+      window.history.pushState({ view }, "", path);
     }
     setCurrentView(view);
     window.scrollTo(0, 0);
@@ -1170,35 +1320,43 @@ const App: React.FC = () => {
     navigate(PageView.SIGNUP);
   }, [navigate]);
 
-  const handleNavigateToSignup = useCallback((email?: string | React.MouseEvent) => {
-    // Filter out MouseEvent objects (when called from onClick without args)
-    if (email && typeof email === "string") {
-      setCapturedEmail(email);
-    }
-    navigate(PageView.SIGNUP);
-  }, [navigate]);
+  const handleNavigateToSignup = useCallback(
+    (email?: string | React.MouseEvent) => {
+      // Filter out MouseEvent objects (when called from onClick without args)
+      if (email && typeof email === "string") {
+        setCapturedEmail(email);
+      }
+      navigate(PageView.SIGNUP);
+    },
+    [navigate],
+  );
 
   const handleNavigateToPricing = useCallback(() => {
     navigate(PageView.PRICING);
   }, [navigate]);
 
   // Handle signup completion - store user and go to dashboard (memoized for Login/SignUp)
-  const handleSignupComplete = useCallback((user: DashboardUser) => {
-    console.log("[APP] handleSignupComplete called with user:", user);
-    console.log("[APP] User ID:", user.id);
-    console.log("[APP] User email:", user.email);
+  const handleSignupComplete = useCallback(
+    (user: DashboardUser) => {
+      console.log("[APP] handleSignupComplete called with user:", user);
+      console.log("[APP] User ID:", user.id);
+      console.log("[APP] User email:", user.email);
 
-    if (!user.id) {
-      console.error("[APP] WARNING: User has no ID! Billing and other features will not work.");
-    }
+      if (!user.id) {
+        console.error(
+          "[APP] WARNING: User has no ID! Billing and other features will not work.",
+        );
+      }
 
-    setDashboardUser(user);
-    localStorage.setItem('techtriage_user', JSON.stringify(user));
-    // Refetch auth state to sync session with global auth context
-    // This ensures ChatWidget and Header recognize the user as authenticated
-    refetchAuth();
-    navigate(PageView.DASHBOARD);
-  }, [navigate, refetchAuth]);
+      setDashboardUser(user);
+      localStorage.setItem("techtriage_user", JSON.stringify(user));
+      // Refetch auth state to sync session with global auth context
+      // This ensures ChatWidget and Header recognize the user as authenticated
+      refetchAuth();
+      navigate(PageView.DASHBOARD);
+    },
+    [navigate, refetchAuth],
+  );
 
   // Dashboard handlers (memoized to prevent unnecessary re-renders)
   const handleDashboardChat = useCallback(() => {
@@ -1207,7 +1365,9 @@ const App: React.FC = () => {
 
   const handleDashboardUploadImage = useCallback(() => {
     // Open chat with image upload intent
-    chatRef.current?.open("I'd like to upload a photo of my issue for analysis.");
+    chatRef.current?.open(
+      "I'd like to upload a photo of my issue for analysis.",
+    );
   }, []);
 
   const handleDashboardStartVideo = useCallback(() => {
@@ -1216,27 +1376,27 @@ const App: React.FC = () => {
 
   const handleDashboardLogout = useCallback(() => {
     setDashboardUser(null);
-    setDashboardView('main');
-    localStorage.removeItem('techtriage_user');
-    localStorage.removeItem('techtriage_trial');
+    setDashboardView("main");
+    localStorage.removeItem("techtriage_user");
+    localStorage.removeItem("techtriage_trial");
     // Also clear OAuth session by redirecting to logout endpoint
-    window.location.href = '/api/auth/logout';
+    window.location.href = "/api/auth/logout";
   }, []);
 
   const handleOpenHistory = useCallback(() => {
-    setDashboardView('history');
+    setDashboardView("history");
   }, []);
 
   const handleOpenSettings = useCallback(() => {
-    setDashboardView('settings');
+    setDashboardView("settings");
   }, []);
 
   const handleOpenBilling = useCallback(() => {
-    setDashboardView('billing');
+    setDashboardView("billing");
   }, []);
 
   const handleBackToDashboard = useCallback(() => {
-    setDashboardView('main');
+    setDashboardView("main");
   }, []);
 
   const handleUpdateUser = useCallback((updatedUser: DashboardUser) => {
@@ -1254,7 +1414,11 @@ const App: React.FC = () => {
         onClose={handleCloseLiveSupport}
         userId={dashboardUser?.id}
         userEmail={dashboardUser?.email}
-        userName={dashboardUser ? `${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim() : undefined}
+        userName={
+          dashboardUser
+            ? `${dashboardUser.firstName} ${dashboardUser.lastName || ""}`.trim()
+            : undefined
+        }
       />
     );
   }
@@ -1277,6 +1441,13 @@ const App: React.FC = () => {
             onNavigate={navigate}
           />
         );
+      case PageView.VERIFY_EMAIL:
+        return (
+          <VerifyEmail 
+            onNavigate={navigate} 
+            onVerificationComplete={handleSignupComplete} 
+          />
+        );
       case PageView.LOGIN:
         return <Login onNavigate={navigate} onLogin={handleSignupComplete} />;
       case PageView.PRIVACY:
@@ -1289,15 +1460,15 @@ const App: React.FC = () => {
         if (dashboardUser) {
           // Determine what content to show inside dashboard
           let dashboardContent: React.ReactNode = null;
-          if (dashboardView === 'history') {
+          if (dashboardView === "history") {
             dashboardContent = (
               <SessionHistory
                 userEmail={dashboardUser.email}
-                userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ''}`.trim()}
+                userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ""}`.trim()}
                 embedded
               />
             );
-          } else if (dashboardView === 'settings') {
+          } else if (dashboardView === "settings") {
             dashboardContent = (
               <Settings
                 user={dashboardUser}
@@ -1305,7 +1476,7 @@ const App: React.FC = () => {
                 embedded
               />
             );
-          } else if (dashboardView === 'billing' && dashboardUser.id) {
+          } else if (dashboardView === "billing" && dashboardUser.id) {
             dashboardContent = (
               <BillingManagement
                 userId={dashboardUser.id}
@@ -1335,6 +1506,7 @@ const App: React.FC = () => {
         // If no user, redirect to signup
         navigate(PageView.SIGNUP);
         return null;
+        
       case PageView.HOME:
       default:
         return (

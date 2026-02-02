@@ -1,7 +1,7 @@
 export enum UserRole {
-  USER = 'user',
-  MODEL = 'model',
-  SYSTEM = 'system'
+  USER = "user",
+  MODEL = "model",
+  SYSTEM = "system",
 }
 
 export interface ChatMessage {
@@ -24,18 +24,19 @@ export interface SavedSession {
 }
 
 export enum PageView {
-  HOME = 'home',
-  HOW_IT_WORKS = 'how_it_works',
-  PRICING = 'pricing',
-  FAQ = 'faq',
-  SIGNUP = 'signup',
-  LOGIN = 'login',
-  HISTORY = 'history',
-  SAFETY = 'safety',
-  DASHBOARD = 'dashboard',
-  PRIVACY = 'privacy',
-  TERMS = 'terms',
-  CANCELLATION = 'cancellation'
+  HOME = "home",
+  HOW_IT_WORKS = "how_it_works",
+  PRICING = "pricing",
+  FAQ = "faq",
+  SIGNUP = "signup",
+  LOGIN = "login",
+  HISTORY = "history",
+  SAFETY = "safety",
+  DASHBOARD = "dashboard",
+  PRIVACY = "privacy",
+  TERMS = "terms",
+  VERIFY_EMAIL = "verify-email",
+  CANCELLATION = "cancellation",
 }
 
 export interface PricingTier {
