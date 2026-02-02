@@ -8,8 +8,8 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 const IMAGE_BASE_URL = "https://tech-triage-site.replit.app";
 const APP_BASE_URL = process.env.APP_URL || "https://tech-triage-site.replit.app";
 
-// Default sender (Use onboarding@resend.dev for testing until you verify your domain)
-const DEFAULT_SENDER = "onboarding@resend.dev"; 
+// Default sender - use your verified domain
+const DEFAULT_SENDER = "support@trytechtriage.com";
 const EMAIL_FROM = process.env.EMAIL_FROM || `TechTriage <${DEFAULT_SENDER}>`;
 
 // Generate the welcome email HTML
