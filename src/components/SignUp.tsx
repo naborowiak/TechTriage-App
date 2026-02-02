@@ -399,6 +399,15 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         console.log("[SIGNUP] Response success:", data.success);
         console.log("[SIGNUP] Response user:", data.user);
         console.log("[SIGNUP] Response user.id:", data.user?.id);
+
+        // Check for registration errors
+        if (!response.ok || !data.success) {
+          console.error("[SIGNUP] Registration failed:", data.error);
+          setTrialError(data.error || "Registration failed. Please try again.");
+          setCurrentStep("credentials");
+          return;
+        }
+
         userId = data.user?.id;
 
         if (!userId) {
