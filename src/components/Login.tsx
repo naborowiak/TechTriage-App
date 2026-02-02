@@ -1,130 +1,221 @@
-import { useState, memo } from "react";
-import { Eye, EyeOff, AlertCircle, Shield, Zap, Clock } from "lucide-react";
+import React, { useState } from "react";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 import { Logo } from "./Logo";
 import { PageView } from "../types";
 
 interface LoginProps {
   onNavigate: (view: PageView) => void;
-  onLogin?: (user: {
-    id?: string;
-    firstName: string;
-    lastName?: string;
-    email: string;
-  }) => void;
+  onLogin: (user: any) => void;
 }
 
-export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Check if user is entering a Gmail address
-  const isGmailAddress = email.toLowerCase().endsWith("@gmail.com");
-
-  const handleGoogleLogin = () => {
-    window.location.href = "/auth/google";
-  };
-
-  const handleLogin = async () => {
-    setError(null);
-
-    // Basic validation
-    if (!email || !password) {
-      setError("Please enter your email and password.");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Call login API
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Required to establish session cookie
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        setError(data.error || "Invalid email or password.");
-        setIsLoading(false);
-        return;
-      }
-
-      // Login successful
-      const user = {
-        id: data.user.id,
-        firstName: data.user.firstName || email.split("@")[0],
-        lastName: data.user.lastName || "",
-        email: data.user.email,
-      };
-
-      // Store in localStorage for persistence
-      localStorage.setItem("techtriage_user", JSON.stringify(user));
-
-      if (onLogin) {
-        onLogin(user);
-      } else {
-        onNavigate(PageView.DASHBOARD);
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      setError("Login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // New state for verification handling
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const handleLogoClick = () => {
     onNavigate(PageView.HOME);
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = "/auth/google";
+  };
+
+  const updateFormData = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Reset errors when user types
+    setError(null);
+    setNeedsVerification(false);
+    setResendSuccess(false);
+  };
+
+  const handleResendVerification = async () => {
+    if (!formData.email) return;
+
+    setIsResending(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setResendSuccess(true);
+        setNeedsVerification(false); // Hide the button
+      } else {
+        setError(data.error || "Failed to resend verification email.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setNeedsVerification(false);
+    setResendSuccess(false);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        onLogin(data.user);
+      } else {
+        setError(data.error || "Login failed");
+
+        // Detect if the error relates to verification
+        if (data.error && data.error.toLowerCase().includes("verify")) {
+          setNeedsVerification(true);
+        }
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <section className="min-h-screen bg-white">
-      <div className="grid lg:grid-cols-2 min-h-screen">
-        <div className="flex flex-col items-center justify-center px-6 py-12">
-          <div className="w-full max-w-md">
-            <div className="flex justify-center mb-10">
-              <button
-                onClick={handleLogoClick}
-                className="focus:outline-none hover:opacity-80 transition-opacity"
-              >
-                <Logo variant="dark" className="scale-125" />
-              </button>
+    <div
+      className="min-h-screen relative flex flex-col items-center"
+      style={{
+        backgroundColor: "#F9FAFB",
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`,
+      }}
+    >
+      {/* Header / Logo */}
+      <div className="w-full pt-8 pb-6 flex justify-center z-10">
+        <button
+          onClick={handleLogoClick}
+          className="focus:outline-none hover:opacity-80 transition-opacity"
+        >
+          <Logo variant="dark" />
+        </button>
+      </div>
+
+      {/* Main Card */}
+      <div className="w-full max-w-[480px] px-4 pb-12 z-10">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+          <div className="p-8 sm:p-10">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-black text-[#1F2937] leading-tight mb-3">
+                Welcome back
+              </h1>
+              <p className="text-gray-500 text-lg">
+                Log in to access your dashboard
+              </p>
             </div>
 
-            <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-red-700 font-medium text-sm">{error}</p>
+                  </div>
+
+                  {/* Resend Verification Button */}
+                  {needsVerification && (
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={isResending}
+                      className="ml-8 text-sm font-semibold text-red-600 hover:text-red-800 underline text-left flex items-center gap-2"
+                    >
+                      {isResending ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />{" "}
+                          Sending...
+                        </>
+                      ) : (
+                        <>Resend verification email</>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Success Message for Resend */}
+              {resendSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-green-700 font-medium text-sm">
+                      Email Sent!
+                    </p>
+                    <p className="text-green-600 text-xs mt-1">
+                      Please check your inbox and spam folder.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div>
-                <label className="block text-gray-600 text-sm mb-2">
-                  Email address*
+                <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+                  Email
                 </label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-4 border-2 border-gray-200 rounded-lg text-lg focus:border-[#F97316] focus:outline-none transition-colors"
+                  value={formData.email}
+                  onChange={(e) => updateFormData("email", e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all placeholder:text-gray-400"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-gray-600 text-sm mb-2">
-                  Password*
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide">
+                    Password
+                  </label>
+                  <a
+                    href="#"
+                    className="text-sm text-[#F97316] hover:text-[#EA580C] font-medium"
+                  >
+                    Forgot password?
+                  </a>
+                </div>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-lg text-lg focus:border-[#F97316] focus:outline-none transition-colors pr-12"
+                    value={formData.password}
+                    onChange={(e) => updateFormData("password", e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all pr-12 placeholder:text-gray-400"
+                    required
                   />
                   <button
                     type="button"
@@ -140,38 +231,10 @@ export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
                 </div>
               </div>
 
-              <button className="text-[#F97316] font-medium hover:underline text-left">
-                Forgot password?
-              </button>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-red-700 text-sm">{error}</p>
-                </div>
-              )}
-
-              {/* Gmail suggestion */}
-              {isGmailAddress && !error && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-blue-800 text-sm mb-2">
-                    <strong>Tip:</strong> Using a Gmail account? You can sign in
-                    faster with Google.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleGoogleLogin}
-                    className="text-blue-600 font-medium text-sm hover:underline"
-                  >
-                    Sign in with Google instead →
-                  </button>
-                </div>
-              )}
-
               <button
-                onClick={handleLogin}
+                type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-xl py-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-[#1F2937] hover:bg-[#374151] disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-gray-900/20 hover:-translate-y-0.5"
               >
                 {isLoading ? (
                   <>
@@ -179,21 +242,27 @@ export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
                     Logging in...
                   </>
                 ) : (
-                  "Log In"
+                  <>
+                    Log In <ArrowRight className="w-5 h-5" />
+                  </>
                 )}
               </button>
 
-              <div className="flex items-center gap-4 my-6">
-                <div className="flex-1 h-px bg-gray-200"></div>
-                <span className="text-gray-400 text-sm">OR</span>
-                <div className="flex-1 h-px bg-gray-200"></div>
+              <div className="flex items-center gap-4 py-2">
+                <div className="flex-1 h-px bg-gray-100"></div>
+                <span className="text-gray-400 text-sm font-medium">OR</span>
+                <div className="flex-1 h-px bg-gray-100"></div>
               </div>
 
               <button
+                type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-gray-100 bg-white rounded-xl hover:bg-gray-50 hover:border-gray-200 transition-all group"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 h-5 group-hover:scale-110 transition-transform"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -211,97 +280,39 @@ export const Login = memo<LoginProps>(function Login({ onNavigate, onLogin }) {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                <span className="font-medium text-[#1F2937]">
-                  Log In With Google
+                <span className="font-bold text-gray-600 group-hover:text-gray-800">
+                  Log in with Google
                 </span>
               </button>
 
-              <div className="text-center pt-6">
+              <p className="text-sm text-gray-400 text-center pt-2">
+                Don't have an account?{" "}
                 <button
                   onClick={() => onNavigate(PageView.SIGNUP)}
-                  className="text-[#F97316] font-medium hover:underline"
+                  className="text-[#F97316] hover:underline font-bold"
                 >
-                  Sign up
+                  Sign up free
                 </button>
-              </div>
-            </div>
+              </p>
+            </form>
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-[#1F2937] to-[#374151] p-12">
-          <div className="max-w-md text-white">
-            <h3 className="text-3xl font-black mb-6 leading-tight">
-              Welcome back to smarter home tech support
-            </h3>
-            <p className="text-white/70 text-lg leading-relaxed mb-8">
-              Your personalized support dashboard is just a login away. Pick up
-              where you left off or start a new session.
-            </p>
-
-            <div className="space-y-4">
-              <div className="flex items-start gap-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                <div className="w-10 h-10 bg-[#F97316] rounded-lg flex items-center justify-center shrink-0">
-                  <Clock className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="font-bold text-white">Session History</div>
-                  <div className="text-white/60 text-sm">
-                    Access all your past sessions and guides anytime
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                <div className="w-10 h-10 bg-[#F97316] rounded-lg flex items-center justify-center shrink-0">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="font-bold text-white">Instant Support</div>
-                  <div className="text-white/60 text-sm">
-                    Get help in seconds with AI-powered diagnostics
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                <div className="w-10 h-10 bg-[#F97316] rounded-lg flex items-center justify-center shrink-0">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="font-bold text-white">Secure & Private</div>
-                  <div className="text-white/60 text-sm">
-                    Your data is encrypted and never shared
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-white/10">
-              <div className="flex items-center gap-3">
-                {/* Replaced specific number with general community message */}
-                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center text-white text-xs font-bold border-2 border-[#1F2937]">
-                    J
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold border-2 border-[#1F2937]">
-                    M
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold border-2 border-[#1F2937]">
-                    S
-                  </div>
-                </div>
-                <div className="text-white/60 text-sm">
-                  Join our{" "}
-                  <span className="text-white font-semibold">
-                    growing community
-                  </span>{" "}
-                  of homeowners
-                </div>
-              </div>
-            </div>
+        {/* Footer Links */}
+        <div className="mt-8 text-center space-y-4">
+          <p className="text-sm text-gray-400">
+            &copy; {new Date().getFullYear()} TechTriage. All rights reserved.
+          </p>
+          <div className="flex justify-center gap-6 text-sm text-gray-500 font-medium">
+            <a href="#" className="hover:text-[#F97316] transition-colors">
+              Terms of Service
+            </a>
+            <a href="#" className="hover:text-[#F97316] transition-colors">
+              Privacy Policy
+            </a>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
-});
+};
