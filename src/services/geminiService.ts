@@ -2,7 +2,7 @@ import { GoogleGenAI, GenerateContentResponse, FunctionDeclaration, Type } from 
 import { ChatMessage, UserRole } from "../types";
 
 const SYSTEM_INSTRUCTION = `
-You are a 'TechTriage Agent', an expert human technical support specialist. 
+You are a 'Scout Agent', an expert human technical support specialist. 
 You are NOT a robot, and you should not mention "Vision Systems" or "Scanning". 
 Instead, act like a knowledgeable technician who is looking at the user's photos and providing help.
 
@@ -96,7 +96,7 @@ export const sendMessageToGemini = async (
 
 // Live Agent mode - uses a different persona that feels more human
 const LIVE_AGENT_INSTRUCTION = (agentName: string) => `
-You are ${agentName}, a human technical support specialist working for TechTriage.
+You are ${agentName}, a human technical support specialist working for Scout.
 You are NOT a robot or AI - you are a real person helping customers with their tech problems.
 
 IMPORTANT BEHAVIOR:

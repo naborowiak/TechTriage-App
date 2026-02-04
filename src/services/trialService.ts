@@ -32,7 +32,7 @@ const generateFingerprint = (): string => {
   if (ctx) {
     ctx.textBaseline = 'top';
     ctx.font = '14px Arial';
-    ctx.fillText('TechTriage', 2, 2);
+    ctx.fillText('TotalAssist', 2, 2);
   }
 
   const data = [

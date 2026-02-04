@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import {
   MessageSquare,
   Camera,
-  Video,
+  ScanLine,
+  Mic,
   Clock,
   User,
   ChevronRight,
@@ -15,10 +16,14 @@ import {
   AlertTriangle,
   CreditCard,
   FolderOpen,
+  Lock,
+  Zap,
 } from "lucide-react";
 import { Logo } from "./Logo";
 import { getTrialStatus } from "../services/trialService";
 import { useSubscription } from "../hooks/useSubscription";
+import { useUsage, UsageLimits, VideoCredits, VIDEO_CREDIT_CONFIG } from "../stores/usageStore";
+import { UpgradeModal } from "./UpgradeModal";
 
 interface DashboardProps {
   user: {
@@ -30,6 +35,7 @@ interface DashboardProps {
   onStartChat: () => void;
   onUploadImage: () => void;
   onStartVideo: (caseId?: string) => void;
+  onStartSignal?: () => void; // Voice mode handler
   onLogout: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
@@ -58,6 +64,115 @@ interface Case {
   aiSummary?: string;
 }
 
+// Usage Meter Component for Sidebar
+interface UsageMeterProps {
+  tier: string;
+  usage: UsageLimits;
+  videoCredits: VideoCredits;
+  videoResetInfo: { resetType: 'weekly' | 'monthly'; daysUntilReset: number };
+}
+
+const UsageMeter: React.FC<UsageMeterProps> = ({ tier, usage, videoCredits, videoResetInfo }) => {
+  const chatRemaining = Math.max(0, usage.chat.limit - usage.chat.used);
+  const chatTotal = usage.chat.limit;
+  const photoRemaining = Math.max(0, usage.photo.limit - usage.photo.used);
+  const totalVideoCredits = videoCredits.subscriptionCredits + videoCredits.purchasedCredits;
+  const isUnlimited = chatTotal >= 999999;
+  const isPaidTier = tier === 'home' || tier === 'pro';
+
+  const getTierBadge = () => {
+    if (tier === 'pro') return { label: 'PRO', color: 'bg-scout-purple/20 text-scout-purple' };
+    if (tier === 'home') return { label: 'HOME', color: 'bg-electric-cyan/20 text-electric-cyan' };
+    return { label: 'FREE', color: 'bg-midnight-700 text-text-secondary' };
+  };
+
+  const badge = getTierBadge();
+
+  return (
+    <div className="p-4 bg-midnight-800/50 rounded-xl border border-midnight-700 mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Zap className="w-4 h-4 text-electric-cyan" />
+        <span className="text-sm font-semibold text-white">Scout Credits</span>
+        <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${badge.color}`}>
+          {badge.label}
+        </span>
+      </div>
+
+      {/* Chat usage */}
+      {isUnlimited ? (
+        <div className="text-sm text-text-secondary mb-3">
+          <span className="text-electric-cyan font-medium">Unlimited</span> messages
+        </div>
+      ) : (
+        <div className="mb-3">
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-text-secondary">Chat</span>
+            <span className="text-white font-medium">{chatRemaining}/{chatTotal}</span>
+          </div>
+          <div className="h-1.5 bg-midnight-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                chatRemaining === 0
+                  ? 'bg-red-500'
+                  : chatRemaining <= 2
+                    ? 'bg-yellow-500'
+                    : 'bg-gradient-to-r from-electric-indigo to-electric-cyan'
+              }`}
+              style={{ width: `${(chatRemaining / chatTotal) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Photo usage - only show for free tier */}
+      {!isPaidTier && (
+        <div className="mb-3">
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-text-secondary">Snapshot</span>
+            <span className={`font-medium ${photoRemaining === 0 ? 'text-red-400' : 'text-white'}`}>
+              {photoRemaining === 0 ? 'Used' : `${photoRemaining}/1`}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Video Diagnostic usage - only show for paid tiers */}
+      {isPaidTier && (
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-text-secondary">Video Diagnostic</span>
+            <span className={`font-medium ${totalVideoCredits === 0 ? 'text-red-400' : 'text-white'}`}>
+              {tier === 'home'
+                ? (totalVideoCredits > 0 ? '1 Credit' : 'Used')
+                : `${totalVideoCredits}/${videoCredits.subscriptionLimit}`
+              }
+            </span>
+          </div>
+          {tier === 'pro' && (
+            <div className="h-1.5 bg-midnight-700 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-scout-purple to-scout-glow transition-all"
+                style={{ width: `${Math.min(100, (totalVideoCredits / videoCredits.subscriptionLimit) * 100)}%` }}
+              />
+            </div>
+          )}
+          {totalVideoCredits === 0 && (
+            <div className="text-xs text-text-muted mt-1">
+              Resets in {videoResetInfo.daysUntilReset} day{videoResetInfo.daysUntilReset !== 1 ? 's' : ''}
+            </div>
+          )}
+          {videoCredits.purchasedCredits > 0 && (
+            <div className="text-xs text-scout-glow mt-1">
+              +{videoCredits.purchasedCredits} purchased credit{videoCredits.purchasedCredits !== 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Action Card with Locked State
 const ActionCard: React.FC<{
   icon: React.ReactNode;
   title: string;
@@ -67,6 +182,8 @@ const ActionCard: React.FC<{
   highlight?: boolean;
   badge?: string | number;
   disabled?: boolean;
+  locked?: boolean;
+  onLockedClick?: () => void;
 }> = ({
   icon,
   title,
@@ -76,66 +193,101 @@ const ActionCard: React.FC<{
   highlight,
   badge,
   disabled,
-}) => (
-  <div
-    className={`bg-white rounded-2xl p-6 border-2 transition-all ${
-      disabled
-        ? "opacity-60 cursor-not-allowed border-gray-200"
-        : "hover:shadow-lg hover:-translate-y-1 " +
-          (highlight
-            ? "border-[#F97316] shadow-lg shadow-orange-100"
-            : "border-gray-100")
-    }`}
-  >
-    <div className="flex items-start justify-between mb-4">
-      <div
-        className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-          highlight ? "bg-[#F97316] text-white" : "bg-gray-100 text-[#1F2937]"
-        }`}
-      >
-        {icon}
-      </div>
-      {badge !== undefined && (
-        <span
-          className={`text-xs font-bold px-2 py-1 rounded-full ${
-            badge === 0 || badge === "Used"
-              ? "bg-red-100 text-red-600"
-              : badge === "unlimited" || badge === "Unlimited"
-                ? "bg-green-100 text-green-600"
-                : "bg-orange-100 text-[#F97316]"
-          }`}
-        >
-          {badge === "unlimited"
-            ? "Unlimited"
-            : typeof badge === "number"
-              ? `${badge} left`
-              : badge}
-        </span>
-      )}
-    </div>
-    <h3 className="text-xl font-bold text-[#1F2937] mb-2">{title}</h3>
-    <p className="text-gray-500 mb-4 leading-relaxed">{description}</p>
-    <button
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      className={`w-full py-3 px-4 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-        disabled
-          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-          : highlight
-            ? "bg-[#F97316] hover:bg-[#EA580C] text-white"
-            : "bg-[#1F2937] hover:bg-[#374151] text-white"
+  locked,
+  onLockedClick,
+}) => {
+  const handleClick = () => {
+    if (locked && onLockedClick) {
+      onLockedClick();
+    } else if (!disabled) {
+      onClick();
+    }
+  };
+
+  return (
+    <div
+      className={`relative rounded-2xl p-6 border transition-all ${
+        locked
+          ? "bg-midnight-800/70 border-midnight-700 opacity-80"
+          : disabled
+            ? "bg-midnight-800 border-midnight-700 opacity-60 cursor-not-allowed"
+            : highlight
+              ? "bg-midnight-800 border-electric-indigo shadow-glow-electric hover:shadow-lg hover:-translate-y-1"
+              : "bg-midnight-800 border-midnight-700 hover:border-midnight-600 hover:shadow-lg hover:-translate-y-1"
       }`}
     >
-      {buttonText}
-      <ChevronRight className="w-4 h-4" />
-    </button>
-  </div>
-);
+      {/* Pro Badge for locked features */}
+      {locked && (
+        <div className="absolute -top-2 -right-2 px-3 py-1 rounded-full bg-scout-purple text-white text-xs font-bold shadow-lg flex items-center gap-1">
+          <Lock className="w-3 h-3" />
+          PRO
+        </div>
+      )}
+
+      <div className="flex items-start justify-between mb-4">
+        <div
+          className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+            locked
+              ? "bg-midnight-700 text-text-muted"
+              : highlight
+                ? "bg-gradient-to-br from-scout-purple to-electric-indigo text-white"
+                : "bg-midnight-700 text-electric-indigo"
+          }`}
+        >
+          {icon}
+        </div>
+        {badge !== undefined && !locked && (
+          <span
+            className={`text-xs font-bold px-2 py-1 rounded-full ${
+              badge === 0 || badge === "Used"
+                ? "bg-red-500/20 text-red-400"
+                : badge === "unlimited" || badge === "Unlimited"
+                  ? "bg-electric-cyan/20 text-electric-cyan"
+                  : "bg-electric-indigo/20 text-electric-indigo"
+            }`}
+          >
+            {badge === "unlimited"
+              ? "Unlimited"
+              : typeof badge === "number"
+                ? `${badge} left`
+                : badge}
+          </span>
+        )}
+      </div>
+      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+      <p className="text-text-secondary mb-4 leading-relaxed text-sm">{description}</p>
+      <button
+        onClick={handleClick}
+        className={`w-full py-3 px-4 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+          locked
+            ? "bg-scout-purple/20 text-scout-purple hover:bg-scout-purple/30 border border-scout-purple/30"
+            : disabled
+              ? "bg-midnight-700 text-text-muted cursor-not-allowed"
+              : highlight
+                ? "btn-gradient-electric text-white shadow-lg shadow-electric-indigo/20"
+                : "bg-midnight-700 hover:bg-midnight-600 text-white border border-midnight-600"
+        }`}
+      >
+        {locked ? (
+          <>
+            <Lock className="w-4 h-4" />
+            Unlock with Pro
+          </>
+        ) : (
+          <>
+            {buttonText}
+            <ChevronRight className="w-4 h-4" />
+          </>
+        )}
+      </button>
+    </div>
+  );
+};
 
 const QuickTip: React.FC<{ tip: string }> = ({ tip }) => (
-  <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-xl border border-orange-100">
-    <Sparkles className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
-    <p className="text-sm text-[#1F2937]">{tip}</p>
+  <div className="flex items-start gap-3 p-4 bg-electric-indigo/10 rounded-xl border border-electric-indigo/20">
+    <Sparkles className="w-5 h-5 text-electric-indigo shrink-0 mt-0.5" />
+    <p className="text-sm text-text-secondary">{tip}</p>
   </div>
 );
 
@@ -144,6 +296,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onStartChat,
   onUploadImage,
   onStartVideo,
+  onStartSignal,
   onLogout,
   onOpenHistory,
   onOpenSettings,
@@ -157,9 +310,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [cases, setCases] = useState<Case[]>([]);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<'chat' | 'photo' | 'signal' | 'videoDiagnostic'>('chat');
 
-  // Get subscription status and usage
-  const { getRemainingUses, canUseFeature } = useSubscription(user.id);
+  // Usage store
+  const {
+    tier,
+    usage,
+    videoCredits,
+    getRemainingCredits,
+    isFeatureLocked,
+    canUseVideoCredit,
+    getVideoResetInfo,
+    shouldShowRefillModal,
+  } = useUsage();
+
+  // Get subscription status (for future integration)
+  useSubscription(user.id);
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -168,6 +335,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const confirmLogout = () => {
     setShowLogoutConfirm(false);
     onLogout();
+  };
+
+  const handleLockedFeatureClick = (feature: 'chat' | 'photo' | 'signal' | 'videoDiagnostic') => {
+    setUpgradeFeature(feature);
+    setUpgradeModalOpen(true);
   };
 
   // Fetch trial status
@@ -203,43 +375,67 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [user?.id]);
 
-  // Handler to create a case before starting video
-  const handleStartLiveSession = async () => {
+  // Handler for Video Diagnostic
+  const handleStartDiagnostic = async () => {
+    // Check if video is locked for free/guest tiers
+    const isVideoLocked = VIDEO_CREDIT_CONFIG[tier].limit === 0 && videoCredits.purchasedCredits === 0;
+
+    if (isVideoLocked) {
+      handleLockedFeatureClick('videoDiagnostic');
+      return;
+    }
+
+    // Check if user has credits (for paid tiers)
+    if (!canUseVideoCredit()) {
+      // Show refill modal instead of upgrade modal
+      if (shouldShowRefillModal()) {
+        handleLockedFeatureClick('videoDiagnostic');
+      }
+      return;
+    }
+
     try {
-      // Create a case "folder" for this session
       const response = await fetch("/api/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: "Live Support Session - " + new Date().toLocaleDateString(),
+          title: "Video Diagnostic - " + new Date().toLocaleDateString(),
         }),
       });
 
       const newCase = await response.json();
-      console.log("Created Case:", newCase.id);
-
-      // Now start the video UI, passing the caseId so we can save the recording later
       onStartVideo(newCase.id);
     } catch (e) {
       console.error("Error creating case:", e);
-      // Fallback: start video without case tracking if DB fails
       onStartVideo();
     }
   };
 
   const tips = [
     "For the best results, make sure your photos are well-lit and show the entire device or error message.",
-    "Our AI can read error codes and model numbers - just show them clearly in your image!",
-    "Live video sessions let our specialists see exactly what you're dealing with in real-time.",
-    "Not sure what's wrong? Just describe it - our AI is trained to understand everyday language.",
+    "Scout can read error codes and model numbers - just show them clearly in your image!",
+    "Video Diagnostics analyze your recordings to provide detailed technical reports.",
+    "Not sure what's wrong? Just describe it - Scout understands everyday language.",
   ];
 
   const [currentTip] = useState(
     () => tips[Math.floor(Math.random() * tips.length)],
   );
 
+  // Calculate remaining credits
+  const chatRemaining = getRemainingCredits('chat');
+  const photoRemaining = getRemainingCredits('photo');
+  const isPhotoLocked = isFeatureLocked('photo') || photoRemaining === 0;
+  const isSignalLocked = isFeatureLocked('signal');
+  // Video diagnostic is locked for free/guest OR if no credits available
+  const isVideoLocked = VIDEO_CREDIT_CONFIG[tier].limit === 0 && videoCredits.purchasedCredits === 0;
+  const isDiagnosticLocked = isVideoLocked || !canUseVideoCredit();
+
+  // Get video reset info for display
+  const videoResetInfo = getVideoResetInfo();
+
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen bg-midnight-950">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -250,12 +446,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-[#1F2937] z-50 transform transition-transform lg:translate-x-0 ${
+        className={`fixed top-0 left-0 h-full w-64 bg-midnight-900 border-r border-midnight-700 z-50 transform transition-transform lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-6 border-b border-white/10">
+        <div className="p-6 border-b border-midnight-700">
           <Logo variant="light" />
+        </div>
+
+        {/* Usage Meter */}
+        <div className="px-4 pt-4">
+          <UsageMeter tier={tier} usage={usage} videoCredits={videoCredits} videoResetInfo={videoResetInfo} />
         </div>
 
         <nav className="p-4 space-y-1">
@@ -267,8 +468,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
               activeView === "main"
-                ? "bg-white/10 text-white font-medium"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
+                ? "bg-electric-indigo/20 text-electric-indigo font-medium"
+                : "text-text-secondary hover:bg-midnight-800 hover:text-white"
             }`}
           >
             <User className="w-5 h-5" />
@@ -279,7 +480,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               setSidebarOpen(false);
               onStartChat();
             }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-midnight-800 hover:text-white transition-colors"
           >
             <MessageSquare className="w-5 h-5" />
             Chat Support
@@ -291,8 +492,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
               activeView === "history"
-                ? "bg-white/10 text-white font-medium"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
+                ? "bg-electric-indigo/20 text-electric-indigo font-medium"
+                : "text-text-secondary hover:bg-midnight-800 hover:text-white"
             }`}
           >
             <History className="w-5 h-5" />
@@ -305,8 +506,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
               activeView === "settings"
-                ? "bg-white/10 text-white font-medium"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
+                ? "bg-electric-indigo/20 text-electric-indigo font-medium"
+                : "text-text-secondary hover:bg-midnight-800 hover:text-white"
             }`}
           >
             <Settings className="w-5 h-5" />
@@ -320,8 +521,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 activeView === "billing"
-                  ? "bg-white/10 text-white font-medium"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
+                  ? "bg-electric-indigo/20 text-electric-indigo font-medium"
+                  : "text-text-secondary hover:bg-midnight-800 hover:text-white"
               }`}
             >
               <CreditCard className="w-5 h-5" />
@@ -330,10 +531,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           )}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-midnight-700">
           <button
             onClick={handleLogoutClick}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-text-secondary hover:bg-midnight-800 hover:text-white transition-colors"
           >
             <LogOut className="w-5 h-5" />
             Sign Out
@@ -344,105 +545,127 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Main content */}
       <main className="lg:ml-64">
         {/* Top bar */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
+        <header className="bg-midnight-900 border-b border-midnight-700 px-6 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+                className="lg:hidden p-2 hover:bg-midnight-800 rounded-lg text-white"
               >
-                <Menu className="w-6 h-6 text-[#1F2937]" />
+                <Menu className="w-6 h-6" />
               </button>
               <div className="lg:hidden">
-                <Logo variant="dark" />
+                <Logo variant="light" />
               </div>
             </div>
 
-            {/* Trial banner */}
-            {trialInfo.isActive && (
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full border border-orange-200">
-                <Clock className="w-4 h-4 text-[#F97316]" />
-                <span className="text-sm font-medium text-[#1F2937]">
-                  Trial: {trialInfo.remainingHours}h{" "}
-                  {trialInfo.remainingMinutes}m remaining
+            {/* Trial/Plan banner */}
+            {trialInfo.isActive ? (
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-electric-indigo/20 rounded-full border border-electric-indigo/30">
+                <Clock className="w-4 h-4 text-electric-cyan" />
+                <span className="text-sm font-medium text-white">
+                  Trial: {trialInfo.remainingHours}h {trialInfo.remainingMinutes}m
                 </span>
               </div>
-            )}
+            ) : tier === 'pro' ? (
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-scout-purple/20 rounded-full border border-scout-purple/30">
+                <Zap className="w-4 h-4 text-scout-purple" />
+                <span className="text-sm font-medium text-white">Pro Plan</span>
+              </div>
+            ) : tier === 'home' ? (
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-electric-cyan/20 rounded-full border border-electric-cyan/30">
+                <Zap className="w-4 h-4 text-electric-cyan" />
+                <span className="text-sm font-medium text-white">Home Plan</span>
+              </div>
+            ) : tier === 'free' ? (
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-midnight-800 rounded-full border border-midnight-700">
+                <span className="text-sm font-medium text-text-secondary">Free Plan</span>
+              </div>
+            ) : null}
 
             <div className="flex items-center gap-3">
               <div className="hidden sm:block text-right">
-                <div className="text-sm font-medium text-[#1F2937]">
+                <div className="text-sm font-medium text-white">
                   {user.firstName} {user.lastName}
                 </div>
-                <div className="text-xs text-gray-500">{user.email}</div>
+                <div className="text-xs text-text-secondary">{user.email}</div>
               </div>
-              <div className="w-10 h-10 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold">
                 {user.firstName.charAt(0)}
               </div>
             </div>
           </div>
         </header>
 
-        {/* Main content area - show children if provided, otherwise dashboard content */}
+        {/* Main content area */}
         {children ? (
           <div className="p-6 lg:p-8">{children}</div>
         ) : (
           <div className="p-6 lg:p-8 max-w-6xl mx-auto">
             {/* Welcome section */}
             <div className="mb-8">
-              <h1 className="text-3xl lg:text-4xl font-black text-[#1F2937] mb-2">
+              <h1 className="text-3xl lg:text-4xl font-black text-white mb-2">
                 Welcome, {user.firstName}!
               </h1>
-              <p className="text-lg text-gray-500">
-                How can we help you today? Choose an option below to get
-                started.
+              <p className="text-lg text-text-secondary">
+                How can TotalAssist help you today? Choose an option below.
               </p>
             </div>
 
-            {/* Trial banner (mobile) */}
-            {trialInfo.isActive && (
-              <div className="sm:hidden flex items-center gap-2 px-4 py-3 mb-6 bg-orange-50 rounded-xl border border-orange-200">
-                <Clock className="w-5 h-5 text-[#F97316]" />
-                <span className="text-sm font-medium text-[#1F2937]">
-                  Free Trial: {trialInfo.remainingHours}h{" "}
-                  {trialInfo.remainingMinutes}m remaining
-                </span>
-              </div>
-            )}
-
             {/* Main action cards */}
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <ActionCard
                 icon={<MessageSquare className="w-7 h-7" />}
-                title="Chat with AI"
-                description="Describe your issue in plain English and get instant guidance from our AI assistant."
+                title="Scout Chat"
+                description="Describe your issue in plain English and get instant AI guidance."
                 buttonText="Start Chatting"
                 onClick={onStartChat}
                 highlight
-                badge={getRemainingUses("chat")}
+                badge={chatRemaining >= 999999 ? 'Unlimited' : chatRemaining}
+                disabled={chatRemaining === 0}
               />
               <ActionCard
                 icon={<Camera className="w-7 h-7" />}
-                title="Upload a Photo"
-                description="Take a picture of the problem - error codes, devices, anything. We'll analyze it instantly."
-                buttonText={
-                  canUseFeature("photo") ? "Upload Image" : "Upgrade to Use"
-                }
+                title="Scout Snapshot"
+                description="Upload a photo of the problem for instant AI analysis."
+                buttonText="Upload Image"
                 onClick={onUploadImage}
-                badge={getRemainingUses("photo")}
-                disabled={!canUseFeature("photo")}
+                badge={photoRemaining >= 999999 ? 'Unlimited' : photoRemaining === 0 ? 'Used' : '1 Free'}
+                disabled={isPhotoLocked && tier !== 'pro'}
+                locked={isPhotoLocked && tier === 'free'}
+                onLockedClick={() => handleLockedFeatureClick('photo')}
               />
               <ActionCard
-                icon={<Video className="w-7 h-7" />}
-                title="Live Video Session"
-                description="Show us in real-time what's happening. Perfect for complex issues that need hands-on guidance."
-                buttonText={
-                  canUseFeature("live") ? "Start Video" : "Upgrade to Use"
+                icon={<Mic className="w-7 h-7" />}
+                title="Scout Signal"
+                description="Describe your issue out loud. Scout turns it into a plan."
+                buttonText="Start Voice"
+                onClick={() => {
+                  if (isSignalLocked) {
+                    handleLockedFeatureClick('signal');
+                  } else if (onStartSignal) {
+                    onStartSignal();
+                  }
+                }}
+                locked={isSignalLocked}
+                onLockedClick={() => handleLockedFeatureClick('signal')}
+                badge={!isSignalLocked ? 'Unlimited' : undefined}
+              />
+              <ActionCard
+                icon={<ScanLine className="w-7 h-7" />}
+                title="Video Diagnostic"
+                description="Upload a video for deep AI analysis and a diagnostic report."
+                buttonText={isDiagnosticLocked && !isVideoLocked ? "Buy Credit" : "Start Diagnostic"}
+                onClick={handleStartDiagnostic}
+                locked={isDiagnosticLocked}
+                onLockedClick={() => handleLockedFeatureClick('videoDiagnostic')}
+                badge={
+                  isVideoLocked
+                    ? undefined
+                    : tier === 'home'
+                      ? (canUseVideoCredit() ? '1 Credit' : `Resets in ${videoResetInfo.daysUntilReset}d`)
+                      : `${videoCredits.subscriptionCredits + videoCredits.purchasedCredits}/15`
                 }
-                // Updated to use the new handler
-                onClick={handleStartLiveSession}
-                badge={getRemainingUses("live")}
-                disabled={!canUseFeature("live")}
               />
             </div>
 
@@ -450,45 +673,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {cases.length > 0 && (
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-[#1F2937]">
-                    Your Cases
-                  </h2>
+                  <h2 className="text-lg font-bold text-white">Your Cases</h2>
                   <button
                     onClick={onOpenHistory}
-                    className="text-sm text-[#F97316] font-medium hover:underline"
+                    className="text-sm text-electric-indigo font-medium hover:text-electric-cyan transition-colors"
                   >
                     View All
                   </button>
                 </div>
-                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-midnight-800 rounded-2xl border border-midnight-700 overflow-hidden">
                   {cases.slice(0, 3).map((c) => (
                     <div
                       key={c.id}
-                      className="p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors flex items-center justify-between cursor-pointer"
+                      className="p-4 border-b border-midnight-700 last:border-0 hover:bg-midnight-700/50 transition-colors flex items-center justify-between cursor-pointer"
                       onClick={onOpenHistory}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-[#F97316]">
+                        <div className="w-10 h-10 rounded-full bg-electric-indigo/20 flex items-center justify-center text-electric-indigo">
                           <FolderOpen className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-[#1F2937]">
-                            {c.title}
-                          </h4>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span>
-                              {new Date(c.createdAt).toLocaleDateString()}
-                            </span>
+                          <h4 className="font-semibold text-white">{c.title}</h4>
+                          <div className="flex items-center gap-2 text-xs text-text-secondary">
+                            <span>{new Date(c.createdAt).toLocaleDateString()}</span>
                             <span>•</span>
-                            <span
-                              className={`capitalize ${c.status === "open" ? "text-green-600" : "text-gray-500"}`}
-                            >
+                            <span className={`capitalize ${c.status === "open" ? "text-electric-cyan" : ""}`}>
                               {c.status}
                             </span>
                           </div>
                         </div>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-300" />
+                      <ChevronRight className="w-5 h-5 text-text-muted" />
                     </div>
                   ))}
                 </div>
@@ -497,52 +712,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Quick tip */}
             <div className="mb-8">
-              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">
+              <h2 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-3">
                 Quick Tip
               </h2>
               <QuickTip tip={currentTip} />
             </div>
 
             {/* How it works reminder */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100">
-              <h2 className="text-lg font-bold text-[#1F2937] mb-4">
-                How TechTriage Works
-              </h2>
+            <div className="bg-midnight-800 rounded-2xl p-6 border border-midnight-700">
+              <h2 className="text-lg font-bold text-white mb-4">How Scout Works</h2>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-electric-indigo to-electric-cyan rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                     1
                   </div>
                   <div>
-                    <div className="font-semibold text-[#1F2937]">
-                      Describe or Show
-                    </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-semibold text-white">Describe or Show</div>
+                    <div className="text-sm text-text-secondary">
                       Tell us what's wrong or upload a photo
                     </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-electric-indigo to-electric-cyan rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                     2
                   </div>
                   <div>
-                    <div className="font-semibold text-[#1F2937]">
-                      Get Diagnosis
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Our AI analyzes and identifies the issue
+                    <div className="font-semibold text-white">Get Diagnosis</div>
+                    <div className="text-sm text-text-secondary">
+                      Scout AI analyzes and identifies the issue
                     </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-[#F97316] rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  <div className="w-8 h-8 bg-gradient-to-br from-electric-indigo to-electric-cyan rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                     3
                   </div>
                   <div>
-                    <div className="font-semibold text-[#1F2937]">Fix It</div>
-                    <div className="text-sm text-gray-500">
-                      Follow our step-by-step guidance
+                    <div className="font-semibold text-white">Fix It</div>
+                    <div className="text-sm text-text-secondary">
+                      Follow step-by-step guidance to resolve
                     </div>
                   </div>
                 </div>
@@ -550,46 +759,52 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Safety note */}
-            <div className="mt-6 flex items-center gap-3 text-sm text-gray-500">
-              <Shield className="w-5 h-5 text-[#F97316]" />
+            <div className="mt-6 flex items-center gap-3 text-sm text-text-secondary">
+              <Shield className="w-5 h-5 text-electric-cyan" />
               <span>
-                Your data is encrypted and never shared. We prioritize your
-                privacy and safety.
+                Your data is encrypted and never shared. We prioritize your privacy and safety.
               </span>
             </div>
           </div>
         )}
       </main>
 
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+        currentTier={tier as 'guest' | 'free' | 'home' | 'pro'}
+      />
+
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <div className="fixed inset-0 bg-midnight-950/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-midnight-800 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-midnight-700">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-[#F97316]" />
+              <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-yellow-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#1F2937]">Sign Out?</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="text-lg font-bold text-white">Sign Out?</h3>
+                <p className="text-sm text-text-secondary">
                   Are you sure you want to sign out?
                 </p>
               </div>
             </div>
-            <p className="text-gray-600 mb-6">
-              Your session history and settings will be saved for when you
-              return.
+            <p className="text-text-secondary mb-6">
+              Your session history and settings will be saved for when you return.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-[#1F2937] hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-3 border border-midnight-600 rounded-xl font-semibold text-white hover:bg-midnight-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmLogout}
-                className="flex-1 px-4 py-3 bg-[#F97316] text-white rounded-xl font-semibold hover:bg-[#EA580C] transition-colors"
+                className="flex-1 px-4 py-3 btn-gradient-electric text-white rounded-xl font-semibold transition-colors"
               >
                 Sign Out
               </button>

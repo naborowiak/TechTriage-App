@@ -7,31 +7,31 @@ interface Props {
 
 export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm p-8 md:p-12">
+    <div className="min-h-screen bg-midnight-950 pt-24 pb-12 px-6">
+      <div className="max-w-4xl mx-auto bg-midnight-800 rounded-2xl border border-midnight-700 p-8 md:p-12">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-8 transition-colors"
+          className="flex items-center gap-2 text-text-secondary hover:text-white mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </button>
 
-        <div className="border-b border-gray-100 pb-6 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="border-b border-midnight-700 pb-6 mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">
             Privacy Policy
           </h1>
-          <p className="text-gray-500">Last Updated: February 1, 2026</p>
+          <p className="text-text-muted">Last Updated: February 1, 2026</p>
         </div>
 
-        <div className="prose prose-orange max-w-none text-gray-600 text-sm leading-relaxed">
-          <p className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-blue-800 font-medium mb-8">
-            TechTriage Inc. ("TechTriage", "we", "us") is committed to
+        <div className="prose prose-invert max-w-none text-text-secondary text-sm leading-relaxed">
+          <p className="bg-electric-indigo/10 p-4 rounded-lg border border-electric-indigo/30 text-electric-cyan font-medium mb-8">
+            Smart Tek Labs ("TotalAssist", "we", "us") is committed to
             protecting your personal information. This policy describes how we
             collect, use, and disclose data when you use our AI-powered support
             platform.
           </p>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             1. Information We Collect
           </h3>
           <p>
@@ -40,38 +40,38 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
           </p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
             <li>
-              <strong>Account Data:</strong> Name, email address, and password
+              <strong className="text-white">Account Data:</strong> Name, email address, and password
               hash (we do not store raw passwords).
             </li>
             <li>
-              <strong>Diagnostic Content:</strong> Photos, video streams, and
+              <strong className="text-white">Diagnostic Content:</strong> Photos, video streams, and
               text descriptions of your technical issues uploaded to our chat
               interface.
             </li>
             <li>
-              <strong>Device Metadata:</strong> IP address, browser type, and
+              <strong className="text-white">Device Metadata:</strong> IP address, browser type, and
               operating system information used for security and debugging.
             </li>
             <li>
-              <strong>Payment Information:</strong> We use Stripe to process
+              <strong className="text-white">Payment Information:</strong> We use Stripe to process
               payments. We do not store your full credit card number on our
               servers.
             </li>
           </ul>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             2. Device Permissions (Camera & Microphone)
           </h3>
           <p>
-            To use features like "Snap a Photo" or "Live Video Support," our web
+            To use features like "Scout Snap" or "Live Video Support," our web
             application may request access to your device's camera and
             microphone. You may revoke these permissions at any time via your
             browser settings.
-            <strong>Note:</strong> Denying permissions will limit the AI's
+            <strong className="text-white"> Note:</strong> Denying permissions will limit Scout AI's
             ability to visually diagnose your issue.
           </p>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             3. How We Use Your Information
           </h3>
           <p>We use your data for the following specific purposes:</p>
@@ -80,8 +80,8 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
               To provide immediate, AI-driven technical support responses.
             </li>
             <li>
-              To facilitate live video sessions with human experts (when
-              applicable).
+              To analyze uploaded videos and generate diagnostic reports using
+              Scout AI (Video Diagnostic feature).
             </li>
             <li>
               To improve our AI models (anonymized chat logs may be used to
@@ -94,7 +94,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </li>
           </ul>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             4. Data Sharing and Third Parties
           </h3>
           <p>
@@ -103,25 +103,25 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
           </p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
             <li>
-              <strong>Stripe:</strong> For payment processing and subscription
+              <strong className="text-white">Stripe:</strong> For payment processing and subscription
               management.
             </li>
             <li>
-              <strong>Google Cloud / AWS / Supabase:</strong> For secure cloud
+              <strong className="text-white">Google Cloud / AWS / Supabase:</strong> For secure cloud
               hosting and database storage.
             </li>
             <li>
-              <strong>AI Providers (e.g., OpenAI/Google/Anthropic):</strong> To
+              <strong className="text-white">AI Providers (e.g., Google Gemini):</strong> To
               generate the technical support responses. Data sent to these
               providers is strictly for processing your request.
             </li>
             <li>
-              <strong>Legal Requirements:</strong> We may disclose information
+              <strong className="text-white">Legal Requirements:</strong> We may disclose information
               if required by law, subpoena, or other legal process.
             </li>
           </ul>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             5. Data Retention
           </h3>
           <p>
@@ -132,7 +132,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             for system improvement.
           </p>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             6. Security
           </h3>
           <p>
@@ -142,7 +142,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             complex and secure.
           </p>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             7. Children's Privacy
           </h3>
           <p>
@@ -152,17 +152,17 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             we will take steps to delete such information.
           </p>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             8. International Users
           </h3>
           <p>
-            TechTriage is operated from the United States. If you are accessing
+            TotalAssist is operated from the United States. If you are accessing
             the Service from outside the U.S., please be aware that your
             information will be transferred to, stored, and processed in the
             United States where our servers are located.
           </p>
 
-          <h3 className="text-gray-900 font-bold text-lg mt-8 mb-4">
+          <h3 className="text-white font-bold text-lg mt-8 mb-4">
             9. Changes to this Policy
           </h3>
           <p>
@@ -171,17 +171,17 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             and updating the "Last Updated" date.
           </p>
 
-          <div className="mt-12 pt-8 border-t border-gray-100">
-            <p className="font-bold text-gray-900">Contact Us</p>
+          <div className="mt-12 pt-8 border-t border-midnight-700">
+            <p className="font-bold text-white">Contact Us</p>
             <p>
               If you have questions about this policy or your data rights,
               please contact our Privacy Officer:
             </p>
-            <p className="text-orange-600 font-medium">
-              privacy@techtriage.app
+            <p className="text-electric-indigo font-medium">
+              privacy@totalassist.tech
             </p>
-            <p className="text-gray-500 mt-2">
-              TechTriage Inc.
+            <p className="text-text-muted mt-2">
+              Smart Tek Labs
               <br />
               St. Louis, MO, USA
             </p>

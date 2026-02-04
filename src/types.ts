@@ -37,6 +37,8 @@ export enum PageView {
   TERMS = "terms",
   VERIFY_EMAIL = "verify-email",
   CANCELLATION = "cancellation",
+  FORGOT_PASSWORD = "forgot-password",
+  RESET_PASSWORD = "reset-password",
 }
 
 export interface PricingTier {

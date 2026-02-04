@@ -1,24 +1,24 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TechTriage - Your Home & Tech Lifeline</title>
-    
+    <title>TotalAssist | Powered by Smart Tek Labs</title>
+
     <!-- Open Graph / Social Media Meta Tags -->
-    <meta property="og:title" content="TechTriage - Your Home & Tech Lifeline" />
-    <meta property="og:description" content="From Wi-Fi dead zones to appliance error codes and DIY hurdles. Connect with AI + real specialists to troubleshoot your home and tech instantly." />
-    <meta property="og:image" content="https://techtriage.app/images/og-image.png" />
+    <meta property="og:title" content="TotalAssist | Powered by Smart Tek Labs" />
+    <meta property="og:description" content="Scout's instant guidance via chat, snapshot, and live signal. No hold music, no phone trees. AI-powered tech support that actually works." />
+    <meta property="og:image" content="https://totalassist.tech/images/og-image.png" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://techtriage.app" />
-    
+    <meta property="og:url" content="https://totalassist.tech" />
+
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="TechTriage - Your Home & Tech Lifeline" />
-    <meta name="twitter:description" content="From Wi-Fi dead zones to appliance error codes and DIY hurdles. Connect with AI + real specialists to troubleshoot your home and tech instantly." />
-    <meta name="twitter:image" content="https://techtriage.app/images/og-image.png" />
-    
+    <meta name="twitter:title" content="TotalAssist | Powered by Smart Tek Labs" />
+    <meta name="twitter:description" content="Scout's instant guidance via chat, snapshot, and live signal. No hold music, no phone trees. AI-powered tech support that actually works." />
+    <meta name="twitter:image" content="https://totalassist.tech/images/og-image.png" />
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -30,28 +30,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
               sans: ["Inter", "sans-serif"],
             },
             colors: {
-              brand: {
-                900: "#1F2937", // Deep Navy
-                800: "#374151",
-                50: "#f9fafb"
+              midnight: {
+                950: "#0B0E14", // Deep Midnight (primary bg)
+                900: "#151922", // Lighter Midnight
+                800: "#1E2330", // Card backgrounds
+                700: "#2A3142", // Borders, dividers
+                600: "#3D4559", // Muted elements
               },
-              cta: {
-                500: "#F97316", // Safety Orange
-                600: "#EA580C",
+              electric: {
+                indigo: "#6366F1", // Electric Indigo
+                cyan: "#06B6D4", // Signal Blue
               },
+              scout: {
+                purple: "#A855F7", // Neon Purple for Scout AI
+                glow: "#C084FC", // Lighter purple for glows
+              },
+              text: {
+                primary: "#FFFFFF", // Pure white for headings
+                secondary: "#9CA3AF", // Light grey for body
+                muted: "#6B7280", // Muted text
+              }
             },
             backgroundImage: {
-              'paper-pattern': "url('https://www.transparenttextures.com/patterns/cream-paper.png')",
+              'gradient-electric': 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)',
+              'gradient-scout': 'linear-gradient(135deg, #A855F7 0%, #6366F1 100%)',
+              'gradient-dark': 'linear-gradient(180deg, #0B0E14 0%, #151922 100%)',
             },
             animation: {
               "fade-in-up": "fadeInUp 0.5s ease-out",
               "float": "float 6s ease-in-out infinite",
+              "pulse-glow": "pulseGlow 2s ease-in-out infinite",
+              "radar-sweep": "radarSweep 3s linear infinite",
             },
             keyframes: {
               fadeInUp: {
@@ -61,7 +77,20 @@
               float: {
                 "0%, 100%": { transform: "translateY(0)" },
                 "50%": { transform: "translateY(-10px)" }
+              },
+              pulseGlow: {
+                "0%, 100%": { opacity: "1", boxShadow: "0 0 20px rgba(168, 85, 247, 0.5)" },
+                "50%": { opacity: "0.8", boxShadow: "0 0 40px rgba(168, 85, 247, 0.8)" }
+              },
+              radarSweep: {
+                "0%": { transform: "rotate(0deg)" },
+                "100%": { transform: "rotate(360deg)" }
               }
+            },
+            boxShadow: {
+              'glow-electric': '0 0 30px rgba(99, 102, 241, 0.3)',
+              'glow-cyan': '0 0 30px rgba(6, 182, 212, 0.3)',
+              'glow-scout': '0 0 30px rgba(168, 85, 247, 0.4)',
             }
           }
         }
@@ -69,14 +98,41 @@
     </script>
     <style>
       body { scroll-behavior: smooth; }
-      .bg-paper-texture {
-        background-color: #f9fafb;
-        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231F2937' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      .bg-midnight-gradient {
+        background: linear-gradient(180deg, #0B0E14 0%, #151922 100%);
+      }
+      .text-gradient-electric {
+        background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .btn-gradient-electric {
+        background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+      }
+      .btn-gradient-electric:hover {
+        background: linear-gradient(135deg, #4F46E5 0%, #0891B2 100%);
+      }
+      .border-gradient {
+        border: 1px solid transparent;
+        background: linear-gradient(#151922, #151922) padding-box,
+                    linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) border-box;
+      }
+      .scout-glow {
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+      }
+      .animate-radar-sweep {
+        animation: radarSweep 3s linear infinite;
+        transform-origin: center;
+      }
+      @keyframes radarSweep {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
     </style>
 <link rel="stylesheet" href="/src/index.css">
 </head>
-  <body class="bg-gray-50 text-brand-900 antialiased font-sans selection:bg-cta-500 selection:text-white">
+  <body class="bg-midnight-950 text-text-primary antialiased font-sans selection:bg-electric-indigo selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
   </body>

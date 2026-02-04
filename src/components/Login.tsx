@@ -107,32 +107,30 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
   };
 
   return (
-    <div
-      className="min-h-screen relative flex flex-col items-center"
-      style={{
-        backgroundColor: "#F9FAFB",
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`,
-      }}
-    >
+    <div className="min-h-screen bg-midnight-950 relative flex flex-col items-center noise-texture">
+      {/* Background orbs */}
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
+
       {/* Header / Logo */}
       <div className="w-full pt-8 pb-6 flex justify-center z-10">
         <button
           onClick={handleLogoClick}
           className="focus:outline-none hover:opacity-80 transition-opacity"
         >
-          <Logo variant="dark" />
+          <Logo variant="light" />
         </button>
       </div>
 
       {/* Main Card */}
       <div className="w-full max-w-[480px] px-4 pb-12 z-10">
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+        <div className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
           <div className="p-8 sm:p-10">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-black text-[#1F2937] leading-tight mb-3">
+              <h1 className="text-3xl font-black text-white leading-tight mb-3">
                 Welcome back
               </h1>
-              <p className="text-gray-500 text-lg">
+              <p className="text-text-secondary text-lg">
                 Log in to access your dashboard
               </p>
             </div>
@@ -140,10 +138,10 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Error Display */}
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col gap-3">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex flex-col gap-3">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-red-700 font-medium text-sm">{error}</p>
+                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                    <p className="text-red-400 font-medium text-sm">{error}</p>
                   </div>
 
                   {/* Resend Verification Button */}
@@ -152,7 +150,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
                       type="button"
                       onClick={handleResendVerification}
                       disabled={isResending}
-                      className="ml-8 text-sm font-semibold text-red-600 hover:text-red-800 underline text-left flex items-center gap-2"
+                      className="ml-8 text-sm font-semibold text-red-400 hover:text-red-300 underline text-left flex items-center gap-2"
                     >
                       {isResending ? (
                         <>
@@ -169,13 +167,13 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
 
               {/* Success Message for Resend */}
               {resendSuccess && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-green-700 font-medium text-sm">
+                    <p className="text-green-400 font-medium text-sm">
                       Email Sent!
                     </p>
-                    <p className="text-green-600 text-xs mt-1">
+                    <p className="text-green-400/80 text-xs mt-1">
                       Please check your inbox and spam folder.
                     </p>
                   </div>
@@ -183,7 +181,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
               )}
 
               <div>
-                <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+                <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
                   Email
                 </label>
                 <input
@@ -191,22 +189,23 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
                   value={formData.email}
                   onChange={(e) => updateFormData("email", e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all placeholder:text-gray-400"
+                  className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 rounded-xl text-base text-white focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all placeholder:text-text-muted"
                   required
                 />
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide">
+                  <label className="block text-white font-bold text-sm uppercase tracking-wide">
                     Password
                   </label>
-                  <a
-                    href="#"
-                    className="text-sm text-[#F97316] hover:text-[#EA580C] font-medium"
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(PageView.FORGOT_PASSWORD)}
+                    className="text-sm text-electric-indigo hover:text-electric-cyan font-medium"
                   >
                     Forgot password?
-                  </a>
+                  </button>
                 </div>
                 <div className="relative">
                   <input
@@ -214,13 +213,13 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
                     value={formData.password}
                     onChange={(e) => updateFormData("password", e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all pr-12 placeholder:text-gray-400"
+                    className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 rounded-xl text-base text-white focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -234,7 +233,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#1F2937] hover:bg-[#374151] disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-gray-900/20 hover:-translate-y-0.5"
+                className="w-full btn-gradient-electric disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-electric-indigo/30 hover:-translate-y-0.5"
               >
                 {isLoading ? (
                   <>
@@ -249,15 +248,15 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
               </button>
 
               <div className="flex items-center gap-4 py-2">
-                <div className="flex-1 h-px bg-gray-100"></div>
-                <span className="text-gray-400 text-sm font-medium">OR</span>
-                <div className="flex-1 h-px bg-gray-100"></div>
+                <div className="flex-1 h-px bg-midnight-700"></div>
+                <span className="text-text-muted text-sm font-medium">OR</span>
+                <div className="flex-1 h-px bg-midnight-700"></div>
               </div>
 
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-gray-100 bg-white rounded-xl hover:bg-gray-50 hover:border-gray-200 transition-all group"
+                className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-midnight-600 bg-midnight-900 rounded-xl hover:bg-midnight-700 hover:border-midnight-500 transition-all group"
               >
                 <svg
                   className="w-5 h-5 group-hover:scale-110 transition-transform"
@@ -280,16 +279,16 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                <span className="font-bold text-gray-600 group-hover:text-gray-800">
+                <span className="font-bold text-text-secondary group-hover:text-white">
                   Log in with Google
                 </span>
               </button>
 
-              <p className="text-sm text-gray-400 text-center pt-2">
+              <p className="text-sm text-text-muted text-center pt-2">
                 Don't have an account?{" "}
                 <button
                   onClick={() => onNavigate(PageView.SIGNUP)}
-                  className="text-[#F97316] hover:underline font-bold"
+                  className="text-electric-indigo hover:text-electric-cyan hover:underline font-bold"
                 >
                   Sign up free
                 </button>
@@ -300,14 +299,14 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
 
         {/* Footer Links */}
         <div className="mt-8 text-center space-y-4">
-          <p className="text-sm text-gray-400">
-            &copy; {new Date().getFullYear()} TechTriage. All rights reserved.
+          <p className="text-sm text-text-muted">
+            &copy; {new Date().getFullYear()} Smart Tek Labs. All rights reserved.
           </p>
-          <div className="flex justify-center gap-6 text-sm text-gray-500 font-medium">
-            <a href="#" className="hover:text-[#F97316] transition-colors">
+          <div className="flex justify-center gap-6 text-sm text-text-secondary font-medium">
+            <a href="/terms" className="hover:text-electric-indigo transition-colors">
               Terms of Service
             </a>
-            <a href="#" className="hover:text-[#F97316] transition-colors">
+            <a href="/privacy" className="hover:text-electric-indigo transition-colors">
               Privacy Policy
             </a>
           </div>

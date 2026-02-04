@@ -7,6 +7,7 @@ import { eq, and, gt } from "drizzle-orm";
 const SALT_ROUNDS = 10;
 const TRIAL_DURATION_HOURS = 24;
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
+const PASSWORD_RESET_TOKEN_EXPIRY_HOURS = 1; // Password reset links expire in 1 hour
 
 // Generate a secure random verification token
 export function generateVerificationToken(): string {
@@ -492,4 +493,123 @@ export async function deleteUser(userId: string) {
 
   // Delete the user
   await db.delete(usersTable).where(eq(usersTable.id, userId));
+}
+
+// Request password reset - generates token and returns it for email sending
+export async function requestPasswordReset(email: string) {
+  console.log("[AUTH SERVICE] requestPasswordReset called for:", email);
+
+  // Find user by email
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email.toLowerCase()))
+    .limit(1);
+
+  // Always return success to prevent email enumeration attacks
+  if (!user) {
+    console.log("[AUTH SERVICE] User not found for password reset (not revealing)");
+    return { success: true, message: "If an account exists, a password reset email has been sent." };
+  }
+
+  // Check if user has a password (OAuth users can't reset password)
+  if (!user.passwordHash) {
+    console.log("[AUTH SERVICE] OAuth user attempted password reset");
+    return { success: true, message: "If an account exists, a password reset email has been sent." };
+  }
+
+  // Generate password reset token
+  const passwordResetToken = generateVerificationToken();
+  const passwordResetTokenExpires = new Date(
+    Date.now() + PASSWORD_RESET_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000
+  );
+
+  // Update user with reset token
+  await db
+    .update(usersTable)
+    .set({
+      passwordResetToken,
+      passwordResetTokenExpires,
+      updatedAt: new Date(),
+    })
+    .where(eq(usersTable.id, user.id));
+
+  console.log("[AUTH SERVICE] Password reset token generated for:", email);
+
+  return {
+    success: true,
+    passwordResetToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+    },
+    message: "If an account exists, a password reset email has been sent.",
+  };
+}
+
+// Reset password with token
+export async function resetPassword(token: string, newPassword: string) {
+  console.log("[AUTH SERVICE] resetPassword called");
+
+  if (!newPassword || newPassword.length < 8) {
+    return { success: false, error: "Password must be at least 8 characters." };
+  }
+
+  // Find user by reset token
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.passwordResetToken, token))
+    .limit(1);
+
+  if (!user) {
+    console.log("[AUTH SERVICE] Invalid password reset token");
+    return { success: false, error: "Invalid or expired password reset link." };
+  }
+
+  // Check if token has expired
+  if (user.passwordResetTokenExpires && user.passwordResetTokenExpires < new Date()) {
+    console.log("[AUTH SERVICE] Password reset token expired");
+    return { success: false, error: "Password reset link has expired. Please request a new one." };
+  }
+
+  // Hash new password
+  const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+  // Update user password and clear reset token
+  await db
+    .update(usersTable)
+    .set({
+      passwordHash,
+      passwordResetToken: null,
+      passwordResetTokenExpires: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(usersTable.id, user.id));
+
+  console.log("[AUTH SERVICE] Password reset successful for user:", user.email);
+
+  return {
+    success: true,
+    message: "Your password has been reset successfully.",
+  };
+}
+
+// Find email by username/email (for "forgot username" - we use email as username)
+export async function findAccountByEmail(email: string) {
+  console.log("[AUTH SERVICE] findAccountByEmail called for:", email);
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email.toLowerCase()))
+    .limit(1);
+
+  // Always return success message to prevent enumeration
+  return {
+    success: true,
+    exists: !!user,
+    message: "If an account exists with this email, you can use it to log in.",
+  };
 }

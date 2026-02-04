@@ -1,152 +1,257 @@
 import React from 'react';
-import { Camera, Video, CheckCircle2, ArrowRight, Shield, Smartphone, PenTool as Tool, Search, HeartPulse, MessageSquare } from 'lucide-react';
+import { MessageSquare, Camera, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, Play, FileText, Radar } from 'lucide-react';
+import { ScoutSignalIcon } from './Logo';
 
 export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
-  const steps = [
+  const features = [
     {
-      icon: <MessageSquare className="w-8 h-8 text-[#F97316]" />,
-      title: "1. Tell Us What's Wrong",
-      description: "Just describe it like you would to a friend. \"My Wi-Fi keeps dropping\" or \"There's a weird error on my TV.\" No tech jargon needed.",
-      accent: "bg-orange-50",
-      image: "/images/step-photo.jpg"
+      name: 'Scout Chat',
+      tagline: 'Ask Anything',
+      icon: MessageSquare,
+      color: 'from-electric-indigo to-electric-cyan',
+      bgColor: 'bg-electric-indigo/10',
+      borderColor: 'border-electric-indigo/30',
+      textColor: 'text-electric-indigo',
+      description: 'AI-powered text support for instant answers to your tech questions. Describe your problem in plain English and get step-by-step solutions.',
+      benefits: [
+        'Instant responses 24/7',
+        'No tech jargon required',
+        'Remembers your devices & history',
+      ],
+      availability: 'All Plans',
+      howItWorks: 'Type your question, get an answer. It\'s that simple.',
     },
     {
-      icon: <Camera className="w-8 h-8 text-blue-500" />,
-      title: "2. Show Us (Optional)",
-      description: "Snap a photo of that blinking light or confusing error message. Our AI analyzes it instantly and often knows exactly what's wrong.",
-      accent: "bg-blue-50",
-      image: "/images/step-ai.jpg"
+      name: 'Scout Snapshot',
+      tagline: 'Show, Don\'t Tell',
+      icon: Camera,
+      color: 'from-scout-purple to-electric-indigo',
+      bgColor: 'bg-scout-purple/10',
+      borderColor: 'border-scout-purple/30',
+      textColor: 'text-scout-purple',
+      description: 'Upload a photo of error messages, blinking lights, or device screens. Scout\'s AI vision analyzes it instantly and tells you what\'s wrong.',
+      benefits: [
+        'Reads error codes & screens',
+        'Identifies blinking light patterns',
+        'No need to describe the problem',
+      ],
+      availability: 'All Plans',
+      howItWorks: 'Snap a photo, upload it, get a diagnosis.',
     },
     {
-      icon: <Video className="w-8 h-8 text-purple-500" />,
-      title: "3. Get Real Help",
-      description: "Chat with AI for quick fixes, or hop on a video call with a real human who'll walk you through it step-by-step. We're here to help.",
-      accent: "bg-purple-50",
-      image: "/images/video-support.jpg"
+      name: 'Scout Signal',
+      tagline: 'Just Talk',
+      icon: Radar,
+      color: 'from-electric-cyan to-scout-glow',
+      bgColor: 'bg-electric-cyan/10',
+      borderColor: 'border-electric-cyan/30',
+      textColor: 'text-electric-cyan',
+      description: 'Voice-powered support for when typing isn\'t convenient. Talk to Scout like you would a real technician and get spoken guidance back.',
+      benefits: [
+        'Hands-free troubleshooting',
+        'Natural conversation flow',
+        'Perfect for complex setups',
+      ],
+      availability: 'Home & Pro',
+      howItWorks: 'Press to talk, Scout listens and responds.',
     },
     {
-      icon: <CheckCircle2 className="w-8 h-8 text-[#F97316]" />,
-      title: "4. Back to Normal",
-      description: "Problem solved. We'll save what we learned so next time it's even faster—and so you never have to explain the same issue twice.",
-      accent: "bg-orange-50",
-      image: "/images/step-fix.jpg"
-    }
+      name: 'Video Diagnostic',
+      tagline: 'Deep Analysis',
+      icon: Video,
+      color: 'from-scout-glow to-scout-purple',
+      bgColor: 'bg-scout-glow/10',
+      borderColor: 'border-scout-glow/30',
+      textColor: 'text-scout-glow',
+      description: 'Upload or record a video of your tech issue. Scout AI analyzes the footage and generates a comprehensive diagnostic report.',
+      benefits: [
+        'Detailed observation notes',
+        'Root cause assessment',
+        'Step-by-step action plan',
+      ],
+      availability: 'Home & Pro',
+      howItWorks: 'Record your issue, get a full diagnostic report.',
+    },
+  ];
+
+  const reportSections = [
+    { icon: Sparkles, title: 'Status', desc: 'Issues detected or all clear' },
+    { icon: FileText, title: 'Observation', desc: 'What Scout saw in the video' },
+    { icon: Zap, title: 'Assessment', desc: 'Likely root cause of the issue' },
+    { icon: CheckCircle2, title: 'Action Plan', desc: 'Step-by-step fix instructions' },
   ];
 
   return (
-    <div className="pt-32 pb-20 bg-white min-h-screen">
+    <div className="pt-32 pb-20 bg-midnight-950 min-h-screen noise-texture">
       <div className="container mx-auto px-6">
+        {/* Hero Section */}
         <div className="text-center max-w-3xl mx-auto mb-20">
-          <h1 className="text-5xl font-black text-brand-900 mb-6 tracking-tight">
-            How <span className="text-cta-500">TechTriage</span> actually works
+          <div className="inline-flex items-center gap-2 mb-6">
+            <ScoutSignalIcon size={24} animate={true} />
+            <span className="text-electric-indigo font-bold text-sm uppercase tracking-wider">How Scout Works</span>
+          </div>
+          <h1 className="text-5xl font-black text-white mb-6 tracking-tight">
+            Four ways to fix your <span className="text-gradient-electric">tech</span>
           </h1>
-          <p className="text-xl text-gray-500 font-medium">
-            No confusing phone trees. No waiting on hold. Just real help from people (and AI) who get it.
+          <p className="text-xl text-text-secondary font-medium">
+            Chat, snap a photo, use your voice, or upload a video. Scout meets you where you are.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-8 mb-32 relative">
-          <div className="hidden md:block absolute top-1/4 left-0 right-0 h-0.5 bg-gray-100 -z-10"></div>
+        {/* Feature Cards */}
+        <div className="grid md:grid-cols-2 gap-8 mb-24">
+          {features.map((feature, i) => (
+            <div
+              key={i}
+              className={`${feature.bgColor} ${feature.borderColor} border rounded-3xl p-8 relative overflow-hidden group hover:border-opacity-60 transition-all`}
+            >
+              {/* Background gradient orb */}
+              <div className={`absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br ${feature.color} opacity-10 rounded-full blur-3xl group-hover:opacity-20 transition-opacity`}></div>
 
-          {steps.map((step, i) => (
-            <div key={i} className="flex flex-col items-center text-center group">
-              <div className="w-full h-40 rounded-2xl overflow-hidden mb-6 shadow-lg">
-                <img src={step.image} alt={step.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              <div className="relative z-10">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg`}>
+                      <feature.icon className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{feature.name}</h3>
+                      <p className={`text-sm font-medium ${feature.textColor}`}>{feature.tagline}</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                    feature.availability === 'All Plans'
+                      ? 'bg-electric-cyan/20 text-electric-cyan'
+                      : 'bg-scout-purple/20 text-scout-glow'
+                  }`}>
+                    {feature.availability}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p className="text-text-secondary mb-6 leading-relaxed">
+                  {feature.description}
+                </p>
+
+                {/* Benefits */}
+                <ul className="space-y-2 mb-6">
+                  {feature.benefits.map((benefit, j) => (
+                    <li key={j} className="flex items-center gap-3 text-sm">
+                      <CheckCircle2 className={`w-4 h-4 ${feature.textColor} shrink-0`} />
+                      <span className="text-text-secondary">{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* How it works */}
+                <div className="bg-midnight-950/50 rounded-xl px-4 py-3 border border-midnight-700">
+                  <p className="text-xs text-text-muted uppercase tracking-wider mb-1">How it works</p>
+                  <p className="text-sm text-white font-medium">{feature.howItWorks}</p>
+                </div>
               </div>
-              <div className={`${step.accent} w-14 h-14 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300 border border-white -mt-10 relative z-10`}>
-                {step.icon}
-              </div>
-              <h3 className="text-xl font-bold text-[#1F2937] mb-3">{step.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed font-medium">
-                {step.description}
-              </p>
             </div>
           ))}
         </div>
 
-        <div className="bg-brand-900 rounded-[3rem] p-8 md:p-16 text-white mb-32 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-cta-500/20 blur-[100px] rounded-full"></div>
+        {/* Video Diagnostic Deep Dive */}
+        <div className="bg-midnight-900 rounded-[2rem] p-8 md:p-12 mb-24 border border-midnight-700 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-scout-purple/10 blur-[100px] rounded-full"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-electric-indigo/10 blur-[100px] rounded-full"></div>
+
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-4xl font-black mb-4 text-center">The Best of Both Worlds</h2>
-            <p className="text-white/60 text-center mb-12 max-w-2xl mx-auto">AI that's actually helpful + real humans who actually care. Because sometimes you need instant answers, and sometimes you need someone to talk you through it.</p>
-            <div className="grid md:grid-cols-2 gap-12">
-              <div className="bg-white/5 backdrop-blur-md rounded-3xl p-10 border border-white/10">
-                <div className="flex items-center gap-4 mb-6">
-                  <Smartphone className="w-10 h-10 text-cta-500" />
-                  <h4 className="text-2xl font-bold">Smart AI Assistant</h4>
-                </div>
-                <ul className="space-y-4 text-white/70">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-cta-500 shrink-0 mt-1" />
-                    <span>Recognizes error codes and blinking lights instantly</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-cta-500 shrink-0 mt-1" />
-                    <span>Available 24/7 for quick questions and common fixes</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-cta-500 shrink-0 mt-1" />
-                    <span>Explains things in plain English, not tech speak</span>
-                  </li>
-                </ul>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-scout-glow to-scout-purple flex items-center justify-center">
+                <Video className="w-6 h-6 text-white" />
               </div>
-              <div className="bg-white/5 backdrop-blur-md rounded-3xl p-10 border border-white/10">
-                <div className="flex items-center gap-4 mb-6">
-                  <HeartPulse className="w-10 h-10 text-blue-400" />
-                  <h4 className="text-2xl font-bold">Real Human Experts</h4>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Video Diagnostic Report</h2>
+                <p className="text-text-secondary text-sm">What you get when Scout analyzes your video</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-4 gap-4 mb-8">
+              {reportSections.map((section, i) => (
+                <div key={i} className="bg-midnight-800/50 rounded-xl p-5 border border-midnight-700">
+                  <section.icon className="w-6 h-6 text-scout-glow mb-3" />
+                  <h4 className="text-white font-bold mb-1">{section.title}</h4>
+                  <p className="text-text-muted text-xs">{section.desc}</p>
                 </div>
-                <ul className="space-y-4 text-white/70">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-1" />
-                    <span>Patient, friendly people who take the time to explain</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-1" />
-                    <span>Walk you through tricky stuff via video call</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0 mt-1" />
-                    <span>Know when something's a quick fix vs. needs a pro</span>
-                  </li>
-                </ul>
+              ))}
+            </div>
+
+            <div className="bg-midnight-950/80 rounded-xl p-6 border border-scout-purple/30">
+              <div className="flex items-center gap-2 mb-4">
+                <Play className="w-4 h-4 text-scout-glow" />
+                <span className="text-scout-glow text-sm font-medium">Example Report Output</span>
+              </div>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <span className="text-white font-bold">Status:</span>
+                  <span className="text-red-400 ml-2">Issue Detected</span>
+                </div>
+                <div>
+                  <span className="text-white font-bold">Observation:</span>
+                  <span className="text-text-secondary ml-2">Router front panel shows solid red power LED with blinking amber internet indicator. Device appears to be in diagnostic mode based on LED pattern sequence.</span>
+                </div>
+                <div>
+                  <span className="text-white font-bold">Assessment:</span>
+                  <span className="text-text-secondary ml-2">ISP connection failure. Router is unable to authenticate with upstream provider. This is typically caused by a service outage or credential mismatch.</span>
+                </div>
+                <div>
+                  <span className="text-white font-bold">Action Plan:</span>
+                  <ol className="text-text-secondary ml-4 mt-1 list-decimal list-inside space-y-1">
+                    <li>Power cycle the router (unplug for 30 seconds)</li>
+                    <li>Check ISP status page for reported outages</li>
+                    <li>If issue persists, contact ISP with error code E-AUTH-03</li>
+                  </ol>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-12 mb-32">
+        {/* Why Scout Section */}
+        <div className="grid md:grid-cols-3 gap-8 mb-24">
           <div className="text-center">
-             <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Shield className="w-8 h-8 text-brand-900" />
-             </div>
-             <h4 className="text-xl font-bold text-brand-900 mb-3">We Remember</h4>
-             <p className="text-gray-500 text-sm font-medium">Every issue you've had, every fix we've done—it's all saved. So you never have to explain your setup twice or remember what worked last time.</p>
+            <div className="w-16 h-16 bg-midnight-800 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-midnight-700">
+              <Clock className="w-8 h-8 text-electric-indigo" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Available 24/7</h4>
+            <p className="text-text-secondary text-sm font-medium">No waiting on hold or scheduling appointments. Scout is ready whenever tech trouble strikes.</p>
           </div>
           <div className="text-center">
-             <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Search className="w-8 h-8 text-brand-900" />
-             </div>
-             <h4 className="text-xl font-bold text-brand-900 mb-3">Skip the Runaround</h4>
-             <p className="text-gray-500 text-sm font-medium">If you do need someone onsite, they'll know exactly what's wrong before they arrive. No more paying someone $100 just to diagnose the obvious.</p>
+            <div className="w-16 h-16 bg-midnight-800 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-midnight-700">
+              <Shield className="w-8 h-8 text-electric-cyan" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Remembers Everything</h4>
+            <p className="text-text-secondary text-sm font-medium">Scout saves your device info and past issues. Never explain your setup twice or remember what worked last time.</p>
           </div>
           <div className="text-center">
-             <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Tool className="w-8 h-8 text-brand-900" />
-             </div>
-             <h4 className="text-xl font-bold text-brand-900 mb-3">Actually Affordable</h4>
-             <p className="text-gray-500 text-sm font-medium">Most issues are solved in minutes for a fraction of a service call. And our memberships mean unlimited help whenever you need it.</p>
+            <div className="w-16 h-16 bg-midnight-800 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-midnight-700">
+              <Zap className="w-8 h-8 text-scout-purple" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Actually Affordable</h4>
+            <p className="text-text-secondary text-sm font-medium">Most issues solved in minutes for a fraction of a service call. Unlimited help with our memberships.</p>
           </div>
         </div>
+      </div>
 
-        <div className="bg-cta-50 rounded-[2rem] p-12 text-center border-2 border-cta-100">
-           <h3 className="text-3xl font-black text-brand-900 mb-4">Enough with the tech headaches</h3>
-           <p className="text-gray-600 font-medium mb-8 max-w-xl mx-auto">Your first session is free. See what it's like to get help that actually helps.</p>
-           <button
-             onClick={onStart}
-             className="bg-cta-500 hover:bg-cta-600 text-white font-bold py-4 px-12 rounded-full shadow-xl shadow-cta-500/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
-           >
-             Get Started Free <ArrowRight className="w-5 h-5" />
-           </button>
+      {/* Full-width CTA Section */}
+      <div className="bg-gradient-to-br from-scout-purple to-electric-indigo py-20 text-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-electric-cyan rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-scout-glow rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+        </div>
+        <div className="container mx-auto px-6 relative z-10">
+          <h3 className="text-3xl md:text-4xl font-black text-white mb-4">Ready to fix your tech?</h3>
+          <p className="text-white/90 font-medium mb-8 max-w-xl mx-auto">Start with a free account. No credit card required.</p>
+          <button
+            onClick={onStart}
+            className="bg-midnight-950 hover:bg-midnight-900 text-white font-bold py-4 px-12 rounded-full shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
+          >
+            Get Started Free <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>

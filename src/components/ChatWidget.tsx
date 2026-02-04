@@ -1,9 +1,72 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { MessageSquare, X, Send, Image as ImageIcon, Video, Maximize2, Download, Camera, Library, MoreHorizontal, LifeBuoy, User, ArrowRight } from 'lucide-react';
+import { MessageSquare, X, Send, Image as ImageIcon, ScanLine, Maximize2, Download, Camera, Library, MoreHorizontal, LifeBuoy, User, ArrowRight, Lock, Zap } from 'lucide-react';
 import { ChatMessage, UserRole } from '../types';
 import { sendMessageToGemini, sendMessageAsLiveAgent } from '../services/geminiService';
 import { LiveSupport } from './LiveSupport';
 import { useAuth } from '../hooks/useAuth';
+import { useUsage, UsageLimits } from '../stores/usageStore';
+import { UpgradeModal, SignupGateModal } from './UpgradeModal';
+
+// Simple markdown renderer for chat messages
+const renderMarkdown = (text: string): React.ReactNode => {
+  // Split by lines to handle lists
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+
+  lines.forEach((line, lineIndex) => {
+    // Process inline formatting (bold)
+    const processInline = (str: string): React.ReactNode[] => {
+      const parts: React.ReactNode[] = [];
+      let remaining = str;
+      let keyIndex = 0;
+
+      while (remaining.length > 0) {
+        // Match **bold**
+        const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+        if (boldMatch && boldMatch.index !== undefined) {
+          // Add text before bold
+          if (boldMatch.index > 0) {
+            parts.push(remaining.slice(0, boldMatch.index));
+          }
+          // Add bold text
+          parts.push(<strong key={`b-${lineIndex}-${keyIndex++}`} className="font-semibold">{boldMatch[1]}</strong>);
+          remaining = remaining.slice(boldMatch.index + boldMatch[0].length);
+        } else {
+          parts.push(remaining);
+          break;
+        }
+      }
+      return parts;
+    };
+
+    // Check for numbered list (1. 2. etc)
+    const numberedMatch = line.match(/^(\d+)\.\s+(.*)$/);
+    // Check for bullet point (• or - or *)
+    const bulletMatch = line.match(/^[•\-\*]\s+(.*)$/);
+
+    if (numberedMatch) {
+      elements.push(
+        <div key={lineIndex} className="flex gap-2 ml-1">
+          <span className="text-electric-indigo font-semibold">{numberedMatch[1]}.</span>
+          <span>{processInline(numberedMatch[2])}</span>
+        </div>
+      );
+    } else if (bulletMatch) {
+      elements.push(
+        <div key={lineIndex} className="flex gap-2 ml-1">
+          <span className="text-electric-indigo">•</span>
+          <span>{processInline(bulletMatch[1])}</span>
+        </div>
+      );
+    } else if (line.trim() === '') {
+      elements.push(<div key={lineIndex} className="h-2" />);
+    } else {
+      elements.push(<div key={lineIndex}>{processInline(line)}</div>);
+    }
+  });
+
+  return <>{elements}</>;
+};
 
 export interface ChatWidgetHandle {
   open: (initialMessage?: string) => void;
@@ -13,19 +76,19 @@ export interface ChatWidgetHandle {
 // Canned responses for non-logged in users (sales/conversion focused)
 const CANNED_RESPONSES: Record<string, { text: string; followUp?: string[] }> = {
   pricing: {
-    text: "Great question! We have three plans:\n\n• **Chat (Free)** - 5 AI chat sessions/month\n• **Home ($25/mo)** - Unlimited chat + photo diagnosis\n• **Pro ($59/mo)** - Everything unlimited + multi-home support\n\nWould you like to see the full pricing details?",
+    text: "Great question! We have three plans:\n\n• **Scout Free** - 5 chat messages + 1 photo/month\n• **Scout Home ($9.99/mo)** - Unlimited chat, photos, voice + 1 Video Diagnostic/week\n• **Scout Pro ($19.99/mo)** - Everything unlimited + 15 Video Diagnostics/month + premium AI\n\nWould you like to see the full pricing details?",
     followUp: ["View pricing", "Sign up free", "What's included?"]
   },
   help: {
-    text: "I can help point you in the right direction! Our service helps with:\n\n• Wi-Fi & networking issues\n• Smart home setup\n• TV & streaming problems\n• Computer troubleshooting\n• And much more!\n\nSign up for free to start a triage session with our AI.",
+    text: "I can help point you in the right direction! Our service helps with:\n\n• Wi-Fi & networking issues\n• Smart home setup\n• TV & streaming problems\n• Computer troubleshooting\n• And much more!\n\nSign up for free to start a triage session with Scout AI.",
     followUp: ["Sign up free", "How it works", "View pricing"]
   },
   howItWorks: {
-    text: "Here's how TechTriage works:\n\n1. **Describe** your problem in chat\n2. **Snap** a photo if it helps\n3. **Get** AI-powered solutions instantly\n\nFor complex issues, you can also start a live video session with our AI assistant.",
+    text: "Here's how TotalAssist works:\n\n1. **Describe** your problem in chat\n2. **Snap** a photo if it helps\n3. **Get** AI-powered solutions instantly\n\nFor complex issues, you can also use Video Diagnostic for a detailed analysis.",
     followUp: ["Sign up free", "View pricing", "What can you help with?"]
   },
   default: {
-    text: "Thanks for your interest in TechTriage! To get personalized AI support for your tech issues, you'll need to create a free account.\n\nIt only takes a minute, and you'll get 5 free chat sessions to try it out!",
+    text: "Thanks for your interest in TotalAssist! To get personalized AI support for your tech issues, you'll need to create a free account.\n\nIt only takes a minute, and you'll get 5 free chat messages to try it out!",
     followUp: ["Sign up free", "View pricing", "How it works"]
   }
 };
@@ -52,10 +115,10 @@ const generateSessionId = (): string => {
 
 // Get or create a persistent user identifier
 const getUserIdentifier = (): string => {
-  let userId = localStorage.getItem('techtriage_user_id');
+  let userId = localStorage.getItem('scout_user_id');
   if (!userId) {
     userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-    localStorage.setItem('techtriage_user_id', userId);
+    localStorage.setItem('scout_user_id', userId);
   }
   return userId;
 };
@@ -77,12 +140,12 @@ const getRandomAgent = () => {
 const BotAvatar = ({ className }: { className: string }) => {
   const [error, setError] = useState(false);
   if (error) return <LifeBuoy className={className} />;
-  return <img src="/tech-triage-logo.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
+  return <img src="/scout_logo.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
 };
 
 const AgentAvatar = ({ className, name }: { className: string; name: string }) => {
   return (
-    <div className={`${className} bg-gradient-to-br from-[#F97316] to-[#EA580C] rounded-full flex items-center justify-center text-white font-bold text-xs`}>
+    <div className={`${className} bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs`}>
       {name.charAt(0)}
     </div>
   );
@@ -100,15 +163,11 @@ const logInteraction = async (data: {
   timestamp: number;
 }) => {
   try {
-    // Log to console for now - in production, send to backend
     console.log('[AUDIT LOG]', JSON.stringify(data, null, 2));
-
-    // Store in localStorage for debugging
-    const logs = JSON.parse(localStorage.getItem('techtriage_audit_logs') || '[]');
+    const logs = JSON.parse(localStorage.getItem('scout_audit_logs') || '[]');
     logs.push(data);
-    // Keep only last 100 logs
     if (logs.length > 100) logs.shift();
-    localStorage.setItem('techtriage_audit_logs', JSON.stringify(logs));
+    localStorage.setItem('scout_audit_logs', JSON.stringify(logs));
   } catch (e) {
     console.error('Failed to log interaction:', e);
   }
@@ -128,8 +187,24 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
   const [showImageMenu, setShowImageMenu] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
+  // Modal states for friction ladder
+  const [showSignupGate, setShowSignupGate] = useState(false);
+  const [showUpgradeGate, setShowUpgradeGate] = useState(false);
+  const [gatedFeature, setGatedFeature] = useState<keyof UsageLimits>('chat');
+
   // Check if user is authenticated
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // Usage store for friction ladder
+  const {
+    tier,
+    incrementUsage,
+    canUse,
+    getRemainingCredits,
+    shouldShowSignupGate,
+    shouldShowUpgradeGate,
+    isFeatureLocked
+  } = useUsage();
 
   // Live agent mode state
   const [isLiveAgentMode, setIsLiveAgentMode] = useState(false);
@@ -149,19 +224,17 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     role: UserRole.MODEL,
     text: authenticated
       ? "Hi there! How can I help you today?"
-      : "Hi! I'm here to help you learn about TechTriage. What would you like to know?",
+      : "Hi! I'm Scout. Try asking me a question - you get 1 free message to see how I work!",
     timestamp: Date.now()
   });
 
-  // Load persisted messages on mount (only for authenticated users)
+  // Load persisted messages on mount
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    // For non-authenticated users, always start fresh with sales-focused message
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('techtriage_chat_messages');
+        const saved = localStorage.getItem('scout_chat_messages');
         if (saved) {
           const parsed = JSON.parse(saved);
-          // Check if messages are less than 24 hours old
           const lastMsg = parsed[parsed.length - 1];
           if (lastMsg && Date.now() - lastMsg.timestamp < 24 * 60 * 60 * 1000) {
             return parsed;
@@ -184,7 +257,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
   // Persist messages to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('techtriage_chat_messages', JSON.stringify(messages));
+      localStorage.setItem('scout_chat_messages', JSON.stringify(messages));
     } catch (e) {
       console.error('Failed to save messages:', e);
     }
@@ -226,7 +299,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     const agent = getRandomAgent();
     setCurrentAgent(agent);
 
-    // Simulate connection delay
     setTimeout(() => {
       setIsConnectingToAgent(false);
       setIsLiveAgentMode(true);
@@ -234,14 +306,13 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
       const connectMsg: ChatMessage = {
         id: `connect_${Date.now()}`,
         role: UserRole.MODEL,
-        text: `You're now connected with ${agent.first} ${agent.last}, a TechTriage Support Specialist. How can I help you today?`,
+        text: `You're now connected with ${agent.first} ${agent.last}, a Scout Support Specialist. How can I help you today?`,
         timestamp: Date.now(),
         agentName: `${agent.first} ${agent.last}`
       };
 
       setMessages(prev => [...prev, connectMsg]);
 
-      // Log the agent connection
       logInteraction({
         sessionId,
         userId,
@@ -252,7 +323,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
         messageText: `Agent ${agent.first} ${agent.last} connected`,
         timestamp: Date.now()
       });
-    }, 2000 + Math.random() * 2000); // 2-4 second "connection" delay
+    }, 2000 + Math.random() * 2000);
   };
 
   useImperativeHandle(ref, () => ({
@@ -273,6 +344,17 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check if user can use photo feature
+      if (isFeatureLocked('photo') || !canUse('photo')) {
+        setGatedFeature('photo');
+        if (tier === 'guest') {
+          setShowSignupGate(true);
+        } else {
+          setShowUpgradeGate(true);
+        }
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
@@ -288,22 +370,17 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `TechTriage-Transcript-${Date.now()}.txt`;
+    a.download = `Scout-Transcript-${Date.now()}.txt`;
     a.click();
     setShowOptionsMenu(false);
   };
 
   const handleClearChat = () => {
-    setMessages([{
-      id: 'welcome',
-      role: UserRole.MODEL,
-      text: "Hi there! How can I help you today?",
-      timestamp: Date.now()
-    }]);
+    setMessages([getWelcomeMessage(isAuthenticated)]);
     setIsLiveAgentMode(false);
     setCurrentAgent(null);
     setShowOptionsMenu(false);
-    localStorage.removeItem('techtriage_chat_messages');
+    localStorage.removeItem('scout_chat_messages');
   };
 
   // Handle navigation for canned response buttons
@@ -321,15 +398,74 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
         window.location.href = '/pricing';
       }
     } else if (action === 'How it works') {
-      handleSend('How does TechTriage work?');
+      handleSend('How does Scout work?');
     } else if (action === "What's included?" || action === 'What can you help with?') {
       handleSend('What can you help with?');
+    }
+  };
+
+  const handleSignupFromGate = () => {
+    setShowSignupGate(false);
+    if (onNavigate) {
+      onNavigate('signup');
+    } else {
+      window.location.href = '/signup';
     }
   };
 
   const handleSend = async (messageOverride?: string) => {
     const textToSend = typeof messageOverride === 'string' ? messageOverride : input;
     if ((!textToSend.trim() && !selectedImage) || isLoading) return;
+
+    // Check friction ladder gates BEFORE sending
+    if (tier === 'guest' && shouldShowSignupGate()) {
+      setGatedFeature('chat');
+      setShowSignupGate(true);
+      return;
+    }
+
+    if (tier === 'free' && shouldShowUpgradeGate('chat')) {
+      setGatedFeature('chat');
+      setShowUpgradeGate(true);
+      return;
+    }
+
+    // Check if we can use chat (increment usage)
+    if (!canUse('chat')) {
+      setGatedFeature('chat');
+      if (tier === 'guest') {
+        setShowSignupGate(true);
+      } else {
+        setShowUpgradeGate(true);
+      }
+      return;
+    }
+
+    // Increment chat usage
+    const canProceed = incrementUsage('chat');
+    if (!canProceed) {
+      setGatedFeature('chat');
+      if (tier === 'guest') {
+        setShowSignupGate(true);
+      } else {
+        setShowUpgradeGate(true);
+      }
+      return;
+    }
+
+    // If sending with image, also check/increment photo usage
+    if (selectedImage) {
+      if (!canUse('photo')) {
+        setGatedFeature('photo');
+        if (tier === 'guest') {
+          setShowSignupGate(true);
+        } else {
+          setShowUpgradeGate(true);
+        }
+        return;
+      }
+      incrementUsage('photo');
+    }
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -345,9 +481,8 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     setSelectedImage(undefined);
     setIsLoading(true);
 
-    // For non-authenticated users, use canned responses (no AI)
-    if (!isAuthenticated) {
-      // Simulate brief delay for natural feel
+    // For guests, use canned responses (no AI, but count the message)
+    if (tier === 'guest') {
       setTimeout(() => {
         const response = getCannedResponse(textToSend);
         const aiMsg: ChatMessage = {
@@ -389,7 +524,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
       };
       setMessages(prev => [...prev, aiMsg]);
 
-      // Log AI response
       logInteraction({
         sessionId,
         userId,
@@ -419,7 +553,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
   };
 
   const handleSpeakToExpert = () => {
-    // Add system message about connecting
     const connectingMsg: ChatMessage = {
       id: `connecting_${Date.now()}`,
       role: UserRole.MODEL,
@@ -427,7 +560,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
       timestamp: Date.now()
     };
     setMessages(prev => [...prev, connectingMsg]);
-
     startLiveAgentMode();
   };
 
@@ -435,211 +567,233 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
 
   const displayName = isLiveAgentMode && currentAgent
     ? `${currentAgent.first} ${currentAgent.last}`
-    : 'TechTriage Bot';
+    : 'Scout AI';
 
   const displaySubtitle = isLiveAgentMode
     ? 'Support Specialist'
-    : 'The team can also help';
+    : 'AI Tech Support';
+
+  // Calculate remaining credits for display
+  const chatRemaining = getRemainingCredits('chat');
+  const isAtLimit = chatRemaining === 0;
 
   return (
-    <div
-      className={`fixed z-[60] transition-all duration-300 flex flex-col font-sans ${
-        isFullScreen ? 'inset-0 w-full h-full bg-white' :
-        isOpen ? 'bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[380px] h-full sm:h-[650px]' :
-        'bottom-6 right-6 w-auto h-auto pointer-events-none'
-      }`}
-    >
-      {isOpen && (
-        <div className={`flex flex-col bg-white shadow-2xl overflow-hidden border border-gray-200 transition-all duration-300 pointer-events-auto relative ${
-          isFullScreen ? 'w-full h-full rounded-none' : 'w-full h-full rounded-t-xl sm:rounded-2xl'
-        }`}>
-          <div className="bg-white p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
-            <div className="flex items-center gap-3">
-              {isLiveAgentMode && currentAgent ? (
-                <AgentAvatar className="w-10 h-10" name={currentAgent.first} />
-              ) : (
-                <div className="w-10 h-10 bg-brand-900 rounded-lg flex items-center justify-center text-cta-500 overflow-hidden">
-                  <BotAvatar className="w-6 h-6" />
-                </div>
-              )}
-              <div>
-                <h3 className="font-bold text-brand-900 text-sm">{displayName}</h3>
-                <div className="text-xs text-gray-500 flex items-center gap-1">
-                  {isLiveAgentMode && <span className="w-2 h-2 bg-green-500 rounded-full"></span>}
-                  {displaySubtitle}
+    <>
+      <div
+        className={`fixed z-[60] transition-all duration-300 flex flex-col font-sans ${
+          isFullScreen ? 'inset-0 w-full h-full bg-midnight-950' :
+          isOpen ? 'bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[400px] h-full sm:h-[680px]' :
+          'bottom-6 right-6 w-auto h-auto pointer-events-none'
+        }`}
+      >
+        {isOpen && (
+          <div className={`flex flex-col bg-midnight-900 shadow-2xl overflow-hidden border border-midnight-700 transition-all duration-300 pointer-events-auto relative ${
+            isFullScreen ? 'w-full h-full rounded-none' : 'w-full h-full rounded-t-xl sm:rounded-2xl'
+          }`}>
+            {/* Header */}
+            <div className="bg-midnight-800 p-4 border-b border-midnight-700 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3">
+                {isLiveAgentMode && currentAgent ? (
+                  <AgentAvatar className="w-10 h-10" name={currentAgent.first} />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-xl flex items-center justify-center overflow-hidden">
+                    <BotAvatar className="w-6 h-6" />
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-white text-sm">{displayName}</h3>
+                  <div className="text-xs text-text-secondary flex items-center gap-1">
+                    {isLiveAgentMode && <span className="w-2 h-2 bg-electric-cyan rounded-full animate-pulse"></span>}
+                    {displaySubtitle}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2 relative">
-                <button onClick={() => setShowOptionsMenu(!showOptionsMenu)} className="p-2 hover:bg-gray-50 rounded-full text-gray-500 transition-colors">
+              <div className="flex items-center gap-2 relative">
+                <button onClick={() => setShowOptionsMenu(!showOptionsMenu)} className="p-2 hover:bg-midnight-700 rounded-full text-text-secondary transition-colors">
                   <MoreHorizontal className="w-5 h-5" />
                 </button>
-                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-50 rounded-full text-gray-500 transition-colors">
+                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-midnight-700 rounded-full text-text-secondary transition-colors">
                   <X className="w-5 h-5" />
                 </button>
 
                 {showOptionsMenu && (
-                  <div ref={optionsMenuRef} className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in-up">
-                    <button onClick={() => { setIsFullScreen(!isFullScreen); setShowOptionsMenu(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 text-brand-900 text-sm font-medium">
+                  <div ref={optionsMenuRef} className="absolute top-full right-0 mt-2 w-56 bg-midnight-800 rounded-xl shadow-xl border border-midnight-700 py-2 z-50 animate-fade-in-up">
+                    <button onClick={() => { setIsFullScreen(!isFullScreen); setShowOptionsMenu(false); }} className="w-full text-left px-4 py-3 hover:bg-midnight-700 flex items-center gap-3 text-white text-sm font-medium">
                       <Maximize2 className="w-4 h-4" /> {isFullScreen ? 'Minimize window' : 'Expand window'}
                     </button>
-                    <button onClick={handleDownloadTranscript} className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 text-brand-900 text-sm font-medium">
+                    <button onClick={handleDownloadTranscript} className="w-full text-left px-4 py-3 hover:bg-midnight-700 flex items-center gap-3 text-white text-sm font-medium">
                       <Download className="w-4 h-4" /> Download transcript
                     </button>
-                    <button onClick={handleClearChat} className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 text-red-600 text-sm font-medium">
+                    <button onClick={handleClearChat} className="w-full text-left px-4 py-3 hover:bg-midnight-700 flex items-center gap-3 text-red-400 text-sm font-medium">
                       <X className="w-4 h-4" /> Clear chat history
                     </button>
                   </div>
                 )}
+              </div>
             </div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
-            <div className="text-xs text-center text-gray-400 font-medium py-2">Today</div>
+            {/* Usage indicator bar */}
+            {tier !== 'pro' && (
+              <div className="px-4 py-2 bg-midnight-800/50 border-b border-midnight-700 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs">
+                  <Zap className="w-3 h-3 text-electric-cyan" />
+                  <span className="text-text-secondary">
+                    {tier === 'guest' ? 'Guest' : 'Free'}: {chatRemaining} message{chatRemaining !== 1 ? 's' : ''} left
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowUpgradeGate(true)}
+                  className="text-xs text-electric-indigo hover:text-electric-cyan transition-colors font-medium"
+                >
+                  Upgrade
+                </button>
+              </div>
+            )}
 
-            {messages.map((msg) => (
-              <div key={msg.id}>
-                <div className={`flex w-full ${msg.role === UserRole.USER ? 'justify-end' : 'justify-start items-end gap-2'}`}>
-                  {msg.role === UserRole.MODEL && (
-                    msg.agentName ? (
-                      <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={msg.agentName.charAt(0)} />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-brand-900 flex items-center justify-center text-cta-500 shrink-0 mb-1 overflow-hidden">
-                        <BotAvatar className="w-4 h-4" />
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 bg-midnight-950 space-y-4">
+              <div className="text-xs text-center text-text-muted font-medium py-2">Today</div>
+
+              {messages.map((msg) => (
+                <div key={msg.id}>
+                  <div className={`flex w-full ${msg.role === UserRole.USER ? 'justify-end' : 'justify-start items-end gap-2'}`}>
+                    {msg.role === UserRole.MODEL && (
+                      msg.agentName ? (
+                        <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={msg.agentName.charAt(0)} />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center shrink-0 mb-1 overflow-hidden">
+                          <BotAvatar className="w-4 h-4" />
+                        </div>
+                      )
+                    )}
+                    <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm leading-relaxed shadow-sm ${
+                      msg.role === UserRole.USER
+                        ? 'bg-gradient-to-r from-electric-indigo to-electric-cyan text-white rounded-tr-sm'
+                        : 'bg-midnight-800 text-white rounded-tl-sm border border-midnight-700'
+                    }`}>
+                      {msg.image && <img src={msg.image} className="w-full h-auto rounded-lg mb-3 border border-midnight-700" />}
+                      <div className="leading-relaxed">{renderMarkdown(msg.text)}</div>
+                      <div className={`text-[10px] mt-1 ${msg.role === UserRole.USER ? 'text-white/50' : 'text-text-muted'}`}>
+                        {msg.role === UserRole.MODEL ? `${msg.agentName || 'Scout AI'} • ` : ''}
+                        {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
-                    )
+                    </div>
+                  </div>
+                  {/* Canned follow-up buttons */}
+                  {msg.cannedFollowUp && msg.cannedFollowUp.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 ml-8">
+                      {msg.cannedFollowUp.map((action, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleCannedAction(action)}
+                          className="bg-midnight-800 border border-electric-indigo/50 text-white hover:bg-electric-indigo/20 px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1"
+                        >
+                          {action}
+                          {(action === 'Sign up free' || action === 'View pricing') && <ArrowRight className="w-3 h-3" />}
+                        </button>
+                      ))}
+                    </div>
                   )}
-                  <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-sm leading-relaxed shadow-sm ${
-                    msg.role === UserRole.USER ? 'bg-brand-900 text-white rounded-tr-sm' : 'bg-white text-brand-900 rounded-tl-sm border border-gray-100'
-                  }`}>
-                    {msg.image && <img src={msg.image} className="w-full h-auto rounded-lg mb-3 border border-gray-100" />}
-                    <div className="whitespace-pre-wrap">{msg.text}</div>
-                    <div className={`text-[10px] mt-1 ${msg.role === UserRole.USER ? 'text-white/50' : 'text-gray-400'}`}>
-                      {msg.role === UserRole.MODEL ? `${msg.agentName || 'TechTriage Bot'} • ` : ''}
-                      {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
+              ))}
+
+              {isConnectingToAgent && (
+                <div className="flex justify-start items-end gap-2">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center text-white shrink-0 mb-1">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <div className="bg-midnight-800 rounded-2xl rounded-tl-sm px-5 py-3 border border-midnight-700 shadow-sm">
+                    <div className="flex items-center gap-2 text-sm text-text-secondary">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-electric-cyan rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-electric-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-electric-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
+                      <span>Finding an available specialist...</span>
                     </div>
                   </div>
                 </div>
-                {/* Canned follow-up buttons for non-authenticated users */}
-                {msg.cannedFollowUp && msg.cannedFollowUp.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2 ml-8">
-                    {msg.cannedFollowUp.map((action, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleCannedAction(action)}
-                        className="bg-white border border-[#F97316] text-[#1F2937] hover:bg-[#F97316]/10 px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1"
-                      >
-                        {action}
-                        {(action === 'Sign up free' || action === 'View pricing') && <ArrowRight className="w-3 h-3" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              )}
 
-            {isConnectingToAgent && (
-              <div className="flex justify-start items-end gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#F97316] flex items-center justify-center text-white shrink-0 mb-1">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="bg-white rounded-2xl rounded-tl-sm px-5 py-3 border border-gray-100 shadow-sm">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+              {isLoading && !isConnectingToAgent && (
+                <div className="flex justify-start items-end gap-2">
+                  {isLiveAgentMode && currentAgent ? (
+                    <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={currentAgent.first} />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center shrink-0 mb-1 overflow-hidden">
+                      <BotAvatar className="w-4 h-4" />
+                    </div>
+                  )}
+                  <div className="bg-midnight-800 rounded-2xl rounded-tl-sm px-4 py-3 border border-midnight-700 shadow-sm">
                     <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-[#F97316] rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-[#F97316] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                      <div className="w-2 h-2 bg-[#F97316] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce"></div>
+                      <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                     </div>
-                    <span>Finding an available specialist...</span>
                   </div>
                 </div>
+              )}
+
+              {messages.length < 3 && !isLoading && !isLiveAgentMode && !isConnectingToAgent && (
+                <div className="flex flex-wrap gap-2 mt-4 ml-8">
+                  {tier !== 'guest' ? (
+                    <>
+                      <button onClick={handleSpeakToExpert} className="bg-midnight-800 border border-electric-indigo/50 text-white hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                        Speak to an expert
+                      </button>
+                      <button onClick={() => handleSend("What can you help with?")} className="bg-midnight-800 border border-electric-indigo/50 text-white hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                        What can you help with?
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => handleSend("What are your pricing plans?")} className="bg-midnight-800 border border-electric-indigo/50 text-white hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                        Pricing
+                      </button>
+                      <button onClick={() => handleSend("How does Scout work?")} className="bg-midnight-800 border border-electric-indigo/50 text-white hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                        How it works
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Video Diagnostic button - only for pro users */}
+            {!isSessionEnded && tier === 'pro' && (
+              <div className="px-4 py-2 bg-midnight-900 border-t border-midnight-700">
+                <button
+                  onClick={() => setIsLiveVideoActive(true)}
+                  className="w-full btn-gradient-electric text-white py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold shadow-sm transition-all"
+                >
+                  <ScanLine className="w-4 h-4" /> Start Video Diagnostic
+                </button>
               </div>
             )}
 
-            {isLoading && !isConnectingToAgent && (
-               <div className="flex justify-start items-end gap-2">
-                 {isLiveAgentMode && currentAgent ? (
-                   <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={currentAgent.first} />
-                 ) : (
-                   <div className="w-6 h-6 rounded-full bg-brand-900 flex items-center justify-center text-cta-500 shrink-0 mb-1 overflow-hidden">
-                     <BotAvatar className="w-4 h-4" />
-                   </div>
-                 )}
-                 <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 border border-gray-100 shadow-sm">
-                   <div className="flex gap-1">
-                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                     <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                   </div>
-                 </div>
-               </div>
-            )}
-
-            {messages.length < 3 && !isLoading && !isLiveAgentMode && !isConnectingToAgent && (
-              <div className="flex flex-wrap gap-2 mt-4 ml-8">
-                {isAuthenticated ? (
-                  <>
-                    <button onClick={handleSpeakToExpert} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                      Speak to an expert
-                    </button>
-                    <button onClick={() => handleSend("What are your pricing plans?")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                      Pricing
-                    </button>
-                    <button onClick={() => handleSend("I have a broken device and need to start a triage session.")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                      Start Triage
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => handleSend("What are your pricing plans?")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                      Pricing
-                    </button>
-                    <button onClick={() => handleSend("How does TechTriage work?")} className="bg-white border border-cta-500 text-brand-900 hover:bg-cta-500/10 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                      How it works
-                    </button>
-                    <button onClick={() => handleCannedAction('Sign up free')} className="bg-cta-500 text-white hover:bg-cta-600 px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1">
-                      Sign up free <ArrowRight className="w-3 h-3" />
-                    </button>
-                  </>
-                )}
+            {/* Sign up CTA for guests */}
+            {!isSessionEnded && tier === 'guest' && (
+              <div className="px-4 py-2 bg-gradient-to-r from-scout-purple to-electric-indigo">
+                <button
+                  onClick={() => handleCannedAction('Sign up free')}
+                  className="w-full bg-white hover:bg-gray-100 text-scout-purple py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold shadow-sm transition-all"
+                >
+                  Sign Up Free to Get AI Support <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             )}
 
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Video button - only for authenticated users */}
-          {!isSessionEnded && isAuthenticated && (
-            <div className="px-4 py-2 bg-gray-50">
-              <button
-                onClick={() => setIsLiveVideoActive(true)}
-                className="w-full bg-cta-500 hover:bg-cta-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold shadow-sm transition-all"
-              >
-                <Video className="w-4 h-4" /> Initiate Live Video Feed
-              </button>
-            </div>
-          )}
-
-          {/* Sign up CTA for non-authenticated users */}
-          {!isSessionEnded && !isAuthenticated && (
-            <div className="px-4 py-2 bg-gradient-to-r from-[#F97316] to-[#EA580C]">
-              <button
-                onClick={() => handleCannedAction('Sign up free')}
-                className="w-full bg-white hover:bg-gray-100 text-[#F97316] py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold shadow-sm transition-all"
-              >
-                Sign Up Free to Get AI Support <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          <div className="p-4 bg-white border-t border-gray-100 relative">
-             {selectedImage && (
+            {/* Input area */}
+            <div className="p-4 bg-midnight-900 border-t border-midnight-700 relative">
+              {selectedImage && (
                 <div className="absolute bottom-full left-4 mb-2 flex gap-3 animate-fade-in-up">
-                  <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 group shadow-lg">
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-midnight-700 group shadow-lg">
                     <img src={selectedImage} className="w-full h-full object-cover" />
                     <button
                       onClick={() => setSelectedImage(undefined)}
-                      className="absolute top-1 right-1 bg-brand-900/80 text-white p-0.5 rounded-full"
+                      className="absolute top-1 right-1 bg-midnight-950/80 text-white p-0.5 rounded-full"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -647,70 +801,94 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                 </div>
               )}
 
-             {/* Image menu - only for authenticated users */}
-             {showImageMenu && isAuthenticated && (
-                <div ref={menuRef} className="absolute bottom-16 left-4 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-50 w-48 animate-fade-in-up">
-                  <button onClick={() => cameraInputRef.current?.click()} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-all text-brand-900 text-sm font-medium">
-                     <Camera className="w-4 h-4 text-gray-500" /> Take Photo
+              {showImageMenu && tier !== 'guest' && (
+                <div ref={menuRef} className="absolute bottom-16 left-4 bg-midnight-800 border border-midnight-700 rounded-xl shadow-xl p-2 z-50 w-48 animate-fade-in-up">
+                  <button onClick={() => cameraInputRef.current?.click()} className="w-full flex items-center gap-3 p-3 hover:bg-midnight-700 rounded-lg transition-all text-white text-sm font-medium">
+                    <Camera className="w-4 h-4 text-text-secondary" /> Take Photo
                   </button>
-                  <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-all text-brand-900 text-sm font-medium">
-                     <Library className="w-4 h-4 text-gray-500" /> Photo Library
+                  <button onClick={() => fileInputRef.current?.click()} className="w-full flex items-center gap-3 p-3 hover:bg-midnight-700 rounded-lg transition-all text-white text-sm font-medium">
+                    <Library className="w-4 h-4 text-text-secondary" /> Photo Library
                   </button>
                 </div>
               )}
 
-            <div className="flex gap-2 items-center">
-              <div className="relative flex-1">
-                 <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder={isAuthenticated
-                      ? (isLiveAgentMode ? `Message ${currentAgent?.first}...` : "Type a message...")
-                      : "Ask about TechTriage..."}
-                    className="w-full bg-gray-50 border-none rounded-full px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-cta-500/50 pr-10 text-brand-900 placeholder:text-gray-400"
-                  />
-                  {/* Image button - only for authenticated users */}
-                  {isAuthenticated && (
-                    <button
-                      onClick={() => setShowImageMenu(!showImageMenu)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-900 transition-colors"
-                    >
-                      <ImageIcon className="w-5 h-5" />
-                    </button>
-                  )}
-              </div>
+              {/* Disabled input state when at limit */}
+              {isAtLimit && tier !== 'pro' ? (
+                <div className="bg-midnight-800 rounded-xl p-4 text-center border border-midnight-700">
+                  <Lock className="w-6 h-6 text-text-muted mx-auto mb-2" />
+                  <p className="text-sm text-text-secondary mb-3">
+                    Scout needs a recharge. Upgrade to continue.
+                  </p>
+                  <button
+                    onClick={() => setShowUpgradeGate(true)}
+                    className="btn-gradient-electric text-white px-6 py-2 rounded-full text-sm font-bold"
+                  >
+                    Upgrade Now
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <div className="relative flex-1">
+                    <input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                      placeholder={isLiveAgentMode ? `Message ${currentAgent?.first}...` : "Type a message..."}
+                      className="w-full bg-midnight-800 border border-midnight-700 rounded-full px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-electric-indigo/50 pr-10 text-white placeholder:text-text-muted"
+                    />
+                    {tier !== 'guest' && (
+                      <button
+                        onClick={() => setShowImageMenu(!showImageMenu)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors"
+                      >
+                        <ImageIcon className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
 
-              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-              <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                  <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
 
-              <button
-                onClick={() => handleSend()}
-                disabled={(!input.trim() && !selectedImage) || isLoading}
-                className="p-3 bg-brand-900 text-white rounded-full hover:bg-brand-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="w-5 h-5" />
-              </button>
+                  <button
+                    onClick={() => handleSend()}
+                    disabled={(!input.trim() && !selectedImage) || isLoading}
+                    className="p-3 btn-gradient-electric text-white rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Chat bubble - hidden on mobile for non-auth users (covers CTAs), enhanced on desktop */}
-      {!isOpen && (
-        <button
-          aria-label="Open Chat"
-          onClick={() => setIsOpen(true)}
-          className={`bg-[#1F2937] text-white rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-3 font-bold pointer-events-auto hover:bg-[#374151] ${
-            isAuthenticated
-              ? 'px-8 py-5 text-lg'
-              : 'hidden sm:flex px-6 py-4 text-base animate-pulse hover:animate-none ring-4 ring-[#F97316]/90'
-          }`}
-        >
-          <MessageSquare className={isAuthenticated ? 'w-6 h-6' : 'w-5 h-5'} />
-          {isAuthenticated ? 'Need Help?' : 'Questions?'}
-        </button>
-      )}
-    </div>
+        {/* Chat bubble */}
+        {!isOpen && (
+          <button
+            aria-label="Open Chat"
+            onClick={() => setIsOpen(true)}
+            className="bg-gradient-to-r from-scout-purple to-electric-indigo text-white rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-3 font-bold pointer-events-auto px-6 py-4 text-base hover:shadow-glow-scout"
+          >
+            <MessageSquare className="w-5 h-5" />
+            Ask Scout
+          </button>
+        )}
+      </div>
+
+      {/* Signup Gate Modal */}
+      <SignupGateModal
+        isOpen={showSignupGate}
+        onClose={() => setShowSignupGate(false)}
+        onSignup={handleSignupFromGate}
+      />
+
+      {/* Upgrade Gate Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeGate}
+        onClose={() => setShowUpgradeGate(false)}
+        feature={gatedFeature}
+        currentTier={tier}
+      />
+    </>
   );
 });

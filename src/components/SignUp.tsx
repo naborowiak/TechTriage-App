@@ -54,15 +54,15 @@ const ProgressBar: React.FC<{ step: number; totalSteps: number }> = ({
   const progress = (step / totalSteps) * 100;
   return (
     <div className="w-full mb-6">
-      <div className="flex justify-between text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">
+      <div className="flex justify-between text-xs text-text-muted mb-2 font-medium uppercase tracking-wider">
         <span>
           Step {step} of {totalSteps}
         </span>
         <span>{Math.round(progress)}%</span>
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-midnight-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#F97316] transition-all duration-500 ease-out rounded-full"
+          className="h-full bg-gradient-to-r from-electric-indigo to-electric-cyan transition-all duration-500 ease-out rounded-full"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -153,26 +153,24 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   showProgressBar,
   onLogoClick,
 }) => (
-  <div
-    className="min-h-screen relative flex flex-col items-center"
-    style={{
-      backgroundColor: "#F9FAFB",
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`,
-    }}
-  >
+  <div className="min-h-screen bg-midnight-950 relative flex flex-col items-center noise-texture">
+    {/* Background orbs */}
+    <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
+    <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
+
     {/* Header / Logo */}
     <div className="w-full pt-8 pb-6 flex justify-center z-10">
       <button
         onClick={onLogoClick}
         className="focus:outline-none hover:opacity-80 transition-opacity"
       >
-        <Logo variant="dark" />
+        <Logo variant="light" />
       </button>
     </div>
 
     {/* Main Card */}
     <div className="w-full max-w-[520px] px-4 pb-12 z-10">
-      <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+      <div className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
         {/* Progress Bar */}
         {step && showProgressBar && (
           <div className="px-8 pt-8">
@@ -182,11 +180,11 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
         <div className="p-8 sm:p-10">
           <div className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-black text-[#1F2937] leading-tight mb-3">
+            <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-3">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-gray-500 text-lg leading-relaxed">
+              <p className="text-text-secondary text-lg leading-relaxed">
                 {subtitle}
               </p>
             )}
@@ -198,14 +196,14 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
       {/* Footer Links */}
       <div className="mt-8 text-center space-y-4">
-        <p className="text-sm text-gray-400">
-          &copy; {new Date().getFullYear()} TechTriage. All rights reserved.
+        <p className="text-sm text-text-muted">
+          &copy; {new Date().getFullYear()} Smart Tek Labs. All rights reserved.
         </p>
-        <div className="flex justify-center gap-6 text-sm text-gray-500 font-medium">
-          <a href="#" className="hover:text-[#F97316] transition-colors">
+        <div className="flex justify-center gap-6 text-sm text-text-secondary font-medium">
+          <a href="/terms" className="hover:text-electric-indigo transition-colors">
             Terms of Service
           </a>
-          <a href="#" className="hover:text-[#F97316] transition-colors">
+          <a href="/privacy" className="hover:text-electric-indigo transition-colors">
             Privacy Policy
           </a>
         </div>
@@ -272,10 +270,10 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+      <div className="min-h-screen flex items-center justify-center bg-midnight-950">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#F97316] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading...</p>
+          <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-text-secondary font-medium">Loading...</p>
         </div>
       </div>
     );
@@ -460,18 +458,18 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         showProgressBar={isOAuthUser || getStepNumber("complete") > 1}
         onLogoClick={handleLogoClick}
         title={<span className="italic">One last thing...</span>}
-        subtitle="How did you hear about TechTriage? This helps us reach more people who need help."
+        subtitle="How did you hear about TotalAssist? This helps us reach more people who need help."
       >
         <div className="space-y-6">
           <div className="relative">
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
               How did you find us?
             </label>
             <div className="relative">
               <select
                 value={formData.howHeard}
                 onChange={(e) => updateFormData("howHeard", e.target.value)}
-                className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all appearance-none cursor-pointer"
               >
                 <option value="">Select an option</option>
                 {howHeardOptions.map((option) => (
@@ -480,31 +478,31 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
             </div>
           </div>
 
           <button
             onClick={handleComplete}
-            className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
+            className="w-full btn-gradient-electric text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/40 hover:-translate-y-0.5"
           >
             Get Started <ArrowRight className="w-5 h-5" />
           </button>
 
           <button
             onClick={handleComplete}
-            className="w-full text-gray-400 hover:text-gray-600 text-sm font-medium py-2 transition-colors"
+            className="w-full text-text-muted hover:text-white text-sm font-medium py-2 transition-colors"
           >
             Skip this step
           </button>
         </div>
 
         {/* Benefits reminder */}
-        <div className="mt-8 pt-8 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="mt-8 pt-8 border-t border-midnight-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {benefits.slice(0, 2).map((benefit, i) => (
             <div key={i} className="flex items-start gap-2 text-sm">
-              <CheckCircle2 className="w-4 h-4 text-[#F97316] shrink-0 mt-0.5" />
-              <span className="text-gray-500">{benefit.title}</span>
+              <CheckCircle2 className="w-4 h-4 text-electric-indigo shrink-0 mt-0.5" />
+              <span className="text-text-secondary">{benefit.title}</span>
             </div>
           ))}
         </div>
@@ -522,14 +520,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         onLogoClick={handleLogoClick}
         title={
           <>
-            Tech help made <span className="text-[#F97316] italic">simple</span>
+            Tech help made <span className="text-electric-indigo italic">simple</span>
           </>
         }
-        subtitle="Get started with TechTriage. No credit card required."
+        subtitle="Get started with TotalAssist. No credit card required."
       >
         <div className="space-y-5">
           <div>
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
               Email
             </label>
             <input
@@ -537,12 +535,12 @@ export const SignUp = memo<SignUpProps>(function SignUp({
               value={formData.email}
               onChange={(e) => updateFormData("email", e.target.value)}
               placeholder="you@example.com"
-              className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all placeholder:text-gray-400"
+              className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all placeholder:text-text-muted"
             />
           </div>
 
           <div>
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
               Password
             </label>
             <div className="relative">
@@ -551,12 +549,12 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 value={formData.password}
                 onChange={(e) => updateFormData("password", e.target.value)}
                 placeholder="Create a password"
-                className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all pr-12 placeholder:text-gray-400"
+                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -568,11 +566,11 @@ export const SignUp = memo<SignUpProps>(function SignUp({
           </div>
 
           {trialError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-red-700 font-medium text-sm">{trialError}</p>
-                <p className="text-red-600 text-xs mt-1">
+                <p className="text-red-400 font-medium text-sm">{trialError}</p>
+                <p className="text-red-400/80 text-xs mt-1">
                   Please use a different email or contact support.
                 </p>
               </div>
@@ -581,14 +579,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
 
           {/* Gmail suggestion */}
           {formData.email.toLowerCase().endsWith('@gmail.com') && !trialError && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-blue-800 text-sm mb-2">
+            <div className="bg-electric-indigo/10 border border-electric-indigo/30 rounded-xl p-4">
+              <p className="text-electric-cyan text-sm mb-2">
                 <strong>Tip:</strong> Using a Gmail account? You can sign up faster with Google.
               </p>
               <button
                 type="button"
                 onClick={() => (window.location.href = "/auth/google")}
-                className="text-blue-600 font-medium text-sm hover:underline"
+                className="text-electric-indigo font-medium text-sm hover:underline"
               >
                 Sign up with Google instead →
               </button>
@@ -600,7 +598,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
             disabled={
               !formData.email || formData.password.length < 8 || isCheckingTrial
             }
-            className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5 mt-2"
+            className="w-full btn-gradient-electric disabled:bg-midnight-700 disabled:text-text-muted disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/40 hover:-translate-y-0.5 mt-2"
           >
             {isCheckingTrial ? (
               <>
@@ -613,14 +611,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
           </button>
 
           <div className="flex items-center gap-4 py-2">
-            <div className="flex-1 h-px bg-gray-100"></div>
-            <span className="text-gray-400 text-sm font-medium">OR</span>
-            <div className="flex-1 h-px bg-gray-100"></div>
+            <div className="flex-1 h-px bg-midnight-700"></div>
+            <span className="text-text-muted text-sm font-medium">OR</span>
+            <div className="flex-1 h-px bg-midnight-700"></div>
           </div>
 
           <button
             onClick={() => (window.location.href = "/auth/google")}
-            className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-gray-100 bg-white rounded-xl hover:bg-gray-50 hover:border-gray-200 transition-all group"
+            className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-midnight-600 bg-midnight-900 rounded-xl hover:bg-midnight-700 hover:border-midnight-500 transition-all group"
           >
             <svg
               className="w-5 h-5 group-hover:scale-110 transition-transform"
@@ -643,12 +641,12 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            <span className="font-bold text-gray-600 group-hover:text-gray-800">
+            <span className="font-bold text-text-secondary group-hover:text-white">
               Sign up with Google
             </span>
           </button>
 
-          <p className="text-sm text-gray-400 text-center pt-2">
+          <p className="text-sm text-text-muted text-center pt-2">
             Already have an account?{" "}
             <button
               onClick={() =>
@@ -656,7 +654,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   ? onNavigate(PageView.LOGIN)
                   : (window.location.href = "/login")
               }
-              className="text-[#F97316] hover:underline font-bold"
+              className="text-electric-indigo hover:underline font-bold"
             >
               Log in
             </button>
@@ -680,7 +678,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+              <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
                 First name*
               </label>
               <input
@@ -688,11 +686,11 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 value={formData.firstName}
                 onChange={(e) => updateFormData("firstName", e.target.value)}
                 placeholder="First name"
-                className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all"
+                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+              <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
                 Last name*
               </label>
               <input
@@ -700,15 +698,15 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 value={formData.lastName}
                 onChange={(e) => updateFormData("lastName", e.target.value)}
                 placeholder="Last name"
-                className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all"
+                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
               Phone number{" "}
-              <span className="text-gray-400 font-normal lowercase">
+              <span className="text-text-muted font-normal lowercase">
                 (optional)
               </span>
             </label>
@@ -717,7 +715,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
               value={formData.phone}
               onChange={(e) => updateFormData("phone", e.target.value)}
               placeholder="(555) 123-4567"
-              className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all"
+              className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
             />
           </div>
 
@@ -725,7 +723,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
             <button
               onClick={nextStep}
               disabled={!formData.firstName || !formData.lastName}
-              className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
+              className="w-full btn-gradient-electric disabled:bg-midnight-700 disabled:text-text-muted disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/40 hover:-translate-y-0.5"
             >
               Continue <ArrowRight className="w-5 h-5" />
             </button>
@@ -748,14 +746,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       >
         <div className="space-y-6">
           <div>
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
               Home type
             </label>
             <div className="relative">
               <select
                 value={formData.homeType}
                 onChange={(e) => updateFormData("homeType", e.target.value)}
-                className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base focus:bg-white focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10 focus:outline-none transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all appearance-none cursor-pointer"
               >
                 <option value="">Select your home type</option>
                 {homeTypes.map((type) => (
@@ -764,12 +762,12 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none" />
             </div>
           </div>
 
           <div>
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-3">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-3">
               How comfortable are you with technology?
             </label>
             <div className="space-y-3">
@@ -780,25 +778,25 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   onClick={() => updateFormData("techComfort", level.value)}
                   className={`w-full px-5 py-4 border-2 rounded-xl text-left transition-all flex items-center justify-between group ${
                     formData.techComfort === level.value
-                      ? "border-[#F97316] bg-orange-50 ring-2 ring-orange-500/20"
-                      : "border-gray-100 bg-white hover:border-gray-300 hover:bg-gray-50"
+                      ? "border-electric-indigo bg-electric-indigo/10 ring-2 ring-electric-indigo/20"
+                      : "border-midnight-600 bg-midnight-900 hover:border-midnight-500 hover:bg-midnight-800"
                   }`}
                 >
                   <div>
                     <div
-                      className={`font-bold ${formData.techComfort === level.value ? "text-[#F97316]" : "text-[#1F2937]"}`}
+                      className={`font-bold ${formData.techComfort === level.value ? "text-electric-indigo" : "text-white"}`}
                     >
                       {level.label}
                     </div>
-                    <div className="text-sm text-gray-500 mt-0.5">
+                    <div className="text-sm text-text-secondary mt-0.5">
                       {level.desc}
                     </div>
                   </div>
                   <div
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       formData.techComfort === level.value
-                        ? "border-[#F97316] bg-[#F97316]"
-                        : "border-gray-300"
+                        ? "border-electric-indigo bg-electric-indigo"
+                        : "border-midnight-500"
                     }`}
                   >
                     {formData.techComfort === level.value && (
@@ -814,7 +812,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
             <button
               onClick={nextStep}
               disabled={!formData.homeType || !formData.techComfort}
-              className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
+              className="w-full btn-gradient-electric disabled:bg-midnight-700 disabled:text-text-muted disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/40 hover:-translate-y-0.5"
             >
               Continue <ArrowRight className="w-5 h-5" />
             </button>
@@ -837,7 +835,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       >
         <div className="space-y-8">
           <div>
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-3">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-3">
               Household size
             </label>
             <div className="flex flex-wrap gap-3">
@@ -848,8 +846,8 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   onClick={() => updateFormData("householdSize", size)}
                   className={`px-5 py-2.5 border-2 rounded-full text-sm font-bold transition-all ${
                     formData.householdSize === size
-                      ? "border-[#F97316] bg-[#F97316] text-white shadow-md shadow-orange-500/20"
-                      : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+                      ? "border-electric-indigo bg-electric-indigo text-white shadow-md shadow-electric-indigo/20"
+                      : "border-midnight-600 text-text-secondary hover:border-midnight-500 hover:bg-midnight-800"
                   }`}
                 >
                   {size}
@@ -859,9 +857,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
           </div>
 
           <div>
-            <label className="block text-[#1F2937] font-bold text-sm uppercase tracking-wide mb-3">
+            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-3">
               Areas of focus{" "}
-              <span className="text-gray-400 font-normal normal-case ml-1">
+              <span className="text-text-muted font-normal normal-case ml-1">
                 (select all that apply)
               </span>
             </label>
@@ -876,15 +874,15 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                     onClick={() => toggleIssue(issue.value)}
                     className={`p-4 border-2 rounded-xl text-left transition-all ${
                       isSelected
-                        ? "border-[#F97316] bg-orange-50 shadow-inner"
-                        : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50"
+                        ? "border-electric-indigo bg-electric-indigo/10 shadow-inner"
+                        : "border-midnight-600 bg-midnight-900 hover:border-midnight-500 hover:bg-midnight-800"
                     }`}
                   >
                     <Icon
-                      className={`w-6 h-6 mb-3 ${isSelected ? "text-[#F97316]" : "text-gray-400"}`}
+                      className={`w-6 h-6 mb-3 ${isSelected ? "text-electric-indigo" : "text-text-muted"}`}
                     />
                     <div
-                      className={`text-sm font-bold ${isSelected ? "text-[#F97316]" : "text-gray-600"}`}
+                      className={`text-sm font-bold ${isSelected ? "text-electric-indigo" : "text-text-secondary"}`}
                     >
                       {issue.label}
                     </div>
@@ -898,7 +896,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
             <button
               onClick={nextStep}
               disabled={!formData.householdSize || formData.primaryIssues.length === 0}
-              className="w-full bg-[#F97316] hover:bg-[#EA580C] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-0.5"
+              className="w-full btn-gradient-electric disabled:bg-midnight-700 disabled:text-text-muted disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/40 hover:-translate-y-0.5"
             >
               Continue <ArrowRight className="w-5 h-5" />
             </button>

@@ -265,10 +265,10 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId, on
             notAvailable={limits.photoAnalyses === 0}
           />
 
-          {/* Live Sessions */}
+          {/* Video Diagnostics */}
           <UsageCard
             icon={<Video className="w-5 h-5" />}
-            title="Live Sessions"
+            title="Video Diagnostics"
             used={usage.liveSessions}
             limit={limits.liveSessions}
             canUse={canUseFeature('live')}

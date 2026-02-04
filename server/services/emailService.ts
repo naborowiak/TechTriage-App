@@ -353,3 +353,121 @@ export async function sendVerificationEmail(
     return { success: false, error: String(error) };
   }
 }
+
+// Generate password reset email HTML
+function getPasswordResetEmailHtml(displayName: string, resetUrl: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Reset Your Password - TotalAssist</title>
+    <style>
+        :root { color-scheme: light dark; }
+        body { margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        @media (prefers-color-scheme: light) {
+            .body-bg { background-color: #f4f4f4 !important; }
+        }
+    </style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: #0f172a;">
+    <center style="width: 100%; background-color: #0f172a; padding: 40px 0;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+            <!-- Header -->
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 50px 30px;">
+                    <img src="${IMAGE_BASE_URL}/total_assist_logo.png" alt="TotalAssist" width="180" style="display: block; max-width: 180px; height: auto; margin-bottom: 20px;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Reset Your Password</h1>
+                    <p style="margin: 15px 0 0; color: rgba(255,255,255,0.8); font-size: 16px;">We received a request to reset your password.</p>
+                </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+                <td align="left" style="padding: 40px 40px 30px;">
+                    <p style="margin: 0 0 20px; color: #e2e8f0; font-size: 16px; line-height: 1.6;">
+                        Hi <strong style="color: #ffffff;">${displayName}</strong>,
+                    </p>
+                    <p style="margin: 0 0 25px; color: #94a3b8; font-size: 15px; line-height: 1.7;">
+                        Click the button below to reset your password. This link will expire in <strong style="color: #e2e8f0;">1 hour</strong> for security reasons.
+                    </p>
+                    <p style="margin: 0; color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                        If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Button -->
+            <tr>
+                <td align="center" style="padding: 10px 40px 40px;">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td align="center" style="border-radius: 12px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);">
+                                <a href="${resetUrl}" target="_blank" style="display: block; padding: 18px 40px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">Reset Password →</a>
+                            </td>
+                        </tr>
+                    </table>
+                    <p style="margin: 25px 0 0; color: #64748b; font-size: 13px;">
+                        Or copy this link: <span style="color: #818cf8; word-break: break-all;">${resetUrl}</span>
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+                <td align="center" style="background-color: #0f172a; padding: 30px 20px; border-top: 1px solid #334155;">
+                    <p style="color: #64748b; font-size: 12px; margin: 0 0 10px;">
+                        © ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+                    </p>
+                    <p style="margin: 0;">
+                        <a href="${APP_BASE_URL}/privacy" style="color: #818cf8; text-decoration: none; font-size: 12px; margin: 0 10px;">Privacy Policy</a>
+                        <span style="color: #475569;">|</span>
+                        <a href="${APP_BASE_URL}/terms" style="color: #818cf8; text-decoration: none; font-size: 12px; margin: 0 10px;">Terms of Service</a>
+                    </p>
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+</html>`;
+}
+
+// Send password reset email
+export async function sendPasswordResetEmail(
+  email: string,
+  token: string,
+  firstName?: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending password reset email to ${email}`);
+
+  const resetUrl = `${APP_BASE_URL}/reset-password?token=${token}`;
+  const displayName = firstName || "there";
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}`);
+    console.log(`[EMAIL] Password Reset URL: ${resetUrl}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Reset Your Password - TotalAssist",
+      html: getPasswordResetEmailHtml(displayName, resetUrl),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Password reset email sent via Resend:", data.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send password reset email:", error);
+    return { success: false, error: String(error) };
+  }
+}

@@ -10,7 +10,7 @@ import casesRouter from "./routes/cases";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import nodemailer from "nodemailer";
 import * as authService from "./services/authService";
-import { sendWelcomeEmail, sendVerificationEmail } from "./services/emailService";
+import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail } from "./services/emailService";
 import { authStorage } from "./replit_integrations/auth/storage";
 
 import * as stripeService from "./services/stripeService";
@@ -308,6 +308,62 @@ app.post("/api/auth/resend-verification", async (req, res) => {
   } catch (error) {
     console.error("Resend verification error:", error);
     res.status(500).json({ error: "Failed to resend verification email. Please try again." });
+  }
+});
+
+// Request password reset
+app.post("/api/auth/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const result = await authService.requestPasswordReset(email);
+
+    // Send the password reset email if token was generated
+    if (result.passwordResetToken && result.user) {
+      sendPasswordResetEmail(
+        email,
+        result.passwordResetToken,
+        result.user.firstName || undefined
+      ).catch((err) => {
+        console.error("[EMAIL] Failed to send password reset email:", err);
+      });
+    }
+
+    // Always return success to prevent email enumeration
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    console.error("Password reset request error:", error);
+    res.status(500).json({ error: "Failed to process request. Please try again." });
+  }
+});
+
+// Reset password with token
+app.post("/api/auth/reset-password", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Reset token is required" });
+    }
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+
+    const result = await authService.resetPassword(token, password);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    console.error("Password reset error:", error);
+    res.status(500).json({ error: "Failed to reset password. Please try again." });
   }
 });
 
