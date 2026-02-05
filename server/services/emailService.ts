@@ -107,7 +107,7 @@ function getHeaderHtml(title: string, subtitle: string): string {
           <tr>
             <td align="center">
               <h1 class="hero-text" style="margin: 0; color: #ffffff; font-size: 36px; font-weight: 700; letter-spacing: -0.5px;">${title}</h1>
-              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.8); font-size: 17px; font-weight: 400;">${subtitle}</p>
+              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.95); font-size: 17px; font-weight: 500;">${subtitle}</p>
             </td>
           </tr>
         </table>

@@ -107,6 +107,7 @@ export async function registerUser(data: {
 // User Login
 export async function loginUser(email: string, password: string) {
   console.log("[AUTH SERVICE] loginUser called for:", email);
+  console.log("[AUTH SERVICE] Password provided length:", password?.length);
 
   // Find user by email
   const [user] = await db
@@ -121,10 +122,11 @@ export async function loginUser(email: string, password: string) {
   }
 
   console.log("[AUTH SERVICE] User found, ID:", user.id);
+  console.log("[AUTH SERVICE] User email:", user.email);
   console.log("[AUTH SERVICE] User has passwordHash:", !!user.passwordHash);
-  console.log("[AUTH SERVICE] User object keys:", Object.keys(user));
-  console.log("[AUTH SERVICE] Raw passwordHash value type:", typeof user.passwordHash);
   console.log("[AUTH SERVICE] passwordHash length:", user.passwordHash?.length);
+  console.log("[AUTH SERVICE] passwordHash starts with $2:", user.passwordHash?.startsWith("$2"));
+  console.log("[AUTH SERVICE] emailVerified:", user.emailVerified);
 
   // Check if user has a password (OAuth users don't)
   if (!user.passwordHash) {
@@ -145,10 +147,12 @@ export async function loginUser(email: string, password: string) {
 
   // Verify password
   console.log("[AUTH SERVICE] Comparing passwords...");
+  console.log("[AUTH SERVICE] Input password first 3 chars:", password?.substring(0, 3));
   const isValid = await bcrypt.compare(password, user.passwordHash);
   console.log("[AUTH SERVICE] Password valid:", isValid);
 
   if (!isValid) {
+    console.log("[AUTH SERVICE] Password comparison FAILED for user:", email);
     return { success: false, error: "Invalid email or password." };
   }
 
@@ -551,6 +555,7 @@ export async function requestPasswordReset(email: string) {
 // Reset password with token
 export async function resetPassword(token: string, newPassword: string) {
   console.log("[AUTH SERVICE] resetPassword called");
+  console.log("[AUTH SERVICE] New password length:", newPassword?.length);
 
   if (!newPassword || newPassword.length < 8) {
     return { success: false, error: "Password must be at least 8 characters." };
@@ -568,6 +573,9 @@ export async function resetPassword(token: string, newPassword: string) {
     return { success: false, error: "Invalid or expired password reset link." };
   }
 
+  console.log("[AUTH SERVICE] Found user for password reset:", user.email);
+  console.log("[AUTH SERVICE] User ID:", user.id);
+
   // Check if token has expired
   if (user.passwordResetTokenExpires && user.passwordResetTokenExpires < new Date()) {
     console.log("[AUTH SERVICE] Password reset token expired");
@@ -575,10 +583,12 @@ export async function resetPassword(token: string, newPassword: string) {
   }
 
   // Hash new password
+  console.log("[AUTH SERVICE] Hashing new password...");
   const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  console.log("[AUTH SERVICE] New password hash generated, length:", passwordHash.length);
 
   // Update user password and clear reset token
-  await db
+  const [updatedUser] = await db
     .update(usersTable)
     .set({
       passwordHash,
@@ -586,9 +596,25 @@ export async function resetPassword(token: string, newPassword: string) {
       passwordResetTokenExpires: null,
       updatedAt: new Date(),
     })
-    .where(eq(usersTable.id, user.id));
+    .where(eq(usersTable.id, user.id))
+    .returning();
+
+  if (!updatedUser) {
+    console.error("[AUTH SERVICE] Failed to update password - no user returned");
+    return { success: false, error: "Failed to update password. Please try again." };
+  }
 
   console.log("[AUTH SERVICE] Password reset successful for user:", user.email);
+  console.log("[AUTH SERVICE] Updated user passwordHash exists:", !!updatedUser.passwordHash);
+  console.log("[AUTH SERVICE] Updated user passwordHash length:", updatedUser.passwordHash?.length);
+
+  // Verify the password was saved correctly by comparing immediately
+  const verifyHash = await bcrypt.compare(newPassword, updatedUser.passwordHash!);
+  console.log("[AUTH SERVICE] Immediate password verification:", verifyHash);
+
+  if (!verifyHash) {
+    console.error("[AUTH SERVICE] CRITICAL: Password hash verification failed immediately after save!");
+  }
 
   return {
     success: true,
