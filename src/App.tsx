@@ -560,10 +560,21 @@ const Header: React.FC<{
   );
 };
 
+// Seeded random number generator for consistent hex patterns
+const mulberry32 = (seed: number) => {
+  return () => {
+    let t = (seed += 0x6D2B79F5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
 // Hero Hexagon Pattern - creates visual distinction in the gradient area
 const HeroHexagonPattern: React.FC<{ offset: number }> = ({ offset }) => {
-  // Generate hexagon positions - concentrated on the left/gradient side and bottom edge
+  // Generate hexagon positions with seeded random for consistency
   const hexagons = React.useMemo(() => {
+    const rand = mulberry32(1337); // Consistent seed
     const items: Array<{
       x: number;
       y: number;
@@ -578,36 +589,36 @@ const HeroHexagonPattern: React.FC<{ offset: number }> = ({ offset }) => {
     // Left side hexagons (gradient area) - more concentrated
     for (let i = 0; i < 12; i++) {
       items.push({
-        x: Math.random() * 45, // Left 45% of screen
-        y: Math.random() * 100,
-        size: 30 + Math.random() * 50,
-        opacity: 0.03 + Math.random() * 0.06,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        parallaxFactor: 0.2 + Math.random() * 0.4,
+        x: rand() * 45, // Left 45% of screen
+        y: rand() * 100,
+        size: 30 + rand() * 50,
+        opacity: 0.03 + rand() * 0.06,
+        color: colors[Math.floor(rand() * colors.length)],
+        parallaxFactor: 0.2 + rand() * 0.4,
       });
     }
 
     // Bottom edge hexagons - creates the "split" visual
     for (let i = 0; i < 8; i++) {
       items.push({
-        x: Math.random() * 100,
-        y: 75 + Math.random() * 25, // Bottom 25%
-        size: 40 + Math.random() * 60,
-        opacity: 0.04 + Math.random() * 0.08,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        parallaxFactor: 0.1 + Math.random() * 0.3,
+        x: rand() * 100,
+        y: 75 + rand() * 25, // Bottom 25%
+        size: 40 + rand() * 60,
+        opacity: 0.04 + rand() * 0.08,
+        color: colors[Math.floor(rand() * colors.length)],
+        parallaxFactor: 0.1 + rand() * 0.3,
       });
     }
 
     // Scattered accent hexagons
     for (let i = 0; i < 6; i++) {
       items.push({
-        x: 30 + Math.random() * 40, // Middle area
-        y: Math.random() * 80,
-        size: 20 + Math.random() * 35,
-        opacity: 0.02 + Math.random() * 0.04,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        parallaxFactor: 0.3 + Math.random() * 0.5,
+        x: 30 + rand() * 40, // Middle area
+        y: rand() * 80,
+        size: 20 + rand() * 35,
+        opacity: 0.02 + rand() * 0.04,
+        color: colors[Math.floor(rand() * colors.length)],
+        parallaxFactor: 0.3 + rand() * 0.5,
       });
     }
 
@@ -662,7 +673,9 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
   const { ref: parallaxRef, offset } = useParallax(0.3);
 
   return (
-    <section ref={parallaxRef} className="relative min-h-screen overflow-hidden -mt-[72px] pt-[72px]">
+    <section ref={parallaxRef} className="relative overflow-hidden -mt-[72px] pt-[72px]">
+      {/* Constrained height container */}
+      <div className="min-h-screen lg:min-h-[760px] lg:max-h-[900px] relative">
       {/* Background hero image - different images for mobile vs desktop */}
       {/* Mobile/Tablet: vertical mobile-hero.png, Desktop: horizontal homepage-hero.jpg */}
 
@@ -674,9 +687,9 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
         }}
       ></div>
 
-      {/* Desktop hero image (lg and up) */}
+      {/* Desktop hero image (lg and up) - positioned to favor the phone */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_right_-50px] xl:bg-[center_right] hidden lg:block"
+        className="absolute inset-0 bg-cover bg-no-repeat hidden lg:block bg-[position:85%_55%] xl:bg-[position:90%_50%] 2xl:bg-[position:92%_48%]"
         style={{
           backgroundImage: "url(/homepage-hero.jpg)",
         }}
@@ -706,32 +719,30 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
           transparent 85%)`
       }}></div>
 
-      {/* ===== LIGHT MODE - DESKTOP (left to right, layered like Jobber) ===== */}
-      {/* Layer 1: Primary left-to-right gradient */}
-      <div className="absolute inset-0 hidden lg:block dark:hidden" style={{
+      {/* ===== LIGHT MODE - DESKTOP (split overlay: strong left, light right) ===== */}
+      {/* Layer 1: Primary split gradient - strong text area, transparent phone area */}
+      <div className="absolute inset-0 hidden lg:block dark:hidden z-[1]" style={{
         background: `linear-gradient(90deg,
           rgba(255,255,255,0.98) 0%,
-          rgba(252,252,255,0.96) 20%,
-          rgba(248,248,255,0.85) 35%,
-          rgba(243,244,255,0.6) 48%,
-          rgba(238,242,255,0.3) 58%,
-          transparent 70%)`
+          rgba(255,255,255,0.92) 30%,
+          rgba(255,255,255,0.55) 48%,
+          rgba(255,255,255,0.15) 60%,
+          transparent 72%)`
       }}></div>
-      {/* Layer 2: Diagonal gradient (top-left to bottom-right) for organic curve */}
+      {/* Layer 2: Diagonal gradient for organic edge */}
       <div className="absolute inset-0 hidden lg:block dark:hidden" style={{
         background: `linear-gradient(135deg,
-          rgba(255,255,255,0.9) 0%,
-          rgba(250,249,255,0.7) 25%,
-          rgba(243,244,255,0.4) 40%,
-          rgba(168,85,247,0.06) 55%,
-          transparent 70%)`
-      }}></div>
-      {/* Layer 3: Subtle bottom-left corner reinforcement */}
-      <div className="absolute inset-0 hidden lg:block dark:hidden" style={{
-        background: `linear-gradient(45deg,
           rgba(255,255,255,0.85) 0%,
-          rgba(248,248,255,0.5) 25%,
-          transparent 50%)`
+          rgba(250,249,255,0.6) 25%,
+          rgba(243,244,255,0.3) 40%,
+          transparent 55%)`
+      }}></div>
+      {/* Light mode phone spotlight - subtle brightness behind phone */}
+      <div className="absolute inset-0 hidden lg:block dark:hidden pointer-events-none z-[2]" style={{
+        background: `radial-gradient(circle at 78% 55%,
+          rgba(255,255,255,0.18) 0%,
+          rgba(255,255,255,0.10) 18%,
+          rgba(255,255,255,0.00) 45%)`
       }}></div>
 
       {/* ===== DARK MODE - MOBILE (top to bottom, layered) ===== */}
@@ -756,35 +767,31 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
           transparent 88%)`
       }}></div>
 
-      {/* ===== DARK MODE - DESKTOP (left to right, layered like Jobber) ===== */}
-      {/* Layer 1: Primary left-to-right gradient with deep purple undertones */}
-      <div className="absolute inset-0 hidden lg:dark:block" style={{
+      {/* ===== DARK MODE - DESKTOP (matches nav bar, split overlay) ===== */}
+      {/* Layer 1: Primary split gradient - anchored to midnight-900 like nav */}
+      <div className="absolute inset-0 hidden lg:dark:block z-[1]" style={{
         background: `linear-gradient(90deg,
-          rgba(11,14,30,0.98) 0%,
-          rgba(15,14,38,0.97) 15%,
-          rgba(22,20,50,0.92) 28%,
-          rgba(35,28,68,0.8) 40%,
-          rgba(55,45,90,0.55) 52%,
+          rgba(15,18,32,0.98) 0%,
+          rgba(15,18,32,0.96) 18%,
+          rgba(27,24,58,0.86) 34%,
+          rgba(45,35,85,0.62) 48%,
           rgba(99,102,241,0.25) 62%,
-          transparent 75%)`
+          transparent 76%)`
       }}></div>
-      {/* Layer 2: Diagonal gradient (top-left to bottom-right) for organic curve */}
+      {/* Layer 2: Diagonal gradient for organic edge */}
       <div className="absolute inset-0 hidden lg:dark:block" style={{
         background: `linear-gradient(135deg,
-          rgba(12,10,32,0.92) 0%,
-          rgba(25,20,55,0.75) 20%,
-          rgba(45,35,80,0.5) 38%,
-          rgba(168,85,247,0.15) 52%,
-          rgba(99,102,241,0.08) 65%,
-          transparent 78%)`
+          rgba(15,18,32,0.9) 0%,
+          rgba(25,22,52,0.7) 22%,
+          rgba(40,32,72,0.4) 40%,
+          transparent 58%)`
       }}></div>
-      {/* Layer 3: Bottom-left corner reinforcement for depth */}
-      <div className="absolute inset-0 hidden lg:dark:block" style={{
-        background: `linear-gradient(45deg,
-          rgba(11,14,28,0.9) 0%,
-          rgba(20,18,45,0.6) 20%,
-          rgba(35,30,60,0.3) 35%,
-          transparent 55%)`
+      {/* Dark mode phone spotlight - brand-colored glow behind phone */}
+      <div className="absolute inset-0 hidden lg:dark:block pointer-events-none z-[2]" style={{
+        background: `radial-gradient(circle at 78% 55%,
+          rgba(99,102,241,0.22) 0%,
+          rgba(168,85,247,0.12) 22%,
+          rgba(0,0,0,0.00) 52%)`
       }}></div>
 
       {/* Hexagon pattern for visual distinction */}
@@ -885,6 +892,12 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
           <div className="hidden lg:block"></div>
         </div>
       </div>
+
+      {/* Bottom fade into next section - kills the "black bar" effect */}
+      <div className="absolute inset-x-0 bottom-0 h-40 z-[3] pointer-events-none
+        bg-gradient-to-t from-light-100 via-light-100/70 to-transparent
+        dark:from-midnight-950 dark:via-midnight-950/70" />
+      </div>{/* Close height constraint container */}
     </section>
   );
 };
