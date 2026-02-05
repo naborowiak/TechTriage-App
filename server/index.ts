@@ -1154,12 +1154,45 @@ const GREETINGS = [
   "Welcome! I'm ready to help with your tech issue. Just show me what you're dealing with and we'll tackle it step by step.",
 ];
 
+// Voice-only greeting variations (no camera/video references)
+const VOICE_GREETINGS = [
+  "Hi there! I'm Scout, your tech support assistant. Just describe what's going on and I'll help you figure it out.",
+  "Hey! Welcome to TotalAssist. I'm here and ready to help. Tell me what's giving you trouble and we'll solve it together.",
+  "Hello! Scout support here. Go ahead and describe your issue - I'm listening and ready to help.",
+  "Hi! I'm your tech support buddy today. What are we troubleshooting?",
+  "Welcome! I'm ready to help with your tech issue. Just tell me what's going on and we'll tackle it step by step.",
+];
+
 function getRandomVoice() {
   return VOICES[Math.floor(Math.random() * VOICES.length)];
 }
 
-function getRandomGreeting() {
-  return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+function getRandomGreeting(mode: 'video' | 'voice' = 'video') {
+  const greetings = mode === 'voice' ? VOICE_GREETINGS : GREETINGS;
+  return greetings[Math.floor(Math.random() * greetings.length)];
+}
+
+function buildVoiceSystemInstruction(voiceStyle: string) {
+  return `You are Scout, a friendly AI tech support assistant from TotalAssist.
+
+IMPORTANT PRONUNCIATION: The word "Triage" is pronounced "TREE-ahzh" (like the French word, rhymes with "massage"). Say "Tech-TREE-ahzh" NOT "Tech-TRY-age". This is critical for brand consistency.
+
+YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally in how you speak.
+
+BEHAVIOR:
+- Be conversational and helpful, like a knowledgeable friend
+- The user is speaking to you through their microphone — there is no camera or video feed
+- Ask clarifying questions to understand the issue since you cannot see it
+- Provide step-by-step troubleshooting when appropriate
+- Speak naturally and conversationally — avoid sounding robotic or scripted
+- Keep responses concise and actionable
+- If the user mentions model numbers, error codes, or specific symptoms, acknowledge them specifically
+
+SAFETY:
+- Never assist with gas leaks, electrical panels, bare wires, or structural changes
+- For dangerous situations, advise calling a professional immediately
+
+TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real person helping a friend with tech issues.`;
 }
 
 function buildSystemInstruction(voiceStyle: string) {
@@ -1185,7 +1218,7 @@ SAFETY:
 TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real person helping a friend with tech issues.`;
 }
 
-async function setupGeminiLive(ws: WebSocket) {
+async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video') {
   const apiKey = process.env.GEMINI_API_KEY__TECHTRIAGE;
   if (!apiKey) {
     ws.send(
@@ -1200,9 +1233,9 @@ async function setupGeminiLive(ws: WebSocket) {
 
     // Select random voice and greeting for this session
     const selectedVoice = getRandomVoice();
-    const selectedGreeting = getRandomGreeting();
+    const selectedGreeting = getRandomGreeting(mode);
     console.log(
-      `Session voice: ${selectedVoice.name} (${selectedVoice.style})`,
+      `Session voice: ${selectedVoice.name} (${selectedVoice.style}), mode: ${mode}`,
     );
 
     // Flag to track when session is ready for greeting
@@ -1368,7 +1401,7 @@ async function setupGeminiLive(ws: WebSocket) {
       config: {
         responseModalities: [Modality.AUDIO],
         systemInstruction: {
-          parts: [{ text: buildSystemInstruction(selectedVoice.style) }],
+          parts: [{ text: mode === 'voice' ? buildVoiceSystemInstruction(selectedVoice.style) : buildSystemInstruction(selectedVoice.style) }],
         },
         speechConfig: {
           voiceConfig: {
@@ -1658,18 +1691,18 @@ async function main() {
   const wss = new WebSocketServer({ server, path: "/live" });
 
   wss.on("connection", async (ws, req) => {
-    console.log("New WebSocket connection for live session");
-
-    // Parse userId from query string for access control
+    // Parse query params for access control and mode
     const url = new URL(req.url || "", `http://${req.headers.host}`);
     const userId = url.searchParams.get("userId");
+    const mode = (url.searchParams.get("mode") === "voice" ? "voice" : "video") as "voice" | "video";
+    console.log(`New WebSocket connection for ${mode} session`);
 
     if (userId) {
-      // Check if user has access to live sessions
+      // Check if user has access to live sessions (voice and video share the same quota)
       const accessCheck = await checkFeatureAccess(userId, "live");
       if (!accessCheck.allowed) {
         console.log(
-          `[LIVE] Access denied for user ${userId}: ${accessCheck.reason}`,
+          `[${mode.toUpperCase()}] Access denied for user ${userId}: ${accessCheck.reason}`,
         );
         ws.send(
           JSON.stringify({
@@ -1677,8 +1710,8 @@ async function main() {
             code: accessCheck.reason,
             message:
               accessCheck.reason === "LIMIT_REACHED"
-                ? "You've used all your live support sessions for this billing period."
-                : "Live support is not available on your current plan.",
+                ? `You've used all your ${mode} support sessions for this billing period.`
+                : `${mode === 'voice' ? 'Voice' : 'Live'} support is not available on your current plan.`,
             tier: accessCheck.tier,
             usage: accessCheck.usage,
             limits: accessCheck.limits,
@@ -1690,10 +1723,10 @@ async function main() {
 
       // Increment usage when connection is established
       await incrementUsage(userId, "liveSessions");
-      console.log(`[LIVE] Session started for user ${userId}`);
+      console.log(`[${mode.toUpperCase()}] Session started for user ${userId}`);
     }
 
-    setupGeminiLive(ws);
+    setupGeminiLive(ws, mode);
   });
 
   server.listen(PORT, "0.0.0.0", () => {

@@ -152,29 +152,45 @@ const shouldResetVideoCredits = (videoCredits: VideoCredits): boolean => {
   return videoCredits.lastResetDate !== getCurrentMonth();
 };
 
+const isValidTier = (tier: unknown): tier is UserTier =>
+  tier === 'guest' || tier === 'free' || tier === 'home' || tier === 'pro';
+
+const isValidUsage = (usage: unknown): usage is UsageLimits =>
+  usage != null &&
+  typeof usage === 'object' &&
+  'chat' in usage && usage.chat != null && typeof (usage.chat as FeatureUsage).used === 'number' &&
+  'photo' in usage && usage.photo != null && typeof (usage.photo as FeatureUsage).used === 'number' &&
+  'signal' in usage && usage.signal != null && typeof (usage.signal as FeatureUsage).used === 'number' &&
+  'voice' in usage && usage.voice != null && typeof (usage.voice as FeatureUsage).used === 'number';
+
 const getInitialState = (): UsageState => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
+      const tier: UserTier = isValidTier(parsed.tier) ? parsed.tier : 'guest';
       const currentMonth = getCurrentMonth();
 
       // Check if we need monthly reset for chat/photo
       const needsMonthlyReset = parsed.lastMonthlyResetDate !== currentMonth;
 
       // Check if we need video credit reset
-      const videoCredits = parsed.videoCredits || getInitialVideoCredits(parsed.tier);
+      const videoCredits = parsed.videoCredits || getInitialVideoCredits(tier);
       const needsVideoReset = shouldResetVideoCredits(videoCredits);
+
+      // Validate stored usage structure before reusing it
+      const hasValidUsage = isValidUsage(parsed.usage);
 
       return {
         ...parsed,
-        usage: needsMonthlyReset
-          ? { ...TIER_LIMITS[parsed.tier as UserTier] }
+        tier,
+        usage: (needsMonthlyReset || !hasValidUsage)
+          ? { ...TIER_LIMITS[tier] }
           : parsed.usage,
         videoCredits: needsVideoReset
           ? {
               ...videoCredits,
-              subscriptionCredits: VIDEO_CREDIT_CONFIG[parsed.tier as UserTier].limit,
+              subscriptionCredits: VIDEO_CREDIT_CONFIG[tier].limit,
               lastResetDate: videoCredits.resetType === 'weekly' ? getCurrentWeekStart() : currentMonth,
             }
           : videoCredits,
@@ -248,7 +264,7 @@ export const UsageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         ...prev,
         tier,
         userId: userId || null,
-        usage: needsReset
+        usage: (needsReset || !isValidUsage(prev.usage))
           ? { ...TIER_LIMITS[tier] }
           : {
               chat: { used: prev.usage.chat.used, limit: TIER_LIMITS[tier].chat.limit },
@@ -434,10 +450,18 @@ export const useUsage = (): UsageContextValue => {
 };
 
 // Helper to sync with auth state
-export const useSyncUsageWithAuth = (isAuthenticated: boolean, userId?: string, subscriptionTier?: string) => {
+export const useSyncUsageWithAuth = (
+  isAuthenticated: boolean,
+  userId?: string,
+  subscriptionTier?: string,
+  isLoading?: boolean
+) => {
   const { setTier, tier: currentTier, userId: currentUserId } = useUsage();
 
   useEffect(() => {
+    // Don't sync while subscription data is still loading — trust cached tier from localStorage
+    if (isLoading) return;
+
     if (!isAuthenticated) {
       if (currentTier !== 'guest') {
         setTier('guest');
@@ -456,7 +480,7 @@ export const useSyncUsageWithAuth = (isAuthenticated: boolean, userId?: string, 
     if (currentTier !== tier || currentUserId !== userId) {
       setTier(tier, userId);
     }
-  }, [isAuthenticated, userId, subscriptionTier, currentTier, currentUserId, setTier]);
+  }, [isAuthenticated, userId, subscriptionTier, isLoading, currentTier, currentUserId, setTier]);
 };
 
 // Helper function to check if a feature requires upgrade

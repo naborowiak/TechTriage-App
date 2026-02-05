@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { X, Mic, MicOff, Camera, Phone, Volume2 } from 'lucide-react';
 import type { VoiceSessionState } from '../../hooks/useVoiceSession';
+import type { GeminiVoiceStatus } from '../../hooks/useGeminiVoice';
 
 interface VoiceOverlayProps {
   session: VoiceSessionState;
@@ -14,25 +15,36 @@ interface VoiceOverlayProps {
   onCapturePhoto: () => void;
   photoRequestPending: boolean;
   currentPhotoPrompt: string | null;
+  // Optional analyser nodes for real audio visualization
+  outputAnalyser?: AnalyserNode | null;
+  inputAnalyser?: AnalyserNode | null;
+  // Optional Gemini voice status (overrides isListening/isSpeaking when provided)
+  geminiStatus?: GeminiVoiceStatus;
 }
 
 export function VoiceOverlay({
   session,
   timeDisplay,
   isWarning,
-  isListening,
-  isSpeaking,
+  isListening: isListeningProp,
+  isSpeaking: isSpeakingProp,
   transcript,
   interimTranscript,
   onEndSession,
   onCapturePhoto,
   photoRequestPending,
   currentPhotoPrompt,
+  outputAnalyser,
+  inputAnalyser,
+  geminiStatus,
 }: VoiceOverlayProps) {
+  // When geminiStatus is provided, derive listening/speaking from it
+  const isListening = geminiStatus ? geminiStatus === 'listening' : isListeningProp;
+  const isSpeaking = geminiStatus ? geminiStatus === 'speaking' : isSpeakingProp;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
 
-  // Waveform visualization
+  // Waveform visualization — uses real analyser data when available, falls back to random
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -46,10 +58,33 @@ export function VoiceOverlay({
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Choose the active analyser based on state
+      const activeAnalyser = isSpeaking ? outputAnalyser : inputAnalyser;
+      let dataArray: Uint8Array<ArrayBuffer> | null = null;
+
+      if (activeAnalyser) {
+        const bufferLength = activeAnalyser.frequencyBinCount;
+        const arr = new Uint8Array(bufferLength);
+        activeAnalyser.getByteFrequencyData(arr);
+        dataArray = arr as Uint8Array<ArrayBuffer>;
+      }
+
       for (let i = 0; i < bars; i++) {
-        const amplitude = isListening || isSpeaking
-          ? Math.random() * 0.7 + 0.3
-          : 0.1;
+        let amplitude: number;
+        if (dataArray && dataArray.length > 0) {
+          // Map bar index to analyser data
+          const dataIndex = Math.floor((i / bars) * dataArray.length);
+          amplitude = dataArray[dataIndex] / 255;
+          // Add minimum floor when active
+          if (isListening || isSpeaking) {
+            amplitude = Math.max(amplitude, 0.05);
+          }
+        } else {
+          // Fallback to random when no analyser available
+          amplitude = isListening || isSpeaking
+            ? Math.random() * 0.7 + 0.3
+            : 0.1;
+        }
         const height = amplitude * canvas.height * 0.8;
 
         // Gradient for bars
@@ -84,7 +119,7 @@ export function VoiceOverlay({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isListening, isSpeaking]);
+  }, [isListening, isSpeaking, outputAnalyser, inputAnalyser]);
 
   return (
     <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-[#0B0E14] to-[#151922] flex flex-col">

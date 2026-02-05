@@ -5,12 +5,17 @@ import { VoiceOverlay } from './VoiceOverlay';
 import { PhotoCaptureModal } from './PhotoCaptureModal';
 import { VideoSessionModal } from './VideoSessionModal';
 import { useUsage } from '../../stores/usageStore';
-import { sendMessageToGemini, sendVoiceMessage } from '../../services/geminiService';
+import { sendMessageToGemini } from '../../services/geminiService';
 import { useVoiceSession } from '../../hooks/useVoiceSession';
 import { useWebSpeech } from '../../hooks/useWebSpeech';
+import { useGeminiVoice } from '../../hooks/useGeminiVoice';
 import { ChatMessage, UserRole } from '../../types';
 
-export function ScoutChatScreen() {
+interface ScoutChatScreenProps {
+  embedded?: boolean;
+}
+
+export function ScoutChatScreen({ embedded = false }: ScoutChatScreenProps) {
   const { tier, canUse, incrementUsage } = useUsage();
 
   const [activeMode, setActiveMode] = useState<ScoutMode>('chat');
@@ -35,6 +40,7 @@ export function ScoutChatScreen() {
   // Voice session hooks
   const voiceSession = useVoiceSession();
   const webSpeech = useWebSpeech();
+  const geminiVoice = useGeminiVoice();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,39 +50,18 @@ export function ScoutChatScreen() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Process voice transcripts when user finishes speaking
+  // Sync Gemini voice transcript history into voiceSession for display
   useEffect(() => {
-    if (!voiceSession.session.isActive || !webSpeech.transcript) return;
+    if (!showVoiceOverlay || geminiVoice.transcriptHistory.length === 0) return;
 
-    const processVoiceInput = async () => {
-      const userText = webSpeech.transcript;
-      voiceSession.addTranscriptEntry('user', userText);
-
-      try {
-        const response = await sendVoiceMessage(
-          voiceSession.session.transcript,
-          userText
-        );
-
-        voiceSession.addTranscriptEntry('assistant', response.text);
-
-        if (response.photoRequest && response.photoPrompt) {
-          voiceSession.setPhotoRequest(response.photoPrompt);
-        }
-
-        await webSpeech.speak(response.text);
-        webSpeech.startListening();
-      } catch (error) {
-        console.error('Voice processing error:', error);
-        const errorMsg = "I had trouble understanding that. Could you repeat it?";
-        voiceSession.addTranscriptEntry('assistant', errorMsg);
-        await webSpeech.speak(errorMsg);
-        webSpeech.startListening();
-      }
-    };
-
-    processVoiceInput();
-  }, [webSpeech.transcript, voiceSession.session.isActive]);
+    const latest = geminiVoice.transcriptHistory[geminiVoice.transcriptHistory.length - 1];
+    if (latest) {
+      voiceSession.addTranscriptEntry(
+        latest.role === 'model' ? 'assistant' : 'user',
+        latest.text
+      );
+    }
+  }, [geminiVoice.transcriptHistory.length, showVoiceOverlay]);
 
   const generateId = () => `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
@@ -163,29 +148,19 @@ export function ScoutChatScreen() {
   };
 
   const startVoiceMode = useCallback(() => {
-    if (!webSpeech.isSupported) {
-      alert('Voice mode requires Chrome, Safari, or Edge browser');
-      return;
-    }
-
     voiceSession.startSession();
     setShowVoiceOverlay(true);
-
-    const greeting = "Hi! I'm Scout, ready to help with your tech issue. Just describe what's happening and I'll guide you through it.";
-    voiceSession.addTranscriptEntry('assistant', greeting);
-
-    webSpeech.speak(greeting).then(() => {
-      webSpeech.startListening();
-    });
-  }, [webSpeech, voiceSession]);
+    // Connect to Gemini native audio (opens WS, starts mic, gets Gemini greeting)
+    geminiVoice.connect();
+  }, [voiceSession, geminiVoice]);
 
   const endVoiceMode = useCallback(() => {
+    geminiVoice.disconnect();
     webSpeech.cancel();
-    webSpeech.stopListening();
     voiceSession.endSession();
     setShowVoiceOverlay(false);
     setActiveMode('chat');
-  }, [webSpeech, voiceSession]);
+  }, [geminiVoice, webSpeech, voiceSession]);
 
   const handlePhotoCaptured = useCallback((imageBase64: string) => {
     setShowPhotoModal(false);
@@ -246,26 +221,33 @@ export function ScoutChatScreen() {
     });
   };
 
+  // Derive the last transcript text for VoiceOverlay display
+  const lastTranscriptText = geminiVoice.transcriptHistory.length > 0
+    ? geminiVoice.transcriptHistory[geminiVoice.transcriptHistory.length - 1].text
+    : '';
+
   return (
-    <div className="flex flex-col h-screen bg-[#0B0E14]">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-[#151922] border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-white font-semibold text-lg">Scout AI</h1>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/60 text-xs">Online</span>
+    <div className={`flex flex-col ${embedded ? 'h-full' : 'h-screen'} bg-[#0B0E14]`}>
+      {/* Header - only shown in standalone mode */}
+      {!embedded && (
+        <header className="flex items-center justify-between px-4 py-3 bg-[#151922] border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white font-semibold text-lg">Scout AI</h1>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-white/60 text-xs">Online</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#A855F7]" />
-        </div>
-      </header>
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-[#A855F7]" />
+          </div>
+        </header>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -363,14 +345,17 @@ export function ScoutChatScreen() {
           session={voiceSession.session}
           timeDisplay={voiceSession.formatTimeRemaining()}
           isWarning={voiceSession.isWarningTime}
-          isListening={webSpeech.isListening}
-          isSpeaking={webSpeech.isSpeaking}
-          transcript={webSpeech.transcript}
-          interimTranscript={webSpeech.interimTranscript}
+          isListening={geminiVoice.status === 'listening'}
+          isSpeaking={geminiVoice.status === 'speaking'}
+          transcript={lastTranscriptText}
+          interimTranscript=""
           onEndSession={endVoiceMode}
           onCapturePhoto={() => setShowPhotoModal(true)}
           photoRequestPending={voiceSession.session.photoRequestPending}
           currentPhotoPrompt={voiceSession.session.currentPhotoPrompt}
+          outputAnalyser={geminiVoice.outputAnalyser}
+          inputAnalyser={geminiVoice.inputAnalyser}
+          geminiStatus={geminiVoice.status}
         />
       )}
 

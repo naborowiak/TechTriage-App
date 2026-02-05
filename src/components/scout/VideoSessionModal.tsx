@@ -75,54 +75,56 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
     }
   }, [transcriptHistory, isTranscriptOpen]);
 
-  // Waveform drawing
-  const drawWaveform = useCallback(() => {
-    if (!waveformCanvasRef.current) return;
-    const canvas = waveformCanvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  // Debounce ref for status transitions
+  const lastSpeakingTimeRef = useRef<number>(0);
+  const statusTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
-    const audioCtx = audioContextRef.current;
-    const currentlySpeaking = audioCtx && audioCtx.currentTime < nextStartTimeRef.current + 0.15;
+  // Waveform drawing (ref-based to avoid stale closures)
+  const drawWaveformRef = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => {
+    drawWaveformRef.current = () => {
+      if (!waveformCanvasRef.current) return;
+      const canvas = waveformCanvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
-    if (currentlySpeaking && status !== 'speaking') {
-      setStatus('speaking');
-    } else if (!currentlySpeaking && status === 'speaking') {
-      setStatus('listening');
-    }
+      const audioCtx = audioContextRef.current;
+      const currentlySpeaking = audioCtx && audioCtx.currentTime < nextStartTimeRef.current + 0.15;
 
-    const analyser = currentlySpeaking ? outputAnalyserRef.current : inputAnalyserRef.current;
+      const analyser = currentlySpeaking ? outputAnalyserRef.current : inputAnalyserRef.current;
 
-    if (!analyser || (isMutedRef.current && !currentlySpeaking)) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      animationFrameRef.current = requestAnimationFrame(drawWaveform);
-      return;
-    }
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyser.getByteFrequencyData(dataArray);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const barWidth = (canvas.width / bufferLength) * 2.5;
-    let x = 0;
-    for (let i = 0; i < bufferLength; i++) {
-      const barHeight = (dataArray[i] / 255) * canvas.height;
-      // Gradient colors
-      const gradient = ctx.createLinearGradient(0, canvas.height - barHeight, 0, canvas.height);
-      if (currentlySpeaking) {
-        gradient.addColorStop(0, '#A855F7');
-        gradient.addColorStop(1, '#6366F1');
-      } else {
-        gradient.addColorStop(0, '#06B6D4');
-        gradient.addColorStop(1, '#6366F1');
+      if (!analyser || (isMutedRef.current && !currentlySpeaking)) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
+        return;
       }
-      ctx.fillStyle = gradient;
-      ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
-      x += barWidth + 1;
-    }
-    animationFrameRef.current = requestAnimationFrame(drawWaveform);
-  }, [status]);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      analyser.getByteFrequencyData(dataArray);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const barWidth = (canvas.width / bufferLength) * 2.5;
+      let x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const barHeight = (dataArray[i] / 255) * canvas.height;
+        const gradient = ctx.createLinearGradient(0, canvas.height - barHeight, 0, canvas.height);
+        if (currentlySpeaking) {
+          gradient.addColorStop(0, '#A855F7');
+          gradient.addColorStop(1, '#6366F1');
+        } else {
+          gradient.addColorStop(0, '#06B6D4');
+          gradient.addColorStop(1, '#6366F1');
+        }
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
+        x += barWidth + 1;
+      }
+      animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -269,7 +271,13 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
               setStatus('listening');
               videoIntervalId = setInterval(captureAndSendFrame, 2000);
             } else if (message.type === 'audio') {
+              // Set speaking immediately, track timing for debounce
+              if (statusTransitionTimerRef.current) {
+                clearTimeout(statusTransitionTimerRef.current);
+                statusTransitionTimerRef.current = null;
+              }
               setStatus('speaking');
+              lastSpeakingTimeRef.current = Date.now();
               playAudio(message.data);
             } else if (message.type === 'aiTranscript') {
               setTranscriptHistory((prev) => [
@@ -282,7 +290,16 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
                 { role: 'user', text: message.data, timestamp: Date.now() },
               ]);
             } else if (message.type === 'turnComplete') {
-              setStatus('listening');
+              // Debounce transition to listening to prevent flicker
+              const timeSinceSpeaking = Date.now() - lastSpeakingTimeRef.current;
+              const delay = Math.max(0, 300 - timeSinceSpeaking);
+              if (statusTransitionTimerRef.current) {
+                clearTimeout(statusTransitionTimerRef.current);
+              }
+              statusTransitionTimerRef.current = setTimeout(() => {
+                setStatus('listening');
+                statusTransitionTimerRef.current = null;
+              }, delay);
             } else if (message.type === 'endSession') {
               const finalSummary = message.summary || 'Session completed';
               setSummary(finalSummary);
@@ -309,7 +326,7 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
           wsRef.current.send(JSON.stringify({ type: 'audio', data: base64 }));
         };
 
-        animationFrameRef.current = requestAnimationFrame(drawWaveform);
+        animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
       } catch (e) {
         console.error('Error starting video session:', e);
       }
@@ -324,9 +341,12 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
         scriptProcessor.disconnect();
         scriptProcessor.onaudioprocess = null;
       }
+      if (statusTransitionTimerRef.current) {
+        clearTimeout(statusTransitionTimerRef.current);
+      }
       stopAllHardware();
     };
-  }, [user?.id, drawWaveform, stopAllHardware]);
+  }, [user?.id, stopAllHardware]);
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#0B0E14] flex flex-col overflow-hidden">

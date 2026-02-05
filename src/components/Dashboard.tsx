@@ -20,6 +20,7 @@ import {
   Zap,
   Sun,
   Moon,
+  Bot,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { Logo } from "./Logo";
@@ -39,12 +40,13 @@ interface DashboardProps {
   onUploadImage: () => void;
   onStartVideo: (caseId?: string) => void;
   onStartSignal?: () => void; // Voice mode handler
+  onOpenScout?: () => void; // Scout AI nav handler
   onLogout: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
   onOpenBilling?: () => void;
   onBackToDashboard?: () => void;
-  activeView?: "main" | "history" | "settings" | "billing";
+  activeView?: "main" | "history" | "settings" | "billing" | "scout";
   children?: React.ReactNode;
   onUpdateUser?: (user: {
     firstName: string;
@@ -300,6 +302,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onUploadImage,
   onStartVideo,
   onStartSignal,
+  onOpenScout,
   onLogout,
   onOpenHistory,
   onOpenSettings,
@@ -492,6 +495,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <MessageSquare className="w-5 h-5" />
             Chat Support
           </button>
+          {onOpenScout && (
+            <button
+              onClick={() => {
+                setSidebarOpen(false);
+                onOpenScout();
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                activeView === "scout"
+                  ? "bg-electric-indigo/20 text-electric-indigo font-medium"
+                  : "text-text-secondary hover:bg-light-100 dark:hover:bg-midnight-800 hover:text-text-primary dark:hover:text-white"
+              }`}
+            >
+              <Bot className="w-5 h-5" />
+              Scout AI
+            </button>
+          )}
           <button
             onClick={() => {
               setSidebarOpen(false);
@@ -633,6 +652,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 How can TotalAssist help you today? Choose an option below.
               </p>
             </div>
+
+            {/* Scout AI Hero Banner */}
+            {onOpenScout && activeView === "main" && (
+              <div
+                className="relative mb-8 group cursor-pointer"
+                onClick={onOpenScout}
+              >
+                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-scout-purple via-electric-indigo to-electric-cyan opacity-60 group-hover:opacity-100 blur-sm transition-opacity duration-500" />
+                <div className="relative bg-white dark:bg-midnight-800 rounded-2xl p-6 sm:p-8 border border-light-300 dark:border-midnight-700 overflow-hidden">
+                  {/* Background glow */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-scout-purple/10 to-transparent rounded-full -translate-y-1/3 translate-x-1/3 pointer-events-none" />
+
+                  <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center shadow-lg shadow-scout-purple/25 flex-shrink-0">
+                      <Bot className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xl sm:text-2xl font-black text-text-primary dark:text-white mb-1">
+                        Scout AI
+                      </h2>
+                      <p className="text-text-secondary text-sm sm:text-base">
+                        Your AI-powered tech assistant — chat, voice, photo, or video
+                      </p>
+                    </div>
+                    <button
+                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-scout-purple to-electric-indigo text-white font-semibold text-sm shadow-lg shadow-electric-indigo/25 hover:shadow-electric-indigo/40 hover:scale-[1.02] active:scale-[0.98] transition-all whitespace-nowrap"
+                    >
+                      Open Scout AI
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Main action cards */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

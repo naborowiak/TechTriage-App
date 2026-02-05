@@ -45,7 +45,7 @@ import { ResetPassword } from "./components/ResetPassword";
 import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
-import { ScoutChatScreen } from "./components/scout";
+import { ScoutChatScreen, ScoutInfoPanel } from "./components/scout";
 
 // ============================================
 // Animation Hooks & Components
@@ -1729,7 +1729,7 @@ const getStoredUser = (): DashboardUser | null => {
   return null;
 };
 
-type DashboardView = "main" | "history" | "settings" | "billing";
+type DashboardView = "main" | "history" | "settings" | "billing" | "scout";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);
@@ -1750,10 +1750,18 @@ const App: React.FC = () => {
   } = useAuth();
 
   // Get subscription tier for the authenticated user
-  const { tier: subscriptionTier } = useSubscription(sessionUser?.id);
+  // Use dashboardUser.id as fallback so subscription fetch starts immediately from localStorage
+  const effectiveUserId = sessionUser?.id || dashboardUser?.id;
+  const { tier: subscriptionTier, isLoading: subscriptionLoading } = useSubscription(effectiveUserId);
 
   // Sync usage store tier with auth/subscription state
-  useSyncUsageWithAuth(isAuthenticated, sessionUser?.id, subscriptionTier);
+  // Treat dashboardUser as auth signal so we don't flash guest tier while auth is loading
+  useSyncUsageWithAuth(
+    isAuthenticated || !!dashboardUser,
+    effectiveUserId,
+    subscriptionTier,
+    subscriptionLoading
+  );
 
   // Check if user should see dashboard on initial load
   useEffect(() => {
@@ -1963,6 +1971,10 @@ const App: React.FC = () => {
     setShowLiveSupport(false);
   }, []);
 
+  const handleOpenScout = useCallback(() => {
+    setDashboardView("scout");
+  }, []);
+
   // Handle navigation to dashboard sub-views from header dropdown
   const handleDashboardSubNavigation = useCallback((subView: DashboardView) => {
     setDashboardView(subView);
@@ -2024,6 +2036,33 @@ const App: React.FC = () => {
       case PageView.CANCELLATION:
         return <CancellationPolicy onBack={() => navigate(PageView.HOME)} />;
       case PageView.SCOUT:
+        if (dashboardUser) {
+          return (
+            <Dashboard
+              user={dashboardUser}
+              onStartChat={handleDashboardChat}
+              onUploadImage={handleDashboardUploadImage}
+              onStartVideo={handleDashboardStartVideo}
+              onOpenScout={handleOpenScout}
+              onLogout={handleDashboardLogout}
+              onOpenHistory={handleOpenHistory}
+              onOpenSettings={handleOpenSettings}
+              onOpenBilling={handleOpenBilling}
+              onBackToDashboard={handleBackToDashboard}
+              activeView="scout"
+              onUpdateUser={handleUpdateUser}
+            >
+              <div className="flex gap-0 -m-6 lg:-m-8 h-[calc(100vh-73px)]">
+                <div className="flex-1 min-w-0">
+                  <ScoutChatScreen embedded />
+                </div>
+                <div className="hidden xl:block w-80 flex-shrink-0">
+                  <ScoutInfoPanel />
+                </div>
+              </div>
+            </Dashboard>
+          );
+        }
         return <ScoutChatScreen />;
       case PageView.DASHBOARD:
         if (dashboardUser) {
@@ -2051,12 +2090,42 @@ const App: React.FC = () => {
             );
           }
 
+          // If user navigated to scout view within dashboard, render embedded scout
+          if (dashboardView === "scout") {
+            return (
+              <Dashboard
+                user={dashboardUser}
+                onStartChat={handleDashboardChat}
+                onUploadImage={handleDashboardUploadImage}
+                onStartVideo={handleDashboardStartVideo}
+                onOpenScout={handleOpenScout}
+                onLogout={handleDashboardLogout}
+                onOpenHistory={handleOpenHistory}
+                onOpenSettings={handleOpenSettings}
+                onOpenBilling={handleOpenBilling}
+                onBackToDashboard={handleBackToDashboard}
+                activeView="scout"
+                onUpdateUser={handleUpdateUser}
+              >
+                <div className="flex gap-0 -m-6 lg:-m-8 h-[calc(100vh-73px)]">
+                  <div className="flex-1 min-w-0">
+                    <ScoutChatScreen embedded />
+                  </div>
+                  <div className="hidden xl:block w-80 flex-shrink-0">
+                    <ScoutInfoPanel />
+                  </div>
+                </div>
+              </Dashboard>
+            );
+          }
+
           return (
             <Dashboard
               user={dashboardUser}
               onStartChat={handleDashboardChat}
               onUploadImage={handleDashboardUploadImage}
               onStartVideo={handleDashboardStartVideo}
+              onOpenScout={handleOpenScout}
               onLogout={handleDashboardLogout}
               onOpenHistory={handleOpenHistory}
               onOpenSettings={handleOpenSettings}
@@ -2120,7 +2189,7 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
         {renderContent()}
-        {dashboardUser && <ChatWidget ref={chatRef} />}
+        {dashboardUser && dashboardView !== 'scout' && <ChatWidget ref={chatRef} />}
       </div>
     );
   }
