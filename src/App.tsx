@@ -1205,30 +1205,20 @@ const WhyTotalAssist: React.FC = () => {
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Header */}
-        <AnimatedElement animation="fadeInUp" className="text-center mb-16">
+        <AnimatedElement animation="fadeInUp" className="text-center mb-12">
           <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
-            Comparison
+            Why Scout AI
           </span>
           <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight text-text-primary dark:text-white">
-            Tech support that actually works
+            Skip the wait. Get answers instantly.
           </h2>
           <p className="text-text-secondary text-xl max-w-2xl mx-auto">
-            We built Scout AI because everyone deserves help that's instant,
-            clear, and doesn't waste your time.
+            Scout AI diagnoses tech and home issues in seconds — no calls, no waiting, no transfers.
           </p>
         </AnimatedElement>
 
         {/* Comparison Table Section */}
         <AnimatedElement animation="fadeInUp" delay={0.2} className="mb-20">
-          {/* Table Header */}
-          <div className="text-center mb-8">
-            <h3 className="text-3xl lg:text-4xl font-black text-text-primary dark:text-white mb-3">
-              Skip the wait. Get answers instantly.
-            </h3>
-            <p className="text-text-secondary text-lg max-w-2xl mx-auto">
-              Scout AI diagnoses tech and home issues in seconds — no calls, no waiting, no transfers.
-            </p>
-          </div>
 
           {/* Comparison Table */}
           <div className="relative overflow-hidden rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-lg">

@@ -38,15 +38,17 @@ export const VerifyEmail: React.FC<VerifyEmailProps> = ({
 
         if (data.success) {
           setStatus("success");
-          setMessage("Email verified successfully! Logging you in...");
 
-          // FIX: Call the parent completion handler so the variable is used
-          if (data.user) {
+          // If session was created, go to dashboard; otherwise go to login
+          if (data.sessionCreated && data.user) {
+            setMessage("Email verified! Redirecting to your dashboard...");
             onVerificationComplete(data.user);
+            // handleSignupComplete will navigate to dashboard
+          } else {
+            setMessage("Email verified! Please log in to continue.");
+            // Redirect to Login after 2 seconds
+            setTimeout(() => onNavigate(PageView.LOGIN), 2000);
           }
-
-          // Redirect to Login after 2 seconds
-          setTimeout(() => onNavigate(PageView.LOGIN), 2000);
         } else {
           setStatus("error");
           setMessage(data.error || "Verification failed.");

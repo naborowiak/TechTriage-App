@@ -256,7 +256,23 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const result = await authService.loginUser(email, password);
+    let result;
+    try {
+      result = await authService.loginUser(email, password);
+    } catch (authError) {
+      console.error("[LOGIN] Auth service error:", authError);
+      return res.status(500).json({ error: "Authentication service error. Please try again." });
+    }
+
+    console.log("[LOGIN] Auth result:", { success: result.success, hasUser: !!result.user, error: result.error });
+
+    // Check for verification needed
+    if (!result.success && (result as any).needsVerification) {
+      return res.status(401).json({
+        error: result.error || "Please verify your email before logging in.",
+        needsVerification: true,
+      });
+    }
 
     // FIX: Check !result.user to satisfy TypeScript 'possibly undefined' error
     if (!result.success || !result.user) {
@@ -302,12 +318,30 @@ app.post("/api/auth/verify-email", async (req, res) => {
       return res.status(400).json({ error: result.error });
     }
 
-    // New: Send welcome email now that they are verified
-    sendWelcomeEmail(result.user.email, result.user.firstName || undefined).catch(err => 
+    // Send welcome email now that they are verified
+    sendWelcomeEmail(result.user.email, result.user.firstName || undefined).catch(err =>
       console.error("[EMAIL] Failed to send welcome email:", err)
     );
 
-    res.json({ success: true, user: result.user });
+    // Create session so user is logged in after verification
+    const sessionUser = {
+      id: result.user.id,
+      username: result.user.email || "",
+      email: result.user.email,
+      firstName: result.user.firstName,
+      lastName: result.user.lastName,
+      profileImageUrl: null,
+    };
+
+    req.login(sessionUser, (err) => {
+      if (err) {
+        console.error("Session creation error after verification:", err);
+        // Still return success - user can log in manually
+        return res.json({ success: true, user: result.user, sessionCreated: false });
+      }
+      console.log("[AUTH] Session created after email verification for:", result.user?.email);
+      res.json({ success: true, user: result.user, sessionCreated: true });
+    });
   } catch (error) {
     console.error("Email verification error:", error);
     res.status(500).json({ error: "Email verification failed. Please try again." });
