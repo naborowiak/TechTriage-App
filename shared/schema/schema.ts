@@ -149,6 +149,9 @@ export const subscriptionsTable = pgTable("subscriptions", {
   trialStart: timestamp("trial_start"),
   trialEnd: timestamp("trial_end"),
 
+  // Purchased credits (one-time purchases, never expire)
+  videoCredits: integer("video_credits").notNull().default(0),
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -186,6 +189,38 @@ export const webhookEventsTable = pgTable("webhook_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Promo codes table - tracks promotional codes and their configuration
+export const promoCodesTable = pgTable("promo_codes", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  stripePromoCodeId: varchar("stripe_promo_code_id", { length: 255 }),
+  stripeCouponId: varchar("stripe_coupon_id", { length: 255 }),
+  description: varchar("description", { length: 255 }),
+  discountType: varchar("discount_type", { length: 20 }).notNull(), // 'percent' | 'fixed'
+  discountValue: integer("discount_value").notNull(),
+  maxRedemptions: integer("max_redemptions"),
+  redemptionCount: integer("redemption_count").notNull().default(0),
+  validFrom: timestamp("valid_from"),
+  validUntil: timestamp("valid_until"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Promo code redemptions table - tracks who used which promo code
+export const promoCodeRedemptionsTable = pgTable("promo_code_redemptions", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  promoCodeId: varchar("promo_code_id", { length: 255 })
+    .notNull()
+    .references(() => promoCodesTable.id),
+  userId: varchar("user_id", { length: 255 }).references(() => usersTable.id),
+  checkoutSessionId: varchar("checkout_session_id", { length: 255 }),
+  redeemedAt: timestamp("redeemed_at").defaultNow(),
+});
+
 // Type exports
 export type User = typeof usersTable.$inferSelect;
 export type InsertUser = typeof usersTable.$inferInsert;
@@ -205,3 +240,7 @@ export type Case = typeof casesTable.$inferSelect;
 export type InsertCase = typeof casesTable.$inferInsert;
 export type SessionRecording = typeof sessionRecordingsTable.$inferSelect;
 export type InsertSessionRecording = typeof sessionRecordingsTable.$inferInsert;
+export type PromoCode = typeof promoCodesTable.$inferSelect;
+export type InsertPromoCode = typeof promoCodesTable.$inferInsert;
+export type PromoCodeRedemption = typeof promoCodeRedemptionsTable.$inferSelect;
+export type InsertPromoCodeRedemption = typeof promoCodeRedemptionsTable.$inferInsert;

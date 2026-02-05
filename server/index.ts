@@ -10,10 +10,12 @@ import casesRouter from "./routes/cases";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import nodemailer from "nodemailer";
 import * as authService from "./services/authService";
-import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail } from "./services/emailService";
+import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendTestEmailWithResendDomain } from "./services/emailService";
 import { authStorage } from "./replit_integrations/auth/storage";
 
 import * as stripeService from "./services/stripeService";
+import * as promoCodeService from "./services/promoCodeService";
+import { startTrialNotificationJob, runTrialNotificationCheckNow } from "./services/scheduledJobs";
 import {
   loadSubscription,
   requireFeature,
@@ -116,11 +118,47 @@ app.post("/api/test-email", async (req, res) => {
   }
 
   console.log("[EMAIL TEST] Attempting to send test email to:", email);
-  console.log("[EMAIL TEST] SMTP_HOST configured:", !!process.env.SMTP_HOST);
+  console.log("[EMAIL TEST] RESEND_API_KEY configured:", !!process.env.RESEND_API_KEY);
+  console.log("[EMAIL TEST] API Key prefix:", process.env.RESEND_API_KEY?.substring(0, 8) + "...");
 
   try {
     const result = await sendWelcomeEmail(email, "Test User");
     // FIX: Just return the result directly to avoid 'success' duplication error
+    res.json(result);
+  } catch (error) {
+    console.error("[EMAIL TEST] Error:", error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+// Email diagnostics endpoint
+app.get("/api/email-diagnostics", async (_req, res) => {
+  const hasApiKey = !!process.env.RESEND_API_KEY;
+  const apiKeyPrefix = process.env.RESEND_API_KEY?.substring(0, 8) || "NOT SET";
+
+  res.json({
+    resendConfigured: hasApiKey,
+    apiKeyPrefix: hasApiKey ? apiKeyPrefix + "..." : "NOT SET",
+    configuredSender: process.env.EMAIL_FROM || "TotalAssist <support@totalassist.tech>",
+    appUrl: process.env.APP_URL || "https://totalassist.tech",
+    note: hasApiKey
+      ? "API key is set. If emails fail, verify the domain is fully verified in Resend dashboard (all DNS records green) and the API key belongs to the same account."
+      : "No RESEND_API_KEY found. Emails will be simulated."
+  });
+});
+
+// Test email with Resend's default sender (bypasses domain verification)
+// Use this to verify your API key is valid
+app.post("/api/test-email-resend", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email address required" });
+  }
+
+  console.log("[EMAIL TEST] Testing Resend API key with default sender to:", email);
+
+  try {
+    const result = await sendTestEmailWithResendDomain(email);
     res.json(result);
   } catch (error) {
     console.error("[EMAIL TEST] Error:", error);
@@ -849,6 +887,163 @@ app.get("/api/stripe/prices", (_req, res) => {
   });
 });
 
+// ============================================
+// Retention Discount API Endpoint
+// ============================================
+
+// Apply retention discount to prevent churn
+app.post("/api/subscription/apply-retention-discount", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
+    }
+
+    const result = await stripeService.applyRetentionDiscount(userId);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Apply retention discount error:", error);
+    res.status(500).json({ error: "Failed to apply retention discount" });
+  }
+});
+
+// ============================================
+// Promo Code API Endpoints
+// ============================================
+
+// Validate a promo code (public endpoint)
+app.post("/api/promo-codes/validate", async (req, res) => {
+  try {
+    const { code, userId } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: "Promo code is required" });
+    }
+
+    const result = await promoCodeService.validatePromoCode(code, userId);
+    res.json(result);
+  } catch (error) {
+    console.error("[PROMO] Validation error:", error);
+    res.status(500).json({ error: "Failed to validate promo code" });
+  }
+});
+
+// Create a promo code (admin endpoint)
+app.post("/api/admin/promo-codes", async (req, res) => {
+  try {
+    // TODO: Add admin authentication check
+    const {
+      code,
+      description,
+      discountType,
+      discountValue,
+      maxRedemptions,
+      validFrom,
+      validUntil,
+      stripePromoCodeId,
+      stripeCouponId,
+    } = req.body;
+
+    if (!code || !discountType || discountValue === undefined) {
+      return res.status(400).json({
+        error: "code, discountType, and discountValue are required",
+      });
+    }
+
+    if (!["percent", "fixed"].includes(discountType)) {
+      return res.status(400).json({
+        error: "discountType must be 'percent' or 'fixed'",
+      });
+    }
+
+    const result = await promoCodeService.createPromoCode({
+      code,
+      description,
+      discountType,
+      discountValue,
+      maxRedemptions,
+      validFrom: validFrom ? new Date(validFrom) : undefined,
+      validUntil: validUntil ? new Date(validUntil) : undefined,
+      stripePromoCodeId,
+      stripeCouponId,
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("[PROMO] Create error:", error);
+    res.status(500).json({ error: "Failed to create promo code" });
+  }
+});
+
+// List all promo codes (admin endpoint)
+app.get("/api/admin/promo-codes", async (_req, res) => {
+  try {
+    // TODO: Add admin authentication check
+    const result = await promoCodeService.listPromoCodes();
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("[PROMO] List error:", error);
+    res.status(500).json({ error: "Failed to list promo codes" });
+  }
+});
+
+// Update a promo code (admin endpoint)
+app.put("/api/admin/promo-codes/:id", async (req, res) => {
+  try {
+    // TODO: Add admin authentication check
+    const { id } = req.params;
+    const { description, maxRedemptions, validFrom, validUntil, isActive } = req.body;
+
+    const result = await promoCodeService.updatePromoCode(id, {
+      description,
+      maxRedemptions,
+      validFrom: validFrom ? new Date(validFrom) : undefined,
+      validUntil: validUntil ? new Date(validUntil) : undefined,
+      isActive,
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("[PROMO] Update error:", error);
+    res.status(500).json({ error: "Failed to update promo code" });
+  }
+});
+
+// ============================================
+// Scheduled Jobs API Endpoints (Admin)
+// ============================================
+
+// Manually trigger trial notification check (for testing)
+app.post("/api/admin/run-trial-notifications", async (_req, res) => {
+  try {
+    // TODO: Add admin authentication check
+    const result = await runTrialNotificationCheckNow();
+    res.json(result);
+  } catch (error) {
+    console.error("[SCHEDULED] Manual trigger error:", error);
+    res.status(500).json({ error: "Failed to run trial notifications" });
+  }
+});
+
 // Email transporter configuration
 // In production, use a real email service (SendGrid, AWS SES, etc.)
 const createEmailTransporter = () => {
@@ -1478,6 +1673,11 @@ async function main() {
     });
     // --- GOOGLE AUTH SETUP END ---
     console.log("Auth setup complete");
+
+    // Start scheduled jobs
+    startTrialNotificationJob();
+    console.log("Scheduled jobs initialized");
+
     // Mount the cases router
     app.use("/api/cases", casesRouter);
   } catch (error) {

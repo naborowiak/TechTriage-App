@@ -89,14 +89,19 @@ export async function loadSubscription(
       liveSessions: usage?.liveSessions || 0,
     };
 
+    // Calculate total video sessions available (included + purchased credits)
+    const includedVideoSessions = limits.includedVideoSessions;
+    const purchasedVideoCredits = subscription?.videoCredits || 0;
+    const totalVideoSessions = includedVideoSessions + purchasedVideoCredits;
+
     // Calculate if user can use each feature
     const canUseChat = currentUsage.chatSessions < limits.chatSessions;
     const canUsePhoto =
       limits.photoAnalyses === Infinity ||
       (limits.photoAnalyses > 0 && currentUsage.photoAnalyses < limits.photoAnalyses);
     const canUseLive =
-      limits.liveSessions === Infinity ||
-      (limits.liveSessions > 0 && currentUsage.liveSessions < limits.liveSessions);
+      totalVideoSessions === Infinity ||
+      (totalVideoSessions > 0 && currentUsage.liveSessions < totalVideoSessions);
 
     req.subscription = {
       tier,
@@ -213,6 +218,13 @@ export async function incrementUsage(
 ): Promise<void> {
   const now = new Date();
 
+  // Get subscription for period dates and video credits
+  const [sub] = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.userId, userId))
+    .limit(1);
+
   // Find current period usage record
   let [usage] = await db
     .select()
@@ -227,13 +239,6 @@ export async function incrementUsage(
     .limit(1);
 
   if (!usage) {
-    // Get subscription for period dates
-    const [sub] = await db
-      .select()
-      .from(subscriptionsTable)
-      .where(eq(subscriptionsTable.userId, userId))
-      .limit(1);
-
     // Calculate period dates
     let periodStart: Date;
     let periodEnd: Date;
@@ -259,15 +264,51 @@ export async function incrementUsage(
       .returning();
 
     usage = newUsage;
+
+    // For live sessions: if this is the first session and user has no included sessions,
+    // consume a purchased credit
+    if (feature === 'liveSessions' && sub) {
+      const tier = (sub.tier || 'free') as PlanTier;
+      const includedSessions = PLAN_LIMITS[tier].includedVideoSessions;
+      if (includedSessions === 0 && (sub.videoCredits || 0) > 0) {
+        await db
+          .update(subscriptionsTable)
+          .set({
+            videoCredits: (sub.videoCredits || 0) - 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(subscriptionsTable.userId, userId));
+      }
+    }
   } else {
     // Increment existing record
+    const newCount = (usage[feature] || 0) + 1;
     await db
       .update(usageTable)
       .set({
-        [feature]: (usage[feature] || 0) + 1,
+        [feature]: newCount,
         updatedAt: new Date(),
       })
       .where(eq(usageTable.id, usage.id));
+
+    // For live sessions: consume a purchased credit if exceeding included sessions
+    if (feature === 'liveSessions' && sub) {
+      const tier = (sub.tier || 'free') as PlanTier;
+      const includedSessions = PLAN_LIMITS[tier].includedVideoSessions;
+      const currentUsed = usage.liveSessions || 0;
+
+      // If the new session exceeds included sessions, consume a purchased credit
+      if (newCount > includedSessions && (sub.videoCredits || 0) > 0) {
+        await db
+          .update(subscriptionsTable)
+          .set({
+            videoCredits: (sub.videoCredits || 0) - 1,
+            updatedAt: new Date(),
+          })
+          .where(eq(subscriptionsTable.userId, userId));
+        console.log(`[USAGE] Consumed 1 purchased video credit for user ${userId}. Remaining: ${(sub.videoCredits || 0) - 1}`);
+      }
+    }
   }
 }
 
@@ -322,11 +363,16 @@ export async function checkFeatureAccess(
     liveSessions: usage?.liveSessions || 0,
   };
 
+  // Calculate total video sessions (included + purchased credits)
+  const includedVideoSessions = limits.includedVideoSessions;
+  const purchasedVideoCredits = subscription?.videoCredits || 0;
+  const totalVideoSessions = includedVideoSessions + purchasedVideoCredits;
+
   // Check specific feature
   const featureMap = {
     chat: { current: currentUsage.chatSessions, limit: limits.chatSessions },
     photo: { current: currentUsage.photoAnalyses, limit: limits.photoAnalyses },
-    live: { current: currentUsage.liveSessions, limit: limits.liveSessions },
+    live: { current: currentUsage.liveSessions, limit: totalVideoSessions },
   };
 
   const { current, limit } = featureMap[feature];

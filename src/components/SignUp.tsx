@@ -12,7 +12,10 @@ import {
   Lock,
   ChevronDown,
   AlertCircle,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 import { Logo } from "./Logo";
 import { PageView } from "../types";
 import { checkTrialEligibility, startTrial } from "../services/trialService";
@@ -60,7 +63,7 @@ const ProgressBar: React.FC<{ step: number; totalSteps: number }> = ({
         </span>
         <span>{Math.round(progress)}%</span>
       </div>
-      <div className="h-1.5 bg-midnight-700 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-light-300 dark:bg-midnight-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-electric-indigo to-electric-cyan transition-all duration-500 ease-out rounded-full"
           style={{ width: `${progress}%` }}
@@ -152,25 +155,43 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   subtitle,
   showProgressBar,
   onLogoClick,
-}) => (
-  <div className="min-h-screen bg-midnight-950 relative flex flex-col items-center noise-texture">
+}) => {
+  const { theme, toggleTheme } = useTheme();
+
+  return (
+  <div className="min-h-screen bg-light-100 dark:bg-midnight-950 relative flex flex-col items-center transition-colors">
     {/* Background orbs */}
     <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
     <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
 
     {/* Header / Logo */}
-    <div className="w-full pt-8 pb-6 flex justify-center z-10">
+    <div className="w-full pt-8 pb-6 flex justify-center z-10 relative">
       <button
         onClick={onLogoClick}
         className="focus:outline-none hover:opacity-80 transition-opacity"
       >
-        <Logo variant="light" />
+        <Logo variant="dark" className="dark:hidden" />
+        <Logo variant="light" className="hidden dark:flex" />
+      </button>
+
+      {/* Theme Toggle */}
+      <button
+        onClick={toggleTheme}
+        className="absolute right-6 top-8 p-2 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      >
+        {theme === 'light' ? (
+          <Moon className="w-5 h-5" />
+        ) : (
+          <Sun className="w-5 h-5" />
+        )}
       </button>
     </div>
 
     {/* Main Card */}
     <div className="w-full max-w-[520px] px-4 pb-12 z-10">
-      <div className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
+      <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-xl border border-light-300 dark:border-midnight-700 overflow-hidden">
         {/* Progress Bar */}
         {step && showProgressBar && (
           <div className="px-8 pt-8">
@@ -180,7 +201,7 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
 
         <div className="p-8 sm:p-10">
           <div className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight mb-3">
+            <h1 className="text-3xl sm:text-4xl font-black text-text-primary dark:text-white leading-tight mb-3">
               {title}
             </h1>
             {subtitle && (
@@ -210,7 +231,8 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export const SignUp = memo<SignUpProps>(function SignUp({
   onStart,
@@ -270,7 +292,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-midnight-950">
+      <div className="min-h-screen flex items-center justify-center bg-light-100 dark:bg-midnight-950 transition-colors">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-text-secondary font-medium">Loading...</p>
@@ -462,14 +484,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       >
         <div className="space-y-6">
           <div className="relative">
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
               How did you find us?
             </label>
             <div className="relative">
               <select
                 value={formData.howHeard}
                 onChange={(e) => updateFormData("howHeard", e.target.value)}
-                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white rounded-xl text-base focus:bg-white dark:focus:bg-midnight-800 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all appearance-none cursor-pointer"
               >
                 <option value="">Select an option</option>
                 {howHeardOptions.map((option) => (
@@ -491,14 +513,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
 
           <button
             onClick={handleComplete}
-            className="w-full text-text-muted hover:text-white text-sm font-medium py-2 transition-colors"
+            className="w-full text-text-muted hover:text-text-primary dark:hover:text-white text-sm font-medium py-2 transition-colors"
           >
             Skip this step
           </button>
         </div>
 
         {/* Benefits reminder */}
-        <div className="mt-8 pt-8 border-t border-midnight-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="mt-8 pt-8 border-t border-light-300 dark:border-midnight-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {benefits.slice(0, 2).map((benefit, i) => (
             <div key={i} className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="w-4 h-4 text-electric-indigo shrink-0 mt-0.5" />
@@ -527,7 +549,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       >
         <div className="space-y-5">
           <div>
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
               Email
             </label>
             <input
@@ -535,12 +557,12 @@ export const SignUp = memo<SignUpProps>(function SignUp({
               value={formData.email}
               onChange={(e) => updateFormData("email", e.target.value)}
               placeholder="you@example.com"
-              className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all placeholder:text-text-muted"
+              className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white rounded-xl text-base focus:bg-white dark:focus:bg-midnight-800 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all placeholder:text-text-muted"
             />
           </div>
 
           <div>
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
               Password
             </label>
             <div className="relative">
@@ -549,12 +571,12 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 value={formData.password}
                 onChange={(e) => updateFormData("password", e.target.value)}
                 placeholder="Create a password"
-                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
+                className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white rounded-xl text-base focus:bg-white dark:focus:bg-midnight-800 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -611,14 +633,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
           </button>
 
           <div className="flex items-center gap-4 py-2">
-            <div className="flex-1 h-px bg-midnight-700"></div>
+            <div className="flex-1 h-px bg-light-300 dark:bg-midnight-700"></div>
             <span className="text-text-muted text-sm font-medium">OR</span>
-            <div className="flex-1 h-px bg-midnight-700"></div>
+            <div className="flex-1 h-px bg-light-300 dark:bg-midnight-700"></div>
           </div>
 
           <button
             onClick={() => (window.location.href = "/auth/google")}
-            className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-midnight-600 bg-midnight-900 rounded-xl hover:bg-midnight-700 hover:border-midnight-500 transition-all group"
+            className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-light-300 dark:border-midnight-600 bg-light-100 dark:bg-midnight-900 rounded-xl hover:bg-light-200 dark:hover:bg-midnight-700 hover:border-light-400 dark:hover:border-midnight-500 transition-all group"
           >
             <svg
               className="w-5 h-5 group-hover:scale-110 transition-transform"
@@ -641,7 +663,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            <span className="font-bold text-text-secondary group-hover:text-white">
+            <span className="font-bold text-text-secondary group-hover:text-text-primary dark:group-hover:text-white">
               Sign up with Google
             </span>
           </button>
@@ -678,7 +700,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+              <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
                 First name*
               </label>
               <input
@@ -686,11 +708,11 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 value={formData.firstName}
                 onChange={(e) => updateFormData("firstName", e.target.value)}
                 placeholder="First name"
-                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
+                className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white rounded-xl text-base focus:bg-white dark:focus:bg-midnight-800 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+              <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
                 Last name*
               </label>
               <input
@@ -698,13 +720,13 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 value={formData.lastName}
                 onChange={(e) => updateFormData("lastName", e.target.value)}
                 placeholder="Last name"
-                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
+                className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white rounded-xl text-base focus:bg-white dark:focus:bg-midnight-800 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
               Phone number{" "}
               <span className="text-text-muted font-normal lowercase">
                 (optional)
@@ -715,7 +737,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
               value={formData.phone}
               onChange={(e) => updateFormData("phone", e.target.value)}
               placeholder="(555) 123-4567"
-              className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
+              className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white rounded-xl text-base focus:bg-white dark:focus:bg-midnight-800 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all"
             />
           </div>
 
@@ -746,14 +768,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       >
         <div className="space-y-6">
           <div>
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
               Home type
             </label>
             <div className="relative">
               <select
                 value={formData.homeType}
                 onChange={(e) => updateFormData("homeType", e.target.value)}
-                className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 text-white rounded-xl text-base focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white rounded-xl text-base focus:bg-white dark:focus:bg-midnight-800 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/10 focus:outline-none transition-all appearance-none cursor-pointer"
               >
                 <option value="">Select your home type</option>
                 {homeTypes.map((type) => (
@@ -767,7 +789,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
           </div>
 
           <div>
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-3">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-3">
               How comfortable are you with technology?
             </label>
             <div className="space-y-3">
@@ -779,12 +801,12 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   className={`w-full px-5 py-4 border-2 rounded-xl text-left transition-all flex items-center justify-between group ${
                     formData.techComfort === level.value
                       ? "border-electric-indigo bg-electric-indigo/10 ring-2 ring-electric-indigo/20"
-                      : "border-midnight-600 bg-midnight-900 hover:border-midnight-500 hover:bg-midnight-800"
+                      : "border-light-300 dark:border-midnight-600 bg-light-100 dark:bg-midnight-900 hover:border-light-400 dark:hover:border-midnight-500 hover:bg-light-200 dark:hover:bg-midnight-800"
                   }`}
                 >
                   <div>
                     <div
-                      className={`font-bold ${formData.techComfort === level.value ? "text-electric-indigo" : "text-white"}`}
+                      className={`font-bold ${formData.techComfort === level.value ? "text-electric-indigo" : "text-text-primary dark:text-white"}`}
                     >
                       {level.label}
                     </div>
@@ -796,7 +818,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       formData.techComfort === level.value
                         ? "border-electric-indigo bg-electric-indigo"
-                        : "border-midnight-500"
+                        : "border-light-400 dark:border-midnight-500"
                     }`}
                   >
                     {formData.techComfort === level.value && (
@@ -835,7 +857,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       >
         <div className="space-y-8">
           <div>
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-3">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-3">
               Household size
             </label>
             <div className="flex flex-wrap gap-3">
@@ -847,7 +869,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                   className={`px-5 py-2.5 border-2 rounded-full text-sm font-bold transition-all ${
                     formData.householdSize === size
                       ? "border-electric-indigo bg-electric-indigo text-white shadow-md shadow-electric-indigo/20"
-                      : "border-midnight-600 text-text-secondary hover:border-midnight-500 hover:bg-midnight-800"
+                      : "border-light-300 dark:border-midnight-600 text-text-secondary hover:border-light-400 dark:hover:border-midnight-500 hover:bg-light-200 dark:hover:bg-midnight-800"
                   }`}
                 >
                   {size}
@@ -857,7 +879,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
           </div>
 
           <div>
-            <label className="block text-white font-bold text-sm uppercase tracking-wide mb-3">
+            <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-3">
               Areas of focus{" "}
               <span className="text-text-muted font-normal normal-case ml-1">
                 (select all that apply)
@@ -875,7 +897,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                     className={`p-4 border-2 rounded-xl text-left transition-all ${
                       isSelected
                         ? "border-electric-indigo bg-electric-indigo/10 shadow-inner"
-                        : "border-midnight-600 bg-midnight-900 hover:border-midnight-500 hover:bg-midnight-800"
+                        : "border-light-300 dark:border-midnight-600 bg-light-100 dark:bg-midnight-900 hover:border-light-400 dark:hover:border-midnight-500 hover:bg-light-200 dark:hover:bg-midnight-800"
                     }`}
                   >
                     <Icon

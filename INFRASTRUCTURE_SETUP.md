@@ -167,15 +167,15 @@ EMAIL_FROM=support@totalassist.tech
 ### C. Create Products & Prices
 1. Go to Products → Add Product
 
-**Scout Home:**
-- Name: "Scout Home"
+**TotalAssist Home:**
+- Name: "TotalAssist Home"
 - Description: "The Daily Driver - Unlimited Chat, Photos, Voice + 1 Video/week"
 - Pricing:
   - Monthly: $9.99/month (recurring)
   - Annual: $7.99/month billed annually ($95.88/year)
 
-**Scout Pro:**
-- Name: "Scout Pro"
+**TotalAssist Pro:**
+- Name: "TotalAssist Pro"
 - Description: "The Power User - Everything unlimited + 15 Video/month + Premium AI"
 - Pricing:
   - Monthly: $19.99/month (recurring)

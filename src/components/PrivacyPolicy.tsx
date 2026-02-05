@@ -63,7 +63,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             2. Device Permissions (Camera & Microphone)
           </h3>
           <p>
-            To use features like "Scout Snap" or "Live Video Support," our web
+            To use features like "Scout Snapshot" or "Live Video Support," our web
             application may request access to your device's camera and
             microphone. You may revoke these permissions at any time via your
             browser settings.

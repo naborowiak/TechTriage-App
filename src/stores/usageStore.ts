@@ -15,6 +15,7 @@ export interface UsageLimits {
   chat: FeatureUsage;
   photo: FeatureUsage;
   signal: FeatureUsage;
+  voice: FeatureUsage;
 }
 
 // Video credits are handled separately with different reset logic
@@ -59,17 +60,17 @@ interface UsageContextValue extends UsageState {
 // Tier 0: Guest (Anonymous) - Lead Capture
 //   - 1 message, hard block on #2 -> Force Signup
 //
-// Tier 1: Scout Free (Signed In) - The "Taste Test"
+// Tier 1: TotalAssist Free (Signed In) - The "Taste Test"
 //   - Chat: 5 messages/month
 //   - Photos: 1 photo/month
 //   - Voice & Video: LOCKED
 //
-// Tier 2: Scout Home ($9.99/mo) - The "Daily Driver"
+// Tier 2: TotalAssist Home ($9.99/mo) - The "Daily Driver"
 //   - Chat/Photos/Voice: UNLIMITED
 //   - Video Diagnostic: 1 Credit/Week (resets every 7 days)
 //   - Model: Flash for Chat/Voice, Pro for Video
 //
-// Tier 3: Scout Pro ($19.99/mo) - The "Power User"
+// Tier 3: TotalAssist Pro ($19.99/mo) - The "Power User"
 //   - Chat/Photos/Voice: UNLIMITED
 //   - Video Diagnostic: 15 Credits/Month
 //   - Model: Pro for ALL interactions
@@ -81,21 +82,25 @@ const TIER_LIMITS: Record<UserTier, UsageLimits> = {
     chat: { used: 0, limit: 1 },
     photo: { used: 0, limit: 0 },
     signal: { used: 0, limit: 0 },
+    voice: { used: 0, limit: 0 },
   },
   free: {
     chat: { used: 0, limit: 5 },
     photo: { used: 0, limit: 1 },
     signal: { used: 0, limit: 0 },
+    voice: { used: 0, limit: 0 },
   },
   home: {
     chat: { used: 0, limit: UNLIMITED },
     photo: { used: 0, limit: UNLIMITED },
     signal: { used: 0, limit: UNLIMITED },
+    voice: { used: 0, limit: UNLIMITED },
   },
   pro: {
     chat: { used: 0, limit: UNLIMITED },
     photo: { used: 0, limit: UNLIMITED },
     signal: { used: 0, limit: UNLIMITED },
+    voice: { used: 0, limit: UNLIMITED },
   },
 };
 
@@ -249,6 +254,7 @@ export const UsageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               chat: { used: prev.usage.chat.used, limit: TIER_LIMITS[tier].chat.limit },
               photo: { used: prev.usage.photo.used, limit: TIER_LIMITS[tier].photo.limit },
               signal: { used: prev.usage.signal.used, limit: TIER_LIMITS[tier].signal.limit },
+              voice: { used: prev.usage.voice.used, limit: TIER_LIMITS[tier].voice.limit },
             },
         videoCredits: {
           subscriptionCredits: config.limit,
@@ -457,7 +463,7 @@ export const useSyncUsageWithAuth = (isAuthenticated: boolean, userId?: string, 
 export const getUpgradeReason = (tier: UserTier, feature: keyof UsageLimits | 'videoDiagnostic'): string | null => {
   if (feature === 'videoDiagnostic') {
     if (tier === 'guest' || tier === 'free') {
-      return 'Video Diagnostic requires Scout Home or Pro';
+      return 'Video Diagnostic requires TotalAssist Home or Pro';
     }
     return null;
   }
@@ -466,7 +472,9 @@ export const getUpgradeReason = (tier: UserTier, feature: keyof UsageLimits | 'v
   if (limit === 0) {
     switch (feature) {
       case 'signal':
-        return 'Scout Signal requires Scout Home or Pro';
+        return 'Scout Voice requires TotalAssist Home or Pro';
+      case 'voice':
+        return 'Voice Mode requires TotalAssist Home or Pro';
       case 'photo':
         return 'Scout Snapshot requires a free account';
       default:
@@ -492,7 +500,7 @@ export const VIDEO_CREDIT_PRICES = {
 // Tier display info
 export const TIER_INFO: Record<UserTier, { name: string; price: string; tagline: string }> = {
   guest: { name: 'Guest', price: 'Free', tagline: 'Try Scout' },
-  free: { name: 'Scout Free', price: 'Free', tagline: 'The Taste Test' },
-  home: { name: 'Scout Home', price: '$9.99/mo', tagline: 'The Daily Driver' },
-  pro: { name: 'Scout Pro', price: '$19.99/mo', tagline: 'The Power User' },
+  free: { name: 'TotalAssist Free', price: 'Free', tagline: 'The Taste Test' },
+  home: { name: 'TotalAssist Home', price: '$9.99/mo', tagline: 'The Daily Driver' },
+  pro: { name: 'TotalAssist Pro', price: '$19.99/mo', tagline: 'The Power User' },
 };

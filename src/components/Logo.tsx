@@ -94,21 +94,26 @@ export const Logo: React.FC<LogoProps> = ({
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className={`flex items-center gap-2.5 select-none ${className}`}>
-      {!imgError ? (
-        <img
-          src="/total_assist_logo.png"
-          alt="TotalAssist Logo"
-          className="w-9 h-9 object-contain"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <ScoutLogo size={36} />
-      )}
-      <div className="flex flex-col justify-center">
-        <span className="text-xl font-bold tracking-tight leading-none">
+    <div className={`flex flex-row items-center gap-2.5 select-none ${className}`}>
+      <div className="shrink-0">
+        {!imgError ? (
+          <img
+            src="/total_assist_logo-new.png"
+            alt="TotalAssist Logo"
+            className="w-9 h-9 object-contain"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <ScoutLogo size={36} />
+        )}
+      </div>
+      <div className="flex flex-col justify-center items-start shrink-0">
+        <span className="text-xl font-bold tracking-tight leading-none whitespace-nowrap">
           <span className={isLight ? 'text-white' : 'text-midnight-950'}>Total</span>
           <span className="text-gradient-electric">Assist</span>
+        </span>
+        <span className={`text-[9px] font-medium tracking-wide uppercase whitespace-nowrap ${isLight ? 'text-white/60' : 'text-midnight-600'}`}>
+          Powered by Scout AI
         </span>
       </div>
     </div>

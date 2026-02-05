@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, Lock, XCircle } from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, Lock, XCircle, Sun, Moon } from "lucide-react";
 import { Logo } from "./Logo";
 import { PageView } from "../types";
+import { useTheme } from "../context/ThemeContext";
 
 interface ResetPasswordProps {
   onNavigate: (view: PageView) => void;
@@ -17,6 +18,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [invalidToken, setInvalidToken] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   // Extract token from URL on mount
   useEffect(() => {
@@ -69,26 +71,41 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
   // Invalid or expired token state
   if (invalidToken) {
     return (
-      <div className="min-h-screen bg-midnight-950 relative flex flex-col items-center noise-texture">
+      <div className="min-h-screen bg-light-100 dark:bg-midnight-950 relative flex flex-col items-center transition-colors">
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
 
-        <div className="w-full pt-8 pb-6 flex justify-center z-10">
+        <div className="w-full pt-8 pb-6 flex justify-center z-10 relative">
           <button
             onClick={() => onNavigate(PageView.HOME)}
             className="focus:outline-none hover:opacity-80 transition-opacity"
           >
-            <Logo variant="light" />
+            <Logo variant="dark" className="dark:hidden" />
+            <Logo variant="light" className="hidden dark:flex" />
+          </button>
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="absolute right-6 top-8 p-2 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            {theme === 'light' ? (
+              <Moon className="w-5 h-5" />
+            ) : (
+              <Sun className="w-5 h-5" />
+            )}
           </button>
         </div>
 
         <div className="w-full max-w-[480px] px-4 pb-12 z-10">
-          <div className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
+          <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-xl border border-light-300 dark:border-midnight-700 overflow-hidden">
             <div className="p-8 sm:p-10 text-center">
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <XCircle className="w-8 h-8 text-red-400" />
+                <XCircle className="w-8 h-8 text-red-500" />
               </div>
-              <h1 className="text-2xl font-bold text-white mb-3">Link Expired or Invalid</h1>
+              <h1 className="text-2xl font-bold text-text-primary dark:text-white mb-3">Link Expired or Invalid</h1>
               <p className="text-text-secondary mb-6">
                 This password reset link is no longer valid. Links expire after 1 hour for security.
               </p>
@@ -100,7 +117,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
               </button>
               <button
                 onClick={() => onNavigate(PageView.LOGIN)}
-                className="text-text-secondary hover:text-white text-sm font-medium transition-colors"
+                className="text-text-secondary hover:text-text-primary dark:hover:text-white text-sm font-medium transition-colors"
               >
                 Return to Login
               </button>
@@ -112,32 +129,47 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="min-h-screen bg-midnight-950 relative flex flex-col items-center noise-texture">
+    <div className="min-h-screen bg-light-100 dark:bg-midnight-950 relative flex flex-col items-center transition-colors">
       {/* Background orbs */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
 
       {/* Header / Logo */}
-      <div className="w-full pt-8 pb-6 flex justify-center z-10">
+      <div className="w-full pt-8 pb-6 flex justify-center z-10 relative">
         <button
           onClick={() => onNavigate(PageView.HOME)}
           className="focus:outline-none hover:opacity-80 transition-opacity"
         >
-          <Logo variant="light" />
+          <Logo variant="dark" className="dark:hidden" />
+          <Logo variant="light" className="hidden dark:flex" />
+        </button>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="absolute right-6 top-8 p-2 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? (
+            <Moon className="w-5 h-5" />
+          ) : (
+            <Sun className="w-5 h-5" />
+          )}
         </button>
       </div>
 
       {/* Main Card */}
       <div className="w-full max-w-[480px] px-4 pb-12 z-10">
-        <div className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
+        <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-xl border border-light-300 dark:border-midnight-700 overflow-hidden">
           <div className="p-8 sm:p-10">
             {success ? (
               // Success State
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 className="w-8 h-8 text-green-400" />
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
                 </div>
-                <h1 className="text-2xl font-bold text-white mb-3">Password Reset!</h1>
+                <h1 className="text-2xl font-bold text-text-primary dark:text-white mb-3">Password Reset!</h1>
                 <p className="text-text-secondary mb-8">
                   Your password has been successfully updated. You can now log in with your new password.
                 </p>
@@ -155,7 +187,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
                   <div className="w-14 h-14 bg-electric-indigo/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Lock className="w-7 h-7 text-electric-indigo" />
                   </div>
-                  <h1 className="text-2xl font-bold text-white mb-2">Create New Password</h1>
+                  <h1 className="text-2xl font-bold text-text-primary dark:text-white mb-2">Create New Password</h1>
                   <p className="text-text-secondary">
                     Enter your new password below. Make sure it's at least 8 characters.
                   </p>
@@ -164,13 +196,13 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {error && (
                     <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                      <p className="text-red-400 font-medium text-sm">{error}</p>
+                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                      <p className="text-red-600 dark:text-red-400 font-medium text-sm">{error}</p>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+                    <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
                       New Password
                     </label>
                     <div className="relative">
@@ -179,25 +211,25 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter new password"
-                        className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 rounded-xl text-base text-white focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
+                        className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 rounded-xl text-base text-text-primary dark:text-white focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
                         required
                         autoFocus
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                     {password && !passwordLongEnough && (
-                      <p className="text-red-400 text-xs mt-2">Password must be at least 8 characters</p>
+                      <p className="text-red-600 dark:text-red-400 text-xs mt-2">Password must be at least 8 characters</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+                    <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
                       Confirm Password
                     </label>
                     <div className="relative">
@@ -206,19 +238,19 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm new password"
-                        className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 rounded-xl text-base text-white focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
+                        className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 rounded-xl text-base text-text-primary dark:text-white focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white"
                       >
                         {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
                     {confirmPassword && !passwordsMatch && (
-                      <p className="text-red-400 text-xs mt-2">Passwords do not match</p>
+                      <p className="text-red-600 dark:text-red-400 text-xs mt-2">Passwords do not match</p>
                     )}
                   </div>
 

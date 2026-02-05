@@ -1,5 +1,6 @@
 import { GoogleGenAI, GenerateContentResponse, FunctionDeclaration, Type } from "@google/genai";
 import { ChatMessage, UserRole } from "../types";
+import { VoiceTranscriptEntry } from "../hooks/useVoiceSession";
 
 const SYSTEM_INSTRUCTION = `
 You are a 'Scout Agent', an expert human technical support specialist. 
@@ -166,5 +167,180 @@ export const sendMessageAsLiveAgent = async (
   } catch (error) {
     console.error("Gemini API Error (Live Agent):", error);
     return { text: "I'm having some technical difficulties on my end. Give me just a moment..." };
+  }
+};
+
+// Voice Mode System Instruction
+const VOICE_MODE_INSTRUCTION = `
+You are Scout, a friendly and expert AI technical support assistant conducting a voice-guided diagnostic session.
+
+VOICE CONVERSATION GUIDELINES:
+- Keep responses concise and conversational (2-3 sentences max unless explaining steps)
+- Speak naturally as if having a phone conversation
+- Use simple, clear language that's easy to understand when spoken aloud
+- Pause between steps to let the user follow along
+- Be encouraging and supportive
+
+PHOTO REQUEST PROTOCOL:
+When you need to see something to diagnose the issue, include the marker [PHOTO_REQUEST] at the START of your response, followed by a clear request for what you need to see.
+
+Examples:
+- "[PHOTO_REQUEST] Could you show me the front panel of your router so I can see the status lights?"
+- "[PHOTO_REQUEST] Can you take a photo of the error message on your screen?"
+- "[PHOTO_REQUEST] Let me see the back of the device where the cables connect."
+
+Only request photos when visual information is genuinely needed for diagnosis. Don't request multiple photos at once.
+
+DIAGNOSTIC FLOW:
+1. Greet the user warmly and ask about their issue
+2. Listen to their description and ask clarifying questions
+3. Request photos when needed using [PHOTO_REQUEST]
+4. Analyze photos and explain what you see
+5. Provide step-by-step troubleshooting guidance
+6. Confirm each step is completed before moving to the next
+7. Summarize findings and recommendations at the end
+
+SAFETY:
+Never assist with gas leaks, electrical panels, bare wires, or structural changes. Advise calling a professional for these.
+
+Remember: This is a voice conversation. Keep it natural and avoid long blocks of text.
+`;
+
+// Voice mode message function with photo request detection
+export const sendVoiceMessage = async (
+  history: VoiceTranscriptEntry[],
+  userText: string,
+  photo?: string
+): Promise<{ text: string; photoRequest: boolean; photoPrompt?: string }> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    const model = "gemini-2.0-flash";
+
+    // Convert voice transcript to Gemini format
+    const contents: Array<{ role: string; parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> }> = history.map(entry => {
+      return {
+        role: entry.role === 'user' ? 'user' : 'model',
+        parts: [{ text: entry.text }]
+      };
+    });
+
+    // Add the current message
+    const currentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [{ text: userText }];
+    if (photo) {
+      const base64Data = photo.includes('base64,') ? photo.split('base64,')[1] : photo;
+      currentParts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+    }
+    contents.push({ role: 'user', parts: currentParts });
+
+    const response: GenerateContentResponse = await ai.models.generateContent({
+      model: model,
+      contents: contents,
+      config: {
+        systemInstruction: VOICE_MODE_INSTRUCTION,
+        temperature: 0.5,
+      }
+    });
+
+    let text = response.text || "I'm processing that for you...";
+    let photoRequest = false;
+    let photoPrompt: string | undefined;
+
+    // Check for [PHOTO_REQUEST] marker
+    if (text.includes('[PHOTO_REQUEST]')) {
+      photoRequest = true;
+      // Remove the marker from the response text
+      text = text.replace('[PHOTO_REQUEST]', '').trim();
+
+      // The photo prompt is typically the first sentence after the marker
+      const sentences = text.split(/[.?!]/);
+      if (sentences.length > 0) {
+        photoPrompt = sentences[0].trim();
+        if (photoPrompt && !photoPrompt.endsWith('?')) {
+          photoPrompt += '?';
+        }
+      }
+    }
+
+    return { text, photoRequest, photoPrompt };
+
+  } catch (error) {
+    console.error("Gemini API Error (Voice Mode):", error);
+    return {
+      text: "I'm having a bit of trouble connecting. Could you repeat that?",
+      photoRequest: false
+    };
+  }
+};
+
+// Generate a summary for the voice diagnostic report
+export const generateVoiceSummary = async (
+  transcript: VoiceTranscriptEntry[],
+  photoCount: number
+): Promise<{
+  issue: string;
+  diagnosis: string;
+  steps: string[];
+  outcome: 'resolved' | 'partial' | 'escalate';
+  recommendations: string[];
+}> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    const model = "gemini-2.0-flash";
+
+    const transcriptText = transcript
+      .map(e => `${e.role === 'user' ? 'User' : 'Scout'}: ${e.text}`)
+      .join('\n');
+
+    const prompt = `Analyze this voice diagnostic session transcript and provide a structured summary in JSON format:
+
+TRANSCRIPT:
+${transcriptText}
+
+Photos analyzed during session: ${photoCount}
+
+Provide a JSON response with these fields:
+- issue: A brief (1-2 sentence) description of the user's original problem
+- diagnosis: What was determined about the issue (1-2 sentences)
+- steps: Array of key troubleshooting steps taken (max 5, each under 100 chars)
+- outcome: Either "resolved" (issue fixed), "partial" (some progress), or "escalate" (needs pro)
+- recommendations: Array of follow-up suggestions (max 3, each under 100 chars)
+
+Return ONLY valid JSON, no markdown.`;
+
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        temperature: 0.3,
+      }
+    });
+
+    const responseText = response.text || '{}';
+
+    // Try to parse JSON from response
+    try {
+      // Clean up potential markdown formatting
+      const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      return JSON.parse(cleanJson);
+    } catch {
+      // Return default if parsing fails
+      return {
+        issue: transcript.find(t => t.role === 'user')?.text.substring(0, 200) || 'Technical issue diagnosed',
+        diagnosis: 'Voice diagnostic session completed.',
+        steps: [],
+        outcome: 'partial',
+        recommendations: ['Continue monitoring the issue', 'Contact support if problem persists'],
+      };
+    }
+
+  } catch (error) {
+    console.error("Gemini API Error (Voice Summary):", error);
+    return {
+      issue: 'Technical issue diagnosed',
+      diagnosis: 'Voice diagnostic session completed.',
+      steps: [],
+      outcome: 'partial',
+      recommendations: ['Continue monitoring the issue', 'Contact support if problem persists'],
+    };
   }
 };

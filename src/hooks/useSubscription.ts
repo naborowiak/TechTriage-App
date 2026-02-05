@@ -14,12 +14,20 @@ export interface SubscriptionLimits {
   liveSessions: number;
 }
 
+export interface VideoCredits {
+  included: number;    // From subscription plan
+  purchased: number;   // Bought via credit packs
+  used: number;        // Used this period
+  remaining: number;   // Available to use
+}
+
 export interface SubscriptionState {
   tier: SubscriptionTier;
   status: string;
   billingInterval: 'monthly' | 'annual' | null;
   usage: SubscriptionUsage;
   limits: SubscriptionLimits;
+  videoCredits: VideoCredits;
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   trialEnd: Date | null;
@@ -43,7 +51,8 @@ const defaultState: SubscriptionState = {
   status: 'active',
   billingInterval: null,
   usage: { chatSessions: 0, photoAnalyses: 0, liveSessions: 0 },
-  limits: { chatSessions: 5, photoAnalyses: 2, liveSessions: 1 },  // Trial limits
+  limits: { chatSessions: 5, photoAnalyses: 2, liveSessions: 0 },  // Free tier limits
+  videoCredits: { included: 0, purchased: 0, used: 0, remaining: 0 },
   currentPeriodEnd: null,
   cancelAtPeriodEnd: false,
   trialEnd: null,
@@ -74,7 +83,8 @@ export function useSubscription(userId: string | undefined) {
           status: data.status || 'active',
           billingInterval: data.billingInterval || null,
           usage: data.usage || { chatSessions: 0, photoAnalyses: 0, liveSessions: 0 },
-          limits: data.limits || { chatSessions: 5, photoAnalyses: 2, liveSessions: 1 },
+          limits: data.limits || { chatSessions: 5, photoAnalyses: 2, liveSessions: 0 },
+          videoCredits: data.videoCredits || { included: 0, purchased: 0, used: 0, remaining: 0 },
           currentPeriodEnd: data.currentPeriodEnd
             ? new Date(data.currentPeriodEnd)
             : null,

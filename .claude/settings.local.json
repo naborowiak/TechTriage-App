@@ -27,7 +27,14 @@
       "Bash(git pull:*)",
       "Bash(git status:*)",
       "Bash(git stash:*)",
-      "Bash(env)"
+      "Bash(env)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nTotalAssist rebrand with full monetization system\n\n## Brand & UI\n- Rebrand from TechTriage to TotalAssist \\(platform\\) + Scout \\(AI persona\\)\n- Dark theme throughout \\(midnight color palette\\)\n- New logos: total_assist_logo.png, scout_logo.png\n- Improved button/icon contrast and accessibility\n\n## Pricing & Tiers\n- Scout Free: 5 chat/month, 1 photo/month, voice/video locked\n- Scout Home \\($9.99/mo\\): Unlimited chat/photo/voice, 1 video credit/week\n- Scout Pro \\($19.99/mo\\): Everything unlimited, 15 video credits/month, premium AI\n\n## Monetization System \\(usageStore\\)\n- Tier-based usage tracking with monthly/weekly resets\n- Video credits system with weekly reset \\(Home\\) / monthly reset \\(Pro\\)\n- Ad-hoc credit purchases \\($5/1 credit, $12/3 pack\\)\n- Signup gate for guests, upgrade gate for free users\n- RefillCreditsModal for paid users who exhaust credits\n\n## New Components\n- UpgradeModal, SignupGateModal, RefillCreditsModal\n- ForgotPassword, ResetPassword flows\n- DiagnosticReport for video analysis output\n- UsageMeter in Dashboard sidebar\n\n## Features\n- Scout Chat, Scout Snapshot, Scout Signal \\(voice\\), Video Diagnostic\n- 4 features displayed on Pricing and HowItWorks pages\n- FAQ section for each feature including Scout Signal\n- Markdown rendering in chat widget\n\n## Infrastructure\n- Added INFRASTRUCTURE_SETUP.md with full deployment guide\n- Supabase, Google OAuth, Resend, Stripe setup instructions\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git remote add:*)",
+      "Bash(git remote:*)",
+      "Bash(pgrep:*)",
+      "Bash(timeout 5 npm run server:*)"
     ]
   }
 }

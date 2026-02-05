@@ -9,8 +9,11 @@ import {
 import { eq, and, lte, gte } from 'drizzle-orm';
 import {
   STRIPE_PRICES,
+  STRIPE_CREDIT_PRICES,
   getTierFromPriceId,
   getBillingIntervalFromPriceId,
+  isCreditPackPurchase,
+  getCreditsFromPriceId,
   PLAN_LIMITS,
   TRIAL_DURATION_DAYS,
 } from '../config/stripe';
@@ -55,7 +58,7 @@ export async function getOrCreateStripeCustomer(userId: string): Promise<string>
   return customer.id;
 }
 
-// Create a checkout session for subscription
+// Create a checkout session for subscription or one-time purchase
 export async function createCheckoutSession(
   userId: string,
   priceId: string,
@@ -64,6 +67,39 @@ export async function createCheckoutSession(
 ): Promise<{ sessionId: string; url: string }> {
   const customerId = await getOrCreateStripeCustomer(userId);
 
+  // Check if this is a credit pack (one-time) purchase
+  const isCredits = isCreditPackPurchase(priceId);
+
+  if (isCredits) {
+    // One-time payment for credit packs
+    const creditInfo = getCreditsFromPriceId(priceId);
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        userId,
+        creditType: creditInfo?.type || 'videoDiagnostic',
+        creditQuantity: String(creditInfo?.quantity || 1),
+      },
+      allow_promotion_codes: true,
+    });
+
+    return {
+      sessionId: session.id,
+      url: session.url || '',
+    };
+  }
+
+  // Subscription checkout
   // Check if this is the user's first subscription (for trial)
   const [existingSub] = await db
     .select()
@@ -252,6 +288,11 @@ export async function getSubscriptionStatus(userId: string) {
     )
     .limit(1);
 
+  // Calculate video session allowance: included (from plan) + purchased credits
+  const includedVideoSessions = limits.includedVideoSessions;
+  const purchasedVideoCredits = subscription?.videoCredits || 0;
+  const usedVideoSessions = usage?.liveSessions || 0;
+
   return {
     tier,
     status: subscription?.status || 'active',
@@ -263,12 +304,20 @@ export async function getSubscriptionStatus(userId: string) {
     usage: {
       chatSessions: usage?.chatSessions || 0,
       photoAnalyses: usage?.photoAnalyses || 0,
-      liveSessions: usage?.liveSessions || 0,
+      liveSessions: usedVideoSessions,
     },
     limits: {
       chatSessions: limits.chatSessions,
       photoAnalyses: limits.photoAnalyses,
-      liveSessions: limits.liveSessions,
+      // Total video sessions = included from plan + purchased credits
+      liveSessions: includedVideoSessions + purchasedVideoCredits,
+    },
+    // Additional credit info for UI
+    videoCredits: {
+      included: includedVideoSessions,
+      purchased: purchasedVideoCredits,
+      used: usedVideoSessions,
+      remaining: Math.max(0, includedVideoSessions + purchasedVideoCredits - usedVideoSessions),
     },
   };
 }
@@ -343,6 +392,45 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
     return;
   }
 
+  // Check if this is a one-time payment (credit purchase)
+  if (session.mode === 'payment') {
+    const creditQuantity = parseInt(session.metadata?.creditQuantity || '0', 10);
+    if (creditQuantity > 0) {
+      console.log(`[STRIPE] Processing credit purchase: ${creditQuantity} credits for user ${userId}`);
+
+      // Get or create subscription record to store credits
+      const [existingSub] = await db
+        .select()
+        .from(subscriptionsTable)
+        .where(eq(subscriptionsTable.userId, userId))
+        .limit(1);
+
+      if (existingSub) {
+        // Add credits to existing subscription record
+        await db
+          .update(subscriptionsTable)
+          .set({
+            videoCredits: (existingSub.videoCredits || 0) + creditQuantity,
+            updatedAt: new Date(),
+          })
+          .where(eq(subscriptionsTable.userId, userId));
+      } else {
+        // Create new subscription record with credits (free tier)
+        await db.insert(subscriptionsTable).values({
+          userId,
+          tier: 'free',
+          status: 'active',
+          videoCredits: creditQuantity,
+          stripeCustomerId: session.customer as string,
+        });
+      }
+
+      console.log(`[STRIPE] Successfully added ${creditQuantity} video credits to user ${userId}`);
+    }
+    return;
+  }
+
+  // Handle subscription checkout
   const subscriptionId = session.subscription as string;
   if (!subscriptionId) {
     console.error('No subscription ID in checkout session');
@@ -638,6 +726,90 @@ export function constructWebhookEvent(
     signature,
     process.env.STRIPE_WEBHOOK_SECRET || ''
   );
+}
+
+// Retention discount coupon ID - create this in Stripe Dashboard
+// 20% off for 3 months, coupon ID: STAY20
+const RETENTION_COUPON_ID = process.env.STRIPE_RETENTION_COUPON_ID || 'STAY20';
+
+// Apply retention discount to prevent churn
+export async function applyRetentionDiscount(userId: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    const [subscription] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.userId, userId))
+      .limit(1);
+
+    if (!subscription?.stripeSubscriptionId) {
+      return { success: false, error: 'No active subscription found' };
+    }
+
+    // Check if subscription already has a coupon
+    const stripeSubscription = await stripe.subscriptions.retrieve(
+      subscription.stripeSubscriptionId
+    );
+
+    if (stripeSubscription.discount) {
+      return {
+        success: false,
+        error: 'Your subscription already has a discount applied',
+      };
+    }
+
+    // Apply the retention coupon
+    await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+      coupon: RETENTION_COUPON_ID,
+    });
+
+    console.log(`[STRIPE] Applied retention discount for user ${userId}`);
+    return {
+      success: true,
+      message: 'Discount applied! You now have 20% off for the next 3 months.',
+    };
+  } catch (error) {
+    console.error('[STRIPE] Error applying retention discount:', error);
+
+    // Handle specific Stripe errors
+    if (error instanceof Error) {
+      if (error.message.includes('No such coupon')) {
+        return {
+          success: false,
+          error: 'Retention coupon not configured. Please contact support.',
+        };
+      }
+    }
+
+    return { success: false, error: 'Failed to apply discount' };
+  }
+}
+
+// Check if a subscription has an active discount
+export async function hasActiveDiscount(userId: string): Promise<boolean> {
+  try {
+    const [subscription] = await db
+      .select()
+      .from(subscriptionsTable)
+      .where(eq(subscriptionsTable.userId, userId))
+      .limit(1);
+
+    if (!subscription?.stripeSubscriptionId) {
+      return false;
+    }
+
+    const stripeSubscription = await stripe.subscriptions.retrieve(
+      subscription.stripeSubscriptionId
+    );
+
+    return !!stripeSubscription.discount;
+  } catch (error) {
+    console.error('[STRIPE] Error checking discount status:', error);
+    return false;
+  }
 }
 
 // Export stripe instance for direct use if needed

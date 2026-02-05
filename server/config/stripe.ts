@@ -1,18 +1,40 @@
-// Stripe configuration for TechTriage subscription plans
+// Stripe configuration for TotalAssist subscription plans + credit packs
 
-// Price IDs from Stripe Dashboard
+// ============================================
+// SUBSCRIPTION PRICE IDs (Recurring Revenue)
+// ============================================
 export const STRIPE_PRICES = {
   home: {
-    monthly: 'price_1SvwfjHcv0NiVMuKGDVU6oKu',  // $25/month
-    annual: 'price_1SvwfjHcv0NiVMuKV0AMJZxC',   // $228/year ($19/mo)
+    monthly: 'price_1SxBdZPeLuLIM8GmEUA9WuJH',  // $25/month
+    annual: 'price_1SxBKmPeLuLIM8Gmv3EbHR44',   // $228/year ($19/mo)
   },
   pro: {
-    monthly: 'price_1SvwhfHcv0NiVMuKXauBRlcX',  // $59/month
-    annual: 'price_1Svwi6Hcv0NiVMuKFgbK5GSK',   // $588/year ($49/mo)
+    monthly: 'price_1SxBdvPeLuLIM8GmXo3KCqT2',  // $59/month
+    annual: 'price_1SxBefPeLuLIM8GmlwmfnA2C',   // $588/year ($49/mo)
   },
 } as const;
 
-// Map price IDs back to tiers
+// ============================================
+// CREDIT PACK PRICE IDs (One-time Purchases)
+// ============================================
+// For users who want premium features without subscribing,
+// or subscribers who need more than their included allowance
+export const STRIPE_CREDIT_PRICES = {
+  videoDiagnostic: {
+    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $5 - 1 video diagnostic session
+    pack: 'price_1SxBgLPeLuLIM8GmkJ27pvdX',    // $12 - 3 video diagnostic sessions (save $3)
+  },
+} as const;
+
+// Credit pack quantities
+export const CREDIT_PACK_QUANTITIES = {
+  videoDiagnostic: {
+    single: 1,
+    pack: 3,
+  },
+} as const;
+
+// Map subscription price IDs back to tiers
 export function getTierFromPriceId(priceId: string): 'home' | 'pro' | null {
   if (priceId === STRIPE_PRICES.home.monthly || priceId === STRIPE_PRICES.home.annual) {
     return 'home';
@@ -34,26 +56,43 @@ export function getBillingIntervalFromPriceId(priceId: string): 'monthly' | 'ann
   return null;
 }
 
+// Check if a price ID is a credit pack purchase
+export function isCreditPackPurchase(priceId: string): boolean {
+  return Object.values(STRIPE_CREDIT_PRICES.videoDiagnostic).includes(priceId);
+}
+
+// Get credit quantity from price ID
+export function getCreditsFromPriceId(priceId: string): { type: 'videoDiagnostic'; quantity: number } | null {
+  if (priceId === STRIPE_CREDIT_PRICES.videoDiagnostic.single) {
+    return { type: 'videoDiagnostic', quantity: CREDIT_PACK_QUANTITIES.videoDiagnostic.single };
+  }
+  if (priceId === STRIPE_CREDIT_PRICES.videoDiagnostic.pack) {
+    return { type: 'videoDiagnostic', quantity: CREDIT_PACK_QUANTITIES.videoDiagnostic.pack };
+  }
+  return null;
+}
+
 // Plan feature limits
+// Note: liveSessions = INCLUDED per month. Users can always buy more credits.
 export const PLAN_LIMITS = {
   free: {
-    chatSessions: 5,
-    photoAnalyses: 2,  // Trial taste: 2 photo analyses
-    liveSessions: 1,   // Trial taste: 1 live session
+    chatSessions: 5,           // Limited AI chat sessions
+    photoAnalyses: 2,          // Trial taste: 2 photo analyses
+    includedVideoSessions: 0,  // Must purchase credits for video
     multiHome: false,
     maxHomes: 1,
   },
   home: {
-    chatSessions: Infinity,
-    photoAnalyses: Infinity,
-    liveSessions: 2,
+    chatSessions: Infinity,    // Unlimited AI chat
+    photoAnalyses: Infinity,   // Unlimited photo analysis
+    includedVideoSessions: 2,  // 2 video sessions included/month (can buy more)
     multiHome: false,
     maxHomes: 1,
   },
   pro: {
-    chatSessions: Infinity,
-    photoAnalyses: Infinity,
-    liveSessions: Infinity,
+    chatSessions: Infinity,    // Unlimited AI chat
+    photoAnalyses: Infinity,   // Unlimited photo analysis
+    includedVideoSessions: 5,  // 5 video sessions included/month (can buy more)
     multiHome: true,
     maxHomes: 5,
   },
@@ -65,22 +104,44 @@ export type PlanLimits = typeof PLAN_LIMITS[PlanTier];
 // Plan display information
 export const PLAN_INFO = {
   free: {
-    name: 'Chat',
+    name: 'Free',
     monthlyPrice: 0,
     annualPrice: 0,
-    description: 'Basic AI chat support',
+    description: 'Try Scout AI with limited access',
+    highlights: ['5 AI chat sessions', '2 photo analyses', 'Purchase video credits as needed'],
   },
   home: {
     name: 'Home',
     monthlyPrice: 25,
-    annualPrice: 228, // $19/mo
-    description: 'Full access for homeowners',
+    annualPrice: 228, // $19/mo billed annually
+    description: 'Perfect for homeowners',
+    highlights: ['Unlimited AI chat', 'Unlimited photo analysis', '2 video sessions/month included', 'Buy extra video credits anytime'],
   },
   pro: {
     name: 'Pro',
     monthlyPrice: 59,
-    annualPrice: 588, // $49/mo
-    description: 'Unlimited access for families',
+    annualPrice: 588, // $49/mo billed annually
+    description: 'Best for families & landlords',
+    highlights: ['Everything in Home', '5 video sessions/month included', 'Multi-home support (up to 5)', 'Priority support'],
+  },
+} as const;
+
+// Credit pack display information
+export const CREDIT_PACK_INFO = {
+  videoDiagnostic: {
+    single: {
+      name: 'Video Diagnostic',
+      price: 5,
+      credits: 1,
+      description: 'One live video diagnostic session with AI assistance',
+    },
+    pack: {
+      name: 'Video Diagnostic 3-Pack',
+      price: 12,
+      credits: 3,
+      savings: 3,  // Save $3 vs buying individually
+      description: 'Three live video diagnostic sessions (save $3)',
+    },
   },
 } as const;
 

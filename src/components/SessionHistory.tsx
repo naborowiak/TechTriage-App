@@ -180,13 +180,13 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-midnight-400" />
             <input
               type="text"
               placeholder="Search sessions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#F97316] focus:outline-none transition-colors"
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-midnight-600 rounded-xl bg-white dark:bg-midnight-800 text-text-primary dark:text-white placeholder:text-text-muted focus:border-electric-indigo focus:outline-none transition-colors"
             />
           </div>
         </div>
@@ -195,10 +195,10 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
           {/* Sessions List */}
           <div className="lg:col-span-1 space-y-3">
             {filteredSessions.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
-                <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="font-bold text-[#1F2937] mb-2">No Sessions Yet</h3>
-                <p className="text-gray-500 text-sm">
+              <div className="bg-white dark:bg-midnight-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-midnight-700">
+                <MessageSquare className="w-12 h-12 text-gray-300 dark:text-midnight-600 mx-auto mb-4" />
+                <h3 className="font-bold text-text-primary dark:text-white mb-2">No Sessions Yet</h3>
+                <p className="text-text-muted text-sm">
                   Your support sessions will appear here after you complete them.
                 </p>
               </div>
@@ -207,23 +207,23 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                 <button
                   key={session.id}
                   onClick={() => setSelectedSession(session)}
-                  className={`w-full text-left bg-white rounded-xl p-4 border-2 transition-all hover:shadow-md ${
+                  className={`w-full text-left bg-white dark:bg-midnight-800 rounded-xl p-4 border-2 transition-all hover:shadow-md ${
                     selectedSession?.id === session.id
-                      ? 'border-[#F97316] shadow-md'
-                      : 'border-gray-100 hover:border-gray-200'
+                      ? 'border-electric-indigo shadow-md'
+                      : 'border-gray-100 dark:border-midnight-700 hover:border-gray-200 dark:hover:border-midnight-600'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                       selectedSession?.id === session.id
-                        ? 'bg-[#F97316] text-white'
-                        : 'bg-gray-100 text-gray-500'
+                        ? 'bg-electric-indigo text-white'
+                        : 'bg-gray-100 dark:bg-midnight-700 text-gray-500 dark:text-gray-400'
                     }`}>
                       {getSessionIcon(session.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-[#1F2937] truncate">{session.title}</h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                      <h3 className="font-semibold text-text-primary dark:text-white truncate">{session.title}</h3>
+                      <div className="flex items-center gap-2 text-xs text-text-muted mt-1">
                         <Calendar className="w-3 h-3" />
                         <span>{formatDate(session.date)}</span>
                         <Clock className="w-3 h-3 ml-1" />
@@ -239,13 +239,13 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
           {/* Session Detail */}
           <div className="lg:col-span-2">
             {selectedSession ? (
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="bg-white dark:bg-midnight-800 rounded-2xl border border-gray-100 dark:border-midnight-700 overflow-hidden">
                 {/* Session Header */}
-                <div className="p-6 border-b border-gray-100">
+                <div className="p-6 border-b border-gray-100 dark:border-midnight-700">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="text-xl font-bold text-[#1F2937] mb-2">{selectedSession.title}</h2>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <h2 className="text-xl font-bold text-text-primary dark:text-white mb-2">{selectedSession.title}</h2>
+                      <div className="flex items-center gap-4 text-sm text-text-muted">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           {formatDate(selectedSession.date)}
@@ -259,14 +259,14 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => downloadSessionGuide(selectedSession)}
-                        className="p-2 bg-[#F97316] text-white rounded-lg hover:bg-[#EA580C] transition-colors"
+                        className="p-2 bg-electric-indigo text-white rounded-lg hover:bg-electric-indigo/90 transition-colors"
                         title="Download PDF Guide"
                       >
                         <Download className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => deleteSession(selectedSession.id)}
-                        className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                        className="p-2 bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
                         title="Delete Session"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -276,17 +276,17 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                 </div>
 
                 {/* Summary */}
-                <div className="p-6 border-b border-gray-100 bg-gray-50">
-                  <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <div className="p-6 border-b border-gray-100 dark:border-midnight-700 bg-gray-50 dark:bg-midnight-900">
+                  <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
                     <FileText className="w-4 h-4" />
                     Summary
                   </div>
-                  <p className="text-[#1F2937] leading-relaxed">{selectedSession.summary}</p>
+                  <p className="text-text-primary dark:text-white leading-relaxed">{selectedSession.summary}</p>
                 </div>
 
                 {/* Transcript */}
                 <div className="p-6">
-                  <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-wider mb-4">
                     <MessageSquare className="w-4 h-4" />
                     Conversation Transcript
                   </div>
@@ -296,8 +296,8 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                         <div key={i} className={`flex ${entry.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[80%] p-4 rounded-2xl ${
                             entry.role === 'user'
-                              ? 'bg-[#F97316] text-white rounded-tr-none'
-                              : 'bg-gray-100 text-[#1F2937] rounded-tl-none'
+                              ? 'bg-gradient-to-r from-electric-indigo to-scout-purple text-white rounded-tr-none'
+                              : 'bg-gray-100 dark:bg-midnight-700 text-text-primary dark:text-white rounded-tl-none'
                           }`}>
                             <div className="text-xs opacity-70 mb-1">
                               {entry.role === 'user' ? 'You' : 'Scout AI'} • {new Date(entry.timestamp).toLocaleTimeString()}
@@ -307,16 +307,16 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-500 text-center py-8">No transcript available</p>
+                      <p className="text-text-muted text-center py-8">No transcript available</p>
                     )}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-                <FileText className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-[#1F2937] mb-2">Select a Session</h3>
-                <p className="text-gray-500">
+              <div className="bg-white dark:bg-midnight-800 rounded-2xl border border-gray-100 dark:border-midnight-700 p-12 text-center">
+                <FileText className="w-16 h-16 text-gray-200 dark:text-midnight-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-text-primary dark:text-white mb-2">Select a Session</h3>
+                <p className="text-text-muted">
                   Choose a session from the list to view details and download your guide.
                 </p>
               </div>
@@ -331,8 +331,8 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
     return (
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1F2937]">Session History</h1>
-          <p className="text-sm text-gray-500">Review your past support sessions</p>
+          <h1 className="text-2xl font-bold text-text-primary dark:text-white">Session History</h1>
+          <p className="text-sm text-text-muted">Review your past support sessions</p>
         </div>
         {content}
       </div>
@@ -341,18 +341,18 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
 
   // Full page mode with header
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
+    <div className="min-h-screen bg-light-100 dark:bg-midnight-950 transition-colors">
+      <header className="bg-white dark:bg-midnight-900 border-b border-gray-200 dark:border-midnight-700 px-6 py-4 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
           <button
             onClick={onBack}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-midnight-800 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-[#1F2937]" />
+            <ArrowLeft className="w-5 h-5 text-text-primary dark:text-white" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-[#1F2937]">Session History</h1>
-            <p className="text-sm text-gray-500">Review your past support sessions</p>
+            <h1 className="text-xl font-bold text-text-primary dark:text-white">Session History</h1>
+            <p className="text-sm text-text-muted">Review your past support sessions</p>
           </div>
         </div>
       </header>

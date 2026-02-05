@@ -5,14 +5,134 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 // Base URL for images and app
-const IMAGE_BASE_URL = "https://tech-triage-site.replit.app";
-const APP_BASE_URL = process.env.APP_URL || "https://tech-triage-site.replit.app";
+const IMAGE_BASE_URL = "https://totalassist.tech";
+const APP_BASE_URL = process.env.APP_URL || "https://totalassist.tech";
 
 // Default sender - use your verified domain
-const DEFAULT_SENDER = "support@trytechtriage.com";
-const EMAIL_FROM = process.env.EMAIL_FROM || `TechTriage <${DEFAULT_SENDER}>`;
+const DEFAULT_SENDER = "support@totalassist.tech";
+const EMAIL_FROM = process.env.EMAIL_FROM || `TotalAssist <${DEFAULT_SENDER}>`;
 
-// Generate the welcome email HTML
+// Resend's default test sender (works without domain verification)
+const RESEND_TEST_SENDER = "onboarding@resend.dev";
+
+// ============================================
+// TotalAssist Brand Colors
+// ============================================
+const BRAND = {
+  scoutPurple: "#A855F7",
+  electricIndigo: "#6366F1",
+  electricCyan: "#06B6D4",
+  midnight: "#0f172a",
+  midnightLight: "#1e293b",
+  slate: "#334155",
+  slateLight: "#64748b",
+  light: "#f8fafc",
+  lightMuted: "#e2e8f0",
+  white: "#ffffff",
+};
+
+// ============================================
+// Email Template Components
+// ============================================
+
+function getEmailStyles(): string {
+  return `
+    :root { color-scheme: light dark; supported-color-schemes: light dark; }
+    body { margin: 0; padding: 0; min-width: 100%; width: 100% !important; height: 100% !important; }
+    body, table, td, div, p, a { -webkit-font-smoothing: antialiased; text-size-adjust: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; line-height: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; border-spacing: 0; }
+    img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+    /* Mobile styles */
+    @media only screen and (max-width: 599px) {
+      .mobile-full { width: 100% !important; max-width: 100% !important; display: block !important; }
+      .mobile-padding { padding: 30px 20px !important; }
+      .mobile-center { text-align: center !important; }
+      .hero-text { font-size: 32px !important; }
+      .content-padding { padding: 30px 24px !important; }
+      .button-full { display: block !important; width: 100% !important; text-align: center !important; }
+    }
+
+    /* Dark mode styles */
+    @media (prefers-color-scheme: dark) {
+      body, .body-bg { background-color: ${BRAND.midnight} !important; }
+      .email-container { background-color: ${BRAND.midnightLight} !important; }
+      .light-section { background-color: ${BRAND.midnightLight} !important; }
+      .light-text { color: #e2e8f0 !important; }
+      .light-text-secondary { color: #94a3b8 !important; }
+      .card-bg { background-color: #334155 !important; border-color: #475569 !important; }
+    }
+
+    /* Gmail dark mode */
+    [data-ogsc] .light-section { background-color: ${BRAND.midnightLight} !important; }
+    [data-ogsc] .light-text { color: #e2e8f0 !important; }
+    [data-ogsc] .light-text-secondary { color: #94a3b8 !important; }
+    [data-ogsc] .card-bg { background-color: #334155 !important; }
+  `;
+}
+
+function getHeaderHtml(title: string, subtitle: string): string {
+  return `
+    <tr>
+      <td align="center" style="background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 50%, ${BRAND.midnight} 100%); padding: 50px 30px;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td align="center" style="padding-bottom: 25px;">
+              <img src="${IMAGE_BASE_URL}/total_assist_logo-new.png" alt="TotalAssist" width="160" style="display: block; max-width: 160px; height: auto;">
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <h1 class="hero-text" style="margin: 0; color: #ffffff; font-size: 36px; font-weight: 700; letter-spacing: -0.5px;">${title}</h1>
+              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.8); font-size: 17px; font-weight: 400;">${subtitle}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+}
+
+function getFooterHtml(): string {
+  return `
+    <tr>
+      <td align="center" style="background-color: ${BRAND.midnight}; padding: 40px 30px; border-top: 1px solid #334155;">
+        <img src="${IMAGE_BASE_URL}/total_assist_logo-new.png" alt="TotalAssist" width="100" style="display: block; max-width: 100px; height: auto; margin-bottom: 20px; opacity: 0.9;">
+
+        <p style="margin: 0 0 8px; color: #64748b; font-size: 13px;">
+          Powered by Scout AI
+        </p>
+
+        <p style="color: #475569; font-size: 12px; margin: 0 0 15px;">
+          &copy; ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+        </p>
+
+        <p style="margin: 0;">
+          <a href="${APP_BASE_URL}/privacy" style="color: ${BRAND.electricIndigo}; text-decoration: none; font-size: 12px; margin: 0 12px;">Privacy Policy</a>
+          <span style="color: #475569;">|</span>
+          <a href="${APP_BASE_URL}/terms" style="color: ${BRAND.electricIndigo}; text-decoration: none; font-size: 12px; margin: 0 12px;">Terms of Service</a>
+        </p>
+      </td>
+    </tr>
+  `;
+}
+
+function getPrimaryButtonHtml(text: string, url: string): string {
+  return `
+    <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+      <tr>
+        <td align="center" style="border-radius: 12px; background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 100%); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.35);">
+          <a href="${url}" target="_blank" class="button-full" style="display: inline-block; padding: 18px 40px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; letter-spacing: 0.3px;">${text} →</a>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+// ============================================
+// Welcome Email Template
+// ============================================
+
 function getWelcomeEmailHtml(firstName: string): string {
   const displayName = firstName || "there";
 
@@ -23,118 +143,137 @@ function getWelcomeEmailHtml(firstName: string): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <title>Welcome to TechTriage</title>
-    <style>
-        :root { color-scheme: light dark; supported-color-schemes: light dark; }
-        body { margin: 0; padding: 0; min-width: 100%; width: 100% !important; height: 100% !important; background-color: #f4f4f4; }
-        body, table, td, div, p, a { -webkit-font-smoothing: antialiased; text-size-adjust: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; line-height: 100%; }
-        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; border-spacing: 0; }
-        img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+    <title>Welcome to TotalAssist</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
-        /* Mobile styles */
-        @media only screen and (max-width: 599px) {
-            .mobile-full { width: 100% !important; max-width: 100% !important; display: block !important; }
-            .mobile-padding { padding: 30px 20px !important; }
-            .hero-text { font-size: 28px !important; }
-        }
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
 
-        /* Dark mode styles */
-        @media (prefers-color-scheme: dark) {
-            body, .body-bg { background-color: #1a1a1a !important; }
-            .email-container { background-color: #2d2d2d !important; }
-            .light-section { background-color: #2d2d2d !important; background-image: none !important; }
-            .light-text { color: #e5e5e5 !important; }
-            .light-text-secondary { color: #a3a3a3 !important; }
-            .testimonial-section { background-color: #262626 !important; border-color: #404040 !important; }
-            .testimonial-text { color: #e5e5e5 !important; }
-            .testimonial-name { color: #ffffff !important; }
-        }
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-        /* Gmail dark mode */
-        [data-ogsc] .light-section { background-color: #2d2d2d !important; background-image: none !important; }
-        [data-ogsc] .light-text { color: #e5e5e5 !important; }
-        [data-ogsc] .light-text-secondary { color: #a3a3a3 !important; }
-        [data-ogsc] .testimonial-section { background-color: #262626 !important; }
-    </style>
-    </head>
-<body class="body-bg" style="margin: 0; padding: 0; background-color: #f4f4f4;">
+            ${getHeaderHtml("Welcome to TotalAssist", "Your AI-powered tech support is ready.")}
 
-    <center style="width: 100%; background-color: #f4f4f4;" class="body-bg">
-
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-family: Helvetica, Arial, sans-serif;">
-
+            <!-- Hero Image Section -->
             <tr>
-                <td align="center" style="background-color: #1e2b45; background: radial-gradient(circle at 50% 0%, #2a3c5e 0%, #0f172a 80%); padding: 45px 20px;">
+              <td align="center" class="light-section" bgcolor="#ffffff" style="border-bottom: 3px solid ${BRAND.electricIndigo};">
+                <img src="${IMAGE_BASE_URL}/homepage-hero.jpg" alt="TotalAssist Home Support" width="600" style="display: block; width: 100%; max-width: 600px; height: auto;">
+              </td>
+            </tr>
+
+            <!-- Welcome Content -->
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Welcome to <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! You now have access to AI-powered tech support that actually understands your problems.
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        No more waiting on hold, no more explaining the same issue three times, no more frustration. Just smart, fast help whenever you need it.
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Features Grid -->
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 25px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">What you can do</p>
+
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
-                            <td align="center" style="padding-bottom: 25px;">
-                                <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage Logo" width="150" style="display: block; max-width: 150px; height: auto;">
+                            <td width="50%" valign="top" style="padding-right: 10px; padding-bottom: 20px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">💬</div>
+                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Scout AI Chat</p>
+                                            <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Get instant answers to tech questions</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td width="50%" valign="top" style="padding-left: 10px; padding-bottom: 20px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">📸</div>
+                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Photo Analysis</p>
+                                            <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Snap a photo, get a diagnosis</p>
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                         <tr>
-                            <td align="center">
-                                <h1 class="hero-text" style="margin: 0; color: #ffffff; font-size: 36px; font-weight: 800; letter-spacing: -1px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">You're Covered.</h1>
-                                <p style="margin: 0; color: #cbd5e1; font-size: 18px; padding-top: 12px; font-weight: 300;">Expert tech support is now in your pocket.</p>
+                            <td width="50%" valign="top" style="padding-right: 10px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricCyan}, ${BRAND.scoutPurple}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">🎥</div>
+                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Live Video</p>
+                                            <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Real-time guided support</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td width="50%" valign="top" style="padding-left: 10px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">📚</div>
+                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Session History</p>
+                                            <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">All solutions saved for you</p>
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                     </table>
                 </td>
             </tr>
 
+            <!-- CTA Section -->
             <tr>
-                <td align="center" class="light-section" bgcolor="#ffffff" style="border-bottom: 4px solid #e66a00;">
-                    <img src="${IMAGE_BASE_URL}/tech-triage-home.png" alt="TechTriage Support" width="600" style="display: block; width: 100%; max-width: 600px; height: auto;">
-                </td>
-            </tr>
-
-            <tr>
-                <td align="left" class="light-section" style="background-color: #ffffff; background-image: linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px); background-size: 25px 25px; padding: 50px 40px;">
-                    <p class="light-text" style="margin: 0 0 25px; color: #334155; font-size: 18px; line-height: 1.6;">
-                        Hey <strong>${displayName}</strong>, Welcome to <strong style="color: #e66a00;">TechTriage</strong>!
-                    </p>
-                    <p class="light-text-secondary" style="margin: 0; color: #475569; font-size: 16px; line-height: 1.8;">
-                        Time to experience first hand just how easy it is to get tech help with TechTriage. The best part? No more waiting on hold or explaining the same router issue three times.
-                    </p>
-                </td>
-            </tr>
-
-            <tr>
-                <td align="center" style="background-color: #e66a00; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); padding: 60px 30px;">
-
-                    <div style="display: inline-block; background-color: rgba(0,0,0,0.2); color: #ffffff; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; border-radius: 20px; margin-bottom: 20px;">
-                        Step 1
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+                        Get Started
                     </div>
 
-                    <h2 style="margin: 0 0 35px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 1.2;">See how easy it is<br>to get help</h2>
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Ready to solve your first<br>tech problem?</h2>
 
-                    <table border="0" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td align="center" bgcolor="#1e2b45" style="border-radius: 50px; box-shadow: 0 8px 20px rgba(30, 43, 69, 0.4);">
-                                <a href="https://techtriage.app" target="_blank" style="display: block; padding: 20px 45px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 18px; border-radius: 50px; border: 2px solid #1e2b45;">Start Your First Request &rarr;</a>
-                            </td>
-                        </tr>
-                    </table>
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Open Scout AI and describe what's going on.
+                    </p>
 
-                    <p style="margin: 25px 0 0; color: #fff0db; font-size: 14px; font-weight: 500;">
-                        Estimated time to complete: <strong>3 mins</strong>
+                    ${getPrimaryButtonHtml("Launch TotalAssist", APP_BASE_URL + "/dashboard")}
+
+                    <p style="margin: 25px 0 0; color: #64748b; font-size: 13px;">
+                        Takes less than 30 seconds to get help
                     </p>
                 </td>
             </tr>
 
+            <!-- Testimonial -->
             <tr>
-                <td class="testimonial-section" style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 40px;">
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <td class="light-section content-padding" style="background-color: #ffffff; padding: 40px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: linear-gradient(135deg, ${BRAND.scoutPurple}08, ${BRAND.electricIndigo}08); border-radius: 16px; border: 1px solid ${BRAND.scoutPurple}20;">
                         <tr>
-                            <td width="70" valign="top" style="padding-right: 20px;">
-                                <img src="${IMAGE_BASE_URL}/tech-triage-logo.png" alt="Customer" width="70" style="display: block; border-radius: 50%;">
-                            </td>
-                            <td valign="top">
-                                <p class="testimonial-text" style="margin: 0 0 15px; font-family: Georgia, serif; font-style: italic; color: #334155; font-size: 17px; line-height: 1.6;">
-                                    "I knew that <strong style="color: #e66a00;">TechTriage</strong> was the right choice when I didn't have to spend an hour on hold just to reset my router."
+                            <td style="padding: 30px;">
+                                <p class="light-text" style="margin: 0 0 20px; font-family: Georgia, serif; font-style: italic; color: ${BRAND.slate}; font-size: 17px; line-height: 1.7;">
+                                    "I was skeptical about AI support, but <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> actually understood my router problem and fixed it in under 5 minutes. Incredible."
                                 </p>
-                                <div>
-                                    <span class="testimonial-name" style="color: #1e2b45; font-weight: bold; font-size: 15px;">Sarah Mitchell</span>
-                                    <span style="color: #94a3b8; font-size: 14px;"> &mdash; Austin, TX</span>
+                                <div style="display: flex; align-items: center;">
+                                    <div style="width: 44px; height: 44px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin-right: 12px; text-align: center; line-height: 44px; color: white; font-weight: 600;">JM</div>
+                                    <div>
+                                        <span class="light-text" style="color: ${BRAND.midnight}; font-weight: 600; font-size: 14px; display: block;">James Morrison</span>
+                                        <span class="light-text-secondary" style="color: ${BRAND.slateLight}; font-size: 13px;">Denver, CO</span>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -142,28 +281,23 @@ function getWelcomeEmailHtml(firstName: string): string {
                 </td>
             </tr>
 
-            <tr>
-                <td align="center" style="background-color: #1e2b45; padding: 40px 20px; border-top: 5px solid #0f172a;">
-                    <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage" width="80" style="display: block; max-width: 80px; height: auto; margin-bottom: 20px;">
-
-                    <p style="color: #64748b; font-size: 12px; margin: 0 0 10px;">
-                        &copy; 2025 TechTriage. All rights reserved.
-                    </p>
-                    <p style="margin: 0;">
-                        <a href="#" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Privacy Policy</a>
-                        <span style="color: #475569;">|</span>
-                        <a href="#" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Unsubscribe</a>
-                    </p>
-                </td>
-            </tr>
+            ${getFooterHtml()}
 
         </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
     </center>
 </body>
 </html>`;
 }
 
-// Generate the verification email HTML
+// ============================================
+// Verification Email Template
+// ============================================
+
 function getVerificationEmailHtml(firstName: string, verificationUrl: string): string {
   const displayName = firstName || "there";
 
@@ -174,112 +308,438 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <title>Verify Your Email - TechTriage</title>
-    <style>
-        :root { color-scheme: light dark; supported-color-schemes: light dark; }
-        body { margin: 0; padding: 0; min-width: 100%; width: 100% !important; height: 100% !important; background-color: #f4f4f4; }
-        body, table, td, div, p, a { -webkit-font-smoothing: antialiased; text-size-adjust: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; line-height: 100%; }
-        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; border-spacing: 0; }
-        img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+    <title>Verify Your Email - TotalAssist</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
-        /* Mobile styles */
-        @media only screen and (max-width: 599px) {
-            .mobile-full { width: 100% !important; max-width: 100% !important; display: block !important; }
-            .mobile-padding { padding: 30px 20px !important; }
-            .hero-text { font-size: 28px !important; }
-        }
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
 
-        /* Dark mode styles */
-        @media (prefers-color-scheme: dark) {
-            body, .body-bg { background-color: #1a1a1a !important; }
-            .email-container { background-color: #2d2d2d !important; }
-            .light-section { background-color: #2d2d2d !important; background-image: none !important; }
-            .light-text { color: #e5e5e5 !important; }
-            .light-text-secondary { color: #a3a3a3 !important; }
-        }
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-        /* Gmail dark mode */
-        [data-ogsc] .light-section { background-color: #2d2d2d !important; background-image: none !important; }
-        [data-ogsc] .light-text { color: #e5e5e5 !important; }
-        [data-ogsc] .light-text-secondary { color: #a3a3a3 !important; }
-    </style>
-    </head>
-<body class="body-bg" style="margin: 0; padding: 0; background-color: #f4f4f4;">
+            ${getHeaderHtml("Verify Your Email", "One quick step to get started.")}
 
-    <center style="width: 100%; background-color: #f4f4f4;" class="body-bg">
-
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); font-family: Helvetica, Arial, sans-serif;">
-
+            <!-- Content Section -->
             <tr>
-                <td align="center" style="background-color: #1e2b45; background: radial-gradient(circle at 50% 0%, #2a3c5e 0%, #0f172a 80%); padding: 45px 20px;">
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                        <tr>
-                            <td align="center" style="padding-bottom: 25px;">
-                                <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage Logo" width="150" style="display: block; max-width: 150px; height: auto;">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td align="center">
-                                <h1 class="hero-text" style="margin: 0; color: #ffffff; font-size: 36px; font-weight: 800; letter-spacing: -1px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">Verify Your Email</h1>
-                                <p style="margin: 0; color: #cbd5e1; font-size: 18px; padding-top: 12px; font-weight: 300;">One quick step to get started.</p>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-
-            <tr>
-                <td align="left" class="light-section" style="background-color: #ffffff; background-image: linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px); background-size: 25px 25px; padding: 50px 40px;">
-                    <p class="light-text" style="margin: 0 0 25px; color: #334155; font-size: 18px; line-height: 1.6;">
-                        Hey <strong>${displayName}</strong>,
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
                     </p>
-                    <p class="light-text-secondary" style="margin: 0 0 25px; color: #475569; font-size: 16px; line-height: 1.8;">
-                        Thanks for signing up for <strong style="color: #e66a00;">TechTriage</strong>! Please verify your email address by clicking the button below.
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Thanks for signing up for <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! Please verify your email address to activate your account and start getting AI-powered tech support.
                     </p>
-                    <p class="light-text-secondary" style="margin: 0; color: #475569; font-size: 14px; line-height: 1.8;">
-                        This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
+                        This link will expire in <strong style="color: ${BRAND.midnight};">24 hours</strong>. If you didn't create an account, you can safely ignore this email.
                     </p>
                 </td>
             </tr>
 
+            <!-- CTA Section -->
             <tr>
-                <td align="center" style="background-color: #e66a00; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); padding: 50px 30px;">
-                    <table border="0" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td align="center" bgcolor="#1e2b45" style="border-radius: 50px; box-shadow: 0 8px 20px rgba(30, 43, 69, 0.4);">
-                                <a href="${verificationUrl}" target="_blank" style="display: block; padding: 20px 45px; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 18px; border-radius: 50px; border: 2px solid #1e2b45;">Verify Email Address &rarr;</a>
-                            </td>
-                        </tr>
-                    </table>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
 
-                    <p style="margin: 25px 0 0; color: #fff0db; font-size: 14px; font-weight: 500;">
+                    <div style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin: 0 auto 25px; text-align: center; line-height: 70px; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                        ✉️
+                    </div>
+
+                    ${getPrimaryButtonHtml("Verify Email Address", verificationUrl)}
+
+                    <p style="margin: 30px 0 0; color: #64748b; font-size: 13px; line-height: 1.6;">
                         Or copy and paste this link into your browser:
                     </p>
-                    <p style="margin: 10px 0 0; color: #ffffff; font-size: 12px; word-break: break-all;">
+                    <p style="margin: 10px 0 0; color: ${BRAND.electricIndigo}; font-size: 12px; word-break: break-all; max-width: 400px;">
                         ${verificationUrl}
                     </p>
                 </td>
             </tr>
 
+            <!-- Security Notice -->
             <tr>
-                <td align="center" style="background-color: #1e2b45; padding: 40px 20px; border-top: 5px solid #0f172a;">
-                    <img src="${IMAGE_BASE_URL}/tech-triage-white.png" alt="TechTriage" width="80" style="display: block; max-width: 80px; height: auto; margin-bottom: 20px;">
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 30px 40px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td width="50" valign="top">
+                                <div style="width: 40px; height: 40px; background: ${BRAND.electricCyan}15; border-radius: 10px; text-align: center; line-height: 40px; font-size: 18px;">🔒</div>
+                            </td>
+                            <td valign="top">
+                                <p class="light-text" style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Security Notice</p>
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">
+                                    We'll never ask for your password via email. If you didn't request this verification, please ignore this message.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
 
-                    <p style="color: #64748b; font-size: 12px; margin: 0 0 10px;">
-                        &copy; 2025 TechTriage. All rights reserved.
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+// ============================================
+// Password Reset Email Template
+// ============================================
+
+function getPasswordResetEmailHtml(displayName: string, resetUrl: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Reset Your Password - TotalAssist</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Reset Your Password", "We received a request to reset your password.")}
+
+            <!-- Content Section -->
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hi <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
                     </p>
-                    <p style="margin: 0;">
-                        <a href="#" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Privacy Policy</a>
-                        <span style="color: #475569;">|</span>
-                        <a href="#" style="color: #94a3b8; text-decoration: none; font-size: 12px; margin: 0 10px;">Contact Support</a>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Click the button below to reset your password for your <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> account. This link will expire in <strong style="color: ${BRAND.midnight};">1 hour</strong> for security reasons.
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
+                        If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
                     </p>
                 </td>
             </tr>
 
+            <!-- CTA Section -->
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+
+                    <div style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin: 0 auto 25px; text-align: center; line-height: 70px; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                        🔑
+                    </div>
+
+                    ${getPrimaryButtonHtml("Reset Password", resetUrl)}
+
+                    <p style="margin: 30px 0 0; color: #64748b; font-size: 13px; line-height: 1.6;">
+                        Or copy and paste this link into your browser:
+                    </p>
+                    <p style="margin: 10px 0 0; color: ${BRAND.electricIndigo}; font-size: 12px; word-break: break-all; max-width: 400px;">
+                        ${resetUrl}
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Security Tips -->
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Password Tips</p>
+
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 15px;">
+                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 15px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Use at least 8 characters with a mix of letters, numbers, and symbols</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 15px;">
+                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 15px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Avoid using the same password across multiple sites</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px;">
+                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            </td>
+                            <td valign="top">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Consider using a password manager for better security</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
         </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
     </center>
 </body>
 </html>`;
+}
+
+// ============================================
+// Trial Ending Email Template
+// ============================================
+
+function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trialEndDate: Date): string {
+  const displayName = firstName || "there";
+  const formattedDate = trialEndDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const urgencyColor = daysRemaining === 1 ? '#ef4444' : BRAND.electricCyan;
+  const urgencyBg = daysRemaining === 1 ? '#fef2f2' : `${BRAND.electricCyan}15`;
+  const urgencyText = daysRemaining === 1
+    ? 'Your trial ends tomorrow!'
+    : `Your trial ends in ${daysRemaining} days`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Your TotalAssist Trial is Ending Soon</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Your Trial is Ending Soon", "Don't lose access to Scout AI")}
+
+            <!-- Urgency Banner -->
+            <tr>
+              <td align="center" style="background-color: ${urgencyBg}; padding: 20px 30px;">
+                <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding-right: 12px;">
+                      <div style="width: 44px; height: 44px; background: ${urgencyColor}; border-radius: 50%; text-align: center; line-height: 44px; font-size: 20px;">⏰</div>
+                    </td>
+                    <td>
+                      <p style="margin: 0; color: ${urgencyColor}; font-size: 18px; font-weight: 700;">${urgencyText}</p>
+                      <p style="margin: 4px 0 0; color: ${BRAND.slate}; font-size: 14px;">Trial expires on ${formattedDate}</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Content Section -->
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Your free trial of <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> is coming to an end. To continue enjoying unlimited AI-powered tech support, upgrade your plan before the trial expires.
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        As a thank you for trying TotalAssist, your first billing cycle will be discounted when you subscribe today!
+                    </p>
+                </td>
+            </tr>
+
+            <!-- What You'll Lose Section -->
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">What you'll lose without a subscription</p>
+
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+                                <span style="color: #ef4444; font-size: 16px;">✗</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 12px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Unlimited Scout AI chat sessions</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+                                <span style="color: #ef4444; font-size: 16px;">✗</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 12px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Photo analysis for instant diagnostics</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+                                <span style="color: #ef4444; font-size: 16px;">✗</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 12px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Live video support sessions</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px;">
+                                <span style="color: #ef4444; font-size: 16px;">✗</span>
+                            </td>
+                            <td valign="top">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Your saved session history</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- CTA Section -->
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+                        Limited Time Offer
+                    </div>
+
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Keep your access to<br>Scout AI</h2>
+
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Subscribe now and lock in your trial benefits.
+                    </p>
+
+                    ${getPrimaryButtonHtml("Upgrade Now", APP_BASE_URL + "/pricing")}
+
+                    <p style="margin: 25px 0 0; color: #64748b; font-size: 13px;">
+                        Plans start at just $25/month
+                    </p>
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+// Send trial ending notification email
+export async function sendTrialEndingEmail(
+  email: string,
+  firstName: string | undefined,
+  daysRemaining: number,
+  trialEndDate: Date
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending trial ending email to ${email} (${daysRemaining} days remaining)`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}`);
+    console.log(`[EMAIL] Days remaining: ${daysRemaining}`);
+    console.log(`[EMAIL] Trial ends: ${trialEndDate.toISOString()}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const subject = daysRemaining === 1
+      ? "Your TotalAssist trial ends tomorrow!"
+      : `Your TotalAssist trial ends in ${daysRemaining} days`;
+
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject,
+      html: getTrialEndingEmailHtml(firstName || "", daysRemaining, trialEndDate),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Trial ending email sent via Resend:", data.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send trial ending email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// ============================================
+// Email Sending Functions
+// ============================================
+
+// Test function to verify API key works (uses Resend's default sender)
+export async function sendTestEmailWithResendDomain(
+  toEmail: string
+): Promise<{ success: boolean; error?: string; note?: string }> {
+  if (!resend) {
+    return { success: false, error: "RESEND_API_KEY not configured" };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: RESEND_TEST_SENDER,
+      to: toEmail,
+      subject: "Test Email - TotalAssist API Key Verification",
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: ${BRAND.light};">
+  <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+    <div style="background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); padding: 30px; text-align: center;">
+      <h1 style="margin: 0; color: white; font-size: 24px;">API Key Verified!</h1>
+    </div>
+    <div style="padding: 30px;">
+      <p style="margin: 0 0 15px; color: ${BRAND.slate}; font-size: 16px; line-height: 1.6;">
+        Your Resend API key is working correctly.
+      </p>
+      <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
+        To send emails from your custom domain, make sure <strong>totalassist.tech</strong> is fully verified in your Resend dashboard.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`,
+    });
+
+    if (data.error) {
+      return { success: false, error: data.error.message };
+    }
+
+    return {
+      success: true,
+      note: "Email sent using Resend's test domain. Your API key is valid. Now verify your custom domain (totalassist.tech) is fully verified in Resend dashboard.",
+    };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
 }
 
 // Send welcome email to a new user
@@ -299,7 +759,7 @@ export async function sendWelcomeEmail(
     const data = await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: "Welcome to TechTriage - You're Covered!",
+      subject: "Welcome to TotalAssist - Your AI Tech Support is Ready!",
       html: getWelcomeEmailHtml(firstName || ""),
     });
 
@@ -337,7 +797,7 @@ export async function sendVerificationEmail(
     const data = await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: "Verify Your Email - TechTriage",
+      subject: "Verify Your Email - TotalAssist",
       html: getVerificationEmailHtml(firstName || "", verificationUrl),
     });
 
@@ -352,85 +812,6 @@ export async function sendVerificationEmail(
     console.error("[EMAIL] Failed to send verification email:", error);
     return { success: false, error: String(error) };
   }
-}
-
-// Generate password reset email HTML
-function getPasswordResetEmailHtml(displayName: string, resetUrl: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light dark">
-    <title>Reset Your Password - TotalAssist</title>
-    <style>
-        :root { color-scheme: light dark; }
-        body { margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        @media (prefers-color-scheme: light) {
-            .body-bg { background-color: #f4f4f4 !important; }
-        }
-    </style>
-</head>
-<body class="body-bg" style="margin: 0; padding: 0; background-color: #0f172a;">
-    <center style="width: 100%; background-color: #0f172a; padding: 40px 0;">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
-            <!-- Header -->
-            <tr>
-                <td align="center" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 50px 30px;">
-                    <img src="${IMAGE_BASE_URL}/total_assist_logo.png" alt="TotalAssist" width="180" style="display: block; max-width: 180px; height: auto; margin-bottom: 20px;">
-                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Reset Your Password</h1>
-                    <p style="margin: 15px 0 0; color: rgba(255,255,255,0.8); font-size: 16px;">We received a request to reset your password.</p>
-                </td>
-            </tr>
-
-            <!-- Content -->
-            <tr>
-                <td align="left" style="padding: 40px 40px 30px;">
-                    <p style="margin: 0 0 20px; color: #e2e8f0; font-size: 16px; line-height: 1.6;">
-                        Hi <strong style="color: #ffffff;">${displayName}</strong>,
-                    </p>
-                    <p style="margin: 0 0 25px; color: #94a3b8; font-size: 15px; line-height: 1.7;">
-                        Click the button below to reset your password. This link will expire in <strong style="color: #e2e8f0;">1 hour</strong> for security reasons.
-                    </p>
-                    <p style="margin: 0; color: #94a3b8; font-size: 14px; line-height: 1.6;">
-                        If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
-                    </p>
-                </td>
-            </tr>
-
-            <!-- Button -->
-            <tr>
-                <td align="center" style="padding: 10px 40px 40px;">
-                    <table border="0" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td align="center" style="border-radius: 12px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);">
-                                <a href="${resetUrl}" target="_blank" style="display: block; padding: 18px 40px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">Reset Password →</a>
-                            </td>
-                        </tr>
-                    </table>
-                    <p style="margin: 25px 0 0; color: #64748b; font-size: 13px;">
-                        Or copy this link: <span style="color: #818cf8; word-break: break-all;">${resetUrl}</span>
-                    </p>
-                </td>
-            </tr>
-
-            <!-- Footer -->
-            <tr>
-                <td align="center" style="background-color: #0f172a; padding: 30px 20px; border-top: 1px solid #334155;">
-                    <p style="color: #64748b; font-size: 12px; margin: 0 0 10px;">
-                        © ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
-                    </p>
-                    <p style="margin: 0;">
-                        <a href="${APP_BASE_URL}/privacy" style="color: #818cf8; text-decoration: none; font-size: 12px; margin: 0 10px;">Privacy Policy</a>
-                        <span style="color: #475569;">|</span>
-                        <a href="${APP_BASE_URL}/terms" style="color: #818cf8; text-decoration: none; font-size: 12px; margin: 0 10px;">Terms of Service</a>
-                    </p>
-                </td>
-            </tr>
-        </table>
-    </center>
-</body>
-</html>`;
 }
 
 // Send password reset email

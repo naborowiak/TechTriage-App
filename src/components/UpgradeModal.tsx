@@ -5,7 +5,7 @@ import { VIDEO_CREDIT_PRICES } from '../stores/usageStore';
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  feature?: 'chat' | 'photo' | 'videoDiagnostic' | 'signal';
+  feature?: 'chat' | 'photo' | 'videoDiagnostic' | 'signal' | 'voice';
   currentTier?: 'guest' | 'free' | 'home' | 'pro';
 }
 
@@ -24,9 +24,11 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
       case 'photo':
         return "You've used your free photo analysis.";
       case 'videoDiagnostic':
-        return "Video Diagnostic requires Scout Home or Pro.";
+        return "Video Diagnostic requires TotalAssist Home or Pro.";
       case 'signal':
-        return "Scout Signal requires Scout Home or Pro.";
+        return "Scout Voice requires TotalAssist Home or Pro.";
+      case 'voice':
+        return "Voice Mode requires TotalAssist Home or Pro for 15-minute AI-guided diagnostics.";
       default:
         return "Upgrade to unlock more Scout features.";
     }
@@ -35,9 +37,9 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
   const getRecommendedPlan = () => {
     // Recommend Home for free users, Pro for home users
     if (currentTier === 'home') {
-      return { name: 'Scout Pro', price: '$19.99', videoCredits: '15/month' };
+      return { name: 'TotalAssist Pro', price: '$19.99', videoCredits: '15/month' };
     }
-    return { name: 'Scout Home', price: '$9.99', videoCredits: '1/week' };
+    return { name: 'TotalAssist Home', price: '$9.99', videoCredits: '1/week' };
   };
 
   const plan = getRecommendedPlan();
@@ -105,7 +107,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
               <div className="w-8 h-8 rounded-lg bg-electric-indigo/20 flex items-center justify-center">
                 <Mic className="w-4 h-4 text-electric-indigo" />
               </div>
-              <span className="text-sm">Scout Signal (Voice Mode)</span>
+              <span className="text-sm">Scout Voice (Voice Mode)</span>
               <Check className="w-4 h-4 text-electric-cyan ml-auto" />
             </div>
             <div className="flex items-center gap-3 text-text-secondary">
@@ -334,7 +336,7 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
                   <Zap className="w-5 h-5 text-scout-purple" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-white font-medium">Upgrade to Scout Pro</div>
+                  <div className="text-white font-medium">Upgrade to TotalAssist Pro</div>
                   <div className="text-sm text-text-secondary">
                     Get 15 credits/month + premium AI — $19.99/mo
                   </div>

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { ArrowLeft, Mail, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, CheckCircle2, AlertCircle, Loader2, Sun, Moon } from "lucide-react";
 import { Logo } from "./Logo";
 import { PageView } from "../types";
+import { useTheme } from "../context/ThemeContext";
 
 interface ForgotPasswordProps {
   onNavigate: (view: PageView) => void;
@@ -12,6 +13,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,29 +42,44 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) =>
   };
 
   return (
-    <div className="min-h-screen bg-midnight-950 relative flex flex-col items-center noise-texture">
+    <div className="min-h-screen bg-light-100 dark:bg-midnight-950 relative flex flex-col items-center transition-colors">
       {/* Background orbs */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
 
       {/* Header / Logo */}
-      <div className="w-full pt-8 pb-6 flex justify-center z-10">
+      <div className="w-full pt-8 pb-6 flex justify-center z-10 relative">
         <button
           onClick={() => onNavigate(PageView.HOME)}
           className="focus:outline-none hover:opacity-80 transition-opacity"
         >
-          <Logo variant="light" />
+          <Logo variant="dark" className="dark:hidden" />
+          <Logo variant="light" className="hidden dark:flex" />
+        </button>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="absolute right-6 top-8 p-2 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? (
+            <Moon className="w-5 h-5" />
+          ) : (
+            <Sun className="w-5 h-5" />
+          )}
         </button>
       </div>
 
       {/* Main Card */}
       <div className="w-full max-w-[480px] px-4 pb-12 z-10">
-        <div className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
+        <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-xl border border-light-300 dark:border-midnight-700 overflow-hidden">
           <div className="p-8 sm:p-10">
             {/* Back button */}
             <button
               onClick={() => onNavigate(PageView.LOGIN)}
-              className="flex items-center gap-2 text-text-secondary hover:text-white mb-6 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 text-text-secondary hover:text-text-primary dark:hover:text-white mb-6 transition-colors text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Login
             </button>
@@ -71,11 +88,11 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) =>
               // Success State
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 className="w-8 h-8 text-green-400" />
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
                 </div>
-                <h1 className="text-2xl font-bold text-white mb-3">Check Your Email</h1>
+                <h1 className="text-2xl font-bold text-text-primary dark:text-white mb-3">Check Your Email</h1>
                 <p className="text-text-secondary mb-6">
-                  If an account exists for <span className="text-white font-medium">{email}</span>,
+                  If an account exists for <span className="text-text-primary dark:text-white font-medium">{email}</span>,
                   you'll receive a password reset link shortly.
                 </p>
                 <p className="text-text-muted text-sm mb-8">
@@ -95,7 +112,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) =>
                   <div className="w-14 h-14 bg-electric-indigo/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mail className="w-7 h-7 text-electric-indigo" />
                   </div>
-                  <h1 className="text-2xl font-bold text-white mb-2">Forgot Password?</h1>
+                  <h1 className="text-2xl font-bold text-text-primary dark:text-white mb-2">Forgot Password?</h1>
                   <p className="text-text-secondary">
                     Enter your email and we'll send you a link to reset your password.
                   </p>
@@ -104,13 +121,13 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) =>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {error && (
                     <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                      <p className="text-red-400 font-medium text-sm">{error}</p>
+                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                      <p className="text-red-600 dark:text-red-400 font-medium text-sm">{error}</p>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+                    <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
                       Email Address
                     </label>
                     <input
@@ -118,7 +135,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) =>
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
-                      className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 rounded-xl text-base text-white focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all placeholder:text-text-muted"
+                      className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 rounded-xl text-base text-text-primary dark:text-white focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all placeholder:text-text-muted"
                       required
                       autoFocus
                     />

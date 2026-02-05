@@ -1,29 +1,41 @@
 
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TotalAssist | Powered by Smart Tek Labs</title>
+    <title>TotalAssist | Powered by Scout AI</title>
 
     <!-- Open Graph / Social Media Meta Tags -->
-    <meta property="og:title" content="TotalAssist | Powered by Smart Tek Labs" />
-    <meta property="og:description" content="Scout's instant guidance via chat, snapshot, and live signal. No hold music, no phone trees. AI-powered tech support that actually works." />
-    <meta property="og:image" content="https://totalassist.tech/images/og-image.png" />
+    <meta property="og:title" content="TotalAssist | AI-Powered Home Tech Support" />
+    <meta property="og:description" content="Get instant help with Wi-Fi, smart home devices, and appliances. Scout AI provides expert guidance via chat, photo analysis, and live video support. No hold music, no phone trees." />
+    <meta property="og:image" content="https://totalassist.tech/tech-image-man.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="TotalAssist - AI-Powered Home Tech Support" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://totalassist.tech" />
+    <meta property="og:site_name" content="TotalAssist" />
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="TotalAssist | Powered by Smart Tek Labs" />
-    <meta name="twitter:description" content="Scout's instant guidance via chat, snapshot, and live signal. No hold music, no phone trees. AI-powered tech support that actually works." />
-    <meta name="twitter:image" content="https://totalassist.tech/images/og-image.png" />
+    <meta name="twitter:title" content="TotalAssist | AI-Powered Home Tech Support" />
+    <meta name="twitter:description" content="Get instant help with Wi-Fi, smart home devices, and appliances. Scout AI provides expert guidance via chat, photo analysis, and live video support." />
+    <meta name="twitter:image" content="https://totalassist.tech/tech-image-man.png" />
+    <meta name="twitter:image:alt" content="TotalAssist - AI-Powered Home Tech Support" />
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TotalAssist" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#6366F1" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,12 +49,21 @@
               sans: ["Inter", "sans-serif"],
             },
             colors: {
+              // Light theme backgrounds
+              light: {
+                50: "#FFFFFF",   // Pure white (primary bg)
+                100: "#F9FAFB",  // Off-white (sections)
+                200: "#F3F4F6",  // Light gray (cards)
+                300: "#E5E7EB",  // Borders
+                400: "#D1D5DB",  // Stronger borders
+              },
+              // Keep dark colors for contrast elements
               midnight: {
-                950: "#0B0E14", // Deep Midnight (primary bg)
-                900: "#151922", // Lighter Midnight
-                800: "#1E2330", // Card backgrounds
-                700: "#2A3142", // Borders, dividers
-                600: "#3D4559", // Muted elements
+                950: "#0B0E14",
+                900: "#151922",
+                800: "#1E2330",
+                700: "#2A3142",
+                600: "#3D4559",
               },
               electric: {
                 indigo: "#6366F1", // Electric Indigo
@@ -53,9 +74,9 @@
                 glow: "#C084FC", // Lighter purple for glows
               },
               text: {
-                primary: "#FFFFFF", // Pure white for headings
-                secondary: "#9CA3AF", // Light grey for body
-                muted: "#6B7280", // Muted text
+                primary: "#111827", // Dark text for headings
+                secondary: "#4B5563", // Medium gray for body
+                muted: "#9CA3AF", // Light muted text
               }
             },
             backgroundImage: {
@@ -107,6 +128,25 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
+      .text-gradient-locked {
+        background: linear-gradient(135deg, #A855F7 0%, #6366F1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      /* Lighter text colors for dark mode */
+      .dark .text-text-muted {
+        color: #D1D5DB !important;
+      }
+      .dark .text-text-secondary {
+        color: #9CA3AF !important;
+      }
+      .dark .text-gray-500 {
+        color: #9CA3AF !important;
+      }
+      .dark .text-gray-400 {
+        color: #D1D5DB !important;
+      }
       .btn-gradient-electric {
         background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
       }
@@ -131,8 +171,32 @@
       }
     </style>
 <link rel="stylesheet" href="/src/index.css">
+    <script>
+      // Prevent flash of wrong theme by checking localStorage before render
+      (function() {
+        const theme = localStorage.getItem('totalassist_theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+
+      // Register Service Worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('[PWA] Service Worker registered with scope:', registration.scope);
+            })
+            .catch(function(error) {
+              console.log('[PWA] Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
 </head>
-  <body class="bg-midnight-950 text-text-primary antialiased font-sans selection:bg-electric-indigo selection:text-white">
+  <body class="bg-light-50 dark:bg-midnight-950 text-text-primary dark:text-white antialiased font-sans selection:bg-electric-indigo selection:text-white transition-colors">
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
   </body>

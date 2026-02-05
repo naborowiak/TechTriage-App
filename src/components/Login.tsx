@@ -6,7 +6,10 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 import { Logo } from "./Logo";
 import { PageView } from "../types";
 
@@ -23,6 +26,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { theme, toggleTheme } = useTheme();
 
   // New state for verification handling
   const [needsVerification, setNeedsVerification] = useState(false);
@@ -107,27 +111,42 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-midnight-950 relative flex flex-col items-center noise-texture">
+    <div className="min-h-screen bg-light-100 dark:bg-midnight-950 relative flex flex-col items-center transition-colors">
       {/* Background orbs */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
 
       {/* Header / Logo */}
-      <div className="w-full pt-8 pb-6 flex justify-center z-10">
+      <div className="w-full pt-8 pb-6 flex justify-center z-10 relative">
         <button
           onClick={handleLogoClick}
           className="focus:outline-none hover:opacity-80 transition-opacity"
         >
-          <Logo variant="light" />
+          <Logo variant="dark" className="dark:hidden" />
+          <Logo variant="light" className="hidden dark:flex" />
+        </button>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="absolute right-6 top-8 p-2 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? (
+            <Moon className="w-5 h-5" />
+          ) : (
+            <Sun className="w-5 h-5" />
+          )}
         </button>
       </div>
 
       {/* Main Card */}
       <div className="w-full max-w-[480px] px-4 pb-12 z-10">
-        <div className="bg-midnight-800 rounded-2xl shadow-xl border border-midnight-700 overflow-hidden">
+        <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-xl border border-light-300 dark:border-midnight-700 overflow-hidden">
           <div className="p-8 sm:p-10">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-black text-white leading-tight mb-3">
+              <h1 className="text-3xl font-black text-text-primary dark:text-white leading-tight mb-3">
                 Welcome back
               </h1>
               <p className="text-text-secondary text-lg">
@@ -181,7 +200,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
               )}
 
               <div>
-                <label className="block text-white font-bold text-sm uppercase tracking-wide mb-2">
+                <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide mb-2">
                   Email
                 </label>
                 <input
@@ -189,14 +208,14 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
                   value={formData.email}
                   onChange={(e) => updateFormData("email", e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 rounded-xl text-base text-white focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all placeholder:text-text-muted"
+                  className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 rounded-xl text-base text-text-primary dark:text-white focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all placeholder:text-text-muted"
                   required
                 />
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-white font-bold text-sm uppercase tracking-wide">
+                  <label className="block text-text-primary dark:text-white font-bold text-sm uppercase tracking-wide">
                     Password
                   </label>
                   <button
@@ -213,13 +232,13 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
                     value={formData.password}
                     onChange={(e) => updateFormData("password", e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full px-4 py-4 bg-midnight-900 border border-midnight-600 rounded-xl text-base text-white focus:bg-midnight-900 focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
+                    className="w-full px-4 py-4 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-600 rounded-xl text-base text-text-primary dark:text-white focus:border-electric-indigo focus:ring-4 focus:ring-electric-indigo/20 focus:outline-none transition-all pr-12 placeholder:text-text-muted"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -248,15 +267,15 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
               </button>
 
               <div className="flex items-center gap-4 py-2">
-                <div className="flex-1 h-px bg-midnight-700"></div>
+                <div className="flex-1 h-px bg-light-300 dark:bg-midnight-700"></div>
                 <span className="text-text-muted text-sm font-medium">OR</span>
-                <div className="flex-1 h-px bg-midnight-700"></div>
+                <div className="flex-1 h-px bg-light-300 dark:bg-midnight-700"></div>
               </div>
 
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-midnight-600 bg-midnight-900 rounded-xl hover:bg-midnight-700 hover:border-midnight-500 transition-all group"
+                className="w-full flex items-center justify-center gap-3 px-4 py-4 border-2 border-light-300 dark:border-midnight-600 bg-light-100 dark:bg-midnight-900 rounded-xl hover:bg-light-200 dark:hover:bg-midnight-700 hover:border-light-400 dark:hover:border-midnight-500 transition-all group"
               >
                 <svg
                   className="w-5 h-5 group-hover:scale-110 transition-transform"
@@ -279,7 +298,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                <span className="font-bold text-text-secondary group-hover:text-white">
+                <span className="font-bold text-text-secondary group-hover:text-text-primary dark:group-hover:text-white">
                   Log in with Google
                 </span>
               </button>
