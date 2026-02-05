@@ -122,7 +122,7 @@ export function useSubscription(userId: string | undefined) {
   // Fetch Stripe prices
   const fetchPrices = useCallback(async () => {
     try {
-      const res = await fetch('/api/stripe/prices');
+      const res = await fetch('/api/stripe/prices', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setPrices(data.prices);

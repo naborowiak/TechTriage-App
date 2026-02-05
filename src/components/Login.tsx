@@ -59,6 +59,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
       const response = await fetch("/api/auth/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email: formData.email }),
       });
 
@@ -88,6 +89,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Required to receive and store session cookie
         body: JSON.stringify(formData),
       });
 

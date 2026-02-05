@@ -85,6 +85,7 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
     const response = await fetch('/api/subscription/apply-retention-discount', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ userId }),
     });
 

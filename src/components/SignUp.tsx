@@ -387,6 +387,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         const response = await fetch(`/api/auth/user/${oauthUser.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             firstName: formData.firstName,
             lastName: formData.lastName,

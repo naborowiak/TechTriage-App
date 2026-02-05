@@ -181,6 +181,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         await fetch("/api/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             userId,
             sessionType: "video",
@@ -383,6 +384,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
       const response = await fetch("/api/send-session-guide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: userEmail,
           userName: userName || "Valued Customer",

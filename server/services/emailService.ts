@@ -38,17 +38,22 @@ const BRAND = {
 function getEmailStyles(): string {
   return `
     :root { color-scheme: light dark; supported-color-schemes: light dark; }
-    body { margin: 0; padding: 0; min-width: 100%; width: 100% !important; height: 100% !important; }
-    body, table, td, div, p, a { -webkit-font-smoothing: antialiased; text-size-adjust: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; line-height: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; border-spacing: 0; }
-    img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+    body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
+    table { border-collapse: collapse !important; border-spacing: 0; }
+    td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; display: block; }
+    a { text-decoration: none; }
+
+    /* Better typography baseline - fixes cramped text */
+    body, td, p, a, li { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; line-height: 1.4; }
+    p { margin: 0; }
 
     /* Mobile styles */
     @media only screen and (max-width: 599px) {
       .mobile-full { width: 100% !important; max-width: 100% !important; display: block !important; }
       .mobile-padding { padding: 30px 20px !important; }
       .mobile-center { text-align: center !important; }
-      .hero-text { font-size: 32px !important; }
+      .hero-text { font-size: 30px !important; line-height: 1.15 !important; }
       .content-padding { padding: 30px 24px !important; }
       .button-full { display: block !important; width: 100% !important; text-align: center !important; }
     }
@@ -71,11 +76,29 @@ function getEmailStyles(): string {
   `;
 }
 
+// Preheader helper - improves inbox preview text
+function getPreheaderHtml(text: string): string {
+  const safe = (text || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      ${safe}
+    </div>
+    <div style="display:none;max-height:0;overflow:hidden;">
+      ${"&nbsp;".repeat(200)}
+    </div>
+  `;
+}
+
 function getHeaderHtml(title: string, subtitle: string): string {
   return `
     <tr>
-      <td align="center" style="background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 50%, ${BRAND.midnight} 100%); padding: 50px 30px;">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <!--[if mso]>
+      <td align="center" bgcolor="${BRAND.electricIndigo}" style="padding: 50px 30px;">
+      <![endif]-->
+      <!--[if !mso]><!-->
+      <td align="center" bgcolor="${BRAND.electricIndigo}" style="background-color: ${BRAND.electricIndigo}; background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 50%, ${BRAND.midnight} 100%); padding: 50px 30px;">
+      <!--<![endif]-->
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center" style="padding-bottom: 25px;">
               <img src="${IMAGE_BASE_URL}/total_assist_logo-new.png" alt="TotalAssist" width="160" style="display: block; max-width: 160px; height: auto;">
@@ -119,14 +142,171 @@ function getFooterHtml(): string {
 
 function getPrimaryButtonHtml(text: string, url: string): string {
   return `
-    <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
       <tr>
-        <td align="center" style="border-radius: 12px; background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 100%); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.35);">
-          <a href="${url}" target="_blank" class="button-full" style="display: inline-block; padding: 18px 40px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; letter-spacing: 0.3px;">${text} →</a>
+        <!--[if mso]>
+        <td align="center" bgcolor="${BRAND.electricIndigo}" style="border-radius: 12px; mso-padding-alt: 18px 40px;">
+          <a href="${url}" target="_blank" style="display: inline-block; padding: 18px 40px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">${text} &rarr;</a>
         </td>
+        <![endif]-->
+        <!--[if !mso]><!-->
+        <td align="center" bgcolor="${BRAND.electricIndigo}" style="border-radius: 12px; background-color: ${BRAND.electricIndigo}; background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 100%); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.35);">
+          <a href="${url}" target="_blank" class="button-full" style="display: inline-block; padding: 18px 40px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; letter-spacing: 0.3px;">${text} &rarr;</a>
+        </td>
+        <!--<![endif]-->
       </tr>
     </table>
   `;
+}
+
+// ============================================
+// Plain Text Email Generators
+// ============================================
+
+function getWelcomeEmailText(firstName: string): string {
+  const displayName = firstName || "there";
+  return `Welcome to TotalAssist!
+
+Hey ${displayName},
+
+Welcome to TotalAssist! You now have access to AI-powered tech support that actually understands your problems.
+
+No more waiting on hold, no more explaining the same issue three times, no more frustration. Just smart, fast help whenever you need it.
+
+What you can do:
+- Scout AI Chat: Get instant answers to tech questions
+- Photo Analysis: Snap a photo, get a diagnosis
+- Live Video: Real-time guided support
+- Session History: All solutions saved for you
+
+Ready to solve your first tech problem?
+Open Scout AI and describe what's going on.
+
+Launch TotalAssist: ${APP_BASE_URL}/dashboard
+
+---
+Powered by Scout AI
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getVerificationEmailText(firstName: string, verificationUrl: string): string {
+  const displayName = firstName || "there";
+  return `Verify Your Email - TotalAssist
+
+Hey ${displayName},
+
+Thanks for signing up for TotalAssist! Please verify your email address to activate your account and start getting AI-powered tech support.
+
+This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+
+Verify Your Email: ${verificationUrl}
+
+Security Notice:
+We'll never ask for your password via email. If you didn't request this verification, please ignore this message.
+
+---
+Powered by Scout AI
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getPasswordResetEmailText(displayName: string, resetUrl: string): string {
+  return `Reset Your Password - TotalAssist
+
+Hi ${displayName},
+
+We received a request to reset your password for your TotalAssist account. This link will expire in 1 hour for security reasons.
+
+If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+
+Reset Your Password: ${resetUrl}
+
+Password Tips:
+- Use at least 8 characters with a mix of letters, numbers, and symbols
+- Avoid using the same password across multiple sites
+- Consider using a password manager for better security
+
+---
+Powered by Scout AI
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getTrialEndingEmailText(firstName: string, daysRemaining: number, trialEndDate: Date): string {
+  const displayName = firstName || "there";
+  const formattedDate = trialEndDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const urgencyText = daysRemaining === 1
+    ? 'Your trial ends tomorrow!'
+    : `Your trial ends in ${daysRemaining} days`;
+
+  return `${urgencyText} - TotalAssist
+
+Hey ${displayName},
+
+Your free trial of TotalAssist is coming to an end. Trial expires on ${formattedDate}.
+
+To continue enjoying unlimited AI-powered tech support, upgrade your plan before the trial expires.
+
+What you'll lose without a subscription:
+- Unlimited Scout AI chat sessions
+- Photo analysis for instant diagnostics
+- Live video support sessions
+- Your saved session history
+
+As a thank you for trying TotalAssist, your first billing cycle will be discounted when you subscribe today!
+
+Upgrade Now: ${APP_BASE_URL}/pricing
+
+Plans start at just $25/month.
+
+---
+Powered by Scout AI
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getSessionGuideEmailText(userName: string, summary: string, sessionDate: Date): string {
+  const displayName = userName || "there";
+  const formattedDate = sessionDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  return `Your TotalAssist Session Guide - ${formattedDate}
+
+Hey ${displayName},
+
+Thank you for using TotalAssist! We've put together a personalized guide based on your recent support session with Scout AI.
+
+Session Summary:
+${summary || "Session completed successfully"}
+
+Your complete how-to guide is attached as a PDF. It includes:
+- Step-by-step instructions we discussed
+- Full conversation transcript
+- Key troubleshooting tips and next steps
+
+Save this guide for future reference - it's tailored specifically to your situation!
+
+Need More Help? ${APP_BASE_URL}/dashboard
+
+---
+Powered by Scout AI
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
 }
 
 // ============================================
@@ -147,6 +327,8 @@ function getWelcomeEmailHtml(firstName: string): string {
     <style>${getEmailStyles()}</style>
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Welcome ${displayName}! Your AI-powered tech support is ready. Get instant help with Scout AI chat, photo analysis, and live video support.`)}
 
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
@@ -268,13 +450,17 @@ function getWelcomeEmailHtml(firstName: string): string {
                                 <p class="light-text" style="margin: 0 0 20px; font-family: Georgia, serif; font-style: italic; color: ${BRAND.slate}; font-size: 17px; line-height: 1.7;">
                                     "I was skeptical about AI support, but <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> actually understood my router problem and fixed it in under 5 minutes. Incredible."
                                 </p>
-                                <div style="display: flex; align-items: center;">
-                                    <div style="width: 44px; height: 44px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin-right: 12px; text-align: center; line-height: 44px; color: white; font-weight: 600;">JM</div>
-                                    <div>
-                                        <span class="light-text" style="color: ${BRAND.midnight}; font-weight: 600; font-size: 14px; display: block;">James Morrison</span>
-                                        <span class="light-text-secondary" style="color: ${BRAND.slateLight}; font-size: 13px;">Denver, CO</span>
-                                    </div>
-                                </div>
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td valign="middle" width="56" style="padding-right: 12px;">
+                                            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; text-align: center; line-height: 44px; color: white; font-weight: 600;">JM</div>
+                                        </td>
+                                        <td valign="middle">
+                                            <span class="light-text" style="color: ${BRAND.midnight}; font-weight: 600; font-size: 14px; display: block;">James Morrison</span>
+                                            <span class="light-text-secondary" style="color: ${BRAND.slateLight}; font-size: 13px;">Denver, CO</span>
+                                        </td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
                     </table>
@@ -313,6 +499,8 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
+    ${getPreheaderHtml(`Hi ${displayName}! Please verify your email to activate your TotalAssist account. This link expires in 24 hours.`)}
+
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
@@ -342,9 +530,13 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
             <tr>
                 <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
 
-                    <div style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin: 0 auto 25px; text-align: center; line-height: 70px; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
-                        ✉️
-                    </div>
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 25px;">
+                      <tr>
+                        <td align="center" valign="middle" width="70" height="70" style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                          ✉️
+                        </td>
+                      </tr>
+                    </table>
 
                     ${getPrimaryButtonHtml("Verify Email Address", verificationUrl)}
 
@@ -406,6 +598,8 @@ function getPasswordResetEmailHtml(displayName: string, resetUrl: string): strin
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
+    ${getPreheaderHtml(`Hi ${displayName}, click to reset your TotalAssist password. This link expires in 1 hour. Ignore if you didn't request this.`)}
+
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
@@ -435,9 +629,13 @@ function getPasswordResetEmailHtml(displayName: string, resetUrl: string): strin
             <tr>
                 <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
 
-                    <div style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin: 0 auto 25px; text-align: center; line-height: 70px; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
-                        🔑
-                    </div>
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 25px;">
+                      <tr>
+                        <td align="center" valign="middle" width="70" height="70" style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                          🔑
+                        </td>
+                      </tr>
+                    </table>
 
                     ${getPrimaryButtonHtml("Reset Password", resetUrl)}
 
@@ -528,6 +726,8 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
+    ${getPreheaderHtml(`${urgencyText} - Upgrade now to keep unlimited AI tech support. Plans start at $25/month.`)}
+
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
@@ -543,8 +743,12 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
               <td align="center" style="background-color: ${urgencyBg}; padding: 20px 30px;">
                 <table border="0" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="padding-right: 12px;">
-                      <div style="width: 44px; height: 44px; background: ${urgencyColor}; border-radius: 50%; text-align: center; line-height: 44px; font-size: 20px;">⏰</div>
+                    <td style="padding-right: 12px;" valign="middle">
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" valign="middle" width="44" height="44" style="width: 44px; height: 44px; background: ${urgencyColor}; border-radius: 50%; font-size: 20px;">⏰</td>
+                        </tr>
+                      </table>
                     </td>
                     <td>
                       <p style="margin: 0; color: ${urgencyColor}; font-size: 18px; font-weight: 700;">${urgencyText}</p>
@@ -673,6 +877,7 @@ export async function sendTrialEndingEmail(
       to: email,
       subject,
       html: getTrialEndingEmailHtml(firstName || "", daysRemaining, trialEndDate),
+      text: getTrialEndingEmailText(firstName || "", daysRemaining, trialEndDate),
     });
 
     if (data.error) {
@@ -680,7 +885,7 @@ export async function sendTrialEndingEmail(
       return { success: false, error: data.error.message };
     }
 
-    console.log("[EMAIL] Trial ending email sent via Resend:", data.id);
+    console.log("[EMAIL] Trial ending email sent via Resend:", data.data?.id);
     return { success: true };
   } catch (error) {
     console.error("[EMAIL] Failed to send trial ending email:", error);
@@ -761,6 +966,7 @@ export async function sendWelcomeEmail(
       to: email,
       subject: "Welcome to TotalAssist - Your AI Tech Support is Ready!",
       html: getWelcomeEmailHtml(firstName || ""),
+      text: getWelcomeEmailText(firstName || ""),
     });
 
     if (data.error) {
@@ -768,7 +974,7 @@ export async function sendWelcomeEmail(
       return { success: false, error: data.error.message };
     }
 
-    console.log("[EMAIL] Welcome email sent via Resend:", data.id);
+    console.log("[EMAIL] Welcome email sent via Resend:", data.data?.id);
     return { success: true };
   } catch (error) {
     console.error("[EMAIL] Failed to send welcome email:", error);
@@ -799,6 +1005,7 @@ export async function sendVerificationEmail(
       to: email,
       subject: "Verify Your Email - TotalAssist",
       html: getVerificationEmailHtml(firstName || "", verificationUrl),
+      text: getVerificationEmailText(firstName || "", verificationUrl),
     });
 
     if (data.error) {
@@ -806,7 +1013,7 @@ export async function sendVerificationEmail(
       return { success: false, error: data.error.message };
     }
 
-    console.log("[EMAIL] Verification email sent via Resend:", data.id);
+    console.log("[EMAIL] Verification email sent via Resend:", data.data?.id);
     return { success: true };
   } catch (error) {
     console.error("[EMAIL] Failed to send verification email:", error);
@@ -838,6 +1045,7 @@ export async function sendPasswordResetEmail(
       to: email,
       subject: "Reset Your Password - TotalAssist",
       html: getPasswordResetEmailHtml(displayName, resetUrl),
+      text: getPasswordResetEmailText(displayName, resetUrl),
     });
 
     if (data.error) {
@@ -845,7 +1053,7 @@ export async function sendPasswordResetEmail(
       return { success: false, error: data.error.message };
     }
 
-    console.log("[EMAIL] Password reset email sent via Resend:", data.id);
+    console.log("[EMAIL] Password reset email sent via Resend:", data.data?.id);
     return { success: true };
   } catch (error) {
     console.error("[EMAIL] Failed to send password reset email:", error);
@@ -877,6 +1085,8 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
     <style>${getEmailStyles()}</style>
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Your personalized guide from ${formattedDate} is attached. Includes step-by-step instructions and troubleshooting tips.`)}
 
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
@@ -959,9 +1169,13 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
             <!-- CTA Section -->
             <tr>
                 <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
-                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin: 0 auto 20px; text-align: center; line-height: 60px; font-size: 28px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
-                        📎
-                    </div>
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 20px;">
+                      <tr>
+                        <td align="center" valign="middle" width="60" height="60" style="width: 60px; height: 60px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; font-size: 28px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                          📎
+                        </td>
+                      </tr>
+                    </table>
 
                     <h2 style="margin: 0 0 10px; color: #ffffff; font-size: 22px; font-weight: 700;">Check Your Attachment</h2>
 
@@ -1021,6 +1235,7 @@ export async function sendSessionGuideEmail(
       to: email,
       subject: `Your TotalAssist Session Guide - ${dateStr}`,
       html: getSessionGuideEmailHtml(userName, summary, sessionDate),
+      text: getSessionGuideEmailText(userName, summary, sessionDate),
       attachments: [
         {
           filename: `TotalAssist_Guide_${formattedDateForFilename}.pdf`,
@@ -1034,7 +1249,7 @@ export async function sendSessionGuideEmail(
       return { success: false, error: data.error.message };
     }
 
-    console.log("[EMAIL] Session guide email sent via Resend:", data.id);
+    console.log("[EMAIL] Session guide email sent via Resend:", data.data?.id);
     return { success: true };
   } catch (error) {
     console.error("[EMAIL] Failed to send session guide email:", error);

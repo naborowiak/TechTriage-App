@@ -31,6 +31,7 @@ export const VerifyEmail: React.FC<VerifyEmailProps> = ({
         const response = await fetch("/api/auth/verify-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include", // Required to receive session cookie after verification
           body: JSON.stringify({ token }),
         });
 

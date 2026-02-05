@@ -47,6 +47,7 @@ export const ResetPassword: React.FC<ResetPasswordProps> = ({ onNavigate }) => {
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ token, password }),
       });
 

@@ -365,7 +365,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Fetch Cases
   useEffect(() => {
     if (user?.id) {
-      fetch("/api/cases")
+      fetch("/api/cases", { credentials: "include" })
         .then((res) => {
           if (res.ok) return res.json();
           throw new Error("Failed to fetch");
@@ -402,6 +402,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const response = await fetch("/api/cases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title: "Video Diagnostic - " + new Date().toLocaleDateString(),
         }),
