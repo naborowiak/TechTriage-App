@@ -1823,6 +1823,19 @@ const App: React.FC = () => {
     }
   }, [authLoading, isAuthenticated, sessionUser, dashboardUser]);
 
+  // Redirect to signup if on dashboard without authentication (after auth loading completes)
+  useEffect(() => {
+    if (!authLoading && currentView === PageView.DASHBOARD && !dashboardUser && !isAuthenticated) {
+      // Auth finished loading, user is not authenticated, and we're on dashboard
+      // Redirect to signup page
+      const path = viewToPath[PageView.SIGNUP] || "/signup";
+      if (window.location.pathname !== path) {
+        window.history.pushState({ view: PageView.SIGNUP }, "", path);
+      }
+      setCurrentView(PageView.SIGNUP);
+    }
+  }, [authLoading, currentView, dashboardUser, isAuthenticated]);
+
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
@@ -2048,8 +2061,18 @@ const App: React.FC = () => {
             </Dashboard>
           );
         }
-        // If no user, redirect to signup
-        navigate(PageView.SIGNUP);
+        // If auth is still loading, show loading state (don't redirect yet)
+        if (authLoading) {
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-light-100 dark:bg-midnight-950 transition-colors">
+              <div className="text-center">
+                <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-text-secondary font-medium">Loading your dashboard...</p>
+              </div>
+            </div>
+          );
+        }
+        // Auth finished but no user - redirect will be handled by useEffect below
         return null;
         
         case PageView.HOME:
@@ -2083,11 +2106,12 @@ const App: React.FC = () => {
   };
 
   // Dashboard has its own layout, don't show header/footer
-  if (currentView === PageView.DASHBOARD && dashboardUser) {
+  // Also show this layout when on dashboard route but still loading (no dashboardUser yet)
+  if (currentView === PageView.DASHBOARD) {
     return (
       <div className="min-h-screen bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
         {renderContent()}
-        <ChatWidget ref={chatRef} />
+        {dashboardUser && <ChatWidget ref={chatRef} />}
       </div>
     );
   }
