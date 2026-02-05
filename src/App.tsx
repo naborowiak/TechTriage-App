@@ -45,6 +45,7 @@ import { ResetPassword } from "./components/ResetPassword";
 import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
+import { ScoutChatScreen } from "./components/scout";
 
 // ============================================
 // Animation Hooks & Components
@@ -1274,7 +1275,7 @@ const WhyTotalAssist: React.FC = () => {
         </AnimatedElement>
 
         {/* Benefit Cards */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-8 mt-16">
           {benefits.map((benefit, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.3 + i * 0.15}>
               <div className="group p-8 rounded-2xl bg-white dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 transition-all duration-300 hover:-translate-y-1 h-full shadow-sm">
@@ -1676,6 +1677,7 @@ const pathToView: Record<string, PageView> = {
   '/verify-email': PageView.VERIFY_EMAIL,
   '/forgot-password': PageView.FORGOT_PASSWORD,
   '/reset-password': PageView.RESET_PASSWORD,
+  '/scout': PageView.SCOUT,
 };
 
 const viewToPath: Record<PageView, string> = {
@@ -1694,6 +1696,7 @@ const viewToPath: Record<PageView, string> = {
   [PageView.VERIFY_EMAIL]: '/verify-email',
   [PageView.FORGOT_PASSWORD]: '/forgot-password',
   [PageView.RESET_PASSWORD]: '/reset-password',
+  [PageView.SCOUT]: '/scout',
 };
 
 // Get initial view from URL
@@ -2017,6 +2020,8 @@ const App: React.FC = () => {
         return <TermsOfService onBack={() => navigate(PageView.HOME)} />;
       case PageView.CANCELLATION:
         return <CancellationPolicy onBack={() => navigate(PageView.HOME)} />;
+      case PageView.SCOUT:
+        return <ScoutChatScreen />;
       case PageView.DASHBOARD:
         if (dashboardUser) {
           // Determine what content to show inside dashboard
@@ -2112,6 +2117,15 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
         {renderContent()}
         {dashboardUser && <ChatWidget ref={chatRef} />}
+      </div>
+    );
+  }
+
+  // Scout AI has its own full-screen mobile-first layout
+  if (currentView === PageView.SCOUT) {
+    return (
+      <div className="min-h-screen font-['Inter',sans-serif]">
+        {renderContent()}
       </div>
     );
   }

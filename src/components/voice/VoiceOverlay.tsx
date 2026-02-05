@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { X, Camera, Mic, MicOff, StopCircle, Image as ImageIcon, LifeBuoy } from 'lucide-react';
+import { X, Camera, Mic, MicOff, StopCircle, Image as ImageIcon, LifeBuoy, VolumeX, Volume2 } from 'lucide-react';
 import { VoiceSessionState, VoicePhoto } from '../../hooks/useVoiceSession';
 
 interface VoiceOverlayProps {
@@ -10,6 +10,8 @@ interface VoiceOverlayProps {
   isSpeaking: boolean;
   onEndSession: () => void;
   onCapturePhoto: () => void;
+  onToggleMute?: () => void;
+  isMuted?: boolean;
   photoRequestPending: boolean;
   currentPhotoPrompt: string | null;
 }
@@ -35,13 +37,31 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
   isSpeaking,
   onEndSession,
   onCapturePhoto,
+  onToggleMute,
+  isMuted = false,
   photoRequestPending,
   currentPhotoPrompt,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
 
-  // Simple waveform visualization
+  // TotalAssist brand colors for waveform
+  const BRAND_COLORS = {
+    speaking: {
+      start: '#A855F7',  // scout-purple
+      end: '#6366F1',    // electric-indigo
+    },
+    listening: {
+      start: '#06B6D4',  // electric-cyan
+      end: '#A855F7',    // scout-purple
+    },
+    idle: {
+      start: '#475569',
+      end: '#334155',
+    },
+  };
+
+  // Enhanced waveform visualization with brand colors
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -52,37 +72,55 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
     const draw = () => {
       const width = canvas.width;
       const height = canvas.height;
-      const barCount = 32;
-      const barWidth = width / barCount - 2;
+      const barCount = 40;
+      const gap = 3;
+      const barWidth = (width - (barCount - 1) * gap) / barCount;
 
       ctx.clearRect(0, 0, width, height);
 
       for (let i = 0; i < barCount; i++) {
-        // Generate random heights based on speaking/listening state
-        const baseHeight = isSpeaking ? 0.5 : isListening ? 0.3 : 0.1;
-        const variation = (isSpeaking || isListening) ? Math.random() * 0.5 : 0.05;
-        const barHeight = (baseHeight + variation) * height;
+        // Generate wave-like heights based on state
+        const time = Date.now() / 1000;
+        const waveOffset = Math.sin(time * 3 + i * 0.3) * 0.15;
 
-        const x = i * (barWidth + 2);
+        const baseHeight = isMuted ? 0.05 : isSpeaking ? 0.55 : isListening ? 0.35 : 0.1;
+        const variation = (isSpeaking || isListening) && !isMuted ? Math.random() * 0.4 + waveOffset : 0.02;
+        const barHeight = Math.max(4, (baseHeight + variation) * height);
+
+        const x = i * (barWidth + gap);
         const y = (height - barHeight) / 2;
 
-        // Color based on state
+        // Color based on state with brand colors
         const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
-        if (isSpeaking) {
-          gradient.addColorStop(0, '#8B5CF6'); // scout-purple
-          gradient.addColorStop(1, '#6366F1'); // electric-indigo
-        } else if (isListening) {
-          gradient.addColorStop(0, '#22D3EE'); // electric-cyan
-          gradient.addColorStop(1, '#6366F1'); // electric-indigo
-        } else {
+
+        if (isMuted) {
           gradient.addColorStop(0, '#64748B');
           gradient.addColorStop(1, '#475569');
+        } else if (isSpeaking) {
+          gradient.addColorStop(0, BRAND_COLORS.speaking.start);
+          gradient.addColorStop(0.5, BRAND_COLORS.speaking.end);
+          gradient.addColorStop(1, BRAND_COLORS.speaking.start);
+        } else if (isListening) {
+          gradient.addColorStop(0, BRAND_COLORS.listening.start);
+          gradient.addColorStop(0.5, BRAND_COLORS.listening.end);
+          gradient.addColorStop(1, BRAND_COLORS.listening.start);
+        } else {
+          gradient.addColorStop(0, BRAND_COLORS.idle.start);
+          gradient.addColorStop(1, BRAND_COLORS.idle.end);
         }
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, barHeight, 2);
+        ctx.roundRect(x, y, barWidth, barHeight, 3);
         ctx.fill();
+
+        // Add glow effect when active
+        if ((isSpeaking || isListening) && !isMuted) {
+          ctx.shadowColor = isSpeaking ? BRAND_COLORS.speaking.start : BRAND_COLORS.listening.start;
+          ctx.shadowBlur = 8;
+        } else {
+          ctx.shadowBlur = 0;
+        }
       }
 
       animationRef.current = requestAnimationFrame(draw);
@@ -95,7 +133,7 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isListening, isSpeaking]);
+  }, [isListening, isSpeaking, isMuted]);
 
   return (
     <div className="fixed inset-0 z-[70] bg-midnight-950/95 backdrop-blur-md flex flex-col items-center justify-center">
@@ -195,13 +233,32 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
           <Camera className="w-6 h-6" />
         </button>
 
+        {/* Mute button */}
+        {onToggleMute && (
+          <button
+            onClick={onToggleMute}
+            className={`p-4 rounded-full transition-colors ${
+              isMuted
+                ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/30'
+                : 'bg-white/10 hover:bg-white/20 text-white'
+            }`}
+            title={isMuted ? 'Unmute' : 'Mute'}
+          >
+            {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+          </button>
+        )}
+
         {/* Mic status indicator */}
-        <div className={`p-6 rounded-full ${
-          isListening
-            ? 'bg-electric-cyan text-white shadow-lg shadow-electric-cyan/30'
-            : 'bg-white/10 text-white'
+        <div className={`p-6 rounded-full transition-all ${
+          isMuted
+            ? 'bg-yellow-500/20 text-yellow-400'
+            : isListening
+              ? 'bg-gradient-to-br from-electric-cyan to-scout-purple text-white shadow-lg shadow-electric-cyan/40 animate-pulse'
+              : 'bg-white/10 text-white'
         }`}>
-          {isListening ? (
+          {isMuted ? (
+            <MicOff className="w-8 h-8" />
+          ) : isListening ? (
             <Mic className="w-8 h-8" />
           ) : (
             <MicOff className="w-8 h-8" />

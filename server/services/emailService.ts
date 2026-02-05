@@ -852,3 +852,192 @@ export async function sendPasswordResetEmail(
     return { success: false, error: String(error) };
   }
 }
+
+// ============================================
+// Session Guide Email Template
+// ============================================
+
+function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate: Date): string {
+  const displayName = userName || "there";
+  const formattedDate = sessionDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Your TotalAssist Session Guide</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Your Session Guide", formattedDate)}
+
+            <!-- Content Section -->
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Thank you for using <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! We've put together a personalized guide based on your recent support session with Scout AI.
+                    </p>
+                </td>
+            </tr>
+
+            <!-- Summary Card -->
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 0 40px 35px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: linear-gradient(135deg, ${BRAND.scoutPurple}08, ${BRAND.electricIndigo}08); border-radius: 16px; border: 1px solid ${BRAND.scoutPurple}20;">
+                        <tr>
+                            <td style="padding: 25px;">
+                                <p style="margin: 0 0 10px; color: ${BRAND.scoutPurple}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Session Summary</p>
+                                <p class="light-text" style="margin: 0; color: ${BRAND.midnight}; font-size: 16px; font-weight: 600; line-height: 1.6;">
+                                    ${summary || "Session completed successfully"}
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- PDF Contents -->
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 35px 40px;">
+                    <p class="light-text-secondary" style="margin: 0 0 20px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Your complete how-to guide is attached as a PDF. It includes:
+                    </p>
+
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 15px;">
+                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 15px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.5;">Step-by-step instructions we discussed</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 15px;">
+                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 15px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.5;">Full conversation transcript</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px;">
+                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            </td>
+                            <td valign="top">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.5;">Key troubleshooting tips and next steps</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <p class="light-text-secondary" style="margin: 20px 0 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.75;">
+                        Save this guide for future reference - it's tailored specifically to your situation!
+                    </p>
+                </td>
+            </tr>
+
+            <!-- CTA Section -->
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <div style="width: 60px; height: 60px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; margin: 0 auto 20px; text-align: center; line-height: 60px; font-size: 28px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                        📎
+                    </div>
+
+                    <h2 style="margin: 0 0 10px; color: #ffffff; font-size: 22px; font-weight: 700;">Check Your Attachment</h2>
+
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Your personalized guide is attached to this email as a PDF.
+                    </p>
+
+                    ${getPrimaryButtonHtml("Need More Help?", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+// Send session guide email with PDF attachment
+export async function sendSessionGuideEmail(
+  email: string,
+  userName: string,
+  summary: string,
+  pdfBase64: string,
+  sessionDate: Date
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending session guide to ${email}`);
+
+  const formattedDateForFilename = sessionDate.toISOString().split("T")[0];
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log("[EMAIL] Simulated session guide send to:", email);
+    console.log("[EMAIL] PDF attachment size:", pdfBase64.length, "bytes");
+    return { success: true, simulated: true };
+  }
+
+  try {
+    // Convert base64 to Buffer for attachment
+    const pdfBuffer = Buffer.from(pdfBase64, "base64");
+
+    const dateStr = sessionDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Your TotalAssist Session Guide - ${dateStr}`,
+      html: getSessionGuideEmailHtml(userName, summary, sessionDate),
+      attachments: [
+        {
+          filename: `TotalAssist_Guide_${formattedDateForFilename}.pdf`,
+          content: pdfBuffer,
+        },
+      ],
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Session guide email sent via Resend:", data.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send session guide email:", error);
+    return { success: false, error: String(error) };
+  }
+}

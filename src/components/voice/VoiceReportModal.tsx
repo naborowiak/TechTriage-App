@@ -69,9 +69,9 @@ export const VoiceReportModal: React.FC<VoiceReportModalProps> = ({
       case 'resolved':
         return 'Issue Resolved';
       case 'partial':
-        return 'Partially Resolved';
+        return 'In Progress';
       case 'escalate':
-        return 'Needs Expert';
+        return 'Professional Service Recommended';
       default:
         return 'Completed';
     }

@@ -299,11 +299,16 @@ ${transcriptText}
 Photos analyzed during session: ${photoCount}
 
 Provide a JSON response with these fields:
-- issue: A brief (1-2 sentence) description of the user's original problem
-- diagnosis: What was determined about the issue (1-2 sentences)
+- issue: A brief (1-2 sentence) description of the user's original problem. If the problem is unclear or not well-defined, summarize what topics were discussed.
+- diagnosis: What was determined about the issue (1-2 sentences). If inconclusive, explain what information would be needed.
 - steps: Array of key troubleshooting steps taken (max 5, each under 100 chars)
-- outcome: Either "resolved" (issue fixed), "partial" (some progress), or "escalate" (needs pro)
+- outcome: One of these values:
+  * "resolved" - The issue was clearly identified AND successfully fixed/solved
+  * "partial" - Some progress was made but issue not fully resolved, OR the issue couldn't be clearly identified from the conversation
+  * "escalate" - ONLY use this when the issue IS clearly understood but requires physical repair, specialized equipment, licensed professional work (electrical, plumbing, HVAC), or safety concerns that cannot be addressed remotely
 - recommendations: Array of follow-up suggestions (max 3, each under 100 chars)
+
+IMPORTANT: Do NOT use "escalate" if you simply couldn't understand or identify the user's issue. Use "partial" instead with appropriate recommendations to clarify the problem.
 
 Return ONLY valid JSON, no markdown.`;
 

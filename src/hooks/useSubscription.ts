@@ -78,12 +78,22 @@ export function useSubscription(userId: string | undefined) {
 
       if (res.ok) {
         const data = await res.json();
+
+        // Server sends -1 to represent Infinity (unlimited) since JSON doesn't support Infinity
+        const parseLimit = (limit: number): number => (limit === -1 ? Infinity : limit);
+
+        const limits = data.limits || { chatSessions: 5, photoAnalyses: 2, liveSessions: 0 };
+
         setState({
           tier: data.tier || 'free',
           status: data.status || 'active',
           billingInterval: data.billingInterval || null,
           usage: data.usage || { chatSessions: 0, photoAnalyses: 0, liveSessions: 0 },
-          limits: data.limits || { chatSessions: 5, photoAnalyses: 2, liveSessions: 0 },
+          limits: {
+            chatSessions: parseLimit(limits.chatSessions),
+            photoAnalyses: parseLimit(limits.photoAnalyses),
+            liveSessions: limits.liveSessions,
+          },
           videoCredits: data.videoCredits || { included: 0, purchased: 0, used: 0, remaining: 0 },
           currentPeriodEnd: data.currentPeriodEnd
             ? new Date(data.currentPeriodEnd)

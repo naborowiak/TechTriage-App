@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Camera, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, Play, FileText, Mic } from 'lucide-react';
+import { MessageSquare, Camera, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText, Mic } from 'lucide-react';
 import { ScoutSignalIcon } from './Logo';
 import { AnimatedElement, useParallax } from '../hooks/useAnimations';
 
@@ -78,10 +78,10 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   ];
 
   const reportSections = [
-    { icon: Sparkles, title: 'Status', desc: 'Issues detected or all clear' },
-    { icon: FileText, title: 'Observation', desc: 'What Scout saw in the video' },
-    { icon: Zap, title: 'Assessment', desc: 'Likely root cause of the issue' },
-    { icon: CheckCircle2, title: 'Action Plan', desc: 'Step-by-step fix instructions' },
+    { icon: Sparkles, title: 'Outcome Status', desc: 'Resolved, In Progress, or Needs Pro' },
+    { icon: FileText, title: 'Issue Summary', desc: 'Clear description of the problem' },
+    { icon: Zap, title: 'Diagnosis', desc: 'Root cause analysis & findings' },
+    { icon: CheckCircle2, title: 'Actions & Next Steps', desc: 'What was done + recommendations' },
   ];
 
   return (
@@ -191,8 +191,8 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                     <Video className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-text-primary">Video Diagnostic Report</h2>
-                    <p className="text-text-secondary text-sm">What you get when Scout analyzes your video</p>
+                    <h2 className="text-2xl font-bold text-text-primary dark:text-white">Voice & Video Diagnostic Report</h2>
+                    <p className="text-text-secondary text-sm">Professional PDF emailed to you after every session</p>
                   </div>
                 </div>
               </AnimatedElement>
@@ -210,31 +210,100 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               </div>
 
               <AnimatedElement animation="fadeInUp" delay={0.5}>
-                <div className="bg-light-100 dark:bg-midnight-800 rounded-xl p-6 border border-scout-purple/30">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Play className="w-4 h-4 text-scout-purple" />
-                    <span className="text-scout-purple text-sm font-medium">Example Report Output</span>
+                <div className="bg-midnight-950 rounded-xl overflow-hidden border border-midnight-700 shadow-xl">
+                  {/* PDF Header - Tesla style */}
+                  <div className="bg-midnight-900 px-6 py-4 border-b-2 border-scout-purple">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-bold text-lg tracking-wide">TOTALASSIST</h4>
+                        <p className="text-electric-cyan text-xs font-medium tracking-wider">POWERED BY SCOUT AI</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white text-xs font-bold">DIAGNOSTIC REPORT</p>
+                        <p className="text-text-muted text-xs">Feb 5, 2026</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-4 text-sm">
-                    <div>
-                      <span className="text-text-primary dark:text-white font-bold">Status:</span>
-                      <span className="text-red-500 ml-2">Issue Detected</span>
+
+                  {/* Outcome Badge */}
+                  <div className="px-6 py-4">
+                    <div className="bg-green-500 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 font-bold text-sm">
+                      <CheckCircle2 className="w-4 h-4" />
+                      ISSUE RESOLVED
                     </div>
+                  </div>
+
+                  {/* Report Content */}
+                  <div className="px-6 pb-6 space-y-5 text-sm">
+                    {/* Session Overview */}
                     <div>
-                      <span className="text-text-primary dark:text-white font-bold">Observation:</span>
-                      <span className="text-text-secondary ml-2">Router front panel shows solid red power LED with blinking amber internet indicator. Device appears to be in diagnostic mode based on LED pattern sequence.</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <span className="text-text-muted text-xs font-bold tracking-wider">SESSION OVERVIEW</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-xs">
+                        <div><span className="text-text-muted">Duration:</span> <span className="text-white">4m 32s</span></div>
+                        <div><span className="text-text-muted">Photos:</span> <span className="text-white">2</span></div>
+                        <div><span className="text-text-muted">Exchanges:</span> <span className="text-white">8</span></div>
+                      </div>
                     </div>
+
+                    {/* Issue Summary */}
                     <div>
-                      <span className="text-text-primary dark:text-white font-bold">Assessment:</span>
-                      <span className="text-text-secondary ml-2">ISP connection failure. Router is unable to authenticate with upstream provider. This is typically caused by a service outage or credential mismatch.</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <span className="text-text-muted text-xs font-bold tracking-wider">ISSUE SUMMARY</span>
+                      </div>
+                      <p className="text-white/90">Router showing red power LED with blinking amber internet indicator, unable to connect to network.</p>
                     </div>
+
+                    {/* Diagnosis */}
                     <div>
-                      <span className="text-text-primary dark:text-white font-bold">Action Plan:</span>
-                      <ol className="text-text-secondary ml-4 mt-1 list-decimal list-inside space-y-1">
-                        <li>Power cycle the router (unplug for 30 seconds)</li>
-                        <li>Check ISP status page for reported outages</li>
-                        <li>If issue persists, contact ISP with error code E-AUTH-03</li>
-                      </ol>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <span className="text-text-muted text-xs font-bold tracking-wider">ANALYSIS & DIAGNOSIS</span>
+                      </div>
+                      <p className="text-white/90">ISP connection failure due to firmware corruption. Router required factory reset to clear corrupted authentication cache.</p>
+                    </div>
+
+                    {/* Actions Taken */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <span className="text-text-muted text-xs font-bold tracking-wider">ACTIONS TAKEN</span>
+                      </div>
+                      <div className="space-y-2">
+                        {['Power cycled the router for 30 seconds', 'Performed factory reset via pinhole button', 'Re-entered ISP credentials from welcome letter'].map((step, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <span className="w-5 h-5 bg-electric-indigo rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">{i + 1}</span>
+                            <span className="text-white/90">{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recommendations */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <span className="text-text-muted text-xs font-bold tracking-wider">RECOMMENDATIONS</span>
+                      </div>
+                      <ul className="space-y-1">
+                        {['Update router firmware to latest version', 'Consider enabling automatic updates'].map((rec, i) => (
+                          <li key={i} className="flex items-center gap-2 text-white/90">
+                            <div className="w-1.5 h-1.5 bg-scout-purple rounded-full"></div>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="bg-midnight-900 px-6 py-3 border-t border-midnight-700">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-text-muted">Session transcript included in full report</span>
+                      <span className="text-scout-purple font-bold">TOTALASSIST</span>
                     </div>
                   </div>
                 </div>

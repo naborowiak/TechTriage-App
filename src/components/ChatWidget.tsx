@@ -211,6 +211,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
   const voiceSession = useVoiceSession();
   const voiceCameraRef = useRef<HTMLInputElement>(null);
   const isProcessingVoiceRef = useRef(false);
+  const [isVoiceMuted, setIsVoiceMuted] = useState(false);
 
   // Check if user is authenticated
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
@@ -792,6 +793,20 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
 
   if (isLiveVideoActive) return <LiveSupport onClose={() => setIsLiveVideoActive(false)} userId={user?.id} userEmail={user?.email || undefined} userName={user?.firstName || user?.username || undefined} />;
 
+  // Toggle mute for voice mode
+  const handleToggleVoiceMute = useCallback(() => {
+    setIsVoiceMuted(prev => {
+      const newMuted = !prev;
+      if (newMuted) {
+        webSpeech.stopListening();
+        webSpeech.cancel(); // Stop any ongoing speech
+      } else {
+        webSpeech.startListening();
+      }
+      return newMuted;
+    });
+  }, [webSpeech]);
+
   // Voice mode overlay
   if (voiceSession.session.isActive) {
     return (
@@ -800,10 +815,12 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
           session={voiceSession.session}
           timeDisplay={voiceSession.formatTimeRemaining()}
           isWarning={voiceSession.isWarningTime}
-          isListening={webSpeech.isListening}
-          isSpeaking={webSpeech.isSpeaking}
+          isListening={webSpeech.isListening && !isVoiceMuted}
+          isSpeaking={webSpeech.isSpeaking && !isVoiceMuted}
           onEndSession={endVoiceMode}
           onCapturePhoto={handleVoicePhotoCapture}
+          onToggleMute={handleToggleVoiceMute}
+          isMuted={isVoiceMuted}
           photoRequestPending={voiceSession.session.photoRequestPending}
           currentPhotoPrompt={voiceSession.session.currentPhotoPrompt}
         />
@@ -841,11 +858,11 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
         }`}
       >
         {isOpen && (
-          <div className={`flex flex-col bg-white dark:bg-midnight-900 shadow-2xl overflow-hidden border border-light-300 dark:border-midnight-700 transition-all duration-300 pointer-events-auto relative ${
-            isFullScreen ? 'w-full h-full rounded-none' : 'w-full h-full rounded-t-xl sm:rounded-2xl'
+          <div className={`flex flex-col bg-white dark:bg-midnight-900 overflow-hidden border-2 border-scout-purple/30 dark:border-scout-purple/40 transition-all duration-300 pointer-events-auto relative ${
+            isFullScreen ? 'w-full h-full rounded-none shadow-none' : 'w-full h-full rounded-t-xl sm:rounded-2xl shadow-[0_0_60px_-10px_rgba(168,85,247,0.5),0_25px_50px_-12px_rgba(0,0,0,0.4)]'
           }`}>
             {/* Header */}
-            <div className="bg-light-100 dark:bg-midnight-800 p-4 border-b border-light-300 dark:border-midnight-700 flex justify-between items-center shrink-0">
+            <div className="bg-gradient-to-r from-midnight-900 via-midnight-800 to-midnight-900 p-4 border-b border-scout-purple/20 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
                 {isLiveAgentMode && currentAgent ? (
                   <AgentAvatar className="w-10 h-10" name={currentAgent.first} />
@@ -855,18 +872,18 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                   </div>
                 )}
                 <div>
-                  <h3 className="font-bold text-text-primary dark:text-white text-sm">{displayName}</h3>
-                  <div className="text-xs text-text-secondary flex items-center gap-1">
+                  <h3 className="font-bold text-white text-sm">{displayName}</h3>
+                  <div className="text-xs text-electric-cyan/80 flex items-center gap-1">
                     {isLiveAgentMode && <span className="w-2 h-2 bg-electric-cyan rounded-full animate-pulse"></span>}
                     {displaySubtitle}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 relative">
-                <button onClick={() => setShowOptionsMenu(!showOptionsMenu)} className="p-2 hover:bg-light-200 dark:hover:bg-midnight-700 rounded-full text-text-secondary transition-colors">
+                <button onClick={() => setShowOptionsMenu(!showOptionsMenu)} className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors">
                   <MoreHorizontal className="w-5 h-5" />
                 </button>
-                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-light-200 dark:hover:bg-midnight-700 rounded-full text-text-secondary transition-colors">
+                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-colors">
                   <X className="w-5 h-5" />
                 </button>
 
@@ -886,9 +903,12 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
               </div>
             </div>
 
+            {/* Purple accent line */}
+            <div className="h-0.5 bg-gradient-to-r from-scout-purple via-electric-indigo to-electric-cyan"></div>
+
             {/* Usage indicator bar */}
             {tier !== 'pro' && (
-              <div className="px-4 py-2 bg-light-100 dark:bg-midnight-800/50 border-b border-light-300 dark:border-midnight-700 flex items-center justify-between">
+              <div className="px-4 py-2 bg-light-50 dark:bg-midnight-800/50 border-b border-light-300 dark:border-midnight-700 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs">
                   <Zap className="w-3 h-3 text-electric-cyan" />
                   <span className="text-text-secondary">
@@ -1139,7 +1159,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
           <button
             aria-label="Open Chat"
             onClick={() => setIsOpen(true)}
-            className="bg-gradient-to-r from-scout-purple to-electric-indigo text-white rounded-full shadow-2xl hover:scale-105 transition-all flex items-center gap-3 font-bold pointer-events-auto px-6 py-4 text-base hover:shadow-glow-scout animate-fade-in-up"
+            className="bg-gradient-to-r from-scout-purple to-electric-indigo text-white rounded-full shadow-[0_0_40px_-5px_rgba(168,85,247,0.6),0_10px_30px_-5px_rgba(0,0,0,0.3)] hover:shadow-[0_0_50px_-5px_rgba(168,85,247,0.8),0_15px_40px_-5px_rgba(0,0,0,0.4)] hover:scale-105 transition-all flex items-center gap-3 font-bold pointer-events-auto px-6 py-4 text-base animate-fade-in-up ring-2 ring-white/20"
           >
             <MessageSquare className="w-5 h-5" />
             Ask Scout

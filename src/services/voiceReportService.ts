@@ -1,80 +1,183 @@
 import jsPDF from 'jspdf';
 import { VoiceDiagnosticReport } from '../hooks/useVoiceSession';
 
+// TotalAssist Logo as base64 (simplified version for PDF)
+// This creates a clean text-based logo since jsPDF doesn't support complex images easily
+const BRAND_COLORS = {
+  primary: [168, 85, 247] as [number, number, number],      // Scout Purple #A855F7
+  secondary: [99, 102, 241] as [number, number, number],    // Electric Indigo #6366F1
+  accent: [6, 182, 212] as [number, number, number],        // Electric Cyan #06B6D4
+  dark: [15, 23, 42] as [number, number, number],           // Midnight #0f172a
+  darkLight: [30, 41, 59] as [number, number, number],      // Midnight Light #1e293b
+  text: [51, 65, 85] as [number, number, number],           // Slate #334155
+  textLight: [100, 116, 139] as [number, number, number],   // Slate Light #64748b
+  white: [255, 255, 255] as [number, number, number],
+  lightBg: [248, 250, 252] as [number, number, number],     // Light background
+  success: [34, 197, 94] as [number, number, number],       // Green
+  warning: [234, 179, 8] as [number, number, number],       // Yellow
+  error: [239, 68, 68] as [number, number, number],         // Red
+};
+
 export const generateVoiceReportPDF = (
   report: VoiceDiagnosticReport,
   userName?: string
 ): string => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
   let yPosition = margin;
 
-  // Helper function to add text with word wrap
+  // ============================================
+  // HELPER FUNCTIONS
+  // ============================================
+
+  const addNewPageIfNeeded = (requiredSpace: number = 30) => {
+    if (yPosition > pageHeight - requiredSpace) {
+      doc.addPage();
+      yPosition = margin + 10;
+      return true;
+    }
+    return false;
+  };
+
+  const drawLine = (y: number, color: [number, number, number] = [229, 231, 235]) => {
+    doc.setDrawColor(color[0], color[1], color[2]);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, pageWidth - margin, y);
+  };
+
   const addWrappedText = (
     text: string,
     fontSize: number,
-    isBold: boolean = false,
-    color: [number, number, number] = [31, 41, 55]
+    fontStyle: 'normal' | 'bold' | 'italic' = 'normal',
+    color: [number, number, number] = BRAND_COLORS.text,
+    lineHeight: number = 1.4
   ) => {
     doc.setFontSize(fontSize);
-    doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+    doc.setFont('helvetica', fontStyle);
     doc.setTextColor(color[0], color[1], color[2]);
     const lines = doc.splitTextToSize(text, contentWidth);
+    const lineSpacing = fontSize * 0.35 * lineHeight;
 
     for (const line of lines) {
-      if (yPosition > 270) {
-        doc.addPage();
-        yPosition = margin;
-      }
+      addNewPageIfNeeded(15);
       doc.text(line, margin, yPosition);
-      yPosition += fontSize * 0.5;
+      yPosition += lineSpacing;
     }
-    yPosition += 3;
+    yPosition += 2;
   };
 
   const addSectionHeader = (title: string) => {
-    yPosition += 5;
-    if (yPosition > 260) {
-      doc.addPage();
-      yPosition = margin;
-    }
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(99, 102, 241); // electric-indigo
-    doc.text(title.toUpperCase(), margin, yPosition);
     yPosition += 8;
-    doc.setTextColor(31, 41, 55);
+    addNewPageIfNeeded(25);
+
+    // Section title with accent bar
+    doc.setFillColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
+    doc.rect(margin, yPosition - 4, 3, 12, 'F');
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(BRAND_COLORS.dark[0], BRAND_COLORS.dark[1], BRAND_COLORS.dark[2]);
+    doc.text(title.toUpperCase(), margin + 8, yPosition + 4);
+
+    yPosition += 14;
   };
 
-  // Header
-  doc.setFillColor(31, 41, 55); // brand-900
-  doc.rect(0, 0, pageWidth, 45, 'F');
+  const addKeyValue = (key: string, value: string) => {
+    addNewPageIfNeeded(12);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(BRAND_COLORS.textLight[0], BRAND_COLORS.textLight[1], BRAND_COLORS.textLight[2]);
+    doc.text(key, margin, yPosition);
 
-  // Scout branding
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
+    doc.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
+    doc.text(value, margin + 45, yPosition);
+    yPosition += 6;
+  };
+
+  // ============================================
+  // HEADER - Tesla-style clean design
+  // ============================================
+
+  // Dark header background
+  doc.setFillColor(BRAND_COLORS.dark[0], BRAND_COLORS.dark[1], BRAND_COLORS.dark[2]);
+  doc.rect(0, 0, pageWidth, 52, 'F');
+
+  // Gradient accent line
+  doc.setFillColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
+  doc.rect(0, 52, pageWidth, 2, 'F');
+
+  // Logo area - TotalAssist branding
+  doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
-  doc.text('TotalAssist', margin, 22);
+  doc.setTextColor(255, 255, 255);
+  doc.text('TOTALASSIST', margin, 24);
 
-  doc.setFontSize(10);
+  // Tagline
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('Voice Diagnostic Report', margin, 32);
+  doc.setTextColor(BRAND_COLORS.accent[0], BRAND_COLORS.accent[1], BRAND_COLORS.accent[2]);
+  doc.text('POWERED BY SCOUT AI', margin, 32);
+
+  // Report type on the right
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text('DIAGNOSTIC REPORT', pageWidth - margin - 45, 24);
 
   // Report ID
-  doc.setFontSize(8);
-  doc.text(`Report ID: ${report.id.slice(0, 20)}`, pageWidth - margin - 50, 32);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(BRAND_COLORS.textLight[0], BRAND_COLORS.textLight[1], BRAND_COLORS.textLight[2]);
+  doc.text(`ID: ${report.id.slice(0, 16).toUpperCase()}`, pageWidth - margin - 45, 32);
 
-  yPosition = 60;
+  // Date on the right
+  const reportDate = new Date(report.createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  doc.text(reportDate, pageWidth - margin - 45, 40);
 
-  // Session Info Section
-  addSectionHeader('Session Information');
+  yPosition = 68;
+
+  // ============================================
+  // OUTCOME BADGE - Prominent display
+  // ============================================
+
+  const outcomeConfig: Record<string, { label: string; color: [number, number, number]; icon: string }> = {
+    resolved: { label: 'ISSUE RESOLVED', color: BRAND_COLORS.success, icon: '✓' },
+    partial: { label: 'IN PROGRESS', color: BRAND_COLORS.warning, icon: '◐' },
+    escalate: { label: 'PROFESSIONAL SERVICE RECOMMENDED', color: BRAND_COLORS.error, icon: '!' },
+  };
+
+  const outcome = outcomeConfig[report.summary.outcome] || outcomeConfig.partial;
+
+  // Outcome badge background
+  doc.setFillColor(outcome.color[0], outcome.color[1], outcome.color[2]);
+  doc.roundedRect(margin, yPosition - 5, contentWidth, 18, 2, 2, 'F');
+
+  // Outcome text
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text(`${outcome.icon}  ${outcome.label}`, margin + 8, yPosition + 5);
+
+  yPosition += 25;
+
+  // ============================================
+  // SESSION OVERVIEW
+  // ============================================
+
+  addSectionHeader('Session Overview');
 
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins} minutes ${secs} seconds`;
+    if (mins === 0) return `${secs}s`;
+    return `${mins}m ${secs}s`;
   };
 
   const sessionDate = new Date(report.createdAt).toLocaleDateString('en-US', {
@@ -88,194 +191,226 @@ export const generateVoiceReportPDF = (
     minute: '2-digit',
   });
 
-  addWrappedText(`Date: ${sessionDate} at ${sessionTime}`, 10);
+  // Two-column layout for session info
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+
+  // Left column
+  addKeyValue('Date', sessionDate);
+  addKeyValue('Time', sessionTime);
   if (userName) {
-    addWrappedText(`Prepared for: ${userName}`, 10);
+    addKeyValue('Customer', userName);
   }
-  addWrappedText(`Duration: ${formatDuration(report.duration)}`, 10);
-  addWrappedText(`Photos Analyzed: ${report.photos.length}`, 10);
-  addWrappedText(`Total Exchanges: ${report.transcript.length}`, 10);
 
-  // Issue Summary Section
+  // Duration and stats
+  addKeyValue('Duration', formatDuration(report.duration));
+  addKeyValue('Photos', report.photos.length.toString());
+  addKeyValue('Exchanges', report.transcript.length.toString());
+
+  // ============================================
+  // ISSUE SUMMARY
+  // ============================================
+
   addSectionHeader('Issue Summary');
-  addWrappedText(report.summary.issue || 'Technical issue diagnosed', 11);
+  addWrappedText(report.summary.issue || 'Technical issue diagnosed during session.', 10, 'normal', BRAND_COLORS.text);
 
-  // Diagnosis Section
-  addSectionHeader('Diagnosis');
-  addWrappedText(report.summary.diagnosis || 'Session completed', 11);
+  // ============================================
+  // DIAGNOSIS
+  // ============================================
 
-  // Outcome
-  const outcomeLabels: Record<string, string> = {
-    resolved: '✓ Issue Resolved',
-    partial: '◐ Partially Resolved',
-    escalate: '↗ Needs Expert Attention',
-  };
-  addWrappedText(`Outcome: ${outcomeLabels[report.summary.outcome] || 'Completed'}`, 11, true);
+  addSectionHeader('Analysis & Diagnosis');
+  addWrappedText(report.summary.diagnosis || 'Diagnostic session completed.', 10, 'normal', BRAND_COLORS.text);
 
-  // Photo Analysis Section (if photos exist)
+  // ============================================
+  // TROUBLESHOOTING STEPS
+  // ============================================
+
+  if (report.summary.steps.length > 0) {
+    addSectionHeader('Actions Taken');
+
+    report.summary.steps.forEach((step, index) => {
+      addNewPageIfNeeded(15);
+
+      // Step number circle
+      doc.setFillColor(BRAND_COLORS.secondary[0], BRAND_COLORS.secondary[1], BRAND_COLORS.secondary[2]);
+      doc.circle(margin + 4, yPosition - 1, 3, 'F');
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${index + 1}`, margin + 2.5, yPosition + 1);
+
+      // Step text
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
+
+      const stepLines = doc.splitTextToSize(step, contentWidth - 15);
+      stepLines.forEach((line: string, lineIndex: number) => {
+        doc.text(line, margin + 12, yPosition + (lineIndex * 4));
+      });
+
+      yPosition += Math.max(stepLines.length * 4 + 4, 8);
+    });
+  }
+
+  // ============================================
+  // PHOTO ANALYSIS
+  // ============================================
+
   if (report.photos.length > 0) {
     addSectionHeader('Photo Analysis');
 
     report.photos.forEach((photo, index) => {
-      if (yPosition > 200) {
-        doc.addPage();
-        yPosition = margin;
-      }
+      addNewPageIfNeeded(35);
 
-      // Photo number
-      doc.setFontSize(10);
+      // Photo card background
+      doc.setFillColor(BRAND_COLORS.lightBg[0], BRAND_COLORS.lightBg[1], BRAND_COLORS.lightBg[2]);
+      doc.roundedRect(margin, yPosition - 3, contentWidth, 28, 2, 2, 'F');
+
+      // Photo indicator
+      doc.setFillColor(BRAND_COLORS.accent[0], BRAND_COLORS.accent[1], BRAND_COLORS.accent[2]);
+      doc.rect(margin, yPosition - 3, 3, 28, 'F');
+
+      // Photo label
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(31, 41, 55);
-      doc.text(`Photo ${index + 1}`, margin, yPosition);
-      yPosition += 5;
+      doc.setTextColor(BRAND_COLORS.dark[0], BRAND_COLORS.dark[1], BRAND_COLORS.dark[2]);
+      doc.text(`PHOTO ${index + 1}`, margin + 8, yPosition + 3);
 
-      // Photo timestamp
-      const photoTime = new Date(photo.timestamp).toLocaleTimeString();
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(107, 114, 128);
-      doc.text(`Captured at ${photoTime}`, margin, yPosition);
-      yPosition += 6;
-
-      // AI Prompt
-      if (photo.aiPrompt) {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(99, 102, 241);
-        doc.text(`Scout requested: "${photo.aiPrompt}"`, margin, yPosition);
-        yPosition += 5;
-      }
-
-      // AI Analysis
-      if (photo.aiAnalysis) {
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(31, 41, 55);
-        const analysisLines = doc.splitTextToSize(`Analysis: ${photo.aiAnalysis}`, contentWidth);
-        for (const line of analysisLines) {
-          if (yPosition > 270) {
-            doc.addPage();
-            yPosition = margin;
-          }
-          doc.text(line, margin, yPosition);
-          yPosition += 4.5;
-        }
-      }
-
-      yPosition += 5;
-    });
-  }
-
-  // Troubleshooting Steps Section
-  if (report.summary.steps.length > 0) {
-    addSectionHeader('Troubleshooting Steps');
-
-    report.summary.steps.forEach((step, index) => {
-      if (yPosition > 260) {
-        doc.addPage();
-        yPosition = margin;
-      }
-
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(99, 102, 241);
-      doc.text(`${index + 1}.`, margin, yPosition);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(31, 41, 55);
-      const stepLines = doc.splitTextToSize(step, contentWidth - 10);
-      stepLines.forEach((line: string, lineIndex: number) => {
-        doc.text(line, margin + 8, yPosition + (lineIndex * 5));
+      // Timestamp
+      const photoTime = new Date(photo.timestamp).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
       });
-      yPosition += stepLines.length * 5 + 3;
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(BRAND_COLORS.textLight[0], BRAND_COLORS.textLight[1], BRAND_COLORS.textLight[2]);
+      doc.text(`Captured at ${photoTime}`, margin + 8, yPosition + 9);
+
+      // Analysis
+      if (photo.aiAnalysis) {
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
+        const analysisLines = doc.splitTextToSize(photo.aiAnalysis, contentWidth - 20);
+        const displayLines = analysisLines.slice(0, 3); // Max 3 lines per photo
+        displayLines.forEach((line: string, lineIdx: number) => {
+          doc.text(line, margin + 8, yPosition + 15 + (lineIdx * 4));
+        });
+      }
+
+      yPosition += 35;
     });
   }
 
-  // Recommendations Section
+  // ============================================
+  // RECOMMENDATIONS
+  // ============================================
+
   if (report.summary.recommendations.length > 0) {
     addSectionHeader('Recommendations');
 
     report.summary.recommendations.forEach((rec) => {
-      if (yPosition > 265) {
-        doc.addPage();
-        yPosition = margin;
-      }
+      addNewPageIfNeeded(12);
 
-      doc.setFontSize(10);
-      doc.setTextColor(34, 211, 238); // electric-cyan
-      doc.text('•', margin, yPosition);
+      // Bullet point
+      doc.setFillColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
+      doc.circle(margin + 2, yPosition - 1, 1.5, 'F');
 
-      doc.setTextColor(31, 41, 55);
-      const recLines = doc.splitTextToSize(rec, contentWidth - 8);
+      // Recommendation text
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
+
+      const recLines = doc.splitTextToSize(rec, contentWidth - 12);
       recLines.forEach((line: string, lineIndex: number) => {
-        doc.text(line, margin + 6, yPosition + (lineIndex * 5));
+        doc.text(line, margin + 8, yPosition + (lineIndex * 4));
       });
-      yPosition += recLines.length * 5 + 2;
+
+      yPosition += recLines.length * 4 + 4;
     });
   }
 
-  // Full Transcript Section
-  addSectionHeader('Full Conversation Transcript');
+  // ============================================
+  // CONVERSATION TRANSCRIPT
+  // ============================================
 
-  report.transcript.forEach((entry) => {
-    if (yPosition > 255) {
-      doc.addPage();
-      yPosition = margin;
-    }
-
-    const time = new Date(entry.timestamp).toLocaleTimeString();
-    const speaker = entry.role === 'user' ? 'You' : 'Scout AI';
-
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    if (entry.role === 'user') {
-      doc.setTextColor(31, 41, 55);
-    } else {
-      doc.setTextColor(139, 92, 246);
-    }
-    doc.text(`[${time}] ${speaker}:`, margin, yPosition);
-    yPosition += 4;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(31, 41, 55);
-    const textLines = doc.splitTextToSize(entry.text, contentWidth);
-    textLines.forEach((line: string) => {
-      if (yPosition > 270) {
-        doc.addPage();
-        yPosition = margin;
-      }
-      doc.text(line, margin, yPosition);
-      yPosition += 4;
-    });
-
-    yPosition += 3;
-  });
-
-  // Footer
-  yPosition += 10;
-  if (yPosition > 270) {
-    doc.addPage();
-    yPosition = margin;
-  }
-
-  doc.setDrawColor(229, 231, 235);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 8;
+  addSectionHeader('Session Transcript');
 
   doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128);
-  doc.text(
-    'This report was automatically generated by TotalAssist Voice Diagnostic.',
-    margin,
-    yPosition
-  );
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(BRAND_COLORS.textLight[0], BRAND_COLORS.textLight[1], BRAND_COLORS.textLight[2]);
+  doc.text('Complete conversation log from diagnostic session', margin, yPosition);
+  yPosition += 8;
+
+  report.transcript.forEach((entry) => {
+    addNewPageIfNeeded(20);
+
+    const time = new Date(entry.timestamp).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    const isUser = entry.role === 'user';
+    const speaker = isUser ? 'CUSTOMER' : 'SCOUT AI';
+    const speakerColor = isUser ? BRAND_COLORS.dark : BRAND_COLORS.primary;
+
+    // Speaker label with timestamp
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(speakerColor[0], speakerColor[1], speakerColor[2]);
+    doc.text(`${speaker}`, margin, yPosition);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(BRAND_COLORS.textLight[0], BRAND_COLORS.textLight[1], BRAND_COLORS.textLight[2]);
+    doc.text(`  ${time}`, margin + 22, yPosition);
+    yPosition += 4;
+
+    // Message text
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(BRAND_COLORS.text[0], BRAND_COLORS.text[1], BRAND_COLORS.text[2]);
+
+    const textLines = doc.splitTextToSize(entry.text, contentWidth - 5);
+    textLines.forEach((line: string) => {
+      addNewPageIfNeeded(10);
+      doc.text(line, margin + 5, yPosition);
+      yPosition += 3.5;
+    });
+
+    yPosition += 4;
+  });
+
+  // ============================================
+  // FOOTER
+  // ============================================
+
+  yPosition += 10;
+  addNewPageIfNeeded(40);
+
+  drawLine(yPosition, BRAND_COLORS.textLight);
+  yPosition += 12;
+
+  // Footer content
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(BRAND_COLORS.textLight[0], BRAND_COLORS.textLight[1], BRAND_COLORS.textLight[2]);
+
+  doc.text('This diagnostic report was automatically generated by TotalAssist powered by Scout AI.', margin, yPosition);
   yPosition += 4;
-  doc.text(
-    'For additional support, visit totalassist.com or start a new session.',
-    margin,
-    yPosition
-  );
-  yPosition += 4;
-  doc.text(`Generated: ${new Date().toISOString()}`, margin, yPosition);
+  doc.text('For additional support or to schedule a service appointment, visit totalassist.tech', margin, yPosition);
+  yPosition += 8;
+
+  // Generation timestamp
+  doc.setFontSize(6);
+  doc.text(`Report generated: ${new Date().toISOString()}`, margin, yPosition);
+
+  // Branding on footer right
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(BRAND_COLORS.primary[0], BRAND_COLORS.primary[1], BRAND_COLORS.primary[2]);
+  doc.text('TOTALASSIST', pageWidth - margin - 25, yPosition);
 
   // Return as base64
   return doc.output('datauristring').split(',')[1];

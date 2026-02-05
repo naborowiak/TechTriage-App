@@ -293,6 +293,12 @@ export async function getSubscriptionStatus(userId: string) {
   const purchasedVideoCredits = subscription?.videoCredits || 0;
   const usedVideoSessions = usage?.liveSessions || 0;
 
+  // Helper to convert Infinity to a serializable value for JSON
+  // Use -1 to represent "unlimited" since JSON doesn't support Infinity
+  const serializeLimit = (limit: number): number => {
+    return limit === Infinity ? -1 : limit;
+  };
+
   return {
     tier,
     status: subscription?.status || 'active',
@@ -307,8 +313,9 @@ export async function getSubscriptionStatus(userId: string) {
       liveSessions: usedVideoSessions,
     },
     limits: {
-      chatSessions: limits.chatSessions,
-      photoAnalyses: limits.photoAnalyses,
+      // -1 means unlimited (Infinity doesn't serialize to JSON)
+      chatSessions: serializeLimit(limits.chatSessions),
+      photoAnalyses: serializeLimit(limits.photoAnalyses),
       // Total video sessions = included from plan + purchased credits
       liveSessions: includedVideoSessions + purchasedVideoCredits,
     },
