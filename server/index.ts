@@ -105,6 +105,32 @@ app.post(
 
 app.use(express.json());
 
+// Trust proxy for secure cookies behind reverse proxy (must be before session)
+app.set("trust proxy", 1);
+
+// Session middleware - MUST be before any auth routes
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "techtriage_dev_secret_change_in_prod",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: isProduction,
+      httpOnly: true,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
+  }),
+);
+
+// Passport middleware - MUST be before any auth routes
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport serialization (simple - store/retrieve whole user object)
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((obj: any, done) => done(null, obj));
+
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
@@ -1424,27 +1450,9 @@ async function setupGeminiLive(ws: WebSocket) {
 
 async function main() {
   try {
-    // Trust proxy for secure cookies behind reverse proxy
-    app.set("trust proxy", 1);
-
-    // --- GOOGLE AUTH SETUP START ---
-    app.use(
-      session({
-        secret:
-          process.env.SESSION_SECRET || "techtriage_dev_secret_change_in_prod",
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-          secure: isProduction,
-          httpOnly: true,
-          sameSite: isProduction ? "none" : "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        },
-      }),
-    );
-
-    app.use(passport.initialize());
-    app.use(passport.session());
+    // --- GOOGLE AUTH STRATEGY SETUP ---
+    // Note: Session and passport middleware are initialized at the top of the file
+    // before auth routes. Only the Google OAuth strategy is configured here.
 
     // Support multiple custom domains (comma-separated)
     const allowedDomains = process.env.APP_DOMAINS
@@ -1539,9 +1547,6 @@ async function main() {
         },
       ),
     );
-
-    passport.serializeUser((user, done) => done(null, user));
-    passport.deserializeUser((obj: any, done) => done(null, obj));
 
     // 1. Start Login - store origin domain before redirecting to Google
     app.get(
