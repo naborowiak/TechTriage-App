@@ -430,6 +430,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Calculate remaining credits
   const chatRemaining = getRemainingCredits('chat');
   const photoRemaining = getRemainingCredits('photo');
+  const isPaidTier = tier === 'home' || tier === 'pro';
   const isPhotoLocked = isFeatureLocked('photo') || photoRemaining === 0;
   const isSignalLocked = isFeatureLocked('signal');
   // Video diagnostic is locked for free/guest OR if no credits available
@@ -651,7 +652,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 description="Upload a photo of the problem for instant AI analysis."
                 buttonText="Upload Image"
                 onClick={onUploadImage}
-                badge={photoRemaining >= 999999 ? 'Unlimited' : photoRemaining === 0 ? 'Used' : '1 Free'}
+                badge={isPaidTier ? 'Unlimited' : photoRemaining === 0 ? 'Used' : '1 Free'}
                 disabled={isPhotoLocked && tier !== 'pro'}
                 locked={isPhotoLocked && tier === 'free'}
                 onLockedClick={() => handleLockedFeatureClick('photo')}
