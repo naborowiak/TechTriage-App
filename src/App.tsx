@@ -2069,8 +2069,9 @@ const App: React.FC = () => {
             </Dashboard>
           );
         }
-        // If auth is still loading, show loading state (don't redirect yet)
-        if (authLoading) {
+        // If auth is still loading OR user is authenticated but dashboardUser not synced yet,
+        // show loading state (prevents white screen for OAuth users)
+        if (authLoading || (isAuthenticated && !dashboardUser)) {
           return (
             <div className="min-h-screen flex items-center justify-center bg-light-100 dark:bg-midnight-950 transition-colors">
               <div className="text-center">
