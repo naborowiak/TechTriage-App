@@ -111,7 +111,7 @@ app.set("trust proxy", 1);
 // Session middleware - MUST be before any auth routes
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "techtriage_dev_secret_change_in_prod",
+    secret: process.env.SESSION_SECRET || "totalassist_dev_secret_change_in_prod",
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -1147,9 +1147,9 @@ const VOICES = [
 
 // Greeting variations to keep things fresh
 const GREETINGS = [
-  "Hi there! I'm your TechTriage specialist. I can see your camera feed - go ahead and show me what's giving you trouble, and I'll help you figure it out.",
-  "Hey! Welcome to TechTriage. I'm here and ready to help. Point your camera at whatever's giving you grief and let's solve this together.",
-  "Hello! TechTriage support here. I've got your video feed - show me the problem and we'll get it sorted out.",
+  "Hi there! I'm Scout, your TotalAssist specialist. I can see your camera feed - go ahead and show me what's giving you trouble, and I'll help you figure it out.",
+  "Hey! Welcome to TotalAssist. I'm here and ready to help. Point your camera at whatever's giving you grief and let's solve this together.",
+  "Hello! Scout support here. I've got your video feed - show me the problem and we'll get it sorted out.",
   "Hi! I'm your tech support buddy today. Camera's looking good - what are we troubleshooting?",
   "Welcome! I'm ready to help with your tech issue. Just show me what you're dealing with and we'll tackle it step by step.",
 ];
@@ -1175,8 +1175,6 @@ function getRandomGreeting(mode: 'video' | 'voice' = 'video') {
 function buildVoiceSystemInstruction(voiceStyle: string) {
   return `You are Scout, a friendly AI tech support assistant from TotalAssist.
 
-IMPORTANT PRONUNCIATION: The word "Triage" is pronounced "TREE-ahzh" (like the French word, rhymes with "massage"). Say "Tech-TREE-ahzh" NOT "Tech-TRY-age". This is critical for brand consistency.
-
 YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally in how you speak.
 
 BEHAVIOR:
@@ -1196,9 +1194,7 @@ TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real
 }
 
 function buildSystemInstruction(voiceStyle: string) {
-  return `You are a TechTriage Agent - a friendly, professional technical support specialist.
-
-IMPORTANT PRONUNCIATION: The word "Triage" is pronounced "TREE-ahzh" (like the French word, rhymes with "massage"). Say "Tech-TREE-ahzh" NOT "Tech-TRY-age". This is critical for brand consistency.
+  return `You are Scout, a friendly, professional technical support specialist from TotalAssist.
 
 YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally in how you speak.
 
@@ -1219,7 +1215,7 @@ TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real
 }
 
 async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video') {
-  const apiKey = process.env.GEMINI_API_KEY__TECHTRIAGE;
+  const apiKey = process.env.GEMINI_API_KEY_TOTALASSIST;
   if (!apiKey) {
     ws.send(
       JSON.stringify({ type: "error", message: "API key not configured" }),

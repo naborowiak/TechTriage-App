@@ -1719,7 +1719,7 @@ interface DashboardUser {
 // Get stored dashboard user
 const getStoredUser = (): DashboardUser | null => {
   try {
-    const stored = localStorage.getItem("techtriage_user");
+    const stored = localStorage.getItem("totalassist_user");
     if (stored) {
       return JSON.parse(stored);
     }
@@ -1793,7 +1793,7 @@ const App: React.FC = () => {
       if (currentPath === "/dashboard") {
         setSessionChecked(true);
         setDashboardUser(syncedUser);
-        localStorage.setItem("techtriage_user", JSON.stringify(syncedUser));
+        localStorage.setItem("totalassist_user", JSON.stringify(syncedUser));
         setCurrentView(PageView.DASHBOARD);
       }
 
@@ -1808,7 +1808,7 @@ const App: React.FC = () => {
             if (data.homeType || data.techComfort) {
               setDashboardUser(syncedUser);
               localStorage.setItem(
-                "techtriage_user",
+                "totalassist_user",
                 JSON.stringify(syncedUser),
               );
               navigate(PageView.DASHBOARD);
@@ -1833,7 +1833,7 @@ const App: React.FC = () => {
     ) {
       const updatedUser = { ...dashboardUser, id: sessionUser.id };
       setDashboardUser(updatedUser);
-      localStorage.setItem("techtriage_user", JSON.stringify(updatedUser));
+      localStorage.setItem("totalassist_user", JSON.stringify(updatedUser));
     }
   }, [authLoading, isAuthenticated, sessionUser, dashboardUser]);
 
@@ -1913,7 +1913,7 @@ const App: React.FC = () => {
       }
 
       setDashboardUser(user);
-      localStorage.setItem("techtriage_user", JSON.stringify(user));
+      localStorage.setItem("totalassist_user", JSON.stringify(user));
       // Refetch auth state to sync session with global auth context
       // This ensures ChatWidget and Header recognize the user as authenticated
       refetchAuth();
@@ -1941,8 +1941,8 @@ const App: React.FC = () => {
   const handleDashboardLogout = useCallback(() => {
     setDashboardUser(null);
     setDashboardView("main");
-    localStorage.removeItem("techtriage_user");
-    localStorage.removeItem("techtriage_trial");
+    localStorage.removeItem("totalassist_user");
+    localStorage.removeItem("totalassist_trial");
     // Also clear OAuth session by redirecting to logout endpoint
     window.location.href = "/api/auth/logout";
   }, []);

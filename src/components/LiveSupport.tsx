@@ -167,10 +167,10 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
 
     // Save to localStorage as fallback
     const existing = JSON.parse(
-      localStorage.getItem("tech_triage_sessions") || "[]",
+      localStorage.getItem("totalassist_sessions") || "[]",
     );
     localStorage.setItem(
-      "tech_triage_sessions",
+      "totalassist_sessions",
       JSON.stringify([sessionData, ...existing]),
     );
     window.dispatchEvent(new Event("session_saved"));
@@ -334,7 +334,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
     );
     yPosition += 4;
     doc.text(
-      "For additional support, visit techtriage.com or start a new session.",
+      "For additional support, visit totalassist.ai or start a new session.",
       margin,
       yPosition,
     );

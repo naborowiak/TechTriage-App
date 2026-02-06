@@ -436,10 +436,10 @@ export const saveVoiceReportToHistory = (report: VoiceDiagnosticReport) => {
   };
 
   const existing = JSON.parse(
-    localStorage.getItem('tech_triage_sessions') || '[]'
+    localStorage.getItem('totalassist_sessions') || '[]'
   );
   localStorage.setItem(
-    'tech_triage_sessions',
+    'totalassist_sessions',
     JSON.stringify([sessionData, ...existing])
   );
 

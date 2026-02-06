@@ -31,7 +31,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
     // Load sessions from localStorage
     const loadSessions = () => {
       try {
-        const stored = localStorage.getItem('tech_triage_sessions');
+        const stored = localStorage.getItem('totalassist_sessions');
         if (stored) {
           setSessions(JSON.parse(stored));
         }
@@ -56,7 +56,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
   const deleteSession = (sessionId: string) => {
     const updated = sessions.filter(s => s.id !== sessionId);
     setSessions(updated);
-    localStorage.setItem('tech_triage_sessions', JSON.stringify(updated));
+    localStorage.setItem('totalassist_sessions', JSON.stringify(updated));
     if (selectedSession?.id === sessionId) {
       setSelectedSession(null);
     }

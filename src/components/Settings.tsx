@@ -24,7 +24,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser, 
   useEffect(() => {
     // Load settings from localStorage
     try {
-      const settings = localStorage.getItem('techtriage_settings');
+      const settings = localStorage.getItem('totalassist_settings');
       if (settings) {
         const parsed = JSON.parse(settings);
         setPhone(parsed.phone || '');
@@ -40,10 +40,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser, 
     // Save user info
     const updatedUser = { firstName, lastName, email };
     onUpdateUser(updatedUser);
-    localStorage.setItem('techtriage_user', JSON.stringify(updatedUser));
+    localStorage.setItem('totalassist_user', JSON.stringify(updatedUser));
 
     // Save settings
-    localStorage.setItem('techtriage_settings', JSON.stringify({
+    localStorage.setItem('totalassist_settings', JSON.stringify({
       phone,
       emailNotifications,
       sessionGuideEmails
@@ -55,7 +55,7 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser, 
 
   const handleClearHistory = () => {
     if (confirm('Are you sure you want to delete all session history? This cannot be undone.')) {
-      localStorage.removeItem('tech_triage_sessions');
+      localStorage.removeItem('totalassist_sessions');
       window.dispatchEvent(new Event('session_saved'));
       alert('Session history cleared successfully.');
     }
@@ -64,10 +64,10 @@ export const Settings: React.FC<SettingsProps> = ({ onBack, user, onUpdateUser, 
   const handleDeleteAccount = () => {
     if (confirm('Are you sure you want to delete your account? This will remove all your data and cannot be undone.')) {
       // In a real app, this would call an API to delete the account
-      localStorage.removeItem('techtriage_user');
-      localStorage.removeItem('techtriage_trial');
-      localStorage.removeItem('techtriage_settings');
-      localStorage.removeItem('tech_triage_sessions');
+      localStorage.removeItem('totalassist_user');
+      localStorage.removeItem('totalassist_trial');
+      localStorage.removeItem('totalassist_settings');
+      localStorage.removeItem('totalassist_sessions');
       window.location.href = '/';
     }
   };

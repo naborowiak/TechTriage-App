@@ -58,10 +58,10 @@ const generateFingerprint = (): string => {
 
 // Get or create fingerprint
 const getFingerprint = (): string => {
-  let fp = localStorage.getItem('techtriage_device_fp');
+  let fp = localStorage.getItem('totalassist_device_fp');
   if (!fp) {
     fp = generateFingerprint();
-    localStorage.setItem('techtriage_device_fp', fp);
+    localStorage.setItem('totalassist_device_fp', fp);
   }
   return fp;
 };
@@ -98,7 +98,7 @@ export const startTrial = async (email: string): Promise<TrialStartResponse> => 
 
     if (data.success) {
       // Store trial info locally
-      localStorage.setItem('techtriage_trial', JSON.stringify({
+      localStorage.setItem('totalassist_trial', JSON.stringify({
         email,
         startedAt: data.trialStarted,
         expiresAt: data.trialExpires
@@ -115,7 +115,7 @@ export const startTrial = async (email: string): Promise<TrialStartResponse> => 
 export const getTrialStatus = async (email?: string): Promise<TrialStatusResponse> => {
   try {
     // First check localStorage for cached trial info
-    const cached = localStorage.getItem('techtriage_trial');
+    const cached = localStorage.getItem('totalassist_trial');
     if (cached) {
       const trial = JSON.parse(cached);
       const now = Date.now();

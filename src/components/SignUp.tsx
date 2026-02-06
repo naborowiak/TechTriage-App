@@ -437,7 +437,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       }
 
       localStorage.setItem(
-        "techtriage_settings",
+        "totalassist_settings",
         JSON.stringify({
           phone: formData.phone || "",
           emailNotifications: true,
