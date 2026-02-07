@@ -62,7 +62,9 @@
       "WebFetch(domain:localhost)",
       "WebFetch(domain:e56df583-5c45-43b2-a459-002cdbba858f-00-ux7vz4qsc9px.worf.replit.dev)",
       "Bash(python3:*)",
-      "Bash(npx drizzle-kit push:*)"
+      "Bash(npx drizzle-kit push:*)",
+      "Bash(sort:*)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

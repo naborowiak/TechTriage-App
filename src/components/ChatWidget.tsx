@@ -791,8 +791,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     startLiveAgentMode();
   };
 
-  if (isLiveVideoActive) return <LiveSupport onClose={() => setIsLiveVideoActive(false)} userId={user?.id} userEmail={user?.email || undefined} userName={user?.firstName || user?.username || undefined} />;
-
   // Toggle mute for voice mode
   const handleToggleVoiceMute = useCallback(() => {
     setIsVoiceMuted(prev => {
@@ -806,6 +804,8 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
       return newMuted;
     });
   }, [webSpeech]);
+
+  if (isLiveVideoActive) return <LiveSupport onClose={() => setIsLiveVideoActive(false)} userId={user?.id} userEmail={user?.email || undefined} userName={user?.firstName || user?.username || undefined} />;
 
   // Voice mode overlay
   if (voiceSession.session.isActive) {
