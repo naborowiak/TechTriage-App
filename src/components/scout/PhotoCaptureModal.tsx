@@ -97,7 +97,8 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden">
+      <div className="flex flex-col w-full h-full max-w-2xl relative">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent">
         <button
@@ -224,6 +225,7 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
             <div className="w-14" />
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -10,9 +10,10 @@ interface TranscriptEntry {
 
 interface VideoSessionModalProps {
   onClose: () => void;
+  caseId?: string;
 }
 
-export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
+export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
   const { user } = useAuth();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -81,23 +82,28 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
   const statusRef = useRef(status);
   statusRef.current = status;
 
+  // Track whether the component is still mounted for animation frame safety
+  const mountedRef = useRef(true);
+
   // Waveform drawing (ref-based to avoid stale closures)
   const drawWaveformRef = useRef<(() => void) | undefined>(undefined);
   useEffect(() => {
     drawWaveformRef.current = () => {
-      if (!waveformCanvasRef.current) return;
+      if (!mountedRef.current || !waveformCanvasRef.current) return;
       const canvas = waveformCanvasRef.current;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
       const audioCtx = audioContextRef.current;
-      const currentlySpeaking = audioCtx && audioCtx.currentTime < nextStartTimeRef.current + 0.15;
+      const currentlySpeaking = audioCtx && audioCtx.state !== 'closed' && audioCtx.currentTime < nextStartTimeRef.current + 0.15;
 
       const analyser = currentlySpeaking ? outputAnalyserRef.current : inputAnalyserRef.current;
 
       if (!analyser || (isMutedRef.current && !currentlySpeaking)) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
+        if (mountedRef.current) {
+          animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
+        }
         return;
       }
 
@@ -122,7 +128,9 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
         ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
         x += barWidth + 1;
       }
-      animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
+      if (mountedRef.current) {
+        animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
+      }
     };
   }, []);
 
@@ -166,7 +174,7 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
     };
 
     const playAudio = (base64Audio: string) => {
-      if (!audioContextRef.current) return;
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') return;
       try {
         const binaryString = atob(base64Audio);
         const bytes = new Uint8Array(binaryString.length);
@@ -305,6 +313,32 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
               setSummary(finalSummary);
               setIsSessionEnded(true);
               stopAllHardware();
+
+              // Save transcript to case if we have a caseId
+              if (caseId) {
+                const transcriptText = transcriptHistory
+                  .map(t => `${t.role === 'user' ? 'User' : 'Scout'}: ${t.text}`)
+                  .join('\n');
+                fetch(`/api/cases/${caseId}/recordings`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    sessionType: 'live_video',
+                    transcript: transcriptText,
+                  }),
+                }).catch(() => {});
+                // Update case status
+                fetch(`/api/cases/${caseId}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    status: 'resolved',
+                    aiSummary: finalSummary,
+                  }),
+                }).catch(() => {});
+              }
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
@@ -336,6 +370,7 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
 
     return () => {
       mounted = false;
+      mountedRef.current = false;
       if (videoIntervalId) clearInterval(videoIntervalId);
       if (scriptProcessor) {
         scriptProcessor.disconnect();
@@ -344,6 +379,10 @@ export function VideoSessionModal({ onClose }: VideoSessionModalProps) {
       if (statusTransitionTimerRef.current) {
         clearTimeout(statusTransitionTimerRef.current);
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      nextStartTimeRef.current = 0;
       stopAllHardware();
     };
   }, [user?.id, stopAllHardware]);

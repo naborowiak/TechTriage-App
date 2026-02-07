@@ -51,3 +51,50 @@ export interface PricingTier {
   cta: string;
   highlight?: boolean;
 }
+
+// Case types for diagnostic workflow
+export interface CaseRecord {
+  id: string;
+  userId: string;
+  title: string;
+  status: string; // "open" | "resolved" | "escalated" | "pending"
+  aiSummary?: string | null;
+  deviceId?: string | null;
+  diagnosticSteps?: Array<{ step: string; result: string; timestamp: number }> | null;
+  photosCount?: number | null;
+  sessionMode?: string | null; // "chat" | "voice" | "photo" | "video"
+  escalatedAt?: string | null;
+  escalationReport?: EscalationReportData | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeviceRecord {
+  id: string;
+  userId: string;
+  name: string;
+  type: string;
+  brand?: string | null;
+  model?: string | null;
+  location?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EscalationReportData {
+  problemDescription: string;
+  stepsTried: string[];
+  scoutAnalysis: string;
+  recommendedSpecialist: string;
+  urgencyLevel: string;
+  photosIncluded: number;
+  estimatedCostRange: string;
+}
+
+export interface CaseSummary {
+  problem: string;
+  analysis: string;
+  recommendedFix: string;
+  nextSteps: string[];
+}

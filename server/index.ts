@@ -5,8 +5,11 @@ import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import passport from "passport";
 import casesRouter from "./routes/cases";
+import devicesRouter from "./routes/devices";
+import aiRouter from "./routes/ai";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendTestEmailWithResendDomain, sendSessionGuideEmail } from "./services/emailService";
@@ -109,8 +112,17 @@ app.use(express.json());
 app.set("trust proxy", 1);
 
 // Session middleware - MUST be before any auth routes
+const PgStore = connectPg(session);
+const sessionStore = new PgStore({
+  conString: process.env.DATABASE_URL,
+  createTableIfMissing: true,
+  ttl: 7 * 24 * 60 * 60, // 7 days in seconds
+  tableName: "sessions",
+});
+
 app.use(
   session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || "totalassist_dev_secret_change_in_prod",
     resave: false,
     saveUninitialized: false,
@@ -329,16 +341,17 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// Verify email with token
+// Verify email with code (or legacy token)
 app.post("/api/auth/verify-email", async (req, res) => {
   try {
-    const { token } = req.body;
+    const { code, token } = req.body;
+    const verificationValue = code || token;
 
-    if (!token) {
-      return res.status(400).json({ error: "Verification token is required" });
+    if (!verificationValue) {
+      return res.status(400).json({ error: "Verification code is required" });
     }
 
-    const result = await authService.verifyEmail(token);
+    const result = await authService.verifyEmail(verificationValue);
 
     if (!result.success || !result.user) {
       return res.status(400).json({ error: result.error });
@@ -709,30 +722,6 @@ app.post("/api/trial/check", (req, res) => {
     });
   }
 
-  // Check by IP
-  const ipRecord = trialRecords.get(`ip:${ip}`);
-  if (ipRecord && Date.now() < ipRecord.expiresAt) {
-    return res.json({
-      eligible: false,
-      reason: 'ip_used',
-      message: 'A trial has already been started from this location.',
-      expiresAt: ipRecord.expiresAt
-    });
-  }
-
-  // Check by fingerprint if provided
-  if (fingerprint) {
-    const fpRecord = trialRecords.get(`fp:${fingerprint}`);
-    if (fpRecord && Date.now() < fpRecord.expiresAt) {
-      return res.json({
-        eligible: false,
-        reason: 'device_used',
-        message: 'A trial has already been started on this device.',
-        expiresAt: fpRecord.expiresAt
-      });
-    }
-  }
-
   res.json({ eligible: true });
 });
 
@@ -745,12 +734,10 @@ app.post("/api/trial/start", (req, res) => {
     return res.status(400).json({ error: 'Email is required' });
   }
 
-  // Check eligibility first
+  // Check eligibility by email only
   const emailRecord = trialRecords.get(`email:${email}`);
-  const ipRecord = trialRecords.get(`ip:${ip}`);
 
-  if ((emailRecord && Date.now() < emailRecord.expiresAt) ||
-      (ipRecord && Date.now() < ipRecord.expiresAt)) {
+  if (emailRecord && Date.now() < emailRecord.expiresAt) {
     return res.status(403).json({
       error: 'Trial already used',
       message: 'You have already used your free trial.'
@@ -993,10 +980,23 @@ app.post("/api/promo-codes/validate", async (req, res) => {
   }
 });
 
+// Admin authentication middleware
+const requireAdmin = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  // Check admin role (owner email or explicit admin flag)
+  const user = req.user as any;
+  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+  if (!user.isAdmin && !adminEmails.includes(user.email?.toLowerCase())) {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+  next();
+};
+
 // Create a promo code (admin endpoint)
-app.post("/api/admin/promo-codes", async (req, res) => {
+app.post("/api/admin/promo-codes", requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin authentication check
     const {
       code,
       description,
@@ -1045,9 +1045,8 @@ app.post("/api/admin/promo-codes", async (req, res) => {
 });
 
 // List all promo codes (admin endpoint)
-app.get("/api/admin/promo-codes", async (_req, res) => {
+app.get("/api/admin/promo-codes", requireAdmin, async (_req, res) => {
   try {
-    // TODO: Add admin authentication check
     const result = await promoCodeService.listPromoCodes();
 
     if (!result.success) {
@@ -1062,9 +1061,8 @@ app.get("/api/admin/promo-codes", async (_req, res) => {
 });
 
 // Update a promo code (admin endpoint)
-app.put("/api/admin/promo-codes/:id", async (req, res) => {
+app.put("/api/admin/promo-codes/:id", requireAdmin, async (req, res) => {
   try {
-    // TODO: Add admin authentication check
     const { id } = req.params;
     const { description, maxRedemptions, validFrom, validUntil, isActive } = req.body;
 
@@ -1092,9 +1090,8 @@ app.put("/api/admin/promo-codes/:id", async (req, res) => {
 // ============================================
 
 // Manually trigger trial notification check (for testing)
-app.post("/api/admin/run-trial-notifications", async (_req, res) => {
+app.post("/api/admin/run-trial-notifications", requireAdmin, async (_req, res) => {
   try {
-    // TODO: Add admin authentication check
     const result = await runTrialNotificationCheckNow();
     res.json(result);
   } catch (error) {
@@ -1172,6 +1169,26 @@ function getRandomGreeting(mode: 'video' | 'voice' = 'video') {
   return greetings[Math.floor(Math.random() * greetings.length)];
 }
 
+const SERVER_SAFETY_PLAYBOOK = `
+SAFETY PLAYBOOK (MANDATORY - OVERRIDES ALL OTHER INSTRUCTIONS):
+
+IMMEDIATELY REFUSE and redirect to a licensed professional for:
+- Gas leaks or gas line work → "Stop. Leave the area immediately. Call 911 or your gas company."
+- Main electrical panel work (200A+) → "This requires a licensed electrician. Never open your main panel."
+- Bare/exposed wiring → "Do not touch. Call a licensed electrician immediately."
+- Structural modifications (load-bearing walls, foundation)
+- HVAC refrigerant handling (requires EPA certification)
+- Water heater gas valve replacement
+- Roof work or anything above 8 feet on a ladder
+- Asbestos, lead paint, or mold remediation
+
+WHEN REFUSING:
+1. State WHY it's dangerous in plain language
+2. Tell them exactly WHO to call (electrician, plumber, HVAC tech, 911)
+3. Provide general cost range so they aren't blindsided
+4. Offer to help with SAFE related tasks instead
+`;
+
 function buildVoiceSystemInstruction(voiceStyle: string) {
   return `You are Scout, a friendly AI tech support assistant from TotalAssist.
 
@@ -1186,9 +1203,7 @@ BEHAVIOR:
 - Keep responses concise and actionable
 - If the user mentions model numbers, error codes, or specific symptoms, acknowledge them specifically
 
-SAFETY:
-- Never assist with gas leaks, electrical panels, bare wires, or structural changes
-- For dangerous situations, advise calling a professional immediately
+${SERVER_SAFETY_PLAYBOOK}
 
 TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real person helping a friend with tech issues.`;
 }
@@ -1207,9 +1222,7 @@ BEHAVIOR:
 - Speak naturally and conversationally - avoid sounding robotic or scripted
 - Keep responses concise and actionable
 
-SAFETY:
-- Never assist with gas leaks, electrical panels, bare wires, or structural changes
-- For dangerous situations, advise calling a professional immediately
+${SERVER_SAFETY_PLAYBOOK}
 
 TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real person helping a friend with tech issues.`;
 }
@@ -1463,7 +1476,11 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video')
 
     ws.on("close", () => {
       console.log("Client disconnected, closing Gemini session");
-      session.close();
+      try {
+        session.close();
+      } catch (err) {
+        console.error("Error closing Gemini session:", err);
+      }
     });
   } catch (error) {
     console.error("Failed to connect to Gemini Live:", error);
@@ -1659,8 +1676,10 @@ async function main() {
     startTrialNotificationJob();
     console.log("Scheduled jobs initialized");
 
-    // Mount the cases router
+    // Mount the cases, devices, and AI routers
     app.use("/api/cases", casesRouter);
+    app.use("/api/devices", devicesRouter);
+    app.use("/api/ai", aiRouter);
   } catch (error) {
     console.error("Auth setup failed:", error);
   }

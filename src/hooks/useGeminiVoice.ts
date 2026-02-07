@@ -12,6 +12,7 @@ export type GeminiVoiceStatus = 'idle' | 'connecting' | 'listening' | 'speaking'
 export interface UseGeminiVoiceReturn {
   status: GeminiVoiceStatus;
   isConnected: boolean;
+  connectionError: string | null;
   transcriptHistory: TranscriptEntry[];
   connect: () => void;
   disconnect: () => void;
@@ -27,6 +28,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const { user } = useAuth();
   const [status, setStatus] = useState<GeminiVoiceStatus>('idle');
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [transcriptHistory, setTranscriptHistory] = useState<TranscriptEntry[]>([]);
   const [isMuted, setIsMuted] = useState(false);
   const [outputAnalyser, setOutputAnalyser] = useState<AnalyserNode | null>(null);
@@ -80,6 +82,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     if (wsRef.current) return;
 
     setStatus('connecting');
+    setConnectionError(null);
     setTranscriptHistory([]);
     setIsMuted(false);
     isMutedRef.current = false;
@@ -119,7 +122,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     };
 
     const playAudio = (base64Audio: string) => {
-      if (!audioContextRef.current) return;
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') return;
       try {
         const binaryString = atob(base64Audio);
         const bytes = new Uint8Array(binaryString.length);
@@ -235,6 +238,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
               }, delay);
             } else if (message.type === 'error') {
               console.error('Voice session error:', message.message);
+              setConnectionError(message.message || 'Voice session encountered an error.');
               setStatus('idle');
               setIsConnected(false);
               stopAllHardware();
@@ -246,6 +250,10 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
 
         ws.onerror = (error) => {
           console.error('Voice WebSocket error:', error);
+          setConnectionError('Failed to connect to voice service. Please check your connection and try again.');
+          setStatus('idle');
+          setIsConnected(false);
+          stopAllHardware();
         };
 
         ws.onclose = () => {
@@ -268,8 +276,14 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
           const base64 = arrayBufferToBase64(pcmBuffer);
           wsRef.current.send(JSON.stringify({ type: 'audio', data: base64 }));
         };
-      } catch (e) {
+      } catch (e: unknown) {
         console.error('Error starting voice session:', e);
+        const errMsg = e instanceof DOMException && e.name === 'NotAllowedError'
+          ? 'Microphone access is required for voice mode. Please allow access in your browser settings.'
+          : e instanceof DOMException && e.name === 'NotFoundError'
+            ? 'No microphone found. Please connect a microphone and try again.'
+            : 'Failed to start voice session. Please check your microphone permissions.';
+        setConnectionError(errMsg);
         setStatus('idle');
         stopAllHardware();
       }
@@ -282,6 +296,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     stopAllHardware();
     setStatus('idle');
     setIsConnected(false);
+    setConnectionError(null);
     setTranscriptHistory([]);
     nextStartTimeRef.current = 0;
   }, [stopAllHardware]);
@@ -300,6 +315,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   return {
     status,
     isConnected,
+    connectionError,
     transcriptHistory,
     connect,
     disconnect,

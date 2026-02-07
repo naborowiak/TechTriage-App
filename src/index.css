@@ -18,6 +18,48 @@
   animation: fade-in-up 0.15s ease-out forwards;
 }
 
+/* Slide-in from bottom (cookie banner, toasts) */
+@keyframes slide-in-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-out-to-bottom {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.animate-slide-in-bottom {
+  animation: slide-in-from-bottom 0.35s ease-out forwards;
+}
+
+.animate-slide-out-bottom {
+  animation: slide-out-to-bottom 0.25s ease-in forwards;
+}
+
+/* OTP success pulse */
+@keyframes success-pulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-success-pulse {
+  animation: success-pulse 0.4s ease-out forwards;
+}
+
 /* Noise texture overlay for sections */
 .noise-texture {
   position: relative;

@@ -21,6 +21,7 @@ import {
   Sun,
   Moon,
   Bot,
+  Package,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { Logo } from "./Logo";
@@ -45,8 +46,9 @@ interface DashboardProps {
   onOpenHistory: () => void;
   onOpenSettings: () => void;
   onOpenBilling?: () => void;
+  onOpenInventory?: () => void;
   onBackToDashboard?: () => void;
-  activeView?: "main" | "history" | "settings" | "billing" | "scout";
+  activeView?: "main" | "history" | "settings" | "billing" | "scout" | "inventory";
   children?: React.ReactNode;
   onUpdateUser?: (user: {
     firstName: string;
@@ -307,6 +309,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenHistory,
   onOpenSettings,
   onOpenBilling,
+  onOpenInventory,
   onBackToDashboard,
   activeView = "main",
   children,
@@ -411,8 +414,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         }),
       });
 
-      const newCase = await response.json();
-      onStartVideo(newCase.id);
+      if (response.ok) {
+        const newCase = await response.json();
+        onStartVideo(newCase.id);
+      } else {
+        onStartVideo();
+      }
     } catch (e) {
       console.error("Error creating case:", e);
       onStartVideo();
@@ -444,7 +451,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const videoResetInfo = getVideoResetInfo();
 
   return (
-    <div className="min-h-screen bg-light-50 dark:bg-midnight-950 transition-colors">
+    <div className={`${activeView === 'scout' ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-light-50 dark:bg-midnight-950 transition-colors`}>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -525,6 +532,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <History className="w-5 h-5" />
             Session History
           </button>
+          {onOpenInventory && (
+            <button
+              onClick={() => {
+                setSidebarOpen(false);
+                onOpenInventory();
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                activeView === "inventory"
+                  ? "bg-electric-indigo/20 text-electric-indigo font-medium"
+                  : "text-text-secondary hover:bg-light-100 dark:hover:bg-midnight-800 hover:text-text-primary dark:hover:text-white"
+              }`}
+            >
+              <Package className="w-5 h-5" />
+              Home Inventory
+            </button>
+          )}
           <button
             onClick={() => {
               setSidebarOpen(false);
@@ -569,7 +592,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </aside>
 
       {/* Main content */}
-      <main className="lg:ml-64">
+      <main className={`lg:ml-64 ${activeView === 'scout' ? 'h-screen flex flex-col' : ''}`}>
         {/* Top bar */}
         <header className="bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 px-6 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
@@ -640,7 +663,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Main content area */}
         {children ? (
-          <div className="p-6 lg:p-8">{children}</div>
+          <div className={activeView === 'scout' ? 'flex-1 overflow-hidden' : 'p-6 lg:p-8'}>{children}</div>
         ) : (
           <div className="p-6 lg:p-8 max-w-6xl mx-auto">
             {/* Welcome section */}

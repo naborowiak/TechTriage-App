@@ -76,9 +76,9 @@ export function getCreditsFromPriceId(priceId: string): { type: 'videoDiagnostic
 // Note: liveSessions = INCLUDED per month. Users can always buy more credits.
 export const PLAN_LIMITS = {
   free: {
-    chatSessions: 5,           // Limited AI chat sessions
-    photoAnalyses: 2,          // Trial taste: 2 photo analyses
-    includedVideoSessions: 0,  // Must purchase credits for video
+    chatSessions: Infinity,    // Unlimited during stability testing
+    photoAnalyses: Infinity,   // Unlimited during stability testing
+    includedVideoSessions: 3,  // Allow free video sessions during stability testing
     multiHome: false,
     maxHomes: 1,
   },

@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Sun,
   Moon,
+  Mic,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -32,6 +33,7 @@ import { SignUp } from "./components/SignUp";
 import { Login } from "./components/Login";
 import { Dashboard } from "./components/Dashboard";
 import { SessionHistory } from "./components/SessionHistory";
+import { HomeInventory } from "./components/HomeInventory";
 import { Settings } from "./components/Settings";
 import { BillingManagement } from "./components/BillingManagement";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
@@ -46,6 +48,7 @@ import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
 import { ScoutChatScreen, ScoutInfoPanel } from "./components/scout";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
 
 // ============================================
 // Animation Hooks & Components
@@ -191,34 +194,6 @@ const AnimatedElement: React.FC<{
 // ============================================
 // End Animation Hooks & Components
 // ============================================
-
-const Button: React.FC<{
-  children: React.ReactNode;
-  variant?: "electric" | "outline" | "outlineElectric" | "dark" | "scout";
-  className?: string;
-  onClick?: () => void;
-}> = ({ children, variant = "electric", className = "", onClick }) => {
-  const variants = {
-    electric:
-      "btn-gradient-electric text-white shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/50 hover:brightness-110",
-    outline:
-      "bg-transparent border-2 border-electric-indigo text-electric-indigo hover:bg-electric-indigo/10",
-    outlineElectric:
-      "bg-transparent border-2 border-electric-indigo text-electric-indigo hover:bg-electric-indigo/10",
-    dark: "bg-light-200 text-text-primary hover:bg-light-300 border border-light-300",
-    scout:
-      "bg-gradient-to-r from-scout-purple to-electric-indigo text-white shadow-lg shadow-scout-purple/30 hover:shadow-scout-purple/50 hover:brightness-110",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={`px-8 py-4 rounded-full font-bold text-lg transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 ${variants[variant]} ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
 
 // Credit Counter Component - shows usage for logged-in users
 const CreditCounter: React.FC<{
@@ -666,9 +641,14 @@ const HeroHexagonPattern: React.FC<{ offset: number }> = ({ offset }) => {
   );
 };
 
-const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
+const Hero: React.FC<{
+  onFreeTrial: () => void;
+  onPricing: () => void;
+  onHeroAction?: (mode: 'voice' | 'photo' | 'video' | 'chat') => void;
+}> = ({
   onFreeTrial,
   onPricing,
+  onHeroAction,
 }) => {
   const { ref: parallaxRef, offset } = useParallax(0.3);
 
@@ -855,34 +835,53 @@ const Hero: React.FC<{ onFreeTrial: () => void; onPricing: () => void }> = ({
               </p>
             </AnimatedElement>
             <AnimatedElement animation="fadeInUp" delay={0.6}>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
-                <Button
-                  variant="electric"
-                  onClick={onFreeTrial}
-                  className="text-base sm:text-lg px-6 sm:px-10 py-3 sm:py-4 shadow-lg"
+              {/* 4 Action Buttons Grid */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 max-w-lg">
+                <button
+                  onClick={() => onHeroAction ? onHeroAction('voice') : onFreeTrial()}
+                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-purple-600/90 to-purple-800/90 backdrop-blur-sm border border-purple-400/30 text-white shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  Get Started
-                </Button>
-                <Button
-                  variant="dark"
+                  <Mic className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <span className="font-bold text-sm sm:text-base">Talk to Scout</span>
+                  <span className="text-purple-200 text-[10px] sm:text-xs">Voice-First</span>
+                </button>
+                <button
+                  onClick={() => onHeroAction ? onHeroAction('photo') : onFreeTrial()}
+                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-cyan-500/90 to-cyan-700/90 backdrop-blur-sm border border-cyan-400/30 text-white shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  <Camera className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <span className="font-bold text-sm sm:text-base">Snap a Photo</span>
+                  <span className="text-cyan-200 text-[10px] sm:text-xs">Visual Triage</span>
+                </button>
+                <button
+                  onClick={() => onHeroAction ? onHeroAction('video') : onFreeTrial()}
+                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-indigo-600/90 to-indigo-800/90 backdrop-blur-sm border border-indigo-400/30 text-white shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  <Tv className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <span className="font-bold text-sm sm:text-base">Short Video</span>
+                  <span className="text-indigo-200 text-[10px] sm:text-xs">Diagnostic</span>
+                </button>
+                <button
+                  onClick={() => onHeroAction ? onHeroAction('chat') : onFreeTrial()}
+                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-emerald-500/90 to-emerald-700/90 backdrop-blur-sm border border-emerald-400/30 text-white shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <span className="font-bold text-sm sm:text-base">Quick Text Fix</span>
+                  <span className="text-emerald-200 text-[10px] sm:text-xs">Traditional Chat</span>
+                </button>
+              </div>
+              {/* Secondary links */}
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <button
                   onClick={onPricing}
-                  className="text-base sm:text-lg px-6 sm:px-10 py-3 sm:py-4 bg-white/90 dark:bg-midnight-800/90 backdrop-blur-sm border-2 border-gray-300 dark:border-midnight-600 text-text-primary dark:text-white hover:bg-white dark:hover:bg-midnight-700 shadow-md"
+                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-electric-indigo dark:hover:text-electric-cyan transition-colors underline underline-offset-2"
                 >
                   Explore Pricing
-                </Button>
-              </div>
-            </AnimatedElement>
-            <AnimatedElement animation="fadeIn" delay={0.8}>
-              <div
-                className="inline-flex flex-col xs:flex-row items-start xs:items-center gap-3 sm:gap-6 text-xs sm:text-sm px-4 py-3 rounded-xl bg-white/70 dark:bg-midnight-900/70 backdrop-blur-sm border border-gray-200 dark:border-midnight-700 shadow-sm"
-              >
-                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200 font-medium">
-                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-electric-cyan flex-shrink-0" />
+                </button>
+                <span className="text-gray-400 dark:text-gray-600">|</span>
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-electric-cyan" />
                   <span>No credit card needed</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200 font-medium">
-                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-electric-cyan flex-shrink-0" />
-                  <span>24/7 instant answers</span>
                 </div>
               </div>
             </AnimatedElement>
@@ -1729,7 +1728,7 @@ const getStoredUser = (): DashboardUser | null => {
   return null;
 };
 
-type DashboardView = "main" | "history" | "settings" | "billing" | "scout";
+type DashboardView = "main" | "history" | "settings" | "billing" | "scout" | "inventory";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);
@@ -1872,6 +1871,22 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  // Auto-redirect authenticated users from / to dashboard
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && sessionUser && window.location.pathname === "/") {
+      // Sync dashboardUser from session if not already set
+      const syncedUser: DashboardUser = {
+        id: sessionUser.id,
+        firstName: sessionUser.firstName || sessionUser.username || "User",
+        lastName: sessionUser.lastName || undefined,
+        email: sessionUser.email || "",
+      };
+      setDashboardUser(syncedUser);
+      localStorage.setItem("totalassist_user", JSON.stringify(syncedUser));
+      navigate(PageView.DASHBOARD);
+    }
+  }, [authLoading, isAuthenticated, sessionUser, navigate]);
+
   const handleStart = useCallback(() => {
     chatRef.current?.open("I'd like to start a free trial.");
   }, []);
@@ -1880,9 +1895,34 @@ const App: React.FC = () => {
     chatRef.current?.openAsLiveAgent();
   }, []);
 
+  const [heroPreviewMode, setHeroPreviewMode] = useState<'voice' | 'photo' | 'video' | 'chat' | null>(null);
+  const [scoutInitialMode, setScoutInitialMode] = useState<'voice' | 'photo' | 'video' | 'chat' | undefined>(undefined);
+
+  // Lock body scroll when hero preview modal is open (prevents scrolling through marketing sections behind the overlay)
+  useEffect(() => {
+    if (heroPreviewMode) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [heroPreviewMode]);
+
   const handleFreeTrial = useCallback(() => {
     navigate(PageView.SIGNUP);
   }, [navigate]);
+
+  const handleHeroAction = useCallback((mode: 'voice' | 'photo' | 'video' | 'chat') => {
+    if (dashboardUser) {
+      // Authenticated: go to Scout with pre-selected mode
+      setScoutInitialMode(mode);
+      setDashboardView('scout');
+      navigate(PageView.DASHBOARD);
+    } else {
+      // Unauthenticated: show free preview
+      setHeroPreviewMode(mode);
+    }
+  }, [dashboardUser, navigate]);
 
   const handleNavigateToSignup = useCallback(
     (email?: string | React.MouseEvent) => {
@@ -1961,6 +2001,7 @@ const App: React.FC = () => {
 
   const handleBackToDashboard = useCallback(() => {
     setDashboardView("main");
+    setScoutInitialMode(undefined);
   }, []);
 
   const handleUpdateUser = useCallback((updatedUser: DashboardUser) => {
@@ -1973,6 +2014,10 @@ const App: React.FC = () => {
 
   const handleOpenScout = useCallback(() => {
     setDashboardView("scout");
+  }, []);
+
+  const handleOpenInventory = useCallback(() => {
+    setDashboardView("inventory");
   }, []);
 
   // Handle navigation to dashboard sub-views from header dropdown
@@ -2048,13 +2093,14 @@ const App: React.FC = () => {
               onOpenHistory={handleOpenHistory}
               onOpenSettings={handleOpenSettings}
               onOpenBilling={handleOpenBilling}
+              onOpenInventory={handleOpenInventory}
               onBackToDashboard={handleBackToDashboard}
               activeView="scout"
               onUpdateUser={handleUpdateUser}
             >
-              <div className="flex gap-0 -m-6 lg:-m-8 h-[calc(100vh-73px)]">
+              <div className="flex h-full">
                 <div className="flex-1 min-w-0">
-                  <ScoutChatScreen embedded />
+                  <ScoutChatScreen embedded initialMode={scoutInitialMode} />
                 </div>
                 <div className="hidden xl:block w-80 flex-shrink-0">
                   <ScoutInfoPanel />
@@ -2088,6 +2134,10 @@ const App: React.FC = () => {
             dashboardContent = (
               <BillingManagement userId={dashboardUser.id} />
             );
+          } else if (dashboardView === "inventory") {
+            dashboardContent = (
+              <HomeInventory embedded />
+            );
           }
 
           // If user navigated to scout view within dashboard, render embedded scout
@@ -2107,9 +2157,9 @@ const App: React.FC = () => {
                 activeView="scout"
                 onUpdateUser={handleUpdateUser}
               >
-                <div className="flex gap-0 -m-6 lg:-m-8 h-[calc(100vh-73px)]">
+                <div className="flex h-full">
                   <div className="flex-1 min-w-0">
-                    <ScoutChatScreen embedded />
+                    <ScoutChatScreen embedded initialMode={scoutInitialMode} />
                   </div>
                   <div className="hidden xl:block w-80 flex-shrink-0">
                     <ScoutInfoPanel />
@@ -2130,6 +2180,7 @@ const App: React.FC = () => {
               onOpenHistory={handleOpenHistory}
               onOpenSettings={handleOpenSettings}
               onOpenBilling={handleOpenBilling}
+              onOpenInventory={handleOpenInventory}
               onBackToDashboard={handleBackToDashboard}
               activeView={dashboardView}
               onUpdateUser={handleUpdateUser}
@@ -2160,7 +2211,57 @@ const App: React.FC = () => {
               <Hero
                 onFreeTrial={handleFreeTrial}
                 onPricing={handleNavigateToPricing}
+                onHeroAction={handleHeroAction}
               />
+              {/* Free Preview Modal for unauthenticated users */}
+              {heroPreviewMode && (
+                <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex flex-col">
+                  <div className="flex items-center justify-between px-4 py-3 bg-[#151922] border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center">
+                        <Zap className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-white font-medium text-sm">Scout AI Preview</span>
+                      <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">Free preview</span>
+                    </div>
+                    <button
+                      onClick={() => setHeroPreviewMode(null)}
+                      className="text-white/60 hover:text-white p-1"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <ScoutChatScreen embedded initialMode={heroPreviewMode} />
+                  </div>
+                  {/* Signup CTA banner at bottom - non-blocking */}
+                  <div className="bg-gradient-to-r from-[#6366F1]/90 to-[#06B6D4]/90 backdrop-blur-md px-4 py-3 border-t border-white/10">
+                    <div className="max-w-lg mx-auto flex items-center justify-between gap-4">
+                      <p className="text-white/90 text-sm font-medium">Sign up free for unlimited sessions & case tracking</p>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            setHeroPreviewMode(null);
+                            navigate(PageView.SIGNUP);
+                          }}
+                          className="px-4 py-2 rounded-lg bg-white text-[#6366F1] font-semibold text-sm hover:bg-white/90 transition-colors"
+                        >
+                          Sign Up
+                        </button>
+                        <button
+                          onClick={() => {
+                            setHeroPreviewMode(null);
+                            navigate(PageView.LOGIN);
+                          }}
+                          className="px-4 py-2 rounded-lg bg-white/10 text-white font-medium text-sm hover:bg-white/20 transition-colors"
+                        >
+                          Log In
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               <HowItWorksSimple />
               <SectionDivider variant="hexagon" />
               <WhatWeHelpWith />
@@ -2187,9 +2288,10 @@ const App: React.FC = () => {
   // Also show this layout when on dashboard route but still loading (no dashboardUser yet)
   if (currentView === PageView.DASHBOARD) {
     return (
-      <div className="min-h-screen bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
+      <div className={`${dashboardView === 'scout' ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300`}>
         {renderContent()}
         {dashboardUser && dashboardView !== 'scout' && <ChatWidget ref={chatRef} />}
+        <CookieConsentBanner />
       </div>
     );
   }
@@ -2197,7 +2299,7 @@ const App: React.FC = () => {
   // Scout AI has its own full-screen mobile-first layout
   if (currentView === PageView.SCOUT) {
     return (
-      <div className="min-h-screen font-['Inter',sans-serif]">
+      <div className="h-screen overflow-hidden font-['Inter',sans-serif]">
         {renderContent()}
       </div>
     );
@@ -2216,6 +2318,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-light-100 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
         {renderContent()}
         <ChatWidget ref={chatRef} />
+        <CookieConsentBanner />
       </div>
     );
   }
@@ -2231,6 +2334,7 @@ const App: React.FC = () => {
       <main>{renderContent()}</main>
       <Footer onNavigate={navigate} />
       <ChatWidget ref={chatRef} />
+      <CookieConsentBanner />
     </div>
   );
 };

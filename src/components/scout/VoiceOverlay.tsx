@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { X, Mic, MicOff, Camera, Phone, Volume2 } from 'lucide-react';
+import { X, Mic, MicOff, Camera, Phone, Volume2, AlertCircle, Loader2 } from 'lucide-react';
 import type { VoiceSessionState } from '../../hooks/useVoiceSession';
 import type { GeminiVoiceStatus } from '../../hooks/useGeminiVoice';
 
@@ -20,6 +20,8 @@ interface VoiceOverlayProps {
   inputAnalyser?: AnalyserNode | null;
   // Optional Gemini voice status (overrides isListening/isSpeaking when provided)
   geminiStatus?: GeminiVoiceStatus;
+  // Connection error message
+  connectionError?: string | null;
 }
 
 export function VoiceOverlay({
@@ -37,6 +39,7 @@ export function VoiceOverlay({
   outputAnalyser,
   inputAnalyser,
   geminiStatus,
+  connectionError,
 }: VoiceOverlayProps) {
   // When geminiStatus is provided, derive listening/speaking from it
   const isListening = geminiStatus ? geminiStatus === 'listening' : isListeningProp;
@@ -122,7 +125,8 @@ export function VoiceOverlay({
   }, [isListening, isSpeaking, outputAnalyser, inputAnalyser]);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-[#0B0E14] to-[#151922] flex flex-col">
+    <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-[#0B0E14] to-[#151922] flex items-center justify-center overflow-hidden">
+      <div className="flex flex-col w-full h-full max-w-2xl">
       {/* Header with timer */}
       <div className="flex items-center justify-between px-4 py-3">
         <button
@@ -143,6 +147,37 @@ export function VoiceOverlay({
 
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
+        {/* Connection error state */}
+        {connectionError ? (
+          <>
+            <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6">
+              <AlertCircle className="w-10 h-10 text-red-400" />
+            </div>
+            <div className="text-center mb-6">
+              <h2 className="text-white text-xl font-semibold mb-2">Connection Failed</h2>
+              <p className="text-white/60 text-sm max-w-sm">{connectionError}</p>
+            </div>
+            <button
+              onClick={onEndSession}
+              className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-semibold text-sm transition-colors"
+            >
+              Go Back
+            </button>
+          </>
+        ) : geminiStatus === 'connecting' ? (
+          <>
+            <div className="relative mb-8">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#A855F7] to-[#6366F1] flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.4)]">
+                <Loader2 className="w-16 h-16 text-white animate-spin" />
+              </div>
+            </div>
+            <div className="text-center mb-6">
+              <h2 className="text-white text-xl font-semibold mb-2">Connecting...</h2>
+              <p className="text-white/60 text-sm">Setting up your voice session</p>
+            </div>
+          </>
+        ) : (
+          <>
         {/* Scout avatar with glow */}
         <div className="relative mb-8">
           <div className={`
@@ -231,9 +266,12 @@ export function VoiceOverlay({
           height={80}
           className="mb-8"
         />
+          </>
+        )}
       </div>
 
-      {/* Bottom controls */}
+      {/* Bottom controls — hidden during error/connecting */}
+      {!connectionError && geminiStatus !== 'connecting' && (
       <div className="px-6 pb-8">
         <div className="flex items-center justify-center gap-6">
           {/* Camera button */}
@@ -267,6 +305,8 @@ export function VoiceOverlay({
             <Phone className="w-6 h-6 text-white transform rotate-[135deg]" />
           </button>
         </div>
+      </div>
+      )}
       </div>
     </div>
   );

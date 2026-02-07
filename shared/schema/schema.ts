@@ -78,6 +78,24 @@ export const supportSessionsTable = pgTable("support_sessions", {
   endedAt: timestamp("ended_at"),
 });
 
+// NEW: Devices Table (Home Inventory)
+export const devicesTable = pgTable("devices", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  userId: varchar("user_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // 'router', 'smart_speaker', 'thermostat', etc.
+  brand: varchar("brand", { length: 255 }),
+  model: varchar("model", { length: 255 }),
+  location: varchar("location", { length: 255 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // NEW: Cases Table (The "Folder" for a problem)
 export const casesTable = pgTable("cases", {
   id: varchar("id", { length: 255 })
@@ -87,10 +105,36 @@ export const casesTable = pgTable("cases", {
     .notNull()
     .references(() => usersTable.id),
   title: varchar("title", { length: 255 }).notNull(), // e.g., "Blinking Red Router Light"
-  status: varchar("status", { length: 50 }).default("open"), // "open", "resolved", "pending"
+  status: varchar("status", { length: 50 }).default("open"), // "open", "resolved", "escalated", "pending"
   aiSummary: text("ai_summary"), // The compressed context for the AI
+  deviceId: varchar("device_id", { length: 255 }).references(() => devicesTable.id),
+  diagnosticSteps: jsonb("diagnostic_steps").$type<Array<{ step: string; result: string; timestamp: number }>>(),
+  photosCount: integer("photos_count").default(0),
+  sessionMode: varchar("session_mode", { length: 20 }), // 'chat' | 'voice' | 'photo' | 'video'
+  escalatedAt: timestamp("escalated_at"),
+  escalationReport: jsonb("escalation_report").$type<{
+    problemDescription: string;
+    stepsTried: string[];
+    scoutAnalysis: string;
+    recommendedSpecialist: string;
+    urgencyLevel: string;
+    photosIncluded: number;
+    estimatedCostRange: string;
+  }>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// NEW: Case Messages Table (Chat messages per case)
+export const caseMessagesTable = pgTable("case_messages", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  caseId: varchar("case_id", { length: 255 })
+    .notNull()
+    .references(() => casesTable.id),
+  messages: jsonb("messages").$type<Array<{ role: string; text: string; image?: string; timestamp: number }>>(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // NEW: Session Recordings Table (The "File" inside the folder for Live sessions)
@@ -101,7 +145,7 @@ export const sessionRecordingsTable = pgTable("session_recordings", {
   caseId: varchar("case_id", { length: 255 })
     .notNull()
     .references(() => casesTable.id),
-  sessionType: varchar("session_type", { length: 50 }).notNull(), // "live_audio", "live_video"
+  sessionType: varchar("session_type", { length: 50 }).notNull(), // "chat", "live_audio", "live_video", "photo_analysis", "escalation_report"
   transcript: text("transcript"), // Full text conversation
   audioUrl: text("audio_url"), // URL to stored audio file
   durationSeconds: integer("duration_seconds"),
@@ -238,8 +282,12 @@ export type InsertWebhookEvent = typeof webhookEventsTable.$inferInsert;
 // New Type exports
 export type Case = typeof casesTable.$inferSelect;
 export type InsertCase = typeof casesTable.$inferInsert;
+export type CaseMessage = typeof caseMessagesTable.$inferSelect;
+export type InsertCaseMessage = typeof caseMessagesTable.$inferInsert;
 export type SessionRecording = typeof sessionRecordingsTable.$inferSelect;
 export type InsertSessionRecording = typeof sessionRecordingsTable.$inferInsert;
+export type Device = typeof devicesTable.$inferSelect;
+export type InsertDevice = typeof devicesTable.$inferInsert;
 export type PromoCode = typeof promoCodesTable.$inferSelect;
 export type InsertPromoCode = typeof promoCodesTable.$inferInsert;
 export type PromoCodeRedemption = typeof promoCodeRedemptionsTable.$inferSelect;

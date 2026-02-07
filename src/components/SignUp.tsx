@@ -14,12 +14,17 @@ import {
   AlertCircle,
   Sun,
   Moon,
+  Smartphone,
+  Printer,
+  Camera,
+  Speaker,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { Logo } from "./Logo";
 import { PageView } from "../types";
 import { checkTrialEligibility, startTrial } from "../services/trialService";
 import { useAuth } from "../hooks/useAuth";
+import { OTPInput } from "./OTPInput";
 
 interface SignUpProps {
   onStart: () => void;
@@ -34,7 +39,7 @@ interface SignUpProps {
   onNavigate?: (view: PageView) => void;
 }
 
-type OnboardingStep = "credentials" | "profile" | "home" | "needs" | "complete";
+type OnboardingStep = "credentials" | "profile" | "home" | "needs" | "complete" | "verify-email";
 
 interface FormData {
   email: string;
@@ -105,6 +110,10 @@ const issueTypes = [
   { value: "smarthome", label: "Smart Home", icon: Home },
   { value: "hvac", label: "HVAC & Thermostats", icon: Thermometer },
   { value: "security", label: "Accounts & Security", icon: Lock },
+  { value: "phones", label: "Phones & Tablets", icon: Smartphone },
+  { value: "printers", label: "Printers & Peripherals", icon: Printer },
+  { value: "cameras", label: "Home Security & Cameras", icon: Camera },
+  { value: "audio", label: "Audio & Speakers", icon: Speaker },
 ];
 
 const howHeardOptions = [
@@ -193,7 +202,7 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
     <div className="w-full max-w-[520px] px-4 pb-12 z-10">
       <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-xl border border-light-300 dark:border-midnight-700 overflow-hidden">
         {/* Progress Bar */}
-        {step && showProgressBar && (
+        {step !== undefined && step > 0 && showProgressBar && (
           <div className="px-8 pt-8">
             <ProgressBar step={step} totalSteps={totalSteps} />
           </div>
@@ -263,6 +272,24 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     howHeard: "",
   });
 
+  // OTP verification state
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [registeredUserId, setRegisteredUserId] = useState<string | undefined>();
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
   // Handle OAuth users - set up form and step when auth is confirmed (runs only once)
   const [oauthInitialized, setOauthInitialized] = useState(false);
 
@@ -309,15 +336,15 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     }
   };
 
-  // Calculate step number - OAuth users skip credentials step
+  // Calculate step number for the visible onboarding steps (profile → home → needs → complete)
+  // Credentials and verify-email are pre-onboarding gateways and don't show the progress bar
   const getStepNumber = (step: OnboardingStep): number => {
-    const oauthSteps: OnboardingStep[] = ["profile", "home", "needs", "complete"];
-    const regularSteps: OnboardingStep[] = ["credentials", "profile", "home", "needs", "complete"];
-    const steps = isOAuthUser ? oauthSteps : regularSteps;
-    return steps.indexOf(step) + 1;
+    const visibleSteps: OnboardingStep[] = ["profile", "home", "needs", "complete"];
+    const idx = visibleSteps.indexOf(step);
+    return idx >= 0 ? idx + 1 : 0;
   };
 
-  const totalSteps = isOAuthUser ? 4 : 5;
+  const totalSteps = 4;
 
   const updateFormData = (field: keyof FormData, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -367,7 +394,48 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         console.error("Trial check error:", error);
       }
 
-      setIsCheckingTrial(false);
+      // Register the user immediately after credentials validation
+      // so they get the OTP email before starting onboarding
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            firstName: formData.firstName || undefined,
+            lastName: formData.lastName || undefined,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          setTrialError(data.error || "Registration failed. Please try again.");
+          setIsCheckingTrial(false);
+          return;
+        }
+
+        setRegisteredUserId(data.user?.id);
+
+        if (data.needsVerification) {
+          setVerificationEmail(formData.email);
+          setIsCheckingTrial(false);
+          setCurrentStep("verify-email");
+          return;
+        }
+
+        // If no verification needed (shouldn't happen normally), continue
+        setIsCheckingTrial(false);
+        setCurrentStep("profile");
+        return;
+      } catch (error) {
+        console.error("Registration error:", error);
+        setTrialError("Registration failed. Please try again.");
+        setIsCheckingTrial(false);
+        return;
+      }
     }
 
     if (currentIndex < steps.length - 1) {
@@ -377,14 +445,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
 
   const handleComplete = async () => {
     console.log("Onboarding complete:", formData);
-    console.log("[SIGNUP] Password in formData:", !!formData.password, "Length:", formData.password?.length);
 
     try {
-      let userId: string | undefined;
+      // Determine user ID - OAuth user, or email user who already registered + verified
+      const userId = isOAuthUser ? oauthUser?.id : registeredUserId;
 
-      if (isOAuthUser && oauthUser?.id) {
-        // OAuth user - update their profile with onboarding data
-        const response = await fetch(`/api/auth/user/${oauthUser.id}`, {
+      if (userId) {
+        // Update profile with onboarding data (both OAuth and verified email users)
+        const response = await fetch(`/api/auth/user/${userId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -401,39 +469,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         });
 
         const data = await response.json();
-        userId = oauthUser.id;
-        console.log("OAuth user profile updated:", data);
+        console.log("User profile updated:", data);
       } else {
-        // Regular user - register new account
-        console.log("[SIGNUP] Sending registration request with email:", formData.email);
-        console.log("[SIGNUP] Password being sent:", !!formData.password, "Length:", formData.password?.length);
-
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include", // Required to establish session cookie
-          body: JSON.stringify({ ...formData }),
-        });
-
-        const data = await response.json();
-        console.log("[SIGNUP] Registration response:", data);
-        console.log("[SIGNUP] Response success:", data.success);
-        console.log("[SIGNUP] Response user:", data.user);
-        console.log("[SIGNUP] Response user.id:", data.user?.id);
-
-        // Check for registration errors
-        if (!response.ok || !data.success) {
-          console.error("[SIGNUP] Registration failed:", data.error);
-          setTrialError(data.error || "Registration failed. Please try again.");
-          setCurrentStep("credentials");
-          return;
-        }
-
-        userId = data.user?.id;
-
-        if (!userId) {
-          console.error("[SIGNUP] WARNING: No user ID returned from registration!");
-        }
+        console.error("[SIGNUP] WARNING: No user ID available at handleComplete!");
       }
 
       localStorage.setItem(
@@ -456,10 +494,11 @@ export const SignUp = memo<SignUpProps>(function SignUp({
         onStart();
       }
     } catch (error) {
-      console.error("Registration/update error:", error);
+      console.error("Profile update error:", error);
+      // Still complete the flow even if profile update fails
       if (onComplete) {
         onComplete({
-          id: isOAuthUser ? oauthUser?.id : undefined,
+          id: isOAuthUser ? oauthUser?.id : registeredUserId,
           firstName: formData.firstName,
           lastName: formData.lastName || undefined,
           email: formData.email,
@@ -470,7 +509,154 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     }
   };
 
+  // Handle OTP verification
+  const handleVerifyOTP = async (code: string) => {
+    setIsVerifying(true);
+    setVerificationError(null);
+
+    try {
+      const response = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ code }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.user) {
+        // Store the verified user ID
+        setRegisteredUserId(data.user.id);
+
+        // Show success animation then continue to onboarding
+        setIsVerifying(false);
+        setVerificationSuccess(true);
+
+        setTimeout(() => {
+          setVerificationSuccess(false);
+          setCurrentStep("profile");
+        }, 1500);
+      } else {
+        setVerificationError(data.error || "Invalid verification code. Please try again.");
+        setIsVerifying(false);
+      }
+    } catch (error) {
+      console.error("OTP verification error:", error);
+      setVerificationError("Verification failed. Please try again.");
+      setIsVerifying(false);
+    }
+  };
+
+  // Handle resend verification code
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) return;
+    setIsResending(true);
+    setVerificationError(null);
+
+    try {
+      const response = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: verificationEmail }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Start 60-second cooldown
+        setResendCooldown(60);
+      } else {
+        setVerificationError(data.error || "Failed to resend code.");
+      }
+    } catch (error) {
+      console.error("Resend code error:", error);
+      setVerificationError("Failed to resend code. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   // --- Step Content ---
+
+  // Verify Email step (shown after registration when email verification is needed)
+  if (currentStep === "verify-email") {
+    // Success state with animation
+    if (verificationSuccess) {
+      return (
+        <OnboardingLayout
+          showProgressBar={false}
+          totalSteps={totalSteps}
+          onLogoClick={handleLogoClick}
+          title="Email verified!"
+          subtitle="Let's finish setting up your account..."
+        >
+          <div className="flex flex-col items-center gap-4 py-6">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center animate-success-pulse">
+              <CheckCircle2 className="w-8 h-8 text-green-500" />
+            </div>
+            <p className="text-sm text-text-secondary dark:text-gray-400">
+              Great! Just a few more questions to personalize your experience.
+            </p>
+            <div className="w-6 h-6 border-2 border-electric-indigo border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </OnboardingLayout>
+      );
+    }
+
+    return (
+      <OnboardingLayout
+        showProgressBar={false}
+        totalSteps={totalSteps}
+        onLogoClick={handleLogoClick}
+        title="Check your email"
+        subtitle={`We sent a 6-digit code to ${verificationEmail}`}
+      >
+        <div className="space-y-6">
+          <OTPInput
+            onComplete={handleVerifyOTP}
+            onInput={() => setVerificationError(null)}
+            disabled={isVerifying}
+            error={!!verificationError}
+          />
+
+          {verificationError && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-600 dark:text-red-400">{verificationError}</p>
+            </div>
+          )}
+
+          {isVerifying && (
+            <div className="flex items-center justify-center gap-2 text-text-secondary">
+              <div className="w-4 h-4 border-2 border-electric-indigo border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm">Verifying...</span>
+            </div>
+          )}
+
+          <div className="text-center pt-2">
+            <p className="text-sm text-text-muted dark:text-gray-500 mb-2">
+              Didn't receive the code?
+            </p>
+            <button
+              onClick={handleResendCode}
+              disabled={isResending || resendCooldown > 0}
+              className="text-sm font-semibold text-electric-indigo hover:text-electric-indigo/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isResending
+                ? "Sending..."
+                : resendCooldown > 0
+                ? `Resend code in ${resendCooldown}s`
+                : "Resend code"}
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-text-muted dark:text-gray-600">
+            Code expires in 30 minutes
+          </p>
+        </div>
+      </OnboardingLayout>
+    );
+  }
 
   // Step 5 (or Step 4 for OAuth): Complete
   if (currentStep === "complete") {
@@ -478,7 +664,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       <OnboardingLayout
         step={getStepNumber("complete")}
         totalSteps={totalSteps}
-        showProgressBar={isOAuthUser || getStepNumber("complete") > 1}
+        showProgressBar={true}
         onLogoClick={handleLogoClick}
         title={<span className="italic">One last thing...</span>}
         subtitle="How did you hear about TotalAssist? This helps us reach more people who need help."
@@ -537,9 +723,9 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   if (currentStep === "credentials") {
     return (
       <OnboardingLayout
-        step={1}
+        step={0}
         totalSteps={totalSteps}
-        showProgressBar={isOAuthUser || 1 > 1}
+        showProgressBar={false}
         onLogoClick={handleLogoClick}
         title={
           <>
@@ -693,7 +879,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       <OnboardingLayout
         step={getStepNumber("profile")}
         totalSteps={totalSteps}
-        showProgressBar={isOAuthUser || getStepNumber("profile") > 1}
+        showProgressBar={true}
         onLogoClick={handleLogoClick}
         title={isOAuthUser ? `Welcome, ${formData.firstName || 'there'}!` : "Welcome aboard!"}
         subtitle="Let's set up your account so we can personalize your experience."
@@ -762,7 +948,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       <OnboardingLayout
         step={getStepNumber("home")}
         totalSteps={totalSteps}
-        showProgressBar={isOAuthUser || getStepNumber("home") > 1}
+        showProgressBar={true}
         onLogoClick={handleLogoClick}
         title="Tell us about your home"
         subtitle="This helps us give you better recommendations."
@@ -851,7 +1037,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
       <OnboardingLayout
         step={getStepNumber("needs")}
         totalSteps={totalSteps}
-        showProgressBar={isOAuthUser || getStepNumber("needs") > 1}
+        showProgressBar={true}
         onLogoClick={handleLogoClick}
         title="What brings you here?"
         subtitle="Select the types of tech you typically need help with."

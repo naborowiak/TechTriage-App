@@ -191,17 +191,19 @@ Privacy Policy: ${APP_BASE_URL}/privacy
 Terms of Service: ${APP_BASE_URL}/terms`;
 }
 
-function getVerificationEmailText(firstName: string, verificationUrl: string): string {
+function getVerificationEmailText(firstName: string, code: string): string {
   const displayName = firstName || "there";
-  return `Verify Your Email - TotalAssist
+  return `Your TotalAssist Verification Code
 
 Hey ${displayName},
 
-Thanks for signing up for TotalAssist! Please verify your email address to activate your account and start getting AI-powered tech support.
+Thanks for signing up for TotalAssist! Your verification code is:
 
-This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+${code}
 
-Verify Your Email: ${verificationUrl}
+Enter this code in the app to activate your account and start getting AI-powered tech support.
+
+This code will expire in 30 minutes. If you didn't create an account, you can safely ignore this email.
 
 Security Notice:
 We'll never ask for your password via email. If you didn't request this verification, please ignore this message.
@@ -484,7 +486,7 @@ function getWelcomeEmailHtml(firstName: string): string {
 // Verification Email Template
 // ============================================
 
-function getVerificationEmailHtml(firstName: string, verificationUrl: string): string {
+function getVerificationEmailHtml(firstName: string, code: string): string {
   const displayName = firstName || "there";
 
   return `<!DOCTYPE html>
@@ -494,12 +496,12 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <title>Verify Your Email - TotalAssist</title>
+    <title>Your TotalAssist Verification Code</title>
     <style>${getEmailStyles()}</style>
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
-    ${getPreheaderHtml(`Hi ${displayName}! Please verify your email to activate your TotalAssist account. This link expires in 24 hours.`)}
+    ${getPreheaderHtml(`Hi ${displayName}! Your TotalAssist verification code is ${code}. It expires in 30 minutes.`)}
 
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
@@ -518,33 +520,28 @@ function getVerificationEmailHtml(firstName: string, verificationUrl: string): s
                         Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
                     </p>
                     <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
-                        Thanks for signing up for <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! Please verify your email address to activate your account and start getting AI-powered tech support.
+                        Thanks for signing up for <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! Enter the code below in the app to verify your email and activate your account.
                     </p>
                     <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
-                        This link will expire in <strong style="color: ${BRAND.midnight};">24 hours</strong>. If you didn't create an account, you can safely ignore this email.
+                        This code will expire in <strong style="color: ${BRAND.midnight};">30 minutes</strong>. If you didn't create an account, you can safely ignore this email.
                     </p>
                 </td>
             </tr>
 
-            <!-- CTA Section -->
+            <!-- Code Display Section -->
             <tr>
-                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
-
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 25px;">
-                      <tr>
-                        <td align="center" valign="middle" width="70" height="70" style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
-                          ✉️
-                        </td>
-                      </tr>
-                    </table>
-
-                    ${getPrimaryButtonHtml("Verify Email Address", verificationUrl)}
-
-                    <p style="margin: 30px 0 0; color: #64748b; font-size: 13px; line-height: 1.6;">
-                        Or copy and paste this link into your browser:
+                <td align="center" style="background-color: ${BRAND.light}; padding: 10px 40px 40px;">
+                    <p style="margin: 0 0 16px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+                        Your verification code
                     </p>
-                    <p style="margin: 10px 0 0; color: ${BRAND.electricIndigo}; font-size: 12px; word-break: break-all; max-width: 400px;">
-                        ${verificationUrl}
+
+                    <!-- Single copyable code block -->
+                    <div style="background-color: ${BRAND.midnight}; border-radius: 12px; padding: 20px 32px; display: inline-block;">
+                        <span style="font-size: 36px; font-weight: 700; color: #ffffff; font-family: 'Courier New', Courier, monospace; letter-spacing: 12px; user-select: all; -webkit-user-select: all; -moz-user-select: all;">${code}</span>
+                    </div>
+
+                    <p style="margin: 16px 0 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.6;">
+                        Double-click the code to select it, then copy and paste in the app.
                     </p>
                 </td>
             </tr>
@@ -985,17 +982,15 @@ export async function sendWelcomeEmail(
 // Send verification email to a new user
 export async function sendVerificationEmail(
   email: string,
-  token: string,
+  code: string,
   firstName?: string
 ): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
-  console.log(`[EMAIL] Sending verification email to ${email}`);
-
-  const verificationUrl = `${APP_BASE_URL}/verify-email?token=${token}`;
+  console.log(`[EMAIL] Sending verification code email to ${email}`);
 
   if (!resend) {
     console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
     console.log(`[EMAIL] To: ${email}`);
-    console.log(`[EMAIL] Verification URL: ${verificationUrl}`);
+    console.log(`[EMAIL] Verification code: ${code}`);
     return { success: true, simulated: true };
   }
 
@@ -1003,9 +998,9 @@ export async function sendVerificationEmail(
     const data = await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: "Verify Your Email - TotalAssist",
-      html: getVerificationEmailHtml(firstName || "", verificationUrl),
-      text: getVerificationEmailText(firstName || "", verificationUrl),
+      subject: "Your TotalAssist Verification Code",
+      html: getVerificationEmailHtml(firstName || "", code),
+      text: getVerificationEmailText(firstName || "", code),
     });
 
     if (data.error) {
@@ -1013,7 +1008,7 @@ export async function sendVerificationEmail(
       return { success: false, error: data.error.message };
     }
 
-    console.log("[EMAIL] Verification email sent via Resend:", data.data?.id);
+    console.log("[EMAIL] Verification code email sent via Resend:", data.data?.id);
     return { success: true };
   } catch (error) {
     console.error("[EMAIL] Failed to send verification email:", error);

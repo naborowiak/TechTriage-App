@@ -7,11 +7,18 @@ import { eq, and, gt } from "drizzle-orm";
 const SALT_ROUNDS = 10;
 const TRIAL_DURATION_HOURS = 24;
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
+const VERIFICATION_OTP_EXPIRY_MINUTES = 30;
 const PASSWORD_RESET_TOKEN_EXPIRY_HOURS = 1; // Password reset links expire in 1 hour
 
-// Generate a secure random verification token
+// Generate a secure random verification token (used for password reset links)
 export function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString("hex");
+}
+
+// Generate a 6-digit verification code for email OTP
+export function generateVerificationCode(): string {
+  const num = crypto.randomBytes(4).readUInt32BE(0) % 1000000;
+  return num.toString().padStart(6, "0");
 }
 
 // User Registration
@@ -47,10 +54,10 @@ export async function registerUser(data: {
   const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
   console.log("[AUTH SERVICE] Password hashed, hash length:", passwordHash.length);
 
-  // Generate verification token
-  const verificationToken = generateVerificationToken();
+  // Generate 6-digit verification code
+  const verificationToken = generateVerificationCode();
   const verificationTokenExpires = new Date(
-    Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000
+    Date.now() + VERIFICATION_OTP_EXPIRY_MINUTES * 60 * 1000
   );
 
   // Create user
@@ -181,14 +188,14 @@ export async function verifyEmail(token: string) {
     .limit(1);
 
   if (!user) {
-    console.log("[AUTH SERVICE] Invalid verification token");
-    return { success: false, error: "Invalid or expired verification link." };
+    console.log("[AUTH SERVICE] Invalid verification code/token");
+    return { success: false, error: "Invalid or expired verification code." };
   }
 
-  // Check if token has expired
+  // Check if token/code has expired
   if (user.verificationTokenExpires && user.verificationTokenExpires < new Date()) {
-    console.log("[AUTH SERVICE] Verification token expired");
-    return { success: false, error: "Verification link has expired. Please request a new one." };
+    console.log("[AUTH SERVICE] Verification code expired");
+    return { success: false, error: "Verification code has expired. Please request a new one." };
   }
 
   // Check if already verified
@@ -245,13 +252,13 @@ export async function resendVerification(email: string) {
     return { success: false, error: "Email is already verified." };
   }
 
-  // Generate new verification token
-  const verificationToken = generateVerificationToken();
+  // Generate new 6-digit verification code
+  const verificationToken = generateVerificationCode();
   const verificationTokenExpires = new Date(
-    Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000
+    Date.now() + VERIFICATION_OTP_EXPIRY_MINUTES * 60 * 1000
   );
 
-  // Update user with new token
+  // Update user with new code
   await db
     .update(usersTable)
     .set({
@@ -358,26 +365,6 @@ export async function checkTrialEligibility(email: string, ip: string, fingerpri
         reason: "Trial has expired",
       };
     }
-  }
-
-  // Check for existing trial by IP (to prevent abuse)
-  const existingByIP = await db
-    .select()
-    .from(trialsTable)
-    .where(
-      and(
-        eq(trialsTable.ipAddress, ip),
-        gt(trialsTable.expiresAt, new Date())
-      )
-    )
-    .limit(1);
-
-  if (existingByIP.length > 0) {
-    return {
-      eligible: false,
-      hasTrial: false,
-      reason: "A trial is already active from this network",
-    };
   }
 
   return { eligible: true, hasTrial: false };

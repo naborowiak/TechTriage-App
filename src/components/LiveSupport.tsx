@@ -52,14 +52,14 @@ const Button: React.FC<{
 }) => {
   const themes = {
     primary:
-      "bg-cta-500 hover:bg-cta-600 text-white shadow-lg shadow-cta-500/20",
+      "bg-electric-indigo hover:bg-[#4F46E5] text-white shadow-lg shadow-electric-indigo/20",
     danger:
       "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20",
-    gold: "bg-cta-500 hover:bg-cta-600 text-white shadow-lg shadow-cta-500/20",
+    gold: "bg-electric-indigo hover:bg-[#4F46E5] text-white shadow-lg shadow-electric-indigo/20",
     glass:
       "bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/10",
     outline:
-      "bg-transparent border-2 border-gray-200 text-gray-600 hover:border-cta-500 hover:text-cta-500",
+      "bg-transparent border-2 border-gray-200 text-gray-600 hover:border-electric-indigo hover:text-electric-indigo",
   };
   return (
     <button
@@ -92,11 +92,13 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
   userName,
   caseId,
 }) => {
-  const [, setIsConnecting] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const isMutedRef = useRef(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
+  const isSessionEndedRef = useRef(false);
   const [summary, setSummary] = useState("");
   const [status, setStatus] = useState<"listening" | "thinking" | "speaking">(
     "listening",
@@ -111,6 +113,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -463,7 +466,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
   };
 
   const drawWaveform = () => {
-    if (!waveformCanvasRef.current) return;
+    if (!mountedRef.current || !waveformCanvasRef.current) return;
     const canvas = waveformCanvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -566,7 +569,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
 
     // Play incoming audio from Gemini (16kHz PCM)
     const playAudio = (base64Audio: string) => {
-      if (!audioContextRef.current) return;
+      if (!audioContextRef.current || audioContextRef.current.state === "closed") return;
 
       try {
         const binaryString = atob(base64Audio);
@@ -764,11 +767,14 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
               setStatus("listening");
             } else if (message.type === "error") {
               console.error("Server error:", message.message);
+              setConnectionError(message.message || "An error occurred with the AI service.");
+              setIsConnecting(false);
             } else if (message.type === "endSession") {
               console.log("Session ended:", message.summary);
               const finalSummary = message.summary || "Session completed";
               setSummary(finalSummary);
               setIsSessionEnded(true);
+              isSessionEndedRef.current = true;
               setStatus("listening");
               // Stop hardware when session ends
               stopAllHardware();
@@ -785,10 +791,20 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
 
         ws.onerror = (error) => {
           console.error("WebSocket error:", error);
+          if (mounted) {
+            setConnectionError("Failed to connect to AI service. Please check your connection and try again.");
+            setIsConnecting(false);
+          }
         };
 
-        ws.onclose = () => {
-          console.log("WebSocket closed");
+        ws.onclose = (event) => {
+          console.log("WebSocket closed", event.code, event.reason);
+          if (mounted && !isSessionEndedRef.current) {
+            // Only show error if closed unexpectedly (not a clean close)
+            if (event.code !== 1000) {
+              setConnectionError("Connection to AI service was lost. Please try again.");
+            }
+          }
         };
 
         // Process audio and send to backend
@@ -821,9 +837,17 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
 
         // Start waveform visualization
         animationFrameRef.current = requestAnimationFrame(drawWaveform);
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Error starting live support:", e);
-        setIsConnecting(false);
+        const errMsg = e instanceof DOMException && e.name === "NotAllowedError"
+          ? "Camera and microphone access is required for video support. Please allow access in your browser settings and try again."
+          : e instanceof DOMException && e.name === "NotFoundError"
+            ? "No camera or microphone found. Please connect a camera and try again."
+            : "Failed to start video session. Please check your camera/microphone permissions.";
+        if (mounted) {
+          setConnectionError(errMsg);
+          setIsConnecting(false);
+        }
       }
     };
 
@@ -831,6 +855,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
 
     return () => {
       mounted = false;
+      mountedRef.current = false;
       if (videoIntervalId) clearInterval(videoIntervalId);
       if (scriptProcessor) {
         scriptProcessor.disconnect();
@@ -844,7 +869,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-brand-900 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[100] bg-midnight-900 flex flex-col overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
         <video
           ref={videoRef}
@@ -855,12 +880,50 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         />
         <canvas ref={canvasRef} className="hidden" />
 
-        <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-start bg-gradient-to-b from-brand-900/80 to-transparent z-20">
+        {/* Connecting overlay */}
+        {isConnecting && !connectionError && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-midnight-900/90 backdrop-blur-sm">
+            <Loader2 className="w-12 h-12 text-electric-indigo animate-spin mb-4" />
+            <p className="text-white font-bold text-lg tracking-wide">Connecting to Scout AI...</p>
+            <p className="text-white/50 text-sm mt-2">Setting up camera and microphone</p>
+          </div>
+        )}
+
+        {/* Error overlay */}
+        {connectionError && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-midnight-900/95 backdrop-blur-sm px-8">
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
+              <X className="w-8 h-8 text-red-400" />
+            </div>
+            <p className="text-white font-bold text-lg tracking-wide text-center mb-2">Connection Failed</p>
+            <p className="text-white/60 text-sm text-center max-w-md mb-8">{connectionError}</p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setConnectionError(null);
+                  setIsConnecting(true);
+                  window.location.reload();
+                }}
+                className="px-6 py-3 bg-electric-indigo hover:bg-[#4F46E5] text-white rounded-full font-bold text-xs uppercase tracking-widest transition-all"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => { stopAllHardware(); onClose(); }}
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-bold text-xs uppercase tracking-widest transition-all"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-start bg-gradient-to-b from-midnight-900/80 to-transparent z-20">
           <div className="flex items-center gap-3">
             <Logo variant="light" />
             {caseId && (
               <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/10 backdrop-blur-sm">
-                <FolderOpen className="w-3 h-3 text-cta-500" />
+                <FolderOpen className="w-3 h-3 text-electric-indigo" />
                 <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">
                   Case #{caseId.slice(0, 8)}
                 </span>
@@ -870,7 +933,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
           <div className="flex gap-4">
             <button
               onClick={() => setIsTranscriptOpen(!isTranscriptOpen)}
-              className={`p-4 rounded-full text-white backdrop-blur-md transition-all ${isTranscriptOpen ? "bg-cta-500" : "bg-white/10 hover:bg-white/20"}`}
+              className={`p-4 rounded-full text-white backdrop-blur-md transition-all ${isTranscriptOpen ? "bg-electric-indigo" : "bg-white/10 hover:bg-white/20"}`}
             >
               <MessageSquare className="w-6 h-6" />
             </button>
@@ -887,7 +950,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         </div>
 
         <div
-          className={`absolute top-0 bottom-0 right-0 w-full md:w-[450px] bg-brand-900/95 backdrop-blur-2xl shadow-2xl z-30 transition-transform duration-500 ease-in-out border-l border-white/5 flex flex-col ${isTranscriptOpen ? "translate-x-0" : "translate-x-full"}`}
+          className={`absolute top-0 bottom-0 right-0 w-full md:w-[450px] bg-midnight-900/95 backdrop-blur-2xl shadow-2xl z-30 transition-transform duration-500 ease-in-out border-l border-white/5 flex flex-col ${isTranscriptOpen ? "translate-x-0" : "translate-x-full"}`}
         >
           <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
             <div>
@@ -898,7 +961,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
                 {isSessionEnded ? (
                   <CheckCircle className="w-1.5 h-1.5 text-green-500" />
                 ) : (
-                  <div className="w-1.5 h-1.5 bg-cta-500 rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-electric-indigo rounded-full animate-pulse"></div>
                 )}
                 <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
                   {isSessionEnded ? "Session Archived" : "Recording Active"}
@@ -937,7 +1000,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
                   </span>
                 </div>
                 <div
-                  className={`max-w-[90%] p-4 rounded-[1.5rem] text-sm font-medium leading-relaxed ${entry.role === "user" ? "bg-cta-500 text-white border border-cta-600 rounded-tr-none" : "bg-white/5 text-white/90 border border-white/10 rounded-tl-none"}`}
+                  className={`max-w-[90%] p-4 rounded-[1.5rem] text-sm font-medium leading-relaxed ${entry.role === "user" ? "bg-electric-indigo text-white border border-[#4F46E5] rounded-tr-none" : "bg-white/5 text-white/90 border border-white/10 rounded-tl-none"}`}
                 >
                   {entry.text}
                 </div>
@@ -946,10 +1009,10 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
             <div ref={transcriptEndRef} />
           </div>
           {isSessionEnded && (
-            <div className="p-4 bg-cta-500/10 border-t border-cta-500/20">
+            <div className="p-4 bg-electric-indigo/10 border-t border-electric-indigo/20">
               <button
                 onClick={handleDownloadReport}
-                className="w-full py-3 flex items-center justify-center gap-2 text-cta-500 font-bold text-[10px] uppercase tracking-widest hover:text-white transition-colors"
+                className="w-full py-3 flex items-center justify-center gap-2 text-electric-indigo font-bold text-[10px] uppercase tracking-widest hover:text-white transition-colors"
               >
                 <Download className="w-4 h-4" /> Download This Transcript
               </button>
@@ -965,7 +1028,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         {!isSessionEnded && (
           <div className="absolute bottom-40 left-0 right-0 flex flex-col items-center pointer-events-none px-8 z-10">
             <div
-              className={`bg-brand-900/40 backdrop-blur-3xl px-10 py-6 rounded-[3rem] border border-white/10 shadow-2xl flex items-center gap-8 w-full max-w-lg transition-all duration-500 pointer-events-auto ${isTranscriptOpen ? "md:mr-[450px]" : ""}`}
+              className={`bg-midnight-900/40 backdrop-blur-3xl px-10 py-6 rounded-[3rem] border border-white/10 shadow-2xl flex items-center gap-8 w-full max-w-lg transition-all duration-500 pointer-events-auto ${isTranscriptOpen ? "md:mr-[450px]" : ""}`}
             >
               <div className="flex-1 h-12 overflow-hidden">
                 <canvas
@@ -976,7 +1039,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
                 />
               </div>
               <div className="text-right">
-                <div className="text-[10px] font-bold text-cta-500 uppercase tracking-[0.2em] mb-1">
+                <div className="text-[10px] font-bold text-electric-indigo uppercase tracking-[0.2em] mb-1">
                   Status
                 </div>
                 <div className="text-white font-black tracking-tight text-lg uppercase">
@@ -993,7 +1056,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-lg shadow-green-100">
                 <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-500" />
               </div>
-              <h3 className="text-3xl sm:text-4xl font-black text-brand-900 mb-4 tracking-tighter uppercase text-center">
+              <h3 className="text-3xl sm:text-4xl font-black text-midnight-900 mb-4 tracking-tighter uppercase text-center">
                 Triage Complete
               </h3>
 
@@ -1007,7 +1070,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
                 </p>
                 <button
                   onClick={handleCopySummary}
-                  className="absolute top-8 right-8 p-2 text-gray-400 hover:text-cta-500 transition-colors"
+                  className="absolute top-8 right-8 p-2 text-gray-400 hover:text-electric-indigo transition-colors"
                 >
                   {isCopied ? (
                     <CheckCircle className="w-5 h-5 text-green-500" />
@@ -1075,12 +1138,12 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
                   {emailSent ? (
                     <>
                       Your guide has been sent to{" "}
-                      <span className="text-cta-500">{userEmail}</span>
+                      <span className="text-electric-indigo">{userEmail}</span>
                     </>
                   ) : (
                     <>
                       A full recap has been saved to your{" "}
-                      <span className="text-cta-500 underline">Archive</span>
+                      <span className="text-electric-indigo underline">Archive</span>
                     </>
                   )}
                 </p>
@@ -1091,7 +1154,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
       </div>
 
       {!isSessionEnded && (
-        <div className="h-32 bg-brand-900 flex items-center justify-center gap-6 px-8 border-t border-white/5 z-40">
+        <div className="h-32 bg-midnight-900 flex items-center justify-center gap-6 px-8 border-t border-white/5 z-40">
           <button
             onClick={toggleMute}
             className={`p-6 rounded-full transition-all duration-300 ${isMuted ? "bg-red-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}

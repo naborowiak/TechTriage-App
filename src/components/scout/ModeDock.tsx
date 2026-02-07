@@ -13,9 +13,9 @@ interface ModeConfig {
 
 const MODES: ModeConfig[] = [
   { id: 'chat', icon: MessageSquare, label: 'Chat', lockedTiers: [] },
-  { id: 'voice', icon: Mic, label: 'Voice', lockedTiers: ['guest', 'free'] },
-  { id: 'photo', icon: Camera, label: 'Photo', lockedTiers: ['guest'] },
-  { id: 'video', icon: Video, label: 'Video', lockedTiers: ['guest', 'free'] },
+  { id: 'voice', icon: Mic, label: 'Voice', lockedTiers: [] },
+  { id: 'photo', icon: Camera, label: 'Photo', lockedTiers: [] },
+  { id: 'video', icon: Video, label: 'Video', lockedTiers: [] },
 ];
 
 interface ModeDockProps {

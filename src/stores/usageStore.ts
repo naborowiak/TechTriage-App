@@ -79,16 +79,16 @@ const UNLIMITED = 999999;
 
 const TIER_LIMITS: Record<UserTier, UsageLimits> = {
   guest: {
-    chat: { used: 0, limit: 1 },
-    photo: { used: 0, limit: 0 },
-    signal: { used: 0, limit: 0 },
-    voice: { used: 0, limit: 0 },
+    chat: { used: 0, limit: UNLIMITED },
+    photo: { used: 0, limit: UNLIMITED },
+    signal: { used: 0, limit: UNLIMITED },
+    voice: { used: 0, limit: UNLIMITED },
   },
   free: {
-    chat: { used: 0, limit: 5 },
-    photo: { used: 0, limit: 1 },
-    signal: { used: 0, limit: 0 },
-    voice: { used: 0, limit: 0 },
+    chat: { used: 0, limit: UNLIMITED },
+    photo: { used: 0, limit: UNLIMITED },
+    signal: { used: 0, limit: UNLIMITED },
+    voice: { used: 0, limit: UNLIMITED },
   },
   home: {
     chat: { used: 0, limit: UNLIMITED },
@@ -106,8 +106,8 @@ const TIER_LIMITS: Record<UserTier, UsageLimits> = {
 
 // Video credit limits by tier
 const VIDEO_CREDIT_CONFIG: Record<UserTier, { limit: number; resetType: 'weekly' | 'monthly' }> = {
-  guest: { limit: 0, resetType: 'monthly' },
-  free: { limit: 0, resetType: 'monthly' },
+  guest: { limit: 1, resetType: 'monthly' },
+  free: { limit: 1, resetType: 'monthly' },
   home: { limit: 1, resetType: 'weekly' },
   pro: { limit: 15, resetType: 'monthly' },
 };
@@ -115,7 +115,7 @@ const VIDEO_CREDIT_CONFIG: Record<UserTier, { limit: number; resetType: 'weekly'
 // Export for use in other components
 export { TIER_LIMITS, VIDEO_CREDIT_CONFIG, UNLIMITED };
 
-const STORAGE_KEY = 'scout-usage-store-v2';
+const STORAGE_KEY = 'scout-usage-store-v3';
 
 const generateSessionId = (): string => {
   return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
