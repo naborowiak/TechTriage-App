@@ -80,8 +80,8 @@ const UNLIMITED = 999999;
 
 const TIER_LIMITS: Record<UserTier, UsageLimits> = {
   guest: {
-    chat: { used: 0, limit: 1 },        // 1 message, then force signup
-    photo: { used: 0, limit: 0 },       // Locked
+    chat: { used: 0, limit: 3 },        // 3 messages, then rate-limit modal
+    photo: { used: 0, limit: 1 },       // 1 photo for quick synopsis
     signal: { used: 0, limit: 0 },      // Locked
     voice: { used: 0, limit: 0 },       // Locked
   },
@@ -116,7 +116,7 @@ const VIDEO_CREDIT_CONFIG: Record<UserTier, { limit: number; resetType: 'weekly'
 // Export for use in other components
 export { TIER_LIMITS, VIDEO_CREDIT_CONFIG, UNLIMITED };
 
-const STORAGE_KEY = 'scout-usage-store-v5';
+const STORAGE_KEY = 'scout-usage-store-v6';
 
 const generateSessionId = (): string => {
   return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;

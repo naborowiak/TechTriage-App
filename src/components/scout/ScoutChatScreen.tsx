@@ -19,10 +19,11 @@ interface ScoutChatScreenProps {
   embedded?: boolean;
   initialCaseId?: string;
   initialMode?: ScoutMode;
+  initialMessage?: string;
   onEscalation?: (report: EscalationReportData, caseId: string) => void;
 }
 
-export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, onEscalation }: ScoutChatScreenProps) {
+export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onEscalation }: ScoutChatScreenProps) {
   const { tier, canUse, incrementUsage } = useUsage();
   const { user, isAuthenticated } = useAuth();
 
@@ -43,7 +44,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [caseId, setCaseId] = useState<string | null>(initialCaseId || null);
   const [caseTitle, setCaseTitle] = useState<string | null>(null);
   const [hasCreatedCase, setHasCreatedCase] = useState(!!initialCaseId);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ensureCasePromiseRef = useRef<Promise<string | null> | null>(null);
 
   // Device context
@@ -137,33 +137,36 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     }
   }, [geminiVoice.transcriptHistory.length, showVoiceOverlay]);
 
-  // Save messages on unmount
+  // Keep refs to latest state for unmount/beforeunload save
+  const latestMessagesRef = useRef(messages);
+  const latestCaseIdRef = useRef(caseId);
+  useEffect(() => { latestMessagesRef.current = messages; }, [messages]);
+  useEffect(() => { latestCaseIdRef.current = caseId; }, [caseId]);
+
+  // Save messages on unmount or page close (uses refs to avoid stale closures)
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (caseId && isAuthenticated && messages.length > 1) {
-        const msgData = messages.filter(m => m.id !== 'welcome').map(m => ({
+    const flushSave = () => {
+      const currentCaseId = latestCaseIdRef.current;
+      const currentMessages = latestMessagesRef.current;
+      if (currentCaseId && isAuthenticated && currentMessages.length > 1) {
+        const msgData = currentMessages.filter(m => m.id !== 'welcome').map(m => ({
           role: m.role === UserRole.USER ? 'user' : 'model',
           text: m.text,
           image: m.image,
           timestamp: m.timestamp,
         }));
-        // Use sendBeacon for reliability on page unload
         navigator.sendBeacon(
-          `/api/cases/${caseId}/messages`,
+          `/api/cases/${currentCaseId}/messages`,
           new Blob([JSON.stringify({ messages: msgData })], { type: 'application/json' })
         );
       }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('beforeunload', flushSave);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = null;
-      }
-      handleBeforeUnload();
+      window.removeEventListener('beforeunload', flushSave);
+      flushSave();
     };
-  }, [caseId, isAuthenticated, messages]);
+  }, [isAuthenticated]); // Stable deps - refs handle the rest
 
   const generateId = () => `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
@@ -217,23 +220,20 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     return promise;
   }, [hasCreatedCase, caseId, isAuthenticated, selectedDevice]);
 
-  // Debounced message save
-  const debounceSaveMessages = useCallback((currentCaseId: string, msgs: ChatMessage[]) => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      const msgData = msgs.filter(m => m.id !== 'welcome').map(m => ({
-        role: m.role === UserRole.USER ? 'user' : 'model',
-        text: m.text,
-        image: m.image,
-        timestamp: m.timestamp,
-      }));
-      fetch(`/api/cases/${currentCaseId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ messages: msgData }),
-      }).catch(() => {});
-    }, 5000);
+  // Save messages to API (immediate, no debounce)
+  const saveMessages = useCallback((currentCaseId: string, msgs: ChatMessage[]) => {
+    const msgData = msgs.filter(m => m.id !== 'welcome').map(m => ({
+      role: m.role === UserRole.USER ? 'user' : 'model',
+      text: m.text,
+      image: m.image,
+      timestamp: m.timestamp,
+    }));
+    fetch(`/api/cases/${currentCaseId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ messages: msgData }),
+    }).catch(err => console.error('[Scout] Failed to save messages:', err));
   }, []);
 
   // Build device context string for Gemini
@@ -302,7 +302,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       // Debounce save messages to API
       if (currentCaseId) {
-        debounceSaveMessages(currentCaseId, updatedMessages);
+        saveMessages(currentCaseId, updatedMessages);
       }
 
       // Handle endSession function call
@@ -322,7 +322,18 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     } finally {
       setIsLoading(false);
     }
-  }, [messages, canUse, incrementUsage, ensureCase, activeMode, getDeviceContext, debounceSaveMessages]);
+  }, [messages, canUse, incrementUsage, ensureCase, activeMode, getDeviceContext, saveMessages]);
+
+  // Auto-send initial message from Dashboard empty-state input
+  const initialMessageSentRef = useRef(false);
+  useEffect(() => {
+    if (initialMessage && !initialMessageSentRef.current) {
+      initialMessageSentRef.current = true;
+      // Small delay to let the component fully mount
+      const timer = setTimeout(() => sendMessage(initialMessage), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [initialMessage, sendMessage]);
 
   // Handle session end - save summary and mark resolved
   const handleSessionEnd = useCallback(async (currentCaseId: string | null, msgs: ChatMessage[], endSummary?: string) => {

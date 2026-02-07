@@ -6,6 +6,7 @@ import { LiveSupport } from './LiveSupport';
 import { useAuth } from '../hooks/useAuth';
 import { useUsage, UsageLimits } from '../stores/usageStore';
 import { UpgradeModal, SignupGateModal } from './UpgradeModal';
+import { RateLimitModal } from './RateLimitModal';
 
 // Simple markdown renderer for chat messages
 const renderMarkdown = (text: string): React.ReactNode => {
@@ -91,21 +92,6 @@ const CANNED_RESPONSES: Record<string, { text: string; followUp?: string[] }> = 
     text: "Thanks for your interest in TotalAssist! To get personalized AI support for your tech issues, you'll need to create a free account.\n\nIt only takes a minute, and you'll get 5 free chat messages to try it out!",
     followUp: ["Sign up free", "View pricing", "How it works"]
   }
-};
-
-// Match user input to canned response
-const getCannedResponse = (input: string): { text: string; followUp?: string[] } => {
-  const lower = input.toLowerCase();
-  if (lower.includes('price') || lower.includes('cost') || lower.includes('plan') || lower.includes('subscription')) {
-    return CANNED_RESPONSES.pricing;
-  }
-  if (lower.includes('how') && (lower.includes('work') || lower.includes('use'))) {
-    return CANNED_RESPONSES.howItWorks;
-  }
-  if (lower.includes('help') || lower.includes('support') || lower.includes('fix') || lower.includes('broken') || lower.includes('issue') || lower.includes('problem')) {
-    return CANNED_RESPONSES.help;
-  }
-  return CANNED_RESPONSES.default;
 };
 
 // Generate a unique session ID
@@ -194,6 +180,10 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
   const [showSignupGate, setShowSignupGate] = useState(false);
   const [showUpgradeGate, setShowUpgradeGate] = useState(false);
   const [gatedFeature, setGatedFeature] = useState<keyof UsageLimits | 'voice'>('chat');
+
+  // Rate limit modal (ChatGPT-style) for guests
+  const [showRateLimitModal, setShowRateLimitModal] = useState(false);
+  const [rateLimitDismissed, setRateLimitDismissed] = useState(false);
 
   // Check if user is authenticated
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
@@ -389,7 +379,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
       if (isFeatureLocked('photo') || !canUse('photo')) {
         setGatedFeature('photo');
         if (tier === 'guest') {
-          setShowSignupGate(true);
+          setShowRateLimitModal(true);
         } else {
           setShowUpgradeGate(true);
         }
@@ -493,7 +483,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     // Check friction ladder gates BEFORE sending
     if (tier === 'guest' && shouldShowSignupGate()) {
       setGatedFeature('chat');
-      setShowSignupGate(true);
+      setShowRateLimitModal(true);
       return;
     }
 
@@ -507,7 +497,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     if (!canUse('chat')) {
       setGatedFeature('chat');
       if (tier === 'guest') {
-        setShowSignupGate(true);
+        setShowRateLimitModal(true);
       } else {
         setShowUpgradeGate(true);
       }
@@ -519,7 +509,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     if (!canProceed) {
       setGatedFeature('chat');
       if (tier === 'guest') {
-        setShowSignupGate(true);
+        setShowRateLimitModal(true);
       } else {
         setShowUpgradeGate(true);
       }
@@ -531,7 +521,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
       if (!canUse('photo')) {
         setGatedFeature('photo');
         if (tier === 'guest') {
-          setShowSignupGate(true);
+          setShowRateLimitModal(true);
         } else {
           setShowUpgradeGate(true);
         }
@@ -554,24 +544,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     setSelectedImage(undefined);
     setIsLoading(true);
 
-    // For guests, use canned responses (no AI, but count the message)
-    if (tier === 'guest') {
-      setTimeout(() => {
-        const response = getCannedResponse(textToSend);
-        const aiMsg: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: UserRole.MODEL,
-          text: response.text,
-          timestamp: Date.now(),
-          cannedFollowUp: response.followUp
-        };
-        setMessages(prev => [...prev, aiMsg]);
-        setIsLoading(false);
-      }, 500 + Math.random() * 500);
-      return;
-    }
-
-    // Log user message (authenticated users only)
+    // Log user message
     logInteraction({
       sessionId,
       userId,
@@ -835,25 +808,12 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
 
               {messages.length < 3 && !isLoading && !isLiveAgentMode && !isConnectingToAgent && (
                 <div className="flex flex-wrap gap-2 mt-4 ml-8">
-                  {tier !== 'guest' ? (
-                    <>
-                      <button onClick={handleSpeakToExpert} className="bg-white dark:bg-midnight-800 border border-electric-indigo/50 text-text-primary dark:text-white hover:bg-electric-indigo/10 dark:hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                        Speak to an expert
-                      </button>
-                      <button onClick={() => handleQuickAction("What can you help with?")} className="bg-white dark:bg-midnight-800 border border-electric-indigo/50 text-text-primary dark:text-white hover:bg-electric-indigo/10 dark:hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                        What can you help with?
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={() => handleQuickAction("What are your pricing plans?")} className="bg-white dark:bg-midnight-800 border border-electric-indigo/50 text-text-primary dark:text-white hover:bg-electric-indigo/10 dark:hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                        Pricing
-                      </button>
-                      <button onClick={() => handleQuickAction("How does Scout work?")} className="bg-white dark:bg-midnight-800 border border-electric-indigo/50 text-text-primary dark:text-white hover:bg-electric-indigo/10 dark:hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
-                        How it works
-                      </button>
-                    </>
-                  )}
+                  <button onClick={handleSpeakToExpert} className="bg-white dark:bg-midnight-800 border border-electric-indigo/50 text-text-primary dark:text-white hover:bg-electric-indigo/10 dark:hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                    Speak to an expert
+                  </button>
+                  <button onClick={() => handleQuickAction("What can you help with?")} className="bg-white dark:bg-midnight-800 border border-electric-indigo/50 text-text-primary dark:text-white hover:bg-electric-indigo/10 dark:hover:bg-electric-indigo/20 px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                    What can you help with?
+                  </button>
                 </div>
               )}
 
@@ -872,15 +832,15 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
               </div>
             )}
 
-            {/* Sign up CTA for guests */}
-            {!isSessionEnded && tier === 'guest' && (
-              <div className="px-4 py-2 bg-gradient-to-r from-scout-purple to-electric-indigo">
-                <button
-                  onClick={() => handleCannedAction('Sign up free')}
-                  className="w-full bg-white hover:bg-gray-100 text-scout-purple py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold shadow-sm transition-all"
-                >
-                  Sign Up Free to Get AI Support <ArrowRight className="w-4 h-4" />
-                </button>
+
+            {/* Persistent banner for guests after dismissing rate limit modal */}
+            {rateLimitDismissed && tier === 'guest' && !showRateLimitModal && (
+              <div className="px-4 py-2.5 bg-light-50 dark:bg-midnight-800/50 border-t border-light-300 dark:border-midnight-700 flex items-center justify-between gap-3">
+                <span className="text-xs text-text-secondary flex-1">Get smarter responses, upload files and images, and more.</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => onNavigate ? onNavigate('login') : (window.location.href = '/login')} className="text-xs font-semibold text-electric-indigo hover:text-electric-cyan transition-colors">Log in</button>
+                  <button onClick={() => onNavigate ? onNavigate('signup') : (window.location.href = '/signup')} className="text-xs font-semibold bg-midnight-900 dark:bg-white text-white dark:text-midnight-900 px-3 py-1 rounded-full hover:opacity-90 transition-opacity">Sign up</button>
+                </div>
               </div>
             )}
 
@@ -900,7 +860,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                 </div>
               )}
 
-              {showImageMenu && tier !== 'guest' && (
+              {showImageMenu && (
                 <div ref={menuRef} className="absolute bottom-16 left-4 bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-xl shadow-xl p-2 z-50 w-48 animate-fade-in-up">
                   <button onClick={() => cameraInputRef.current?.click()} className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-all text-text-primary dark:text-white text-sm font-medium">
                     <Camera className="w-4 h-4 text-text-secondary" /> Take Photo
@@ -935,14 +895,12 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                       placeholder={isLiveAgentMode ? `Message ${currentAgent?.first}...` : "Type a message..."}
                       className="w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-full px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-electric-indigo/50 pr-10 text-text-primary dark:text-white placeholder:text-text-muted"
                     />
-                    {tier !== 'guest' && (
-                      <button
-                        onClick={() => setShowImageMenu(!showImageMenu)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white transition-colors"
-                      >
-                        <ImageIcon className="w-5 h-5" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setShowImageMenu(!showImageMenu)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white transition-colors"
+                    >
+                      <ImageIcon className="w-5 h-5" />
+                    </button>
                   </div>
 
                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -957,7 +915,29 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                   </button>
                 </div>
               )}
+
+              {/* Disclaimer */}
+              <p className="text-[10px] text-text-muted text-center mt-2">Scout can make mistakes. Check important info.</p>
             </div>
+
+            {/* Rate Limit Modal overlay */}
+            <RateLimitModal
+              isOpen={showRateLimitModal}
+              onLogin={() => {
+                setShowRateLimitModal(false);
+                if (onNavigate) onNavigate('login');
+                else window.location.href = '/login';
+              }}
+              onSignup={() => {
+                setShowRateLimitModal(false);
+                if (onNavigate) onNavigate('signup');
+                else window.location.href = '/signup';
+              }}
+              onDismiss={() => {
+                setShowRateLimitModal(false);
+                setRateLimitDismissed(true);
+              }}
+            />
           </div>
         )}
 

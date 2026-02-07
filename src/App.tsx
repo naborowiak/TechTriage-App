@@ -1877,6 +1877,7 @@ const App: React.FC = () => {
 
   const [heroPreviewMode, setHeroPreviewMode] = useState<'voice' | 'photo' | 'video' | 'chat' | null>(null);
   const [scoutInitialMode, setScoutInitialMode] = useState<'voice' | 'photo' | 'video' | 'chat' | undefined>(undefined);
+  const [scoutInitialMessage, setScoutInitialMessage] = useState<string | undefined>(undefined);
 
   // Lock body scroll when hero preview modal is open (prevents scrolling through marketing sections behind the overlay)
   useEffect(() => {
@@ -1982,6 +1983,7 @@ const App: React.FC = () => {
   const handleBackToDashboard = useCallback(() => {
     setDashboardView("main");
     setScoutInitialMode(undefined);
+    setScoutInitialMessage(undefined);
   }, []);
 
   const handleUpdateUser = useCallback((updatedUser: DashboardUser) => {
@@ -1993,6 +1995,13 @@ const App: React.FC = () => {
   }, []);
 
   const handleOpenScout = useCallback(() => {
+    setScoutInitialMessage(undefined);
+    setDashboardView("scout");
+  }, []);
+
+  const handleNewChat = useCallback((message: string) => {
+    setScoutInitialMessage(message);
+    setScoutInitialMode(undefined);
     setDashboardView("scout");
   }, []);
 
@@ -2075,6 +2084,7 @@ const App: React.FC = () => {
               onStartVideo={handleDashboardStartVideo}
               onStartSignal={handleStartSignal}
               onOpenScout={handleOpenScout}
+              onNewChat={handleNewChat}
               onLogout={handleDashboardLogout}
               onOpenHistory={handleOpenHistory}
               onOpenSettings={handleOpenSettings}
@@ -2086,7 +2096,7 @@ const App: React.FC = () => {
             >
               <div className="flex h-full">
                 <div className="flex-1 min-w-0">
-                  <ScoutChatScreen embedded initialMode={scoutInitialMode} />
+                  <ScoutChatScreen embedded initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} />
                 </div>
                 <div className="hidden xl:block w-80 flex-shrink-0">
                   <ScoutInfoPanel />
@@ -2136,6 +2146,7 @@ const App: React.FC = () => {
                 onStartVideo={handleDashboardStartVideo}
                 onStartSignal={handleStartSignal}
                 onOpenScout={handleOpenScout}
+                onNewChat={handleNewChat}
                 onLogout={handleDashboardLogout}
                 onOpenHistory={handleOpenHistory}
                 onOpenSettings={handleOpenSettings}
@@ -2146,7 +2157,7 @@ const App: React.FC = () => {
               >
                 <div className="flex h-full">
                   <div className="flex-1 min-w-0">
-                    <ScoutChatScreen embedded initialMode={scoutInitialMode} />
+                    <ScoutChatScreen embedded initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} />
                   </div>
                   <div className="hidden xl:block w-80 flex-shrink-0">
                     <ScoutInfoPanel />
@@ -2164,6 +2175,7 @@ const App: React.FC = () => {
               onStartVideo={handleDashboardStartVideo}
               onStartSignal={handleStartSignal}
               onOpenScout={handleOpenScout}
+              onNewChat={handleNewChat}
               onLogout={handleDashboardLogout}
               onOpenHistory={handleOpenHistory}
               onOpenSettings={handleOpenSettings}
@@ -2278,7 +2290,7 @@ const App: React.FC = () => {
     return (
       <div className={`${dashboardView === 'scout' ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300`}>
         {renderContent()}
-        {dashboardUser && dashboardView !== 'scout' && <ChatWidget ref={chatRef} />}
+        {/* ChatWidget removed from dashboard — chat IS the dashboard now */}
         <CookieConsentBanner />
       </div>
     );
