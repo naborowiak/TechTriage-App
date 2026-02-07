@@ -11,8 +11,13 @@ import {
   Package,
   PanelLeft,
   Plus,
-  Paperclip,
   ChevronUp,
+  Camera,
+  Image as ImageIcon,
+  Mic,
+  Video,
+  HelpCircle,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useSubscription } from "../hooks/useSubscription";
@@ -38,7 +43,10 @@ interface DashboardProps {
   onOpenInventory?: () => void;
   onBackToDashboard?: () => void;
   onNewChat?: (message: string) => void;
-  activeView?: "main" | "history" | "settings" | "billing" | "scout" | "inventory";
+  onOpenCase?: (caseId: string) => void;
+  onOpenScoutWithMode?: (mode: 'photo' | 'voice' | 'video') => void;
+  onOpenAnalytics?: () => void;
+  activeView?: "main" | "history" | "scout" | "analytics";
   children?: React.ReactNode;
   onUpdateUser?: (user: {
     firstName: string;
@@ -94,6 +102,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenInventory,
   onBackToDashboard,
   onNewChat,
+  onOpenCase,
+  onOpenScoutWithMode,
+  onOpenAnalytics,
   activeView = "main",
   children,
 }) => {
@@ -106,6 +117,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature] = useState<'chat' | 'photo' | 'signal' | 'videoDiagnostic'>('chat');
   const inputRef = useRef<HTMLInputElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showActionMenu, setShowActionMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const actionMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
 
   // Usage store
@@ -135,6 +151,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
         .catch((err) => console.error("Failed to load cases:", err));
     }
   }, [user?.id]);
+
+  // Click-outside detection for popup menus
+  useEffect(() => {
+    if (!showUserMenu && !showActionMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+      if (showActionMenu && actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
+        setShowActionMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu, showActionMenu]);
+
+  // Action menu handler
+  const handleActionMenuSelect = (mode: 'photo' | 'voice' | 'video') => {
+    setShowActionMenu(false);
+    if (onOpenScoutWithMode) {
+      onOpenScoutWithMode(mode);
+    } else if (onOpenScout) {
+      onOpenScout();
+    }
+  };
 
   // Handle sending initial message from empty state
   const handleSendFromEmpty = () => {
@@ -169,7 +210,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const isScoutView = activeView === "scout";
 
   return (
-    <div className={`${isScoutView ? 'h-screen overflow-hidden' : 'h-screen overflow-hidden'} bg-light-50 dark:bg-midnight-950 transition-colors flex`}>
+    <div
+      className={`${isScoutView ? 'h-screen overflow-hidden' : 'h-screen overflow-hidden'} bg-light-50 dark:bg-midnight-950 transition-colors flex`}
+      onTouchStart={(e) => {
+        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }}
+      onTouchEnd={(e) => {
+        if (!touchStartRef.current) return;
+        const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+        const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+        // Only trigger if horizontal swipe is dominant
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
+          if (deltaX > 0 && touchStartRef.current.x < 30 && !sidebarMobileOpen) {
+            setSidebarMobileOpen(true);
+          } else if (deltaX < 0 && sidebarMobileOpen) {
+            setSidebarMobileOpen(false);
+          }
+        }
+        touchStartRef.current = null;
+      }}
+    >
       {/* Mobile sidebar overlay */}
       {sidebarMobileOpen && (
         <div
@@ -227,7 +287,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   key={c.id}
                   onClick={() => {
                     setSidebarMobileOpen(false);
-                    onOpenHistory();
+                    if (onOpenCase) {
+                      onOpenCase(c.id);
+                    } else {
+                      onOpenHistory();
+                    }
                   }}
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors group"
                 >
@@ -240,65 +304,107 @@ export const Dashboard: React.FC<DashboardProps> = ({
           ))}
         </div>
 
-        {/* Sidebar bottom: User info + nav icons */}
-        <div className="shrink-0 border-t border-light-300 dark:border-midnight-700 p-3 space-y-2">
-          {/* Upgrade button for non-pro */}
-          {tier !== "pro" && (
+        {/* Analytics button */}
+        {onOpenAnalytics && (
+          <div className="px-2 pb-1 shrink-0">
             <button
-              onClick={() => setUpgradeModalOpen(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-scout-purple/10 to-electric-indigo/10 text-electric-indigo hover:from-scout-purple/20 hover:to-electric-indigo/20 transition-colors"
+              onClick={() => { setSidebarMobileOpen(false); onOpenAnalytics(); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeView === 'analytics'
+                  ? 'bg-electric-indigo/10 text-electric-indigo'
+                  : 'text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-100 dark:hover:bg-midnight-800'
+              }`}
             >
-              <Zap className="w-4 h-4" />
-              Upgrade to {tier === "home" ? "Pro" : "Home"}
+              <BarChart3 className="w-4 h-4" />
+              Analytics
             </button>
-          )}
-
-          {/* User row */}
-          <div className="flex items-center gap-2 px-2 py-1">
-            <div className="w-7 h-7 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0">
-              {user.firstName.charAt(0)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-text-primary dark:text-white truncate">
-                {user.firstName} {user.lastName || ""}
-              </div>
-              <div className="text-[10px] text-text-muted">{getTierLabel()} plan</div>
-            </div>
           </div>
+        )}
 
-          {/* Icon row */}
-          <div className="flex items-center gap-1 px-1">
-            <button
-              onClick={() => { setSidebarMobileOpen(false); onOpenSettings(); }}
-              className={`p-2 rounded-lg transition-colors ${activeView === 'settings' ? 'bg-electric-indigo/20 text-electric-indigo' : 'text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-100 dark:hover:bg-midnight-800'}`}
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-            {onOpenBilling && (
-              <button
-                onClick={() => { setSidebarMobileOpen(false); onOpenBilling(); }}
-                className={`p-2 rounded-lg transition-colors ${activeView === 'billing' ? 'bg-electric-indigo/20 text-electric-indigo' : 'text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-100 dark:hover:bg-midnight-800'}`}
-                title="Billing"
-              >
-                <CreditCard className="w-4 h-4" />
-              </button>
+        {/* Sidebar bottom: Clickable user row with popup menu */}
+        <div className="shrink-0 border-t border-light-300 dark:border-midnight-700 p-3" ref={userMenuRef}>
+          <div className="relative">
+            {/* User popup menu */}
+            {showUserMenu && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-xl shadow-xl z-50 animate-fade-in-up overflow-hidden">
+                {/* User info header */}
+                <div className="px-4 py-3 border-b border-light-200 dark:border-midnight-700">
+                  <div className="text-sm font-semibold text-text-primary dark:text-white truncate">
+                    {user.firstName} {user.lastName || ""}
+                  </div>
+                  <div className="text-xs text-text-muted truncate">{user.email}</div>
+                </div>
+
+                <div className="py-1">
+                  {tier !== "pro" && (
+                    <button
+                      onClick={() => { setShowUserMenu(false); setUpgradeModalOpen(true); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
+                    >
+                      <Zap className="w-4 h-4 text-electric-indigo" />
+                      Upgrade plan
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setShowUserMenu(false); setSidebarMobileOpen(false); onOpenSettings(); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-text-muted" />
+                    Settings
+                  </button>
+                  {onOpenBilling && (
+                    <button
+                      onClick={() => { setShowUserMenu(false); setSidebarMobileOpen(false); onOpenBilling(); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
+                    >
+                      <CreditCard className="w-4 h-4 text-text-muted" />
+                      Billing
+                    </button>
+                  )}
+                  {onOpenInventory && (
+                    <button
+                      onClick={() => { setShowUserMenu(false); setSidebarMobileOpen(false); onOpenInventory(); }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
+                    >
+                      <Package className="w-4 h-4 text-text-muted" />
+                      Home Inventory
+                    </button>
+                  )}
+                </div>
+
+                <div className="border-t border-light-200 dark:border-midnight-700 py-1">
+                  <a
+                    href="mailto:support@totalassist.app"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
+                  >
+                    <HelpCircle className="w-4 h-4 text-text-muted" />
+                    Help
+                  </a>
+                  <button
+                    onClick={() => { setShowUserMenu(false); setShowLogoutConfirm(true); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log out
+                  </button>
+                </div>
+              </div>
             )}
-            {onOpenInventory && (
-              <button
-                onClick={() => { setSidebarMobileOpen(false); onOpenInventory(); }}
-                className={`p-2 rounded-lg transition-colors ${activeView === 'inventory' ? 'bg-electric-indigo/20 text-electric-indigo' : 'text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-100 dark:hover:bg-midnight-800'}`}
-                title="Home Inventory"
-              >
-                <Package className="w-4 h-4" />
-              </button>
-            )}
+
+            {/* Clickable user row */}
             <button
-              onClick={() => setShowLogoutConfirm(true)}
-              className="p-2 rounded-lg text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors ml-auto"
-              title="Sign Out"
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors"
             >
-              <LogOut className="w-4 h-4" />
+              <div className="w-8 h-8 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0">
+                {user.firstName.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="text-sm font-medium text-text-primary dark:text-white truncate">
+                  {user.firstName} {user.lastName || ""}
+                </div>
+                <div className="text-[10px] text-text-muted">{getTierLabel()} plan</div>
+              </div>
             </button>
           </div>
         </div>
@@ -364,16 +470,51 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Input bar */}
               <div className="relative w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/50 focus-within:ring-2 focus-within:ring-electric-indigo/20 transition-all">
-                <button
-                  className="p-1.5 text-text-muted hover:text-text-primary dark:hover:text-white transition-colors rounded-lg hover:bg-light-200 dark:hover:bg-midnight-700"
-                  title="Attach file"
-                  onClick={() => {
-                    // For now, just open scout in photo mode
-                    if (onOpenScout) onOpenScout();
-                  }}
-                >
-                  <Paperclip className="w-5 h-5" />
-                </button>
+                {/* + Action menu */}
+                <div className="relative" ref={actionMenuRef}>
+                  <button
+                    className="p-1.5 text-text-muted hover:text-text-primary dark:hover:text-white transition-colors rounded-lg hover:bg-light-200 dark:hover:bg-midnight-700"
+                    title="Actions"
+                    onClick={() => setShowActionMenu(!showActionMenu)}
+                  >
+                    <Plus className={`w-5 h-5 transition-transform ${showActionMenu ? 'rotate-45' : ''}`} />
+                  </button>
+
+                  {showActionMenu && (
+                    <div className="absolute bottom-full left-0 mb-3 bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-xl shadow-xl p-2 z-50 w-56 animate-fade-in-up">
+                      <button
+                        onClick={() => handleActionMenuSelect('photo')}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
+                      >
+                        <Camera className="w-4 h-4 text-text-secondary" />
+                        Take Photo
+                      </button>
+                      <button
+                        onClick={() => handleActionMenuSelect('photo')}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
+                      >
+                        <ImageIcon className="w-4 h-4 text-text-secondary" />
+                        Upload Photo
+                      </button>
+                      <div className="my-1 border-t border-light-200 dark:border-midnight-700" />
+                      <button
+                        onClick={() => handleActionMenuSelect('voice')}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
+                      >
+                        <Mic className="w-4 h-4 text-text-secondary" />
+                        Voice Support
+                      </button>
+                      <button
+                        onClick={() => handleActionMenuSelect('video')}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
+                      >
+                        <Video className="w-4 h-4 text-text-secondary" />
+                        Video Support
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <input
                   ref={inputRef}
                   type="text"

@@ -20,10 +20,11 @@ interface ScoutChatScreenProps {
   initialCaseId?: string;
   initialMode?: ScoutMode;
   initialMessage?: string;
+  onInitialMessageSent?: () => void;
   onEscalation?: (report: EscalationReportData, caseId: string) => void;
 }
 
-export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onEscalation }: ScoutChatScreenProps) {
+export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation }: ScoutChatScreenProps) {
   const { tier, canUse, incrementUsage } = useUsage();
   const { user, isAuthenticated } = useAuth();
 
@@ -330,10 +331,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     if (initialMessage && !initialMessageSentRef.current) {
       initialMessageSentRef.current = true;
       // Small delay to let the component fully mount
-      const timer = setTimeout(() => sendMessage(initialMessage), 100);
+      const timer = setTimeout(() => {
+        sendMessage(initialMessage);
+        onInitialMessageSent?.();
+      }, 100);
       return () => clearTimeout(timer);
     }
-  }, [initialMessage, sendMessage]);
+  }, [initialMessage, sendMessage, onInitialMessageSent]);
 
   // Handle session end - save summary and mark resolved
   const handleSessionEnd = useCallback(async (currentCaseId: string | null, msgs: ChatMessage[], endSummary?: string) => {

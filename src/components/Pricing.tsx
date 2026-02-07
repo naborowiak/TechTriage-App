@@ -151,7 +151,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       description: 'Try Scout AI and see how easy tech support can be. No credit card required.',
       icon: MessageSquare,
       features: [
-        '5 Scout Chat messages per month',
+        '3 Scout Chat messages to start',
         '1 Scout Snapshot photo analysis',
         'Access to knowledge base',
         'Basic troubleshooting guides',
@@ -572,7 +572,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                         </div>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">5/month</span>
+                        <span className="text-sm text-text-secondary">3 to start</span>
                       </td>
                       <td className="py-4 px-4 text-center bg-electric-indigo/5">
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>

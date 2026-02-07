@@ -32,9 +32,6 @@ import { SignUp } from "./components/SignUp";
 import { Login } from "./components/Login";
 import { Dashboard } from "./components/Dashboard";
 import { SessionHistory } from "./components/SessionHistory";
-import { HomeInventory } from "./components/HomeInventory";
-import { Settings } from "./components/Settings";
-import { BillingManagement } from "./components/BillingManagement";
 import { PrivacyPolicy } from "./components/PrivacyPolicy";
 import { TermsOfService } from "./components/TermsOfService";
 import { CancellationPolicy } from "./components/CancellationPolicy";
@@ -47,6 +44,7 @@ import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
 import { ScoutChatScreen, ScoutInfoPanel } from "./components/scout";
+import { SettingsModal, SettingsTab } from "./components/SettingsModal";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 
 // ============================================
@@ -1707,7 +1705,7 @@ const getStoredUser = (): DashboardUser | null => {
   return null;
 };
 
-type DashboardView = "main" | "history" | "settings" | "billing" | "scout" | "inventory";
+type DashboardView = "main" | "history" | "scout" | "analytics";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);
@@ -1878,6 +1876,9 @@ const App: React.FC = () => {
   const [heroPreviewMode, setHeroPreviewMode] = useState<'voice' | 'photo' | 'video' | 'chat' | null>(null);
   const [scoutInitialMode, setScoutInitialMode] = useState<'voice' | 'photo' | 'video' | 'chat' | undefined>(undefined);
   const [scoutInitialMessage, setScoutInitialMessage] = useState<string | undefined>(undefined);
+  const [scoutInitialCaseId, setScoutInitialCaseId] = useState<string | undefined>(undefined);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [settingsModalTab, setSettingsModalTab] = useState<SettingsTab>('general');
 
   // Lock body scroll when hero preview modal is open (prevents scrolling through marketing sections behind the overlay)
   useEffect(() => {
@@ -1973,17 +1974,20 @@ const App: React.FC = () => {
   }, []);
 
   const handleOpenSettings = useCallback(() => {
-    setDashboardView("settings");
+    setSettingsModalTab('general');
+    setSettingsModalOpen(true);
   }, []);
 
   const handleOpenBilling = useCallback(() => {
-    setDashboardView("billing");
+    setSettingsModalTab('billing');
+    setSettingsModalOpen(true);
   }, []);
 
   const handleBackToDashboard = useCallback(() => {
     setDashboardView("main");
     setScoutInitialMode(undefined);
     setScoutInitialMessage(undefined);
+    setScoutInitialCaseId(undefined);
   }, []);
 
   const handleUpdateUser = useCallback((updatedUser: DashboardUser) => {
@@ -1996,11 +2000,20 @@ const App: React.FC = () => {
 
   const handleOpenScout = useCallback(() => {
     setScoutInitialMessage(undefined);
+    setScoutInitialCaseId(undefined);
     setDashboardView("scout");
   }, []);
 
   const handleNewChat = useCallback((message: string) => {
     setScoutInitialMessage(message);
+    setScoutInitialMode(undefined);
+    setScoutInitialCaseId(undefined);
+    setDashboardView("scout");
+  }, []);
+
+  const handleOpenCase = useCallback((caseId: string) => {
+    setScoutInitialCaseId(caseId);
+    setScoutInitialMessage(undefined);
     setScoutInitialMode(undefined);
     setDashboardView("scout");
   }, []);
@@ -2011,12 +2024,32 @@ const App: React.FC = () => {
   }, []);
 
   const handleOpenInventory = useCallback(() => {
-    setDashboardView("inventory");
+    setSettingsModalTab('inventory');
+    setSettingsModalOpen(true);
+  }, []);
+
+  const handleCloseSettingsModal = useCallback(() => {
+    setSettingsModalOpen(false);
+  }, []);
+
+  const handleOpenScoutWithMode = useCallback((mode: 'photo' | 'voice' | 'video') => {
+    setScoutInitialMode(mode);
+    setScoutInitialMessage(undefined);
+    setScoutInitialCaseId(undefined);
+    setDashboardView('scout');
+  }, []);
+
+  const handleOpenAnalytics = useCallback(() => {
+    setDashboardView('analytics');
   }, []);
 
   // Handle navigation to dashboard sub-views from header dropdown
-  const handleDashboardSubNavigation = useCallback((subView: DashboardView) => {
-    setDashboardView(subView);
+  const handleDashboardSubNavigation = useCallback((subView: string) => {
+    // Settings/billing/inventory now open as modal instead of content replacement
+    if (subView === 'settings') { setSettingsModalTab('general'); setSettingsModalOpen(true); }
+    else if (subView === 'billing') { setSettingsModalTab('billing'); setSettingsModalOpen(true); }
+    else if (subView === 'inventory') { setSettingsModalTab('inventory'); setSettingsModalOpen(true); }
+    else { setDashboardView(subView as DashboardView); }
     navigate(PageView.DASHBOARD);
   }, [navigate]);
 
@@ -2077,32 +2110,45 @@ const App: React.FC = () => {
       case PageView.SCOUT:
         if (dashboardUser) {
           return (
-            <Dashboard
-              user={dashboardUser}
-              onStartChat={handleDashboardChat}
-              onUploadImage={handleDashboardUploadImage}
-              onStartVideo={handleDashboardStartVideo}
-              onStartSignal={handleStartSignal}
-              onOpenScout={handleOpenScout}
-              onNewChat={handleNewChat}
-              onLogout={handleDashboardLogout}
-              onOpenHistory={handleOpenHistory}
-              onOpenSettings={handleOpenSettings}
-              onOpenBilling={handleOpenBilling}
-              onOpenInventory={handleOpenInventory}
-              onBackToDashboard={handleBackToDashboard}
-              activeView="scout"
-              onUpdateUser={handleUpdateUser}
-            >
-              <div className="flex h-full">
-                <div className="flex-1 min-w-0">
-                  <ScoutChatScreen embedded initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} />
+            <>
+              <Dashboard
+                user={dashboardUser}
+                onStartChat={handleDashboardChat}
+                onUploadImage={handleDashboardUploadImage}
+                onStartVideo={handleDashboardStartVideo}
+                onStartSignal={handleStartSignal}
+                onOpenScout={handleOpenScout}
+                onNewChat={handleNewChat}
+                onOpenCase={handleOpenCase}
+                onOpenScoutWithMode={handleOpenScoutWithMode}
+                onOpenAnalytics={handleOpenAnalytics}
+                onLogout={handleDashboardLogout}
+                onOpenHistory={handleOpenHistory}
+                onOpenSettings={handleOpenSettings}
+                onOpenBilling={handleOpenBilling}
+                onOpenInventory={handleOpenInventory}
+                onBackToDashboard={handleBackToDashboard}
+                activeView="scout"
+                onUpdateUser={handleUpdateUser}
+              >
+                <div className="flex h-full">
+                  <div className="flex-1 min-w-0">
+                    <ScoutChatScreen embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
+                  </div>
+                  <div className="hidden xl:block w-80 flex-shrink-0">
+                    <ScoutInfoPanel />
+                  </div>
                 </div>
-                <div className="hidden xl:block w-80 flex-shrink-0">
-                  <ScoutInfoPanel />
-                </div>
-              </div>
-            </Dashboard>
+              </Dashboard>
+              <SettingsModal
+                isOpen={settingsModalOpen}
+                onClose={handleCloseSettingsModal}
+                initialTab={settingsModalTab}
+                user={dashboardUser}
+                onUpdateUser={handleUpdateUser}
+                onLogout={handleDashboardLogout}
+              />
+            </>
           );
         }
         return <ScoutChatScreen />;
@@ -2118,27 +2164,60 @@ const App: React.FC = () => {
                 embedded
               />
             );
-          } else if (dashboardView === "settings") {
-            dashboardContent = (
-              <Settings
-                user={dashboardUser}
-                onUpdateUser={handleUpdateUser}
-                embedded
-              />
-            );
-          } else if (dashboardView === "billing" && dashboardUser.id) {
-            dashboardContent = (
-              <BillingManagement userId={dashboardUser.id} />
-            );
-          } else if (dashboardView === "inventory") {
-            dashboardContent = (
-              <HomeInventory embedded />
-            );
           }
+
+          // Settings modal overlay (shared across all dashboard sub-views)
+          const settingsModalEl = (
+            <SettingsModal
+              isOpen={settingsModalOpen}
+              onClose={handleCloseSettingsModal}
+              initialTab={settingsModalTab}
+              user={dashboardUser}
+              onUpdateUser={handleUpdateUser}
+              onLogout={handleDashboardLogout}
+            />
+          );
 
           // If user navigated to scout view within dashboard, render embedded scout
           if (dashboardView === "scout") {
             return (
+              <>
+                <Dashboard
+                  user={dashboardUser}
+                  onStartChat={handleDashboardChat}
+                  onUploadImage={handleDashboardUploadImage}
+                  onStartVideo={handleDashboardStartVideo}
+                  onStartSignal={handleStartSignal}
+                  onOpenScout={handleOpenScout}
+                  onNewChat={handleNewChat}
+                  onOpenCase={handleOpenCase}
+                  onOpenScoutWithMode={handleOpenScoutWithMode}
+                  onOpenAnalytics={handleOpenAnalytics}
+                  onLogout={handleDashboardLogout}
+                  onOpenHistory={handleOpenHistory}
+                  onOpenSettings={handleOpenSettings}
+                  onOpenBilling={handleOpenBilling}
+                  onOpenInventory={handleOpenInventory}
+                  onBackToDashboard={handleBackToDashboard}
+                  activeView="scout"
+                  onUpdateUser={handleUpdateUser}
+                >
+                  <div className="flex h-full">
+                    <div className="flex-1 min-w-0">
+                      <ScoutChatScreen embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
+                    </div>
+                    <div className="hidden xl:block w-80 flex-shrink-0">
+                      <ScoutInfoPanel />
+                    </div>
+                  </div>
+                </Dashboard>
+                {settingsModalEl}
+              </>
+            );
+          }
+
+          return (
+            <>
               <Dashboard
                 user={dashboardUser}
                 onStartChat={handleDashboardChat}
@@ -2147,46 +2226,22 @@ const App: React.FC = () => {
                 onStartSignal={handleStartSignal}
                 onOpenScout={handleOpenScout}
                 onNewChat={handleNewChat}
+                onOpenCase={handleOpenCase}
+                onOpenScoutWithMode={handleOpenScoutWithMode}
+                onOpenAnalytics={handleOpenAnalytics}
                 onLogout={handleDashboardLogout}
                 onOpenHistory={handleOpenHistory}
                 onOpenSettings={handleOpenSettings}
                 onOpenBilling={handleOpenBilling}
+                onOpenInventory={handleOpenInventory}
                 onBackToDashboard={handleBackToDashboard}
-                activeView="scout"
+                activeView={dashboardView}
                 onUpdateUser={handleUpdateUser}
               >
-                <div className="flex h-full">
-                  <div className="flex-1 min-w-0">
-                    <ScoutChatScreen embedded initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} />
-                  </div>
-                  <div className="hidden xl:block w-80 flex-shrink-0">
-                    <ScoutInfoPanel />
-                  </div>
-                </div>
+                {dashboardContent}
               </Dashboard>
-            );
-          }
-
-          return (
-            <Dashboard
-              user={dashboardUser}
-              onStartChat={handleDashboardChat}
-              onUploadImage={handleDashboardUploadImage}
-              onStartVideo={handleDashboardStartVideo}
-              onStartSignal={handleStartSignal}
-              onOpenScout={handleOpenScout}
-              onNewChat={handleNewChat}
-              onLogout={handleDashboardLogout}
-              onOpenHistory={handleOpenHistory}
-              onOpenSettings={handleOpenSettings}
-              onOpenBilling={handleOpenBilling}
-              onOpenInventory={handleOpenInventory}
-              onBackToDashboard={handleBackToDashboard}
-              activeView={dashboardView}
-              onUpdateUser={handleUpdateUser}
-            >
-              {dashboardContent}
-            </Dashboard>
+              {settingsModalEl}
+            </>
           );
         }
         // If auth is still loading OR user is authenticated but dashboardUser not synced yet,
@@ -2317,7 +2372,7 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen bg-light-100 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
         {renderContent()}
-        <ChatWidget ref={chatRef} />
+        <ChatWidget ref={chatRef} onNavigate={(v) => navigate(v as PageView)} />
         <CookieConsentBanner />
       </div>
     );
@@ -2333,7 +2388,7 @@ const App: React.FC = () => {
       />
       <main>{renderContent()}</main>
       <Footer onNavigate={navigate} />
-      <ChatWidget ref={chatRef} />
+      <ChatWidget ref={chatRef} onNavigate={(v) => navigate(v as PageView)} />
       <CookieConsentBanner />
     </div>
   );
