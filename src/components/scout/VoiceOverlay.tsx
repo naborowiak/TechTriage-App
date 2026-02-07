@@ -1,7 +1,13 @@
 import { useRef, useEffect } from 'react';
-import { X, Mic, MicOff, Camera, Phone, Volume2, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Mic, MicOff, Camera, Phone, Volume2, AlertCircle, Loader2, Bot, User } from 'lucide-react';
 import type { VoiceSessionState } from '../../hooks/useVoiceSession';
 import type { GeminiVoiceStatus } from '../../hooks/useGeminiVoice';
+
+interface TranscriptEntry {
+  role: 'user' | 'model';
+  text: string;
+  timestamp: number;
+}
 
 interface VoiceOverlayProps {
   session: VoiceSessionState;
@@ -22,6 +28,10 @@ interface VoiceOverlayProps {
   geminiStatus?: GeminiVoiceStatus;
   // Connection error message
   connectionError?: string | null;
+  // Live transcript history
+  transcriptHistory?: TranscriptEntry[];
+  // User's display name for transcript
+  userName?: string;
 }
 
 export function VoiceOverlay({
@@ -40,12 +50,22 @@ export function VoiceOverlay({
   inputAnalyser,
   geminiStatus,
   connectionError,
+  transcriptHistory,
+  userName,
 }: VoiceOverlayProps) {
   // When geminiStatus is provided, derive listening/speaking from it
   const isListening = geminiStatus ? geminiStatus === 'listening' : isListeningProp;
   const isSpeaking = geminiStatus ? geminiStatus === 'speaking' : isSpeakingProp;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll transcript to bottom
+  useEffect(() => {
+    if (transcriptHistory && transcriptHistory.length > 0) {
+      transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [transcriptHistory?.length]);
 
   // Waveform visualization — uses real analyser data when available, falls back to random
   useEffect(() => {
@@ -211,7 +231,34 @@ export function VoiceOverlay({
         </div>
 
         {/* Live transcript display */}
-        {(transcript || interimTranscript) && (
+        {transcriptHistory && transcriptHistory.length > 0 ? (
+          <div className="w-full max-w-sm bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 mb-6 max-h-48 overflow-y-auto">
+            <div className="space-y-3">
+              {transcriptHistory.map((entry, i) => (
+                <div key={i} className={`flex flex-col ${entry.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className="flex items-center gap-1.5 mb-1 opacity-60">
+                    {entry.role === 'model' ? (
+                      <Bot className="w-3 h-3 text-[#A855F7]" />
+                    ) : (
+                      <User className="w-3 h-3 text-[#06B6D4]" />
+                    )}
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">
+                      {entry.role === 'model' ? 'Scout' : (userName || 'You')}
+                    </span>
+                  </div>
+                  <div className={`max-w-[90%] px-3 py-2 rounded-xl text-sm ${
+                    entry.role === 'user'
+                      ? 'bg-gradient-to-r from-[#6366F1]/30 to-[#06B6D4]/30 text-white border border-[#6366F1]/20 rounded-tr-sm'
+                      : 'bg-white/5 text-white/90 border border-white/10 rounded-tl-sm'
+                  }`}>
+                    {entry.text}
+                  </div>
+                </div>
+              ))}
+              <div ref={transcriptEndRef} />
+            </div>
+          </div>
+        ) : (transcript || interimTranscript) ? (
           <div className="w-full max-w-sm bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 mb-6">
             <p className="text-white/90 text-sm">
               {transcript || interimTranscript}
@@ -220,7 +267,7 @@ export function VoiceOverlay({
               )}
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* Photo request banner */}
         {photoRequestPending && currentPhotoPrompt && (

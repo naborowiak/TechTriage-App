@@ -499,7 +499,15 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
     let x = 0;
     for (let i = 0; i < bufferLength; i++) {
       const barHeight = (dataArray[i] / 255) * canvas.height;
-      ctx.fillStyle = currentlySpeaking ? "#F97316" : "#1F2937";
+      const gradient = ctx.createLinearGradient(0, canvas.height - barHeight, 0, canvas.height);
+      if (currentlySpeaking) {
+        gradient.addColorStop(0, "#A855F7");
+        gradient.addColorStop(1, "#6366F1");
+      } else {
+        gradient.addColorStop(0, "#06B6D4");
+        gradient.addColorStop(1, "#6366F1");
+      }
+      ctx.fillStyle = gradient;
       ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
       x += barWidth + 1;
     }
@@ -996,7 +1004,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
                     <User className="w-3 h-3 text-white" />
                   )}
                   <span className="text-[9px] font-bold uppercase tracking-widest text-white">
-                    {entry.role === "model" ? "AI Agent" : "User"}
+                    {entry.role === "model" ? "Scout" : (userName || "You")}
                   </span>
                 </div>
                 <div

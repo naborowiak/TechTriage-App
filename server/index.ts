@@ -1293,6 +1293,9 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video')
               JSON.stringify(message).substring(0, 500),
             );
 
+            // Prefer outputTranscript (actual spoken words) over part.text (may be thinking/reasoning)
+            const hasOutputTranscript = !!message.serverContent?.outputTranscript;
+
             if (message.serverContent?.modelTurn?.parts) {
               console.log(
                 "Processing modelTurn parts:",
@@ -1308,9 +1311,9 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video')
                     }),
                   );
                 }
-                // Send text as fallback if no outputTranscript is available
-                // Filter out obvious thinking/reasoning markers
+                // Only send part.text as transcript fallback when outputTranscript is NOT available
                 if (
+                  !hasOutputTranscript &&
                   part.text &&
                   !part.text.startsWith("**") &&
                   !part.text.includes("I'm ") &&
@@ -1331,7 +1334,7 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video')
             }
 
             // Handle AI's spoken transcript (what the AI actually says) - preferred method
-            if (message.serverContent?.outputTranscript) {
+            if (hasOutputTranscript) {
               console.log(
                 "AI spoken transcript:",
                 message.serverContent.outputTranscript,

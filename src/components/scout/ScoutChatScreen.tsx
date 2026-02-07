@@ -792,6 +792,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           inputAnalyser={geminiVoice.inputAnalyser}
           geminiStatus={geminiVoice.status}
           connectionError={geminiVoice.connectionError}
+          transcriptHistory={geminiVoice.transcriptHistory}
+          userName={user?.firstName || user?.username || undefined}
         />
       )}
 

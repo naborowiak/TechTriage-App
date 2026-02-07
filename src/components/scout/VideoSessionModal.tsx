@@ -474,7 +474,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
                     <User className="w-3 h-3 text-white" />
                   )}
                   <span className="text-xs text-white/70">
-                    {entry.role === 'model' ? 'Scout' : 'You'}
+                    {entry.role === 'model' ? 'Scout' : (user?.firstName || user?.username || 'You')}
                   </span>
                 </div>
                 <div
