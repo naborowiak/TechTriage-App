@@ -45,6 +45,8 @@ import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
 import { ScoutChatScreen, ScoutInfoPanel } from "./components/scout";
 import { SettingsModal, SettingsTab } from "./components/SettingsModal";
+import { CaseAnalytics } from "./components/CaseAnalytics";
+import { SpecialistResponse } from "./components/SpecialistResponse";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 
 // ============================================
@@ -1657,6 +1659,7 @@ const pathToView: Record<string, PageView> = {
   '/forgot-password': PageView.FORGOT_PASSWORD,
   '/reset-password': PageView.RESET_PASSWORD,
   '/scout': PageView.SCOUT,
+  '/specialist': PageView.SPECIALIST,
 };
 
 const viewToPath: Record<PageView, string> = {
@@ -1676,11 +1679,13 @@ const viewToPath: Record<PageView, string> = {
   [PageView.FORGOT_PASSWORD]: '/forgot-password',
   [PageView.RESET_PASSWORD]: '/reset-password',
   [PageView.SCOUT]: '/scout',
+  [PageView.SPECIALIST]: '/specialist',
 };
 
 // Get initial view from URL
 const getInitialView = (): PageView => {
   const path = window.location.pathname;
+  if (path.startsWith('/specialist/')) return PageView.SPECIALIST;
   return pathToView[path] || PageView.HOME;
 };
 
@@ -1832,6 +1837,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
+      if (path.startsWith('/specialist/')) {
+        setCurrentView(PageView.SPECIALIST);
+        return;
+      }
       const view = pathToView[path] || PageView.HOME;
       setCurrentView(view);
     };
@@ -2107,6 +2116,10 @@ const App: React.FC = () => {
         return <TermsOfService onBack={() => navigate(PageView.HOME)} />;
       case PageView.CANCELLATION:
         return <CancellationPolicy onBack={() => navigate(PageView.HOME)} />;
+      case PageView.SPECIALIST: {
+        const specialistToken = window.location.pathname.split('/specialist/')[1] || '';
+        return <SpecialistResponse token={specialistToken} />;
+      }
       case PageView.SCOUT:
         if (dashboardUser) {
           return (
@@ -2163,6 +2176,10 @@ const App: React.FC = () => {
                 userName={`${dashboardUser.firstName} ${dashboardUser.lastName || ""}`.trim()}
                 embedded
               />
+            );
+          } else if (dashboardView === "analytics") {
+            dashboardContent = (
+              <CaseAnalytics embedded onBack={handleBackToDashboard} />
             );
           }
 

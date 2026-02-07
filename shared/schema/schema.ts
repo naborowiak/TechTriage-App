@@ -101,6 +101,10 @@ export const casesTable = pgTable("cases", {
     photosIncluded: number;
     estimatedCostRange: string;
   }>(),
+  // Specialist response fields
+  specialistToken: varchar("specialist_token", { length: 255 }),
+  specialistNotes: text("specialist_notes"),
+  specialistRespondedAt: timestamp("specialist_responded_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

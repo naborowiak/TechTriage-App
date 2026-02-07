@@ -1195,6 +1195,162 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
 </html>`;
 }
 
+// Send specialist response notification to user
+export async function sendSpecialistResponseEmail(
+  email: string,
+  firstName: string,
+  caseTitle: string,
+  caseId: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending specialist response notification to ${email}`);
+
+  const displayName = firstName || "there";
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, Case: ${caseTitle}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Specialist Response Ready - ${caseTitle}`,
+      html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Specialist Response Ready</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+    ${getPreheaderHtml(`A specialist has reviewed your case "${caseTitle}" and provided their assessment.`)}
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            ${getHeaderHtml("Specialist Response", "A specialist has reviewed your case.")}
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Great news! A specialist has reviewed your case <strong style="color: ${BRAND.scoutPurple};">"${caseTitle}"</strong> and submitted their professional assessment.
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Log in to your dashboard to view the specialist's response and recommended next steps.
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    ${getPrimaryButtonHtml("View Response", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+            ${getFooterHtml()}
+        </table>
+    </center>
+</body>
+</html>`,
+      text: `Hey ${displayName},\n\nA specialist has reviewed your case "${caseTitle}" and submitted their professional assessment.\n\nLog in to view: ${APP_BASE_URL}/dashboard\n\n---\nPowered by Scout AI\n(c) ${new Date().getFullYear()} Smart Tek Labs.`,
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Specialist response email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send specialist response email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// Send escalation notification to specialist
+export async function sendEscalationEmail(
+  specialistEmail: string,
+  caseTitle: string,
+  specialistUrl: string,
+  pdfBase64?: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending escalation email to specialist at ${specialistEmail}`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${specialistEmail}, Case: ${caseTitle}`);
+    console.log(`[EMAIL] Specialist URL: ${specialistUrl}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const attachments = pdfBase64 ? [
+      {
+        filename: `TotalAssist_Escalation_${new Date().toISOString().split("T")[0]}.pdf`,
+        content: Buffer.from(pdfBase64, "base64"),
+      },
+    ] : undefined;
+
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: specialistEmail,
+      subject: `New Escalation: ${caseTitle}`,
+      html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Escalation</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+    ${getPreheaderHtml(`A new case has been escalated: ${caseTitle}. Review and respond.`)}
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            ${getHeaderHtml("New Escalation", "A case needs your expertise.")}
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        A customer case has been escalated and requires specialist review:
+                    </p>
+                    <p class="light-text" style="margin: 0 0 25px; color: ${BRAND.midnight}; font-size: 20px; font-weight: 700;">
+                        "${caseTitle}"
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Click the button below to review the full case details, chat history, and AI analysis. You can then submit your professional assessment.
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    ${getPrimaryButtonHtml("Review Case", specialistUrl)}
+                </td>
+            </tr>
+            ${getFooterHtml()}
+        </table>
+    </center>
+</body>
+</html>`,
+      text: `New Escalation: ${caseTitle}\n\nA customer case has been escalated and requires specialist review.\n\nReview the case: ${specialistUrl}\n\n---\nPowered by Scout AI\n(c) ${new Date().getFullYear()} Smart Tek Labs.`,
+      attachments,
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Escalation email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send escalation email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
 // Send session guide email with PDF attachment
 export async function sendSessionGuideEmail(
   email: string,

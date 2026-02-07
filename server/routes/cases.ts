@@ -3,7 +3,8 @@ import { db } from "../db";
 import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable } from "../../shared/schema/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { generateCaseGuidePDF, type CasePDFData } from "../services/pdfService";
-import { sendSessionGuideEmail } from "../services/emailService";
+import { sendSessionGuideEmail, sendEscalationEmail } from "../services/emailService";
+import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
 
@@ -135,6 +136,11 @@ router.patch("/:id", async (req, res) => {
     if (escalatedAt !== undefined) updates.escalatedAt = new Date(escalatedAt);
     if (escalationReport !== undefined) updates.escalationReport = escalationReport;
 
+    // Generate specialist token on escalation
+    if (status === "escalated" && !existing.specialistToken) {
+      updates.specialistToken = uuidv4();
+    }
+
     const [updated] = await db
       .update(casesTable)
       .set(updates)
@@ -184,6 +190,50 @@ router.patch("/:id", async (req, res) => {
           console.log(`[CASE] Sent resolution PDF email for case ${id} to ${user.email}`);
         } catch (err) {
           console.error(`[CASE] Failed to send resolution email for case ${id}:`, err);
+        }
+      })();
+    }
+
+    // Fire-and-forget: send escalation email with specialist link
+    if (status === "escalated" && updated?.specialistToken) {
+      (async () => {
+        try {
+          const APP_BASE_URL = process.env.APP_URL || "https://totalassist.tech";
+          const specialistUrl = `${APP_BASE_URL}/specialist/${updated.specialistToken}`;
+
+          // For now, log the specialist URL (in production, send to configured specialist email)
+          console.log(`[CASE] Escalation specialist URL: ${specialistUrl}`);
+
+          // Generate PDF for attachment
+          const [messageRecord] = await db
+            .select()
+            .from(caseMessagesTable)
+            .where(eq(caseMessagesTable.caseId, id))
+            .limit(1);
+
+          let pdfBase64: string | undefined;
+          try {
+            pdfBase64 = generateCaseGuidePDF({
+              caseId: id,
+              title: updated.title,
+              status: "escalated",
+              sessionMode: updated.sessionMode,
+              aiSummary: updated.aiSummary,
+              escalationReport: updated.escalationReport as CasePDFData["escalationReport"],
+              messages: (messageRecord?.messages as CasePDFData["messages"]) || [],
+              createdAt: updated.createdAt?.toISOString() || new Date().toISOString(),
+            });
+          } catch {
+            console.warn(`[CASE] Could not generate PDF for escalation ${id}`);
+          }
+
+          // Send to configured specialist email (fallback to support)
+          const specialistEmail = process.env.SPECIALIST_EMAIL || "support@totalassist.tech";
+          await sendEscalationEmail(specialistEmail, updated.title, specialistUrl, pdfBase64);
+
+          console.log(`[CASE] Sent escalation email for case ${id}`);
+        } catch (err) {
+          console.error(`[CASE] Failed to send escalation email for case ${id}:`, err);
         }
       })();
     }

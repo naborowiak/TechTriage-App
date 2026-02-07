@@ -40,6 +40,7 @@ export enum PageView {
   FORGOT_PASSWORD = "forgot-password",
   RESET_PASSWORD = "reset-password",
   SCOUT = "scout",
+  SPECIALIST = "specialist",
 }
 
 export interface PricingTier {

@@ -10,6 +10,7 @@ import passport from "passport";
 import casesRouter from "./routes/cases";
 import devicesRouter from "./routes/devices";
 import aiRouter from "./routes/ai";
+import specialistRouter from "./routes/specialist";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendTestEmailWithResendDomain, sendSessionGuideEmail } from "./services/emailService";
@@ -1587,6 +1588,7 @@ async function main() {
     app.use("/api/cases", casesRouter);
     app.use("/api/devices", devicesRouter);
     app.use("/api/ai", aiRouter);
+    app.use("/api/specialist", specialistRouter);
   } catch (error) {
     console.error("Auth setup failed:", error);
   }
