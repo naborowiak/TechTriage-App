@@ -73,26 +73,26 @@ export function getCreditsFromPriceId(priceId: string): { type: 'videoDiagnostic
 }
 
 // Plan feature limits
-// Note: liveSessions = INCLUDED per month. Users can always buy more credits.
+// Note: liveSessions = INCLUDED per billing period. Users can always buy more credits.
 export const PLAN_LIMITS = {
   free: {
-    chatSessions: Infinity,    // Unlimited during stability testing
-    photoAnalyses: Infinity,   // Unlimited during stability testing
-    includedVideoSessions: 3,  // Allow free video sessions during stability testing
+    chatSessions: 5,              // 5 AI chat sessions/month
+    photoAnalyses: 1,             // 1 photo analysis/month
+    includedVideoSessions: 0,     // Locked — requires Home+
     multiHome: false,
     maxHomes: 1,
   },
   home: {
-    chatSessions: Infinity,    // Unlimited AI chat
-    photoAnalyses: Infinity,   // Unlimited photo analysis
-    includedVideoSessions: 2,  // 2 video sessions included/month (can buy more)
+    chatSessions: Infinity,       // Unlimited AI chat
+    photoAnalyses: Infinity,      // Unlimited photo analysis
+    includedVideoSessions: 4,     // ~1/week (client handles weekly reset, 4/month budget)
     multiHome: false,
     maxHomes: 1,
   },
   pro: {
-    chatSessions: Infinity,    // Unlimited AI chat
-    photoAnalyses: Infinity,   // Unlimited photo analysis
-    includedVideoSessions: 5,  // 5 video sessions included/month (can buy more)
+    chatSessions: Infinity,       // Unlimited AI chat
+    photoAnalyses: Infinity,      // Unlimited photo analysis
+    includedVideoSessions: 15,    // 15 video sessions/month
     multiHome: true,
     maxHomes: 5,
   },
@@ -108,21 +108,21 @@ export const PLAN_INFO = {
     monthlyPrice: 0,
     annualPrice: 0,
     description: 'Try Scout AI with limited access',
-    highlights: ['5 AI chat sessions', '2 photo analyses', 'Purchase video credits as needed'],
+    highlights: ['5 AI chat sessions/month', '1 photo analysis/month', 'Purchase video credits as needed'],
   },
   home: {
     name: 'Home',
     monthlyPrice: 25,
     annualPrice: 228, // $19/mo billed annually
     description: 'Perfect for homeowners',
-    highlights: ['Unlimited AI chat', 'Unlimited photo analysis', '2 video sessions/month included', 'Buy extra video credits anytime'],
+    highlights: ['Unlimited AI chat', 'Unlimited photo analysis', '1 video session/week included', 'Buy extra video credits anytime'],
   },
   pro: {
     name: 'Pro',
     monthlyPrice: 59,
     annualPrice: 588, // $49/mo billed annually
     description: 'Best for families & landlords',
-    highlights: ['Everything in Home', '5 video sessions/month included', 'Multi-home support (up to 5)', 'Priority support'],
+    highlights: ['Everything in Home', '15 video sessions/month included', 'Multi-home support (up to 5)', 'Priority support'],
   },
 } as const;
 

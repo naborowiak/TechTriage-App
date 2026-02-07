@@ -53,6 +53,7 @@ interface UsageContextValue extends UsageState {
   addPurchasedCredits: (count: number) => void;
   getVideoResetInfo: () => { resetType: 'weekly' | 'monthly'; daysUntilReset: number; nextResetDate: Date };
   shouldShowRefillModal: () => boolean;
+  syncVideoCreditsFromServer: (serverRemaining: number, serverPurchased: number) => void;
 }
 
 // Tier Definitions:
@@ -79,16 +80,16 @@ const UNLIMITED = 999999;
 
 const TIER_LIMITS: Record<UserTier, UsageLimits> = {
   guest: {
-    chat: { used: 0, limit: UNLIMITED },
-    photo: { used: 0, limit: UNLIMITED },
-    signal: { used: 0, limit: UNLIMITED },
-    voice: { used: 0, limit: UNLIMITED },
+    chat: { used: 0, limit: 1 },        // 1 message, then force signup
+    photo: { used: 0, limit: 0 },       // Locked
+    signal: { used: 0, limit: 0 },      // Locked
+    voice: { used: 0, limit: 0 },       // Locked
   },
   free: {
-    chat: { used: 0, limit: UNLIMITED },
-    photo: { used: 0, limit: UNLIMITED },
-    signal: { used: 0, limit: UNLIMITED },
-    voice: { used: 0, limit: UNLIMITED },
+    chat: { used: 0, limit: 5 },        // 5 messages/month
+    photo: { used: 0, limit: 1 },       // 1 photo/month
+    signal: { used: 0, limit: 0 },      // Locked — requires Home+
+    voice: { used: 0, limit: 0 },       // Locked — requires Home+
   },
   home: {
     chat: { used: 0, limit: UNLIMITED },
@@ -106,16 +107,16 @@ const TIER_LIMITS: Record<UserTier, UsageLimits> = {
 
 // Video credit limits by tier
 const VIDEO_CREDIT_CONFIG: Record<UserTier, { limit: number; resetType: 'weekly' | 'monthly' }> = {
-  guest: { limit: 1, resetType: 'monthly' },
-  free: { limit: 1, resetType: 'monthly' },
-  home: { limit: 1, resetType: 'weekly' },
-  pro: { limit: 15, resetType: 'monthly' },
+  guest: { limit: 0, resetType: 'monthly' },   // Locked — force signup
+  free: { limit: 0, resetType: 'monthly' },    // Locked — requires Home+
+  home: { limit: 1, resetType: 'weekly' },     // 1 credit/week (resets every 7 days)
+  pro: { limit: 15, resetType: 'monthly' },    // 15 credits/month
 };
 
 // Export for use in other components
 export { TIER_LIMITS, VIDEO_CREDIT_CONFIG, UNLIMITED };
 
-const STORAGE_KEY = 'scout-usage-store-v3';
+const STORAGE_KEY = 'scout-usage-store-v5';
 
 const generateSessionId = (): string => {
   return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -338,6 +339,35 @@ export const UsageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return state.usage[feature].used >= state.usage[feature].limit;
   }, [state.tier, state.usage]);
 
+  // Sync video credits from server's authoritative data
+  const syncVideoCreditsFromServer = useCallback((serverRemaining: number, serverPurchased: number) => {
+    setState(prev => {
+      const config = VIDEO_CREDIT_CONFIG[prev.tier];
+      // Derive subscription credits: remaining minus purchased (purchased don't expire)
+      const subscriptionCredits = Math.max(0, Math.min(serverRemaining - serverPurchased, config.limit));
+      const purchasedCredits = Math.max(0, serverPurchased);
+
+      // Only update if the values actually changed
+      if (
+        prev.videoCredits.subscriptionCredits === subscriptionCredits &&
+        prev.videoCredits.purchasedCredits === purchasedCredits
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        videoCredits: {
+          ...prev.videoCredits,
+          subscriptionCredits,
+          purchasedCredits,
+          subscriptionLimit: config.limit,
+          resetType: config.resetType,
+        },
+      };
+    });
+  }, []);
+
   // Video Credit Methods
   const getTotalVideoCredits = useCallback((): number => {
     return state.videoCredits.subscriptionCredits + state.videoCredits.purchasedCredits;
@@ -436,6 +466,7 @@ export const UsageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     addPurchasedCredits,
     getVideoResetInfo,
     shouldShowRefillModal,
+    syncVideoCreditsFromServer,
   };
 
   return React.createElement(UsageContext.Provider, { value }, children);
@@ -454,9 +485,10 @@ export const useSyncUsageWithAuth = (
   isAuthenticated: boolean,
   userId?: string,
   subscriptionTier?: string,
-  isLoading?: boolean
+  isLoading?: boolean,
+  serverVideoCredits?: { remaining: number; purchased: number } | null
 ) => {
-  const { setTier, tier: currentTier, userId: currentUserId } = useUsage();
+  const { setTier, syncVideoCreditsFromServer, tier: currentTier, userId: currentUserId } = useUsage();
 
   useEffect(() => {
     // Don't sync while subscription data is still loading — trust cached tier from localStorage
@@ -480,7 +512,13 @@ export const useSyncUsageWithAuth = (
     if (currentTier !== tier || currentUserId !== userId) {
       setTier(tier, userId);
     }
-  }, [isAuthenticated, userId, subscriptionTier, isLoading, currentTier, currentUserId, setTier]);
+
+    // Always sync video credits from server (authoritative source)
+    // This fixes stale localStorage credits for returning users
+    if (serverVideoCredits) {
+      syncVideoCreditsFromServer(serverVideoCredits.remaining, serverVideoCredits.purchased);
+    }
+  }, [isAuthenticated, userId, subscriptionTier, isLoading, currentTier, currentUserId, setTier, serverVideoCredits, syncVideoCreditsFromServer]);
 };
 
 // Helper function to check if a feature requires upgrade

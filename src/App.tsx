@@ -1751,15 +1751,17 @@ const App: React.FC = () => {
   // Get subscription tier for the authenticated user
   // Use dashboardUser.id as fallback so subscription fetch starts immediately from localStorage
   const effectiveUserId = sessionUser?.id || dashboardUser?.id;
-  const { tier: subscriptionTier, isLoading: subscriptionLoading } = useSubscription(effectiveUserId);
+  const { tier: subscriptionTier, isLoading: subscriptionLoading, videoCredits: serverVideoCredits } = useSubscription(effectiveUserId);
 
   // Sync usage store tier with auth/subscription state
   // Treat dashboardUser as auth signal so we don't flash guest tier while auth is loading
+  // Also syncs server-side video credits to fix stale localStorage for returning users
   useSyncUsageWithAuth(
     isAuthenticated || !!dashboardUser,
     effectiveUserId,
     subscriptionTier,
-    subscriptionLoading
+    subscriptionLoading,
+    subscriptionLoading ? null : { remaining: serverVideoCredits.remaining, purchased: serverVideoCredits.purchased }
   );
 
   // Check if user should see dashboard on initial load
