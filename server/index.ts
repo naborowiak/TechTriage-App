@@ -107,7 +107,8 @@ app.post(
   }
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Trust proxy for secure cookies behind reverse proxy (must be before session)
 app.set("trust proxy", 1);

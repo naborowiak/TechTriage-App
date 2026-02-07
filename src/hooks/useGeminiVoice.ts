@@ -45,6 +45,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const inputAnalyserRef = useRef<AnalyserNode | null>(null);
   const lastSpeakingTimeRef = useRef<number>(0);
   const statusTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const newTurnRef = useRef<boolean>(true); // Track turn boundaries for transcript accumulation
 
   const stopAllHardware = useCallback(() => {
     if (streamRef.current) {
@@ -217,16 +218,31 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
               lastSpeakingTimeRef.current = Date.now();
               playAudio(message.data);
             } else if (message.type === 'aiTranscript') {
-              setTranscriptHistory((prev) => [
-                ...prev,
-                { role: 'model', text: message.data, timestamp: Date.now() },
-              ]);
+              // Accumulate fragments into the current model turn
+              const startNew = newTurnRef.current;
+              newTurnRef.current = false;
+              setTranscriptHistory((prev) => {
+                const last = prev[prev.length - 1];
+                if (!startNew && last && last.role === 'model') {
+                  // Append to existing model entry within the same turn
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    ...last,
+                    text: last.text + message.data,
+                  };
+                  return updated;
+                }
+                return [...prev, { role: 'model', text: message.data, timestamp: Date.now() }];
+              });
             } else if (message.type === 'userTranscript') {
+              // User transcripts are complete — always a new entry
+              newTurnRef.current = true; // Next AI response starts a new entry
               setTranscriptHistory((prev) => [
                 ...prev,
                 { role: 'user', text: message.data, timestamp: Date.now() },
               ]);
             } else if (message.type === 'turnComplete') {
+              newTurnRef.current = true; // Mark turn boundary
               const timeSinceSpeaking = Date.now() - lastSpeakingTimeRef.current;
               const delay = Math.max(0, 300 - timeSinceSpeaking);
               if (statusTransitionTimerRef.current) {
@@ -256,13 +272,21 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
           stopAllHardware();
         };
 
-        ws.onclose = () => {
-          console.log('Voice WebSocket closed');
+        ws.onclose = (event) => {
+          console.log('Voice WebSocket closed', event.code, event.reason);
           setIsConnected(false);
           if (statusTransitionTimerRef.current) {
             clearTimeout(statusTransitionTimerRef.current);
             statusTransitionTimerRef.current = null;
           }
+          // If we were still connecting when WS closed, show an error
+          setStatus((prev) => {
+            if (prev === 'connecting') {
+              setConnectionError('Voice session disconnected unexpectedly. Please try again.');
+              return 'idle';
+            }
+            return prev;
+          });
         };
 
         // Send audio data

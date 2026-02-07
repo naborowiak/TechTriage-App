@@ -103,7 +103,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               image: m.image,
               timestamp: m.timestamp,
             }));
-            setMessages(prev => [...prev, ...loaded]);
+            setMessages(loaded);
           }
         })
         .catch(() => {});

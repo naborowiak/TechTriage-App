@@ -206,7 +206,7 @@ export function VoiceOverlay({
           </div>
         ) : (
           /* Active Session — Transcript View */
-          <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2">
+          <div className="flex-1 overflow-y-auto scrollbar-hidden px-4 pt-4 pb-2">
             {/* Status indicator */}
             <div className="text-center mb-4">
               <span className="text-white/40 text-xs font-medium">
