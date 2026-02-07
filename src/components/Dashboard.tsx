@@ -22,6 +22,7 @@ import {
   Moon,
   Bot,
   Package,
+  Search,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { Logo } from "./Logo";
@@ -187,6 +188,7 @@ const ActionCard: React.FC<{
   buttonText: string;
   onClick: () => void;
   highlight?: boolean;
+  available?: boolean;
   badge?: string | number;
   disabled?: boolean;
   locked?: boolean;
@@ -198,6 +200,7 @@ const ActionCard: React.FC<{
   buttonText,
   onClick,
   highlight,
+  available,
   badge,
   disabled,
   locked,
@@ -220,7 +223,9 @@ const ActionCard: React.FC<{
             ? "bg-light-100 dark:bg-midnight-800 border-light-300 dark:border-midnight-700 opacity-60 cursor-not-allowed"
             : highlight
               ? "bg-white dark:bg-midnight-800 border-electric-indigo shadow-glow-electric hover:shadow-lg hover:-translate-y-1"
-              : "bg-white dark:bg-midnight-800 border-light-300 dark:border-midnight-700 hover:border-light-400 dark:hover:border-midnight-600 hover:shadow-lg hover:-translate-y-1"
+              : available
+                ? "bg-white dark:bg-midnight-800 border-electric-indigo/40 hover:border-electric-indigo hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+                : "bg-white dark:bg-midnight-800 border-light-300 dark:border-midnight-700 hover:border-light-400 dark:hover:border-midnight-600 hover:shadow-lg hover:-translate-y-1"
       }`}
     >
       {/* Pro Badge for locked features */}
@@ -238,7 +243,9 @@ const ActionCard: React.FC<{
               ? "bg-light-200 dark:bg-midnight-700 text-text-muted"
               : highlight
                 ? "bg-gradient-to-br from-scout-purple to-electric-indigo text-white"
-                : "bg-light-200 dark:bg-midnight-700 text-electric-indigo"
+                : available
+                  ? "bg-electric-indigo/15 dark:bg-electric-indigo/20 text-electric-indigo"
+                  : "bg-light-200 dark:bg-midnight-700 text-electric-indigo"
           }`}
         >
           {icon}
@@ -319,6 +326,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [cases, setCases] = useState<Case[]>([]);
+  const [caseSearch, setCaseSearch] = useState("");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<'chat' | 'photo' | 'signal' | 'videoDiagnostic'>('chat');
   const { theme, toggleTheme } = useTheme();
@@ -730,6 +738,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 badge={isPaidTier ? 'Unlimited' : photoRemaining === 0 ? 'Used' : '1 Free'}
                 disabled={isPhotoLocked && tier !== 'pro'}
                 locked={isPhotoLocked && tier === 'free'}
+                available={!isPhotoLocked}
                 onLockedClick={() => handleLockedFeatureClick('photo')}
               />
               <ActionCard
@@ -745,6 +754,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   }
                 }}
                 locked={isSignalLocked}
+                available={!isSignalLocked}
                 onLockedClick={() => handleLockedFeatureClick('signal')}
                 badge={!isSignalLocked ? 'Unlimited' : undefined}
               />
@@ -755,6 +765,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 buttonText={isDiagnosticLocked && !isVideoLocked ? "Buy Credit" : "Start Session"}
                 onClick={handleStartDiagnostic}
                 locked={isDiagnosticLocked}
+                available={!isDiagnosticLocked}
                 onLockedClick={() => handleLockedFeatureClick('videoDiagnostic')}
                 badge={
                   isVideoLocked
@@ -767,45 +778,72 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Active/Recent Cases Section */}
-            {cases.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-text-primary dark:text-white">Your Cases</h2>
-                  <button
-                    onClick={onOpenHistory}
-                    className="text-sm text-electric-indigo font-medium hover:text-electric-cyan transition-colors"
-                  >
-                    View All
-                  </button>
-                </div>
-                <div className="bg-white dark:bg-midnight-800 rounded-2xl border border-light-300 dark:border-midnight-700 overflow-hidden">
-                  {cases.slice(0, 3).map((c) => (
-                    <div
-                      key={c.id}
-                      className="p-4 border-b border-light-300 dark:border-midnight-700 last:border-0 hover:bg-light-100 dark:hover:bg-midnight-700/50 transition-colors flex items-center justify-between cursor-pointer"
+            {cases.length > 0 && (() => {
+              const filteredCases = caseSearch
+                ? cases.filter(c =>
+                    c.title.toLowerCase().includes(caseSearch.toLowerCase()) ||
+                    (c.aiSummary || "").toLowerCase().includes(caseSearch.toLowerCase())
+                  )
+                : cases.slice(0, 3);
+
+              return (
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-text-primary dark:text-white">Your Cases</h2>
+                    <button
                       onClick={onOpenHistory}
+                      className="text-sm text-electric-indigo font-medium hover:text-electric-cyan transition-colors"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-electric-indigo/20 flex items-center justify-center text-electric-indigo">
-                          <FolderOpen className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-text-primary dark:text-white">{c.title}</h4>
-                          <div className="flex items-center gap-2 text-xs text-text-secondary">
-                            <span>{new Date(c.createdAt).toLocaleDateString()}</span>
-                            <span>•</span>
-                            <span className={`capitalize ${c.status === "open" ? "text-electric-cyan" : ""}`}>
-                              {c.status}
-                            </span>
+                      View All
+                    </button>
+                  </div>
+
+                  {cases.length > 3 && (
+                    <div className="relative mb-3">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                      <input
+                        type="text"
+                        placeholder="Search cases..."
+                        value={caseSearch}
+                        onChange={(e) => setCaseSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-light-300 dark:border-midnight-700 rounded-xl bg-white dark:bg-midnight-800 text-text-primary dark:text-white placeholder:text-text-muted text-sm focus:border-electric-indigo focus:outline-none transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  <div className="bg-white dark:bg-midnight-800 rounded-2xl border border-light-300 dark:border-midnight-700 overflow-hidden">
+                    {filteredCases.length > 0 ? filteredCases.map((c) => (
+                      <div
+                        key={c.id}
+                        className="p-4 border-b border-light-300 dark:border-midnight-700 last:border-0 hover:bg-light-100 dark:hover:bg-midnight-700/50 transition-colors flex items-center justify-between cursor-pointer"
+                        onClick={onOpenHistory}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-electric-indigo/20 flex items-center justify-center text-electric-indigo">
+                            <FolderOpen className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-text-primary dark:text-white">{c.title}</h4>
+                            <div className="flex items-center gap-2 text-xs text-text-secondary">
+                              <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                              <span>•</span>
+                              <span className={`capitalize ${c.status === "open" ? "text-electric-cyan" : ""}`}>
+                                {c.status}
+                              </span>
+                            </div>
                           </div>
                         </div>
+                        <ChevronRight className="w-5 h-5 text-text-muted" />
                       </div>
-                      <ChevronRight className="w-5 h-5 text-text-muted" />
-                    </div>
-                  ))}
+                    )) : (
+                      <div className="p-4 text-center text-text-muted text-sm">
+                        No cases match "{caseSearch}"
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Quick tip */}
             <div className="mb-8">

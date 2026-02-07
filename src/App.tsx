@@ -20,7 +20,6 @@ import {
   HelpCircle,
   Sun,
   Moon,
-  Mic,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -380,6 +379,12 @@ const Header: React.FC<{
             <>
               {/* Credit Counter for logged-in users */}
               <CreditCounter onNavigate={onNavigate} />
+              <button
+                onClick={() => onNavigate(PageView.DASHBOARD)}
+                className="btn-gradient-electric text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-all whitespace-nowrap hover:shadow-glow-electric hover:brightness-110"
+              >
+                Dashboard
+              </button>
               <ProfileDropdown
                 user={user}
                 onDashboardNavigate={onDashboardNavigate}
@@ -408,10 +413,10 @@ const Header: React.FC<{
         {/* Mobile: CTA + Hamburger */}
         <div className="flex lg:hidden items-center gap-3">
           <button
-            onClick={() => onNavigate(PageView.SIGNUP)}
+            onClick={() => onNavigate(isAuthenticated && user ? PageView.DASHBOARD : PageView.SIGNUP)}
             className="btn-gradient-electric text-white font-semibold px-4 py-2 rounded-full text-sm transition-all whitespace-nowrap"
           >
-            Get Started
+            {isAuthenticated && user ? 'Dashboard' : 'Get Started'}
           </button>
           <button
             onClick={toggleMenu}
@@ -648,7 +653,6 @@ const Hero: React.FC<{
 }> = ({
   onFreeTrial,
   onPricing,
-  onHeroAction,
 }) => {
   const { ref: parallaxRef, offset } = useParallax(0.3);
 
@@ -835,53 +839,28 @@ const Hero: React.FC<{
               </p>
             </AnimatedElement>
             <AnimatedElement animation="fadeInUp" delay={0.6}>
-              {/* 4 Action Buttons Grid */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 max-w-lg">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <button
-                  onClick={() => onHeroAction ? onHeroAction('voice') : onFreeTrial()}
-                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-purple-600/90 to-purple-800/90 backdrop-blur-sm border border-purple-400/30 text-white shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  onClick={onFreeTrial}
+                  className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-electric-indigo text-white font-bold text-sm sm:text-base shadow-lg hover:shadow-electric-indigo/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  <Mic className="w-6 h-6 sm:w-7 sm:h-7" />
-                  <span className="font-bold text-sm sm:text-base">Talk to Scout</span>
-                  <span className="text-purple-200 text-[10px] sm:text-xs">Voice-First</span>
+                  Get Started
                 </button>
-                <button
-                  onClick={() => onHeroAction ? onHeroAction('photo') : onFreeTrial()}
-                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-cyan-500/90 to-cyan-700/90 backdrop-blur-sm border border-cyan-400/30 text-white shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  <Camera className="w-6 h-6 sm:w-7 sm:h-7" />
-                  <span className="font-bold text-sm sm:text-base">Snap a Photo</span>
-                  <span className="text-cyan-200 text-[10px] sm:text-xs">Visual Triage</span>
-                </button>
-                <button
-                  onClick={() => onHeroAction ? onHeroAction('video') : onFreeTrial()}
-                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-indigo-600/90 to-indigo-800/90 backdrop-blur-sm border border-indigo-400/30 text-white shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  <Tv className="w-6 h-6 sm:w-7 sm:h-7" />
-                  <span className="font-bold text-sm sm:text-base">Short Video</span>
-                  <span className="text-indigo-200 text-[10px] sm:text-xs">Diagnostic</span>
-                </button>
-                <button
-                  onClick={() => onHeroAction ? onHeroAction('chat') : onFreeTrial()}
-                  className="group relative flex flex-col items-center gap-1.5 sm:gap-2 px-4 py-3 sm:py-4 rounded-xl bg-gradient-to-br from-emerald-500/90 to-emerald-700/90 backdrop-blur-sm border border-emerald-400/30 text-white shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7" />
-                  <span className="font-bold text-sm sm:text-base">Quick Text Fix</span>
-                  <span className="text-emerald-200 text-[10px] sm:text-xs">Traditional Chat</span>
-                </button>
-              </div>
-              {/* Secondary links */}
-              <div className="flex items-center gap-4 mb-6 sm:mb-8">
                 <button
                   onClick={onPricing}
-                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-electric-indigo dark:hover:text-electric-cyan transition-colors underline underline-offset-2"
+                  className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white dark:bg-midnight-800 text-text-primary dark:text-white font-bold text-sm sm:text-base border border-light-300 dark:border-midnight-600 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                   Explore Pricing
                 </button>
-                <span className="text-gray-400 dark:text-gray-600">|</span>
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+              </div>
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   <CheckCircle2 className="w-3.5 h-3.5 text-electric-cyan" />
                   <span>No credit card needed</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-electric-cyan" />
+                  <span>24/7 instant answers</span>
                 </div>
               </div>
             </AnimatedElement>
@@ -1873,7 +1852,7 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Auto-redirect authenticated users from / to dashboard
+  // Sync dashboardUser from session when authenticated (no auto-redirect from homepage)
   useEffect(() => {
     if (!authLoading && isAuthenticated && sessionUser && window.location.pathname === "/") {
       // Sync dashboardUser from session if not already set
@@ -1885,9 +1864,8 @@ const App: React.FC = () => {
       };
       setDashboardUser(syncedUser);
       localStorage.setItem("totalassist_user", JSON.stringify(syncedUser));
-      navigate(PageView.DASHBOARD);
     }
-  }, [authLoading, isAuthenticated, sessionUser, navigate]);
+  }, [authLoading, isAuthenticated, sessionUser]);
 
   const handleStart = useCallback(() => {
     chatRef.current?.open("I'd like to start a free trial.");
@@ -2018,6 +1996,11 @@ const App: React.FC = () => {
     setDashboardView("scout");
   }, []);
 
+  const handleStartSignal = useCallback(() => {
+    setScoutInitialMode('voice');
+    setDashboardView('scout');
+  }, []);
+
   const handleOpenInventory = useCallback(() => {
     setDashboardView("inventory");
   }, []);
@@ -2090,6 +2073,7 @@ const App: React.FC = () => {
               onStartChat={handleDashboardChat}
               onUploadImage={handleDashboardUploadImage}
               onStartVideo={handleDashboardStartVideo}
+              onStartSignal={handleStartSignal}
               onOpenScout={handleOpenScout}
               onLogout={handleDashboardLogout}
               onOpenHistory={handleOpenHistory}
@@ -2150,6 +2134,7 @@ const App: React.FC = () => {
                 onStartChat={handleDashboardChat}
                 onUploadImage={handleDashboardUploadImage}
                 onStartVideo={handleDashboardStartVideo}
+                onStartSignal={handleStartSignal}
                 onOpenScout={handleOpenScout}
                 onLogout={handleDashboardLogout}
                 onOpenHistory={handleOpenHistory}
@@ -2177,6 +2162,7 @@ const App: React.FC = () => {
               onStartChat={handleDashboardChat}
               onUploadImage={handleDashboardUploadImage}
               onStartVideo={handleDashboardStartVideo}
+              onStartSignal={handleStartSignal}
               onOpenScout={handleOpenScout}
               onLogout={handleDashboardLogout}
               onOpenHistory={handleOpenHistory}

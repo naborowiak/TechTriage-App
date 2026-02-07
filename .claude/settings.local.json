@@ -64,7 +64,8 @@
       "Bash(python3:*)",
       "Bash(npx drizzle-kit push:*)",
       "Bash(sort:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npm start)"
     ]
   }
 }

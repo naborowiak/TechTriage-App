@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, Sparkles, UserPlus, Hash } from 'lucide-react';
+import { EscalationBreadcrumb } from './EscalationBreadcrumb';
 import { ModeDock, ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
 import { PhotoCaptureModal } from './PhotoCaptureModal';
 import { VideoSessionModal } from './VideoSessionModal';
 import { useUsage } from '../../stores/usageStore';
-import { sendMessageToGemini, generateCaseSummary, generateEscalationReport } from '../../services/geminiService';
-import { useVoiceSession } from '../../hooks/useVoiceSession';
+import { sendMessageToGemini, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
+import { useVoiceSession, VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
+import { VoiceReportModal } from '../voice/VoiceReportModal';
+import { saveVoiceReportToHistory } from '../../services/voiceReportService';
 import { useWebSpeech } from '../../hooks/useWebSpeech';
 import { useGeminiVoice } from '../../hooks/useGeminiVoice';
 import { ChatMessage, UserRole, DeviceRecord, EscalationReportData } from '../../types';
@@ -24,6 +27,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const { user, isAuthenticated } = useAuth();
 
   const [activeMode, setActiveMode] = useState<ScoutMode>(initialMode || 'chat');
+  const [visitedModes, setVisitedModes] = useState<Set<string>>(new Set([initialMode || 'chat']));
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -37,6 +41,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
   // Case tracking
   const [caseId, setCaseId] = useState<string | null>(initialCaseId || null);
+  const [caseTitle, setCaseTitle] = useState<string | null>(null);
   const [hasCreatedCase, setHasCreatedCase] = useState(!!initialCaseId);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ensureCasePromiseRef = useRef<Promise<string | null> | null>(null);
@@ -55,6 +60,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<ScoutMode | null>(null);
+  const [voiceReport, setVoiceReport] = useState<VoiceDiagnosticReport | null>(null);
+  const [showVoiceReport, setShowVoiceReport] = useState(false);
 
   // Voice session hooks
   const voiceSession = useVoiceSession();
@@ -170,7 +177,17 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
     const promise = (async () => {
       try {
-        const title = firstMessage.substring(0, 80) || 'Support Session';
+        // Generate AI case name, fallback to first 80 chars
+        let aiName = '';
+        try {
+          aiName = await generateCaseName(firstMessage);
+        } catch { /* ignore */ }
+
+        const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const title = aiName
+          ? `${dateStr} - ${aiName}`
+          : `${dateStr} - ${firstMessage.substring(0, 80) || 'Support Session'}`;
+
         const res = await fetch('/api/cases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -184,6 +201,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         if (res.ok) {
           const newCase = await res.json();
           setCaseId(newCase.id);
+          setCaseTitle(title);
           setHasCreatedCase(true);
           return newCase.id;
         }
@@ -429,6 +447,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
   const handleModeSelect = (mode: ScoutMode) => {
     setActiveMode(mode);
+    setVisitedModes(prev => new Set(prev).add(mode));
 
     switch (mode) {
       case 'voice':
@@ -482,9 +501,12 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     // Save voice recording to case
     const currentCaseId = caseId || await ensureCase('Voice diagnostic session', 'voice');
     if (currentCaseId && report) {
-      const transcriptText = (report as { transcript?: Array<{ role: string; text: string }> })?.transcript
+      const typedReport = report as VoiceDiagnosticReport;
+      const transcriptText = typedReport.transcript
         ?.map((t: { role: string; text: string }) => `${t.role}: ${t.text}`)
         .join('\n') || '';
+
+      // Save recording
       fetch(`/api/cases/${currentCaseId}/recordings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -492,14 +514,45 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         body: JSON.stringify({
           sessionType: 'live_audio',
           transcript: transcriptText,
-          durationSeconds: (report as { duration?: number })?.duration
-            ? Math.round(((report as { duration?: number }).duration || 0) / 1000)
+          durationSeconds: typedReport.duration
+            ? Math.round(typedReport.duration / 1000)
             : null,
         }),
       }).catch(() => {});
 
-      // Update case summary with voice summary
-      const summary = (report as { summary?: { issue?: string; diagnosis?: string } })?.summary;
+      // Save voice transcript as case messages so they appear in history
+      if (typedReport.transcript && typedReport.transcript.length > 0) {
+        const msgData = typedReport.transcript.map((t: { role: string; text: string; timestamp?: number }) => ({
+          role: t.role === 'user' ? 'user' : 'model',
+          text: t.text,
+          timestamp: t.timestamp || Date.now(),
+        }));
+        fetch(`/api/cases/${currentCaseId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ messages: msgData }),
+        }).catch(() => {});
+      }
+
+      // Generate AI voice summary and show VoiceReportModal
+      try {
+        const summary = await generateVoiceSummary(
+          typedReport.transcript || [],
+          typedReport.photos?.length || 0
+        );
+        typedReport.summary = summary;
+      } catch (e) {
+        console.error('Failed to generate voice summary:', e);
+      }
+
+      // Save report to history and show modal
+      saveVoiceReportToHistory(typedReport);
+      setVoiceReport(typedReport);
+      setShowVoiceReport(true);
+
+      // Update case with AI summary
+      const summary = typedReport.summary;
       if (summary) {
         fetch(`/api/cases/${currentCaseId}`, {
           method: 'PATCH',
@@ -588,27 +641,81 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     <div className={`flex flex-col ${embedded ? 'h-full' : 'h-screen'} bg-[#0B0E14]`}>
       {/* Header - only shown in standalone mode */}
       {!embedded && (
-        <header className="flex items-center justify-between px-4 py-3 bg-[#151922] border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-              <Bot className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white font-semibold text-lg">Scout AI</h1>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-white/60 text-xs">Online</span>
-                {caseId && (
-                  <span className="text-white/40 text-xs ml-2 flex items-center gap-1">
-                    <Hash className="w-3 h-3" />
-                    {caseId.substring(0, 8)}
-                  </span>
-                )}
+        <div>
+          <header className="flex items-center justify-between px-4 py-3 bg-[#151922] border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                <Bot className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-white font-semibold text-lg">Scout AI</h1>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-white/60 text-xs">Online</span>
+                  {caseId && (
+                    <span className="text-white/40 text-xs ml-2 flex items-center gap-1">
+                      <Hash className="w-3 h-3" />
+                      {caseTitle || caseId.substring(0, 8)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Escalate Button */}
+            <div className="flex items-center gap-2">
+              {/* Escalate Button */}
+              {hasActiveSession && isAuthenticated && (
+                <button
+                  onClick={() => setShowEscalateConfirm(true)}
+                  disabled={isEscalating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-xs font-medium"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  {isEscalating ? 'Escalating...' : 'Escalate'}
+                </button>
+              )}
+              <Sparkles className="w-5 h-5 text-[#A855F7]" />
+            </div>
+          </header>
+          {hasActiveSession && (
+            <div className="px-4 bg-[#151922]/50 border-b border-white/5">
+              <EscalationBreadcrumb
+                activeMode={activeMode}
+                visitedModes={visitedModes}
+                isEscalated={isEscalating || messages.some(m => m.text.includes('escalation report has been generated'))}
+                messageCount={messages.filter(m => m.role === UserRole.USER).length}
+                onSuggestEscalation={() => setShowEscalateConfirm(true)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Embedded header with case ID, breadcrumb, and escalation */}
+      {embedded && (caseId || hasActiveSession) && (
+        <div className="px-4 py-2 bg-[#151922]/50 border-b border-white/5">
+          {hasActiveSession && (
+            <EscalationBreadcrumb
+              activeMode={activeMode}
+              visitedModes={visitedModes}
+              isEscalated={isEscalating || messages.some(m => m.text.includes('escalation report has been generated'))}
+              messageCount={messages.filter(m => m.role === UserRole.USER).length}
+              onSuggestEscalation={() => setShowEscalateConfirm(true)}
+            />
+          )}
+          <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center gap-2">
+              {caseId && (
+                <span className="text-white/40 text-xs flex items-center gap-1 bg-white/5 px-2 py-1 rounded">
+                  <Hash className="w-3 h-3" />
+                  {caseTitle || `Case ${caseId.substring(0, 8)}`}
+                </span>
+              )}
+              {selectedDevice && (
+                <span className="text-cyan-400/70 text-xs bg-cyan-400/10 px-2 py-1 rounded">
+                  {selectedDevice.name}
+                </span>
+              )}
+            </div>
             {hasActiveSession && isAuthenticated && (
               <button
                 onClick={() => setShowEscalateConfirm(true)}
@@ -616,40 +723,10 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-xs font-medium"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                {isEscalating ? 'Escalating...' : 'Escalate'}
+                {isEscalating ? 'Escalating...' : 'Escalate to Human'}
               </button>
             )}
-            <Sparkles className="w-5 h-5 text-[#A855F7]" />
           </div>
-        </header>
-      )}
-
-      {/* Embedded header with case ID and escalation */}
-      {embedded && (caseId || hasActiveSession) && (
-        <div className="flex items-center justify-between px-4 py-2 bg-[#151922]/50 border-b border-white/5">
-          <div className="flex items-center gap-2">
-            {caseId && (
-              <span className="text-white/40 text-xs flex items-center gap-1 bg-white/5 px-2 py-1 rounded">
-                <Hash className="w-3 h-3" />
-                Case {caseId.substring(0, 8)}
-              </span>
-            )}
-            {selectedDevice && (
-              <span className="text-cyan-400/70 text-xs bg-cyan-400/10 px-2 py-1 rounded">
-                {selectedDevice.name}
-              </span>
-            )}
-          </div>
-          {hasActiveSession && isAuthenticated && (
-            <button
-              onClick={() => setShowEscalateConfirm(true)}
-              disabled={isEscalating}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-xs font-medium"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              {isEscalating ? 'Escalating...' : 'Escalate to Human'}
-            </button>
-          )}
         </div>
       )}
 
@@ -883,6 +960,19 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Voice Report Modal */}
+      {showVoiceReport && voiceReport && (
+        <VoiceReportModal
+          report={voiceReport}
+          onClose={() => {
+            setShowVoiceReport(false);
+            setVoiceReport(null);
+          }}
+          userEmail={user?.email || undefined}
+          userName={user?.firstName || user?.username || undefined}
+        />
       )}
     </div>
   );

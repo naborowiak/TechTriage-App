@@ -1,17 +1,11 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
-import { MessageSquare, X, Send, Image as ImageIcon, ScanLine, Maximize2, Download, Camera, Library, MoreHorizontal, LifeBuoy, User, ArrowRight, Lock, Zap, Mic } from 'lucide-react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { MessageSquare, X, Send, Image as ImageIcon, ScanLine, Maximize2, Download, Camera, Library, MoreHorizontal, LifeBuoy, User, ArrowRight, Lock, Zap } from 'lucide-react';
 import { ChatMessage, UserRole } from '../types';
-import { sendMessageToGemini, sendMessageAsLiveAgent, sendVoiceMessage, generateVoiceSummary } from '../services/geminiService';
+import { sendMessageToGemini, sendMessageAsLiveAgent } from '../services/geminiService';
 import { LiveSupport } from './LiveSupport';
 import { useAuth } from '../hooks/useAuth';
 import { useUsage, UsageLimits } from '../stores/usageStore';
 import { UpgradeModal, SignupGateModal } from './UpgradeModal';
-import { ModeSelector, ServiceMode } from './voice/ModeSelector';
-import { VoiceOverlay } from './voice/VoiceOverlay';
-import { VoiceReportModal } from './voice/VoiceReportModal';
-import { useWebSpeech } from '../hooks/useWebSpeech';
-import { useVoiceSession, VoiceDiagnosticReport } from '../hooks/useVoiceSession';
-import { saveVoiceReportToHistory } from '../services/voiceReportService';
 
 // Simple markdown renderer for chat messages
 const renderMarkdown = (text: string): React.ReactNode => {
@@ -201,18 +195,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
   const [showUpgradeGate, setShowUpgradeGate] = useState(false);
   const [gatedFeature, setGatedFeature] = useState<keyof UsageLimits | 'voice'>('chat');
 
-  // Service mode state (Chat, Snap, Voice, Video)
-  const [activeMode, setActiveMode] = useState<ServiceMode>('chat');
-  const [voiceReport, setVoiceReport] = useState<VoiceDiagnosticReport | null>(null);
-  const [showVoiceReport, setShowVoiceReport] = useState(false);
-
-  // Voice mode hooks
-  const webSpeech = useWebSpeech();
-  const voiceSession = useVoiceSession();
-  const voiceCameraRef = useRef<HTMLInputElement>(null);
-  const isProcessingVoiceRef = useRef(false);
-  const [isVoiceMuted, setIsVoiceMuted] = useState(false);
-
   // Check if user is authenticated
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
 
@@ -225,7 +207,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     shouldShowSignupGate,
     shouldShowUpgradeGate,
     isFeatureLocked,
-    canUseVideoCredit
   } = useUsage();
 
   // Live agent mode state
@@ -338,171 +319,35 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showImageMenu, showOptionsMenu]);
 
-  // Handle mode switching
-  const handleModeChange = (mode: ServiceMode) => {
-    if (mode === 'voice') {
-      // Start voice session
-      startVoiceMode();
-    } else if (mode === 'video') {
-      // Check video credits before starting
-      if (canUseVideoCredit()) {
-        setIsLiveVideoActive(true);
-      } else {
-        setGatedFeature('voice'); // Use voice as stand-in, will show video message
-        setShowUpgradeGate(true);
-      }
-    } else if (mode === 'snap') {
-      // Open snap/photo interface
-      setShowImageMenu(true);
-    }
-    setActiveMode(mode);
-  };
-
-  const handleLockedModeClick = (mode: ServiceMode) => {
-    if (mode === 'voice') {
-      setGatedFeature('voice');
-    } else if (mode === 'video') {
-      setGatedFeature('voice'); // Will show video diagnostic message
-    } else if (mode === 'snap') {
-      setGatedFeature('photo');
-    }
-    if (tier === 'guest') {
-      setShowSignupGate(true);
-    } else {
-      setShowUpgradeGate(true);
-    }
-  };
-
-  // Voice mode functions
-  const startVoiceMode = useCallback(() => {
-    if (!webSpeech.isSupported) {
-      alert('Voice mode requires a browser that supports the Web Speech API (Chrome, Safari, Edge).');
-      return;
-    }
-    voiceSession.startSession();
-    // Greeting
-    const greeting = "Hi! I'm Scout. I'll guide you through diagnosing your tech issue. What's going on?";
-    voiceSession.addTranscriptEntry('assistant', greeting);
-    webSpeech.speak(greeting).then(() => {
-      webSpeech.startListening();
-    });
-  }, [webSpeech, voiceSession]);
-
-  const endVoiceMode = useCallback(async () => {
-    webSpeech.cancel();
-    const report = voiceSession.endSession();
-    if (report) {
-      // Generate AI summary
-      try {
-        const summary = await generateVoiceSummary(report.transcript, report.photos.length);
-        report.summary = summary;
-      } catch (e) {
-        console.error('Failed to generate voice summary:', e);
-      }
-      saveVoiceReportToHistory(report);
-      setVoiceReport(report);
-      setShowVoiceReport(true);
-    }
-    setActiveMode('chat');
-  }, [webSpeech, voiceSession]);
-
-  const handleVoicePhotoCapture = useCallback(() => {
-    voiceCameraRef.current?.click();
-  }, []);
-
-  const handleVoicePhotoChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result as string;
-      const prompt = voiceSession.session.currentPhotoPrompt || 'Analyzing photo...';
-
-      // Send photo to AI for analysis
-      try {
-        const { text } = await sendVoiceMessage(voiceSession.session.transcript, 'Here is the photo you requested.', base64);
-        const photoId = voiceSession.addPhoto(base64, prompt, text);
-        voiceSession.addTranscriptEntry('assistant', text, photoId);
-
-        // Speak the analysis
-        await webSpeech.speak(text);
-        webSpeech.startListening();
-      } catch (err) {
-        console.error('Failed to analyze photo:', err);
-        webSpeech.speak("I had trouble analyzing that photo. Could you try again?");
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = ''; // Reset input
-  }, [voiceSession, webSpeech]);
-
-  // Process voice input
-  useEffect(() => {
-    if (!voiceSession.session.isActive || !webSpeech.transcript || isProcessingVoiceRef.current) return;
-
-    const processVoiceInput = async () => {
-      const userText = webSpeech.transcript;
-      if (!userText.trim()) return;
-
-      isProcessingVoiceRef.current = true;
-      webSpeech.stopListening();
-
-      voiceSession.addTranscriptEntry('user', userText);
-
-      try {
-        const { text, photoRequest, photoPrompt } = await sendVoiceMessage(
-          voiceSession.session.transcript,
-          userText
-        );
-
-        voiceSession.addTranscriptEntry('assistant', text);
-
-        if (photoRequest && photoPrompt) {
-          voiceSession.setPhotoRequest(photoPrompt);
-        }
-
-        // Speak the response
-        await webSpeech.speak(text);
-
-        // If no photo request, resume listening
-        if (!photoRequest) {
-          webSpeech.startListening();
-        }
-      } catch (err) {
-        console.error('Voice processing error:', err);
-        await webSpeech.speak("I didn't catch that. Could you repeat?");
-        webSpeech.startListening();
-      } finally {
-        isProcessingVoiceRef.current = false;
-      }
-    };
-
-    processVoiceInput();
-  }, [webSpeech.transcript, voiceSession.session.isActive]);
-
-  // Auto-end voice session when timer runs out
-  useEffect(() => {
-    if (voiceSession.session.isActive && voiceSession.session.timeRemaining === 0) {
-      webSpeech.speak("Our session time is up. Let me prepare your diagnostic report.").then(() => {
-        endVoiceMode();
-      });
-    }
-  }, [voiceSession.session.timeRemaining, voiceSession.session.isActive]);
+  // Agent connection status message
+  const [agentStatusMessage, setAgentStatusMessage] = useState<string>('');
+  // Typing indicator for live agent responses
+  const [isAgentTyping, setIsAgentTyping] = useState(false);
 
   const startLiveAgentMode = () => {
     setIsConnectingToAgent(true);
     const agent = getRandomAgent();
     setCurrentAgent(agent);
 
+    // Progressive status messages
+    setAgentStatusMessage('Searching for available specialists...');
+
+    const connectDelay = 5000 + Math.random() * 3000; // 5-8 seconds
+    const statusUpdateDelay = 2000 + Math.random() * 1000; // Update after 2-3s
+
+    setTimeout(() => {
+      setAgentStatusMessage(`Connecting you with ${agent.first} ${agent.last}...`);
+    }, statusUpdateDelay);
+
     setTimeout(() => {
       setIsConnectingToAgent(false);
+      setAgentStatusMessage('');
       setIsLiveAgentMode(true);
 
       const connectMsg: ChatMessage = {
         id: `connect_${Date.now()}`,
         role: UserRole.MODEL,
-        text: `You're now connected with ${agent.first} ${agent.last}, a Scout Support Specialist. How can I help you today?`,
+        text: `Hey there! I'm ${agent.first}, a Scout Support Specialist. I've reviewed your conversation so far — how can I help you today?`,
         timestamp: Date.now(),
         agentName: `${agent.first} ${agent.last}`
       };
@@ -519,7 +364,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
         messageText: `Agent ${agent.first} ${agent.last} connected`,
         timestamp: Date.now()
       });
-    }, 2000 + Math.random() * 2000);
+    }, connectDelay);
   };
 
   useImperativeHandle(ref, () => ({
@@ -743,6 +588,13 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
         ? await sendMessageAsLiveAgent([...messages, userMsg], userMsg.text, currentAgent, tempImage)
         : await sendMessageToGemini([...messages, userMsg], userMsg.text, tempImage);
 
+      // Add realistic typing delay for live agent responses
+      if (isLiveAgentMode && currentAgent) {
+        setIsAgentTyping(true);
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+        setIsAgentTyping(false);
+      }
+
       const aiMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: UserRole.MODEL,
@@ -791,50 +643,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     startLiveAgentMode();
   };
 
-  // Toggle mute for voice mode
-  const handleToggleVoiceMute = useCallback(() => {
-    setIsVoiceMuted(prev => {
-      const newMuted = !prev;
-      if (newMuted) {
-        webSpeech.stopListening();
-        webSpeech.cancel(); // Stop any ongoing speech
-      } else {
-        webSpeech.startListening();
-      }
-      return newMuted;
-    });
-  }, [webSpeech]);
-
   if (isLiveVideoActive) return <LiveSupport onClose={() => setIsLiveVideoActive(false)} userId={user?.id} userEmail={user?.email || undefined} userName={user?.firstName || user?.username || undefined} />;
-
-  // Voice mode overlay
-  if (voiceSession.session.isActive) {
-    return (
-      <>
-        <VoiceOverlay
-          session={voiceSession.session}
-          timeDisplay={voiceSession.formatTimeRemaining()}
-          isWarning={voiceSession.isWarningTime}
-          isListening={webSpeech.isListening && !isVoiceMuted}
-          isSpeaking={webSpeech.isSpeaking && !isVoiceMuted}
-          onEndSession={endVoiceMode}
-          onCapturePhoto={handleVoicePhotoCapture}
-          onToggleMute={handleToggleVoiceMute}
-          isMuted={isVoiceMuted}
-          photoRequestPending={voiceSession.session.photoRequestPending}
-          currentPhotoPrompt={voiceSession.session.currentPhotoPrompt}
-        />
-        <input
-          type="file"
-          ref={voiceCameraRef}
-          className="hidden"
-          accept="image/*"
-          capture="environment"
-          onChange={handleVoicePhotoChange}
-        />
-      </>
-    );
-  }
 
   const displayName = isLiveAgentMode && currentAgent
     ? `${currentAgent.first} ${currentAgent.last}`
@@ -983,7 +792,23 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                         <div className="w-2 h-2 bg-electric-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                         <div className="w-2 h-2 bg-electric-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                       </div>
-                      <span>Finding an available specialist...</span>
+                      <span>{agentStatusMessage || 'Finding an available specialist...'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isAgentTyping && !isLoading && (
+                <div className="flex justify-start items-end gap-2">
+                  {currentAgent && <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={currentAgent.first} />}
+                  <div className="bg-light-100 dark:bg-midnight-800 rounded-2xl rounded-tl-sm px-4 py-3 border border-light-300 dark:border-midnight-700 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
+                      <span className="text-xs text-text-muted">{currentAgent?.first} is typing...</span>
                     </div>
                   </div>
                 </div>
@@ -1101,53 +926,35 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {/* Mode Selector Row */}
-                  <div className="flex items-center gap-2">
-                    <ModeSelector
-                      activeMode={activeMode}
-                      onModeChange={handleModeChange}
-                      tier={tier}
-                      onLockedModeClick={handleLockedModeClick}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                      placeholder={isLiveAgentMode ? `Message ${currentAgent?.first}...` : "Type a message..."}
+                      className="w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-full px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-electric-indigo/50 pr-10 text-text-primary dark:text-white placeholder:text-text-muted"
                     />
-                    <div className="relative flex-1">
-                      <input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder={isLiveAgentMode ? `Message ${currentAgent?.first}...` : activeMode === 'snap' ? "Describe what you're showing..." : "Type a message..."}
-                        className="w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-full px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-electric-indigo/50 pr-10 text-text-primary dark:text-white placeholder:text-text-muted"
-                      />
-                      {tier !== 'guest' && activeMode === 'chat' && (
-                        <button
-                          onClick={() => setShowImageMenu(!showImageMenu)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white transition-colors"
-                        >
-                          <ImageIcon className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                    <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
-
-                    {activeMode === 'voice' ? (
+                    {tier !== 'guest' && (
                       <button
-                        onClick={() => handleModeChange('voice')}
-                        className="p-3 btn-gradient-electric text-white rounded-full transition-all"
+                        onClick={() => setShowImageMenu(!showImageMenu)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white transition-colors"
                       >
-                        <Mic className="w-5 h-5" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleSend()}
-                        disabled={(!input.trim() && !selectedImage) || isLoading}
-                        className="p-3 btn-gradient-electric text-white rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Send className="w-5 h-5" />
+                        <ImageIcon className="w-5 h-5" />
                       </button>
                     )}
                   </div>
+
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                  <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+
+                  <button
+                    onClick={() => handleSend()}
+                    disabled={(!input.trim() && !selectedImage) || isLoading}
+                    className="p-3 btn-gradient-electric text-white rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
                 </div>
               )}
             </div>
@@ -1182,18 +989,6 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
         currentTier={tier}
       />
 
-      {/* Voice Report Modal */}
-      {showVoiceReport && voiceReport && (
-        <VoiceReportModal
-          report={voiceReport}
-          onClose={() => {
-            setShowVoiceReport(false);
-            setVoiceReport(null);
-          }}
-          userEmail={user?.email || undefined}
-          userName={user?.firstName || user?.username || undefined}
-        />
-      )}
     </>
   );
 });

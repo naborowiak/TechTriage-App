@@ -226,3 +226,20 @@ export const generateEscalationReport = async (
     };
   }
 };
+
+export const generateCaseName = async (message: string): Promise<string> => {
+  try {
+    const res = await fetch('/api/ai/generate-case-name', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ message }),
+    });
+
+    if (!res.ok) return '';
+    const data = await res.json();
+    return data.caseName || '';
+  } catch {
+    return '';
+  }
+};

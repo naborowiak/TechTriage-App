@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { db } from "../db";
-import { casesTable, sessionRecordingsTable, caseMessagesTable } from "../../shared/schema/schema";
+import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable } from "../../shared/schema/schema";
 import { eq, desc, and } from "drizzle-orm";
+import { generateCaseGuidePDF, type CasePDFData } from "../services/pdfService";
+import { sendSessionGuideEmail } from "../services/emailService";
 
 const router = Router();
 
@@ -140,6 +142,51 @@ router.patch("/:id", async (req, res) => {
       .returning();
 
     res.json(updated);
+
+    // Fire-and-forget: email PDF when case is resolved
+    if (status === "resolved" && updated) {
+      (async () => {
+        try {
+          const [user] = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.id, req.user!.id))
+            .limit(1);
+
+          if (!user?.email || user.sessionGuideEmails === false) return;
+
+          const [messageRecord] = await db
+            .select()
+            .from(caseMessagesTable)
+            .where(eq(caseMessagesTable.caseId, id))
+            .limit(1);
+
+          const pdfBase64 = generateCaseGuidePDF({
+            caseId: id,
+            title: updated.title,
+            status: updated.status || "resolved",
+            sessionMode: updated.sessionMode,
+            aiSummary: updated.aiSummary,
+            escalationReport: updated.escalationReport as CasePDFData["escalationReport"],
+            messages: (messageRecord?.messages as CasePDFData["messages"]) || [],
+            createdAt: updated.createdAt?.toISOString() || new Date().toISOString(),
+            userName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || undefined,
+          });
+
+          await sendSessionGuideEmail(
+            user.email,
+            user.firstName || "there",
+            updated.aiSummary || updated.title,
+            pdfBase64,
+            updated.createdAt || new Date()
+          );
+
+          console.log(`[CASE] Sent resolution PDF email for case ${id} to ${user.email}`);
+        } catch (err) {
+          console.error(`[CASE] Failed to send resolution email for case ${id}:`, err);
+        }
+      })();
+    }
   } catch (error) {
     console.error("Error updating case:", error);
     res.status(500).json({ error: "Failed to update case" });

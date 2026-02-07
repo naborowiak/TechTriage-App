@@ -58,27 +58,7 @@ export const trialsTable = pgTable("trials", {
   isActive: boolean("is_active").default(true),
 });
 
-// Support sessions table - stores chat/video session history
-export const supportSessionsTable = pgTable("support_sessions", {
-  id: varchar("id", { length: 255 })
-    .primaryKey()
-    .$defaultFn(() => uuidv4()),
-  userId: varchar("user_id", { length: 255 }).references(() => usersTable.id),
-  sessionType: varchar("session_type", { length: 20 }).notNull(), // 'chat', 'video', 'photo'
-  title: varchar("title", { length: 255 }),
-  summary: text("summary"),
-  transcript: jsonb("transcript").$type<
-    Array<{
-      role: "user" | "model";
-      text: string;
-      timestamp: number;
-    }>
-  >(),
-  startedAt: timestamp("started_at").defaultNow(),
-  endedAt: timestamp("ended_at"),
-});
-
-// NEW: Devices Table (Home Inventory)
+// Devices Table (Home Inventory)
 export const devicesTable = pgTable("devices", {
   id: varchar("id", { length: 255 })
     .primaryKey()
@@ -270,8 +250,6 @@ export type User = typeof usersTable.$inferSelect;
 export type InsertUser = typeof usersTable.$inferInsert;
 export type Trial = typeof trialsTable.$inferSelect;
 export type InsertTrial = typeof trialsTable.$inferInsert;
-export type SupportSession = typeof supportSessionsTable.$inferSelect;
-export type InsertSupportSession = typeof supportSessionsTable.$inferInsert;
 export type Subscription = typeof subscriptionsTable.$inferSelect;
 export type InsertSubscription = typeof subscriptionsTable.$inferInsert;
 export type Usage = typeof usageTable.$inferSelect;

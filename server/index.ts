@@ -547,103 +547,6 @@ app.delete("/api/auth/user/:id", async (req, res) => {
 });
 
 // ============================================
-// Support Sessions API Endpoints
-// ============================================
-
-// Save a support session (with usage tracking)
-app.post("/api/sessions", loadSubscription, async (req, res) => {
-  try {
-    const { userId, sessionType, title, summary, transcript } = req.body;
-
-    // Check feature access based on session type
-    const featureMap: Record<string, "chat" | "photo" | "live"> = {
-      chat: "chat",
-      photo: "photo",
-      video: "live",
-    };
-    const feature = featureMap[sessionType] || "chat";
-
-    // Check if user has access (for non-authenticated saves, skip)
-    if (req.subscription && userId) {
-      const canUse = {
-        chat: req.subscription.canUseChat,
-        photo: req.subscription.canUsePhoto,
-        live: req.subscription.canUseLive,
-      }[feature];
-
-      if (!canUse) {
-        return res.status(403).json({
-          error: "Feature limit reached",
-          code: "LIMIT_REACHED",
-          feature,
-          tier: req.subscription.tier,
-          usage: req.subscription.usage,
-          limits: req.subscription.limits,
-        });
-      }
-    }
-
-    const session = await authService.saveSession({
-      userId,
-      sessionType,
-      title,
-      summary,
-      transcript,
-    });
-
-    // Increment usage after successful save
-    if (userId) {
-      const usageMap: Record<string, "chatSessions" | "photoAnalyses" | "liveSessions"> = {
-        chat: "chatSessions",
-        photo: "photoAnalyses",
-        video: "liveSessions",
-      };
-      const usageField = usageMap[sessionType];
-      if (usageField) {
-        await incrementUsage(userId, usageField);
-      }
-    }
-
-    res.json({ success: true, session });
-  } catch (error) {
-    console.error("Save session error:", error);
-    res.status(500).json({ error: "Failed to save session" });
-  }
-});
-
-// Get user's sessions
-app.get("/api/sessions/:userId", async (req, res) => {
-  try {
-    const sessions = await authService.getUserSessions(req.params.userId);
-    res.json({ sessions });
-  } catch (error) {
-    console.error("Get sessions error:", error);
-    res.status(500).json({ error: "Failed to get sessions" });
-  }
-});
-
-// Delete a session
-app.delete("/api/sessions/:sessionId", async (req, res) => {
-  try {
-    const { userId } = req.body;
-    await authService.deleteSession(req.params.sessionId, userId);
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Delete session error:", error);
-    res.status(500).json({ error: "Failed to delete session" });
-  }
-});
-
-// Delete all user sessions
-app.delete("/api/sessions/user/:userId", async (req, res) => {
-  try {
-    await authService.deleteAllUserSessions(req.params.userId);
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Delete all sessions error:", error);
-    res.status(500).json({ error: "Failed to delete sessions" });
-  }
-});
 
 // ============================================
 // Trial Management (Database)
@@ -1190,41 +1093,42 @@ WHEN REFUSING:
 `;
 
 function buildVoiceSystemInstruction(voiceStyle: string) {
-  return `You are Scout, a friendly AI tech support assistant from TotalAssist.
+  return `You are Scout, Lead Support Specialist for TotalAssist. You're conducting a voice diagnostic session.
 
-YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally in how you speak.
+YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally.
 
 BEHAVIOR:
-- Be conversational and helpful, like a knowledgeable friend
-- The user is speaking to you through their microphone — there is no camera or video feed
+- Use cognitive pauses: "Let me think about this...", "Okay, so here's what I'm thinking..."
+- Use transitional phrases: "Good question.", "Here's the thing...", "That makes sense."
+- The user is speaking through their microphone — there is no camera or video feed
 - Ask clarifying questions to understand the issue since you cannot see it
-- Provide step-by-step troubleshooting when appropriate
-- Speak naturally and conversationally — avoid sounding robotic or scripted
+- Provide step-by-step troubleshooting, confirming each step before moving on
+- Speak naturally — you're a trusted specialist, not a script reader
 - Keep responses concise and actionable
-- If the user mentions model numbers, error codes, or specific symptoms, acknowledge them specifically
+- Acknowledge model numbers, error codes, or specific symptoms by name
 
 ${SERVER_SAFETY_PLAYBOOK}
 
-TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real person helping a friend with tech issues.`;
+TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're Scout from TotalAssist — the specialist homeowners trust.`;
 }
 
 function buildSystemInstruction(voiceStyle: string) {
-  return `You are Scout, a friendly, professional technical support specialist from TotalAssist.
+  return `You are Scout, Lead Support Specialist for TotalAssist. You're conducting a live video diagnostic session.
 
-YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally in how you speak.
+YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally.
 
 BEHAVIOR:
-- Be conversational and helpful, like a knowledgeable friend
-- When you see an image, describe what you're seeing and provide guidance
+- Use cognitive pauses: "Let me take a closer look...", "Okay, I see what's happening here..."
+- Use transitional phrases: "Good news —", "Here's what I'd recommend...", "I've seen this before —"
+- When you see an image, describe what you're seeing naturally and provide guidance
 - Ask clarifying questions if needed
-- Provide step-by-step troubleshooting when appropriate
-- If you see error messages or model numbers, acknowledge them specifically
-- Speak naturally and conversationally - avoid sounding robotic or scripted
-- Keep responses concise and actionable
+- Provide step-by-step troubleshooting, confirming each step
+- Acknowledge error messages and model numbers specifically
+- Speak naturally — you're a trusted specialist helping a homeowner
 
 ${SERVER_SAFETY_PLAYBOOK}
 
-TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're a real person helping a friend with tech issues.`;
+TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're Scout from TotalAssist — the specialist homeowners trust.`;
 }
 
 async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video') {

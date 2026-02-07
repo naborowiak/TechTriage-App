@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { db } from "../db";
-import { usersTable, trialsTable, supportSessionsTable } from "../../shared/schema/schema";
+import { usersTable, trialsTable, casesTable, caseMessagesTable, sessionRecordingsTable } from "../../shared/schema/schema";
 import { eq, and, gt } from "drizzle-orm";
 
 const SALT_ROUNDS = 10;
@@ -428,59 +428,18 @@ export async function getTrialStatus(email: string) {
   };
 }
 
-// Support Session Management
-export async function saveSession(data: {
-  userId?: string;
-  sessionType: "chat" | "video" | "photo";
-  title: string;
-  summary: string;
-  transcript: Array<{ role: "user" | "model"; text: string; timestamp: number }>;
-}) {
-  const [session] = await db
-    .insert(supportSessionsTable)
-    .values({
-      userId: data.userId,
-      sessionType: data.sessionType,
-      title: data.title,
-      summary: data.summary,
-      transcript: data.transcript,
-      endedAt: new Date(),
-    })
-    .returning();
-
-  return session;
-}
-
-export async function getUserSessions(userId: string) {
-  const sessions = await db
-    .select()
-    .from(supportSessionsTable)
-    .where(eq(supportSessionsTable.userId, userId))
-    .orderBy(supportSessionsTable.startedAt);
-
-  return sessions;
-}
-
-export async function deleteSession(sessionId: string, userId: string) {
-  await db
-    .delete(supportSessionsTable)
-    .where(
-      and(
-        eq(supportSessionsTable.id, sessionId),
-        eq(supportSessionsTable.userId, userId)
-      )
-    );
-}
-
-export async function deleteAllUserSessions(userId: string) {
-  await db
-    .delete(supportSessionsTable)
-    .where(eq(supportSessionsTable.userId, userId));
-}
-
 export async function deleteUser(userId: string) {
-  // Delete user's sessions first
-  await deleteAllUserSessions(userId);
+  // Delete user's cases and associated data
+  const userCases = await db
+    .select({ id: casesTable.id })
+    .from(casesTable)
+    .where(eq(casesTable.userId, userId));
+
+  for (const c of userCases) {
+    await db.delete(caseMessagesTable).where(eq(caseMessagesTable.caseId, c.id));
+    await db.delete(sessionRecordingsTable).where(eq(sessionRecordingsTable.caseId, c.id));
+  }
+  await db.delete(casesTable).where(eq(casesTable.userId, userId));
 
   // Delete the user
   await db.delete(usersTable).where(eq(usersTable.id, userId));

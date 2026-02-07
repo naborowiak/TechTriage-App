@@ -43,13 +43,45 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
     }
   };
 
-  // Fetch messages when a case is selected
+  // Fetch messages when a case is selected, with fallback to recordings transcript
   useEffect(() => {
     if (selectedCase) {
       fetch(`/api/cases/${selectedCase.id}/messages`, { credentials: 'include' })
         .then(res => res.ok ? res.json() : null)
         .then(data => {
-          setCaseMessages(data?.messages || []);
+          const msgs = data?.messages || [];
+          if (msgs.length > 0) {
+            setCaseMessages(msgs);
+          } else {
+            // Fallback: try to load from recordings transcript
+            fetch(`/api/cases/${selectedCase.id}/recordings`, { credentials: 'include' })
+              .then(res => res.ok ? res.json() : null)
+              .then(recordingsData => {
+                const recordings = recordingsData?.recordings || recordingsData || [];
+                if (Array.isArray(recordings) && recordings.length > 0) {
+                  const parsedMessages: Array<{ role: string; text: string; timestamp: number }> = [];
+                  recordings.forEach((rec: { transcript?: string; createdAt?: string }) => {
+                    if (rec.transcript) {
+                      const lines = rec.transcript.split('\n').filter((l: string) => l.trim());
+                      lines.forEach((line: string) => {
+                        const match = line.match(/^(user|assistant|model):\s*(.+)$/i);
+                        if (match) {
+                          parsedMessages.push({
+                            role: match[1].toLowerCase() === 'user' ? 'user' : 'model',
+                            text: match[2],
+                            timestamp: rec.createdAt ? new Date(rec.createdAt).getTime() : Date.now(),
+                          });
+                        }
+                      });
+                    }
+                  });
+                  setCaseMessages(parsedMessages);
+                } else {
+                  setCaseMessages([]);
+                }
+              })
+              .catch(() => setCaseMessages([]));
+          }
         })
         .catch(() => setCaseMessages([]));
     }

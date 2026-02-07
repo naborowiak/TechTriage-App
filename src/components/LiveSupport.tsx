@@ -178,24 +178,22 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
     );
     window.dispatchEvent(new Event("session_saved"));
 
-    // Also save to database if user is logged in
-    if (userId) {
+    // Save recording to the case if available
+    if (caseId) {
       try {
-        await fetch("/api/sessions", {
+        await fetch(`/api/cases/${caseId}/recordings`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            userId,
-            sessionType: "video",
-            title: sessionData.title,
-            summary: finalSummary,
-            transcript: sessionData.transcript,
-            caseId, // <--- Link this session record to the Case ID if available
+            sessionType: "live_video",
+            transcript: sessionData.transcript
+              .map((t: { role: string; text: string }) => `${t.role}: ${t.text}`)
+              .join("\n"),
           }),
         });
       } catch (error) {
-        console.error("Failed to save session to database:", error);
+        console.error("Failed to save recording to case:", error);
       }
     }
   };
