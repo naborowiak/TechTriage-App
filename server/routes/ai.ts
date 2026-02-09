@@ -441,7 +441,6 @@ Return ONLY valid JSON, no markdown.`;
 router.post("/case-summary", validate(caseSummarySchema), async (req: Request, res: Response) => {
   try {
     const { messages, transcripts } = req.body;
-    }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
