@@ -243,6 +243,33 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
+// DELETE: Delete ALL cases for the logged-in user
+router.delete("/", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    // Get all case IDs for this user
+    const userCases = await db
+      .select({ id: casesTable.id })
+      .from(casesTable)
+      .where(eq(casesTable.userId, req.user.id));
+
+    // Delete in FK-safe order
+    for (const c of userCases) {
+      await db.delete(caseMessagesTable).where(eq(caseMessagesTable.caseId, c.id));
+      await db.delete(sessionRecordingsTable).where(eq(sessionRecordingsTable.caseId, c.id));
+    }
+    await db.delete(casesTable).where(eq(casesTable.userId, req.user.id));
+
+    res.json({ success: true, deletedCount: userCases.length });
+  } catch (error) {
+    console.error("Error deleting all cases:", error);
+    res.status(500).json({ error: "Failed to delete cases" });
+  }
+});
+
 // DELETE: Delete case + associated recordings/messages
 router.delete("/:id", async (req, res) => {
   if (!req.isAuthenticated() || !req.user) {

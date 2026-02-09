@@ -65,7 +65,8 @@
       "Bash(npx drizzle-kit push:*)",
       "Bash(sort:*)",
       "WebFetch(domain:github.com)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(printf:*)"
     ]
   }
 }

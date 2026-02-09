@@ -188,21 +188,53 @@ export const SettingsNotificationsSection: React.FC = () => {
 };
 
 export const SettingsPrivacySection: React.FC = () => {
-  const handleClearHistory = () => {
-    if (confirm('Are you sure you want to delete all session history? This cannot be undone.')) {
-      localStorage.removeItem('totalassist_sessions');
-      window.dispatchEvent(new Event('session_saved'));
-      alert('Session history cleared successfully.');
+  const [isClearing, setIsClearing] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const handleClearHistory = async () => {
+    if (!confirm('Are you sure you want to delete all session history? This cannot be undone.')) return;
+
+    setIsClearing(true);
+    try {
+      const res = await fetch('/api/cases', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        localStorage.removeItem('totalassist_sessions');
+        window.dispatchEvent(new Event('session_saved'));
+        alert('Session history cleared successfully.');
+      } else {
+        alert('Failed to clear session history. Please try again.');
+      }
+    } catch (e) {
+      console.error('Failed to clear history:', e);
+      alert('Failed to clear session history. Please try again.');
+    } finally {
+      setIsClearing(false);
     }
   };
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This will remove all your data and cannot be undone.')) {
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure you want to delete your account? This will remove all your data and cannot be undone.')) return;
+
+    setIsDeleting(true);
+    try {
+      // First delete all cases via API
+      await fetch('/api/cases', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      // Then clear local data and redirect
       localStorage.removeItem('totalassist_user');
       localStorage.removeItem('totalassist_trial');
       localStorage.removeItem('totalassist_settings');
       localStorage.removeItem('totalassist_sessions');
-      window.location.href = '/';
+      window.location.href = '/api/auth/logout';
+    } catch (e) {
+      console.error('Failed to delete account:', e);
+      alert('Failed to delete account. Please try again.');
+      setIsDeleting(false);
     }
   };
 
@@ -222,20 +254,24 @@ export const SettingsPrivacySection: React.FC = () => {
       <div className="p-6 space-y-4">
         <button
           onClick={handleClearHistory}
-          className="w-full flex items-center justify-between p-4 border-2 border-gray-200 dark:border-midnight-600 rounded-xl hover:border-red-300 dark:hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group"
+          disabled={isClearing}
+          className="w-full flex items-center justify-between p-4 border-2 border-gray-200 dark:border-midnight-600 rounded-xl hover:border-red-300 dark:hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <div className="text-left">
-            <div className="font-medium text-text-primary dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400">Clear Session History</div>
+            <div className="font-medium text-text-primary dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400">
+              {isClearing ? 'Clearing...' : 'Clear Session History'}
+            </div>
             <div className="text-sm text-text-muted">Delete all saved support sessions</div>
           </div>
           <Trash2 className="w-5 h-5 text-gray-400 dark:text-midnight-500 group-hover:text-red-500 dark:group-hover:text-red-400" />
         </button>
         <button
           onClick={handleDeleteAccount}
-          className="w-full flex items-center justify-between p-4 border-2 border-red-200 dark:border-red-500/30 rounded-xl hover:border-red-400 dark:hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-red-600 dark:text-red-400"
+          disabled={isDeleting}
+          className="w-full flex items-center justify-between p-4 border-2 border-red-200 dark:border-red-500/30 rounded-xl hover:border-red-400 dark:hover:border-red-500/50 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <div className="text-left">
-            <div className="font-medium">Delete Account</div>
+            <div className="font-medium">{isDeleting ? 'Deleting...' : 'Delete Account'}</div>
             <div className="text-sm text-red-400">Permanently delete your account and all data</div>
           </div>
           <Trash2 className="w-5 h-5" />
