@@ -84,6 +84,7 @@ export const casesTable = pgTable("cases", {
   userId: varchar("user_id", { length: 255 })
     .notNull()
     .references(() => usersTable.id),
+  caseNumber: integer("case_number"), // Sequential per user (e.g., 1, 2, 3)
   title: varchar("title", { length: 255 }).notNull(), // e.g., "Blinking Red Router Light"
   status: varchar("status", { length: 50 }).default("open"), // "open", "resolved", "escalated", "pending"
   aiSummary: text("ai_summary"), // The compressed context for the AI

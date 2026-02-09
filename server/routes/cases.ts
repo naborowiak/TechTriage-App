@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable } from "../../shared/schema/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, max } from "drizzle-orm";
 import { generateCaseGuidePDF, type CasePDFData } from "../services/pdfService";
 import { sendSessionGuideEmail, sendEscalationEmail } from "../services/emailService";
 import { v4 as uuidv4 } from "uuid";
@@ -37,10 +37,18 @@ router.post("/", async (req, res) => {
   const { title, sessionMode, deviceId } = req.body;
 
   try {
+    // Get next case number for this user
+    const [{ maxNum }] = await db
+      .select({ maxNum: max(casesTable.caseNumber) })
+      .from(casesTable)
+      .where(eq(casesTable.userId, req.user.id));
+    const nextCaseNumber = (maxNum || 0) + 1;
+
     const [newCase] = await db
       .insert(casesTable)
       .values({
         userId: req.user.id,
+        caseNumber: nextCaseNumber,
         title: title || "New Support Session",
         status: "open",
         sessionMode: sessionMode || "chat",

@@ -22,9 +22,10 @@ interface ScoutChatScreenProps {
   initialMessage?: string;
   onInitialMessageSent?: () => void;
   onEscalation?: (report: EscalationReportData, caseId: string) => void;
+  onCaseCreated?: (newCase: { id: string; caseNumber?: number; title: string; status: string; sessionMode: string; createdAt: string; updatedAt: string }) => void;
 }
 
-export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation }: ScoutChatScreenProps) {
+export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation, onCaseCreated }: ScoutChatScreenProps) {
   const { tier, canUse, incrementUsage } = useUsage();
   const { user, isAuthenticated } = useAuth();
 
@@ -44,6 +45,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   // Case tracking
   const [caseId, setCaseId] = useState<string | null>(initialCaseId || null);
   const [caseTitle, setCaseTitle] = useState<string | null>(null);
+  const [caseNumber, setCaseNumber] = useState<number | null>(null);
   const [hasCreatedCase, setHasCreatedCase] = useState(!!initialCaseId);
   const ensureCasePromiseRef = useRef<Promise<string | null> | null>(null);
 
@@ -206,7 +208,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           const newCase = await res.json();
           setCaseId(newCase.id);
           setCaseTitle(title);
+          setCaseNumber(newCase.caseNumber || null);
           setHasCreatedCase(true);
+          onCaseCreated?.(newCase);
+          // Dispatch event so sidebar can update in real-time
+          window.dispatchEvent(new CustomEvent('case-created', { detail: newCase }));
           return newCase.id;
         }
       } catch (e) {
@@ -513,10 +519,17 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       console.error('Error ending voice session:', e);
     }
 
-    // Save voice recording to case
+    // Only save/report if the session had actual content (transcript entries)
+    const typedReport = report as VoiceDiagnosticReport | undefined;
+    const hasContent = typedReport?.transcript && typedReport.transcript.length > 0;
+
+    if (!hasContent) {
+      // Session was empty (e.g., connection failed, no credits) — skip report
+      return;
+    }
+
     const currentCaseId = caseId || await ensureCase('Voice diagnostic session', 'voice');
-    if (currentCaseId && report) {
-      const typedReport = report as VoiceDiagnosticReport;
+    if (currentCaseId) {
       const transcriptText = typedReport.transcript
         ?.map((t: { role: string; text: string }) => `${t.role}: ${t.text}`)
         .join('\n') || '';
@@ -670,7 +683,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   {caseId && (
                     <span className="text-white/40 text-xs ml-2 flex items-center gap-1">
                       <Hash className="w-3 h-3" />
-                      {caseTitle || caseId.substring(0, 8)}
+                      {caseNumber ? `#${caseNumber}` : caseTitle || caseId.substring(0, 8)}
                     </span>
                   )}
                 </div>
@@ -722,7 +735,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               {caseId && (
                 <span className="text-white/40 text-xs flex items-center gap-1 bg-white/5 px-2 py-1 rounded">
                   <Hash className="w-3 h-3" />
-                  {caseTitle || `Case ${caseId.substring(0, 8)}`}
+                  {caseNumber ? `#${caseNumber}` : caseTitle || `Case ${caseId.substring(0, 8)}`}
                 </span>
               )}
               {selectedDevice && (

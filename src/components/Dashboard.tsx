@@ -57,6 +57,7 @@ interface DashboardProps {
 
 interface Case {
   id: string;
+  caseNumber?: number | null;
   title: string;
   status: string;
   createdAt: string;
@@ -152,6 +153,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
         .catch((err) => console.error("Failed to load cases:", err));
     }
   }, [user?.id, activeView]);
+
+  // Listen for real-time case creation from ScoutChatScreen
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const newCase = (e as CustomEvent).detail;
+      if (newCase?.id) {
+        setCases(prev => {
+          // Avoid duplicates
+          if (prev.some(c => c.id === newCase.id)) return prev;
+          return [newCase, ...prev];
+        });
+      }
+    };
+    window.addEventListener('case-created', handler);
+    return () => window.removeEventListener('case-created', handler);
+  }, []);
 
   // Click-outside detection for popup menus
   useEffect(() => {
@@ -297,6 +314,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="w-full text-left px-3 py-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors group"
                 >
                   <div className="text-sm text-text-primary dark:text-white truncate font-medium group-hover:text-electric-indigo transition-colors">
+                    {c.caseNumber ? <span className="text-text-muted font-normal mr-1">#{c.caseNumber}</span> : null}
                     {c.title}
                   </div>
                 </button>

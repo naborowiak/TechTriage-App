@@ -57,6 +57,7 @@ export interface PricingTier {
 export interface CaseRecord {
   id: string;
   userId: string;
+  caseNumber?: number | null;
   title: string;
   status: string; // "open" | "resolved" | "escalated" | "pending"
   aiSummary?: string | null;
