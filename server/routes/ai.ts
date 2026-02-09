@@ -504,7 +504,6 @@ Return ONLY valid JSON, no markdown.`;
 router.post("/escalation-report", validate(escalationReportSchema), async (req: Request, res: Response) => {
   try {
     const { messages, deviceContext, voiceTranscripts } = req.body;
-    }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
