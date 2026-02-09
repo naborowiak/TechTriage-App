@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Camera, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText, Mic } from 'lucide-react';
+import { MessageSquare, Camera, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText } from 'lucide-react';
 import { ScoutSignalIcon } from './Logo';
 import { AnimatedElement, useParallax } from '../hooks/useAnimations';
 
@@ -8,14 +8,14 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const { ref: ctaParallaxRef, offset: ctaOffset } = useParallax(0.2);
   const features = [
     {
-      name: 'Text Support',
+      name: 'Chat Support',
       tagline: 'Ask Anything',
       icon: MessageSquare,
       color: 'from-electric-indigo to-electric-cyan',
       bgColor: 'bg-electric-indigo/10',
       borderColor: 'border-electric-indigo/30',
       textColor: 'text-electric-indigo',
-      description: 'Text support for instant answers to your tech questions. Describe your problem in plain English and get step-by-step solutions.',
+      description: 'Describe your problem in plain English and get step-by-step solutions from a real support agent. No tech jargon required — just tell us what\'s going on.',
       benefits: [
         'Instant responses 24/7',
         'No tech jargon required',
@@ -32,7 +32,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       bgColor: 'bg-scout-purple/10',
       borderColor: 'border-scout-purple/30',
       textColor: 'text-scout-purple',
-      description: 'Upload a photo of error messages, blinking lights, or device screens. The image is analyzed instantly and tells you what\'s wrong.',
+      description: 'Upload a photo of error messages, blinking lights, or device screens. Your agent reads what\'s on screen and tells you exactly what\'s wrong and how to fix it.',
       benefits: [
         'Reads error codes & screens',
         'Identifies blinking light patterns',
@@ -40,40 +40,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       ],
       availability: 'All Plans',
       howItWorks: 'Snap a photo, upload it, get a diagnosis.',
-    },
-    {
-      name: 'Voice Support',
-      tagline: 'Just Talk',
-      icon: Mic,
-      color: 'from-electric-cyan to-scout-glow',
-      bgColor: 'bg-electric-cyan/10',
-      borderColor: 'border-electric-cyan/30',
-      textColor: 'text-electric-cyan',
-      description: 'Voice-powered support for when typing isn\'t convenient. Talk to your agent like you would a real technician and get spoken guidance back.',
-      benefits: [
-        'Hands-free troubleshooting',
-        'Natural conversation flow',
-        'Perfect for complex setups',
-      ],
-      availability: 'Home & Pro',
-      howItWorks: 'Press to talk, your agent listens and responds.',
-    },
-    {
-      name: 'Live Video Support',
-      tagline: 'Real-Time Help',
-      icon: Video,
-      color: 'from-scout-glow to-scout-purple',
-      bgColor: 'bg-scout-glow/10',
-      borderColor: 'border-scout-glow/30',
-      textColor: 'text-scout-glow',
-      description: 'Live video support is coming soon. In the meantime, use text chat and photo analysis for expert troubleshooting.',
-      benefits: [
-        'Real-time visual diagnosis',
-        'Interactive troubleshooting',
-        'Hands-free guidance while you work',
-      ],
-      availability: 'Coming Soon',
-      howItWorks: 'Live video support is coming soon.',
     },
   ];
 
@@ -107,18 +73,18 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1} className="relative z-10">
             <h1 className="text-5xl font-black text-text-primary dark:text-white mb-6 tracking-tight">
-              Four ways to fix your <span className="text-gradient-electric">tech</span>
+              Two ways to fix your <span className="text-gradient-electric">tech</span>
             </h1>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2} className="relative z-10">
             <p className="text-xl text-text-secondary font-medium">
-              Chat, snap a photo, or use your voice. TotalAssist meets you where you are.
+              Chat or snap a photo. TotalAssist meets you where you are.
             </p>
           </AnimatedElement>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-24">
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-24">
           {features.map((feature, i) => (
             <AnimatedElement
               key={i}
@@ -178,7 +144,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           ))}
         </div>
 
-        {/* Video Diagnostic Deep Dive */}
+        {/* Case Report Section */}
         <AnimatedElement animation="fadeInUp">
           <div className="bg-white dark:bg-midnight-900 rounded-[2rem] p-8 md:p-12 mb-24 border border-light-300 dark:border-midnight-700 relative overflow-hidden shadow-lg">
             <div className="absolute top-0 right-0 w-96 h-96 bg-scout-purple/10 blur-[100px] rounded-full"></div>
@@ -187,12 +153,12 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
             <div className="relative z-10">
               <AnimatedElement animation="fadeInLeft" delay={0.1}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-scout-glow to-scout-purple flex items-center justify-center">
-                    <Video className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-text-primary dark:text-white">Voice & Video Diagnostic Report</h2>
-                    <p className="text-text-secondary text-sm">Professional PDF emailed to you after every session</p>
+                    <h2 className="text-2xl font-bold text-text-primary dark:text-white">Every Session Gets a Case Report</h2>
+                    <p className="text-text-secondary text-sm">A clear summary of what happened, what was fixed, and what to do next</p>
                   </div>
                 </div>
               </AnimatedElement>
@@ -211,16 +177,16 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
               <AnimatedElement animation="fadeInUp" delay={0.5}>
                 <div className="bg-midnight-950 rounded-xl overflow-hidden border border-midnight-700 shadow-xl">
-                  {/* PDF Header - Tesla style */}
+                  {/* PDF Header */}
                   <div className="bg-midnight-900 px-6 py-4 border-b-2 border-scout-purple">
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-white font-bold text-lg tracking-wide">TOTALASSIST</h4>
-                        <p className="text-electric-cyan text-xs font-medium tracking-wider">POWERED BY SCOUT AI</p>
+                        <p className="text-electric-cyan text-xs font-medium tracking-wider">CASE REPORT</p>
                       </div>
                       <div className="text-right">
                         <p className="text-white text-xs font-bold">DIAGNOSTIC REPORT</p>
-                        <p className="text-text-muted text-xs">Feb 5, 2026</p>
+                        <p className="text-text-muted text-xs">Feb 9, 2026</p>
                       </div>
                     </div>
                   </div>
@@ -235,7 +201,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
                   {/* Report Content */}
                   <div className="px-6 pb-6 space-y-5 text-sm">
-                    {/* Session Overview */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
@@ -244,11 +209,10 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                       <div className="grid grid-cols-3 gap-4 text-xs">
                         <div><span className="text-text-muted">Duration:</span> <span className="text-white">4m 32s</span></div>
                         <div><span className="text-text-muted">Photos:</span> <span className="text-white">2</span></div>
-                        <div><span className="text-text-muted">Exchanges:</span> <span className="text-white">8</span></div>
+                        <div><span className="text-text-muted">Messages:</span> <span className="text-white">8</span></div>
                       </div>
                     </div>
 
-                    {/* Issue Summary */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
@@ -257,7 +221,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                       <p className="text-white/90">Router showing red power LED with blinking amber internet indicator, unable to connect to network.</p>
                     </div>
 
-                    {/* Diagnosis */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
@@ -266,7 +229,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                       <p className="text-white/90">ISP connection failure due to firmware corruption. Router required factory reset to clear corrupted authentication cache.</p>
                     </div>
 
-                    {/* Actions Taken */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
@@ -282,7 +244,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                       </div>
                     </div>
 
-                    {/* Recommendations */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
@@ -302,7 +263,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                   {/* Footer */}
                   <div className="bg-midnight-900 px-6 py-3 border-t border-midnight-700">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-text-muted">Session transcript included in full report</span>
+                      <span className="text-text-muted">Full conversation transcript included in report</span>
                       <span className="text-scout-purple font-bold">TOTALASSIST</span>
                     </div>
                   </div>
