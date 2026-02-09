@@ -1886,6 +1886,7 @@ const App: React.FC = () => {
   const [scoutInitialMode, setScoutInitialMode] = useState<'voice' | 'photo' | 'video' | 'chat' | undefined>(undefined);
   const [scoutInitialMessage, setScoutInitialMessage] = useState<string | undefined>(undefined);
   const [scoutInitialCaseId, setScoutInitialCaseId] = useState<string | undefined>(undefined);
+  const [scoutSessionKey, setScoutSessionKey] = useState(0);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsModalTab, setSettingsModalTab] = useState<SettingsTab>('general');
 
@@ -1907,6 +1908,7 @@ const App: React.FC = () => {
     if (dashboardUser) {
       // Authenticated: go to Scout with pre-selected mode
       setScoutInitialMode(mode);
+      setScoutSessionKey(prev => prev + 1);
       setDashboardView('scout');
       navigate(PageView.DASHBOARD);
     } else {
@@ -2010,6 +2012,7 @@ const App: React.FC = () => {
   const handleOpenScout = useCallback(() => {
     setScoutInitialMessage(undefined);
     setScoutInitialCaseId(undefined);
+    setScoutSessionKey(prev => prev + 1);
     setDashboardView("scout");
   }, []);
 
@@ -2017,6 +2020,7 @@ const App: React.FC = () => {
     setScoutInitialMessage(message);
     setScoutInitialMode(undefined);
     setScoutInitialCaseId(undefined);
+    setScoutSessionKey(prev => prev + 1);
     setDashboardView("scout");
   }, []);
 
@@ -2024,11 +2028,13 @@ const App: React.FC = () => {
     setScoutInitialCaseId(caseId);
     setScoutInitialMessage(undefined);
     setScoutInitialMode(undefined);
+    setScoutSessionKey(prev => prev + 1);
     setDashboardView("scout");
   }, []);
 
   const handleStartSignal = useCallback(() => {
     setScoutInitialMode('voice');
+    setScoutSessionKey(prev => prev + 1);
     setDashboardView('scout');
   }, []);
 
@@ -2045,6 +2051,7 @@ const App: React.FC = () => {
     setScoutInitialMode(mode);
     setScoutInitialMessage(undefined);
     setScoutInitialCaseId(undefined);
+    setScoutSessionKey(prev => prev + 1);
     setDashboardView('scout');
   }, []);
 
@@ -2146,7 +2153,7 @@ const App: React.FC = () => {
               >
                 <div className="flex h-full">
                   <div className="flex-1 min-w-0">
-                    <ScoutChatScreen embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
+                    <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
                   </div>
                   <div className="hidden xl:block w-80 flex-shrink-0">
                     <ScoutInfoPanel />
@@ -2221,7 +2228,7 @@ const App: React.FC = () => {
                 >
                   <div className="flex h-full">
                     <div className="flex-1 min-w-0">
-                      <ScoutChatScreen embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
+                      <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
                     </div>
                     <div className="hidden xl:block w-80 flex-shrink-0">
                       <ScoutInfoPanel />

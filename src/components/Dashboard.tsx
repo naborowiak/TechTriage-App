@@ -60,6 +60,7 @@ interface Case {
   title: string;
   status: string;
   createdAt: string;
+  updatedAt?: string;
   aiSummary?: string;
 }
 
@@ -80,7 +81,7 @@ const groupCasesByDate = (cases: Case[]) => {
   ];
 
   cases.forEach((c) => {
-    const date = new Date(c.createdAt);
+    const date = new Date(c.updatedAt || c.createdAt);
     if (date >= today) groups[0].cases.push(c);
     else if (date >= yesterday) groups[1].cases.push(c);
     else if (date >= lastWeek) groups[2].cases.push(c);
@@ -135,7 +136,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     onLogout();
   };
 
-  // Fetch Cases
+  // Fetch Cases (re-fetch when view changes so sidebar stays fresh after chatting)
   useEffect(() => {
     if (user?.id) {
       fetch("/api/cases", { credentials: "include" })
@@ -150,7 +151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         })
         .catch((err) => console.error("Failed to load cases:", err));
     }
-  }, [user?.id]);
+  }, [user?.id, activeView]);
 
   // Click-outside detection for popup menus
   useEffect(() => {

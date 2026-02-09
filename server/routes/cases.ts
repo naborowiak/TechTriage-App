@@ -315,6 +315,12 @@ router.post("/:id/messages", async (req, res) => {
       });
     }
 
+    // Bump case updatedAt so sidebar ordering reflects latest activity
+    await db
+      .update(casesTable)
+      .set({ updatedAt: new Date() })
+      .where(eq(casesTable.id, id));
+
     res.json({ success: true });
   } catch (error) {
     console.error("Error saving messages:", error);
