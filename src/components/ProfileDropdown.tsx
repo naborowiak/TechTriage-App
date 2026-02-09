@@ -78,7 +78,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     },
     {
       icon: MessageSquare,
-      label: 'Scout AI',
+      label: 'TotalAssist',
       action: () => onOpenChat?.(),
     },
     {

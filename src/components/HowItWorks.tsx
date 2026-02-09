@@ -8,14 +8,14 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   const { ref: ctaParallaxRef, offset: ctaOffset } = useParallax(0.2);
   const features = [
     {
-      name: 'Scout Chat',
+      name: 'Text Support',
       tagline: 'Ask Anything',
       icon: MessageSquare,
       color: 'from-electric-indigo to-electric-cyan',
       bgColor: 'bg-electric-indigo/10',
       borderColor: 'border-electric-indigo/30',
       textColor: 'text-electric-indigo',
-      description: 'AI-powered text support for instant answers to your tech questions. Describe your problem in plain English and get step-by-step solutions.',
+      description: 'Text support for instant answers to your tech questions. Describe your problem in plain English and get step-by-step solutions.',
       benefits: [
         'Instant responses 24/7',
         'No tech jargon required',
@@ -25,14 +25,14 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       howItWorks: 'Type your question, get an answer. It\'s that simple.',
     },
     {
-      name: 'Scout Snapshot',
+      name: 'Photo Analysis',
       tagline: 'Show, Don\'t Tell',
       icon: Camera,
       color: 'from-scout-purple to-electric-indigo',
       bgColor: 'bg-scout-purple/10',
       borderColor: 'border-scout-purple/30',
       textColor: 'text-scout-purple',
-      description: 'Upload a photo of error messages, blinking lights, or device screens. Scout\'s AI vision analyzes it instantly and tells you what\'s wrong.',
+      description: 'Upload a photo of error messages, blinking lights, or device screens. The image is analyzed instantly and tells you what\'s wrong.',
       benefits: [
         'Reads error codes & screens',
         'Identifies blinking light patterns',
@@ -42,21 +42,21 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       howItWorks: 'Snap a photo, upload it, get a diagnosis.',
     },
     {
-      name: 'Scout Voice',
+      name: 'Voice Support',
       tagline: 'Just Talk',
       icon: Mic,
       color: 'from-electric-cyan to-scout-glow',
       bgColor: 'bg-electric-cyan/10',
       borderColor: 'border-electric-cyan/30',
       textColor: 'text-electric-cyan',
-      description: 'Voice-powered support for when typing isn\'t convenient. Talk to Scout like you would a real technician and get spoken guidance back.',
+      description: 'Voice-powered support for when typing isn\'t convenient. Talk to your agent like you would a real technician and get spoken guidance back.',
       benefits: [
         'Hands-free troubleshooting',
         'Natural conversation flow',
         'Perfect for complex setups',
       ],
       availability: 'Home & Pro',
-      howItWorks: 'Press to talk, Scout listens and responds.',
+      howItWorks: 'Press to talk, your agent listens and responds.',
     },
     {
       name: 'Live Video Support',
@@ -66,14 +66,14 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       bgColor: 'bg-scout-glow/10',
       borderColor: 'border-scout-glow/30',
       textColor: 'text-scout-glow',
-      description: 'Start a live video session with Scout AI. Show your issue in real-time and get instant guidance as Scout watches and diagnoses the problem.',
+      description: 'Live video support is coming soon. In the meantime, use text chat and photo analysis for expert troubleshooting.',
       benefits: [
         'Real-time visual diagnosis',
         'Interactive troubleshooting',
         'Hands-free guidance while you work',
       ],
-      availability: 'Home & Pro',
-      howItWorks: 'Start a video call, Scout watches and guides you live.',
+      availability: 'Coming Soon',
+      howItWorks: 'Live video support is coming soon.',
     },
   ];
 
@@ -102,7 +102,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           <AnimatedElement animation="fadeInDown" className="relative z-10">
             <div className="inline-flex items-center gap-2 mb-6">
               <ScoutSignalIcon size={24} animate={true} />
-              <span className="text-electric-indigo font-bold text-sm uppercase tracking-wider">How Scout Works</span>
+              <span className="text-electric-indigo font-bold text-sm uppercase tracking-wider">How TotalAssist Works</span>
             </div>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1} className="relative z-10">
@@ -112,7 +112,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2} className="relative z-10">
             <p className="text-xl text-text-secondary font-medium">
-              Chat, snap a photo, use your voice, or start a live video session. Scout meets you where you are.
+              Chat, snap a photo, or use your voice. TotalAssist meets you where you are.
             </p>
           </AnimatedElement>
         </div>
@@ -315,8 +315,8 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
         {/* Why Scout Section */}
         <div className="grid md:grid-cols-3 gap-8 mb-24">
           {[
-            { icon: Clock, color: 'text-electric-indigo', title: 'Available 24/7', desc: 'No waiting on hold or scheduling appointments. Scout is ready whenever tech trouble strikes.' },
-            { icon: Shield, color: 'text-electric-cyan', title: 'Remembers Everything', desc: 'Scout saves your device info and past issues. Never explain your setup twice or remember what worked last time.' },
+            { icon: Clock, color: 'text-electric-indigo', title: 'Available 24/7', desc: 'No waiting on hold or scheduling appointments. TotalAssist is ready whenever tech trouble strikes.' },
+            { icon: Shield, color: 'text-electric-cyan', title: 'Remembers Everything', desc: 'TotalAssist saves your device info and past issues. Never explain your setup twice or remember what worked last time.' },
             { icon: Zap, color: 'text-scout-purple', title: 'Actually Affordable', desc: 'Most issues solved in minutes for a fraction of a service call. Unlimited help with our memberships.' },
           ].map((item, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.1 + i * 0.15}>

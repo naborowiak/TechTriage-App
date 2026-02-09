@@ -56,7 +56,7 @@ export function ScoutInfoPanel({ activeMode = 'chat' }: ScoutInfoPanelProps) {
 
       {/* Scout Credits */}
       <div className="mb-6">
-        <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-3">Scout Credits</h3>
+        <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider mb-3">Support Credits</h3>
         <div className="p-4 bg-light-100 dark:bg-midnight-800 rounded-xl border border-light-300 dark:border-midnight-700 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-text-secondary">Plan</span>
@@ -141,7 +141,7 @@ export function ScoutInfoPanel({ activeMode = 'chat' }: ScoutInfoPanelProps) {
           </div>
           <div className="p-3 bg-light-100 dark:bg-midnight-800 rounded-lg border border-light-300 dark:border-midnight-700">
             <div className="text-sm font-medium text-text-primary dark:text-white mb-1">Voice Mode</div>
-            <div className="text-xs text-text-secondary">Speak naturally — Scout listens and responds with real voice.</div>
+            <div className="text-xs text-text-secondary">Speak naturally — your agent listens and responds with real voice.</div>
           </div>
           <div className="p-3 bg-light-100 dark:bg-midnight-800 rounded-lg border border-light-300 dark:border-midnight-700">
             <div className="text-sm font-medium text-text-primary dark:text-white mb-1">Photo Mode</div>

@@ -77,19 +77,19 @@ export interface ChatWidgetHandle {
 // Canned responses for non-logged in users (sales/conversion focused)
 const CANNED_RESPONSES: Record<string, { text: string; followUp?: string[] }> = {
   pricing: {
-    text: "Great question! We have three plans:\n\n• **TotalAssist Free** - 5 chat messages + 1 photo/month\n• **TotalAssist Home ($9.99/mo)** - Unlimited chat, photos, voice + 1 Live Video session/week\n• **TotalAssist Pro ($19.99/mo)** - Everything unlimited + 15 Live Video sessions/month + premium AI\n\nWould you like to see the full pricing details?",
+    text: "Great question! We have three plans:\n\n• **TotalAssist Free** - 5 chat messages + 1 photo/month\n• **TotalAssist Home ($9.99/mo)** - Unlimited chat, photos, voice + 1 Live Video session/week\n• **TotalAssist Pro ($19.99/mo)** - Everything unlimited + 15 Live Video sessions/month + premium support\n\nWould you like to see the full pricing details?",
     followUp: ["View pricing", "Sign up free", "What's included?"]
   },
   help: {
-    text: "I can help point you in the right direction! Our service helps with:\n\n• Wi-Fi & networking issues\n• Smart home setup\n• TV & streaming problems\n• Computer troubleshooting\n• And much more!\n\nSign up for free to start a triage session with Scout AI.",
+    text: "I can help point you in the right direction! Our service helps with:\n\n• Wi-Fi & networking issues\n• Smart home setup\n• TV & streaming problems\n• Computer troubleshooting\n• And much more!\n\nSign up for free to start a support session.",
     followUp: ["Sign up free", "How it works", "View pricing"]
   },
   howItWorks: {
-    text: "Here's how TotalAssist works:\n\n1. **Describe** your problem in chat\n2. **Snap** a photo if it helps\n3. **Get** AI-powered solutions instantly\n\nFor complex issues, you can also start a Live Video session for real-time guidance.",
+    text: "Here's how TotalAssist works:\n\n1. **Describe** your problem in chat\n2. **Snap** a photo if it helps\n3. **Get** expert solutions instantly\n\nFor complex issues, you can also start a Live Video session for real-time guidance.",
     followUp: ["Sign up free", "View pricing", "What can you help with?"]
   },
   default: {
-    text: "Thanks for your interest in TotalAssist! To get personalized AI support for your tech issues, you'll need to create a free account.\n\nIt only takes a minute, and you'll get 5 free chat messages to try it out!",
+    text: "Thanks for your interest in TotalAssist! To get personalized support for your tech issues, you'll need to create a free account.\n\nIt only takes a minute, and you'll get 5 free chat messages to try it out!",
     followUp: ["Sign up free", "View pricing", "How it works"]
   }
 };
@@ -164,6 +164,8 @@ interface ChatWidgetProps {
 }
 
 export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNavigate }, ref) => {
+  // Pick a random agent name for this widget session
+  const botAgentNameRef = useRef(AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)]);
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLiveVideoActive, setIsLiveVideoActive] = useState(false);
@@ -217,7 +219,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     role: UserRole.MODEL,
     text: authenticated
       ? "Hi there! How can I help you today?"
-      : "Hey! I'm Scout, your AI tech support assistant. What's going on with your tech?",
+      : `Hey! I'm ${botAgentNameRef.current.first}, your TotalAssist tech support assistant. What's going on with your tech?`,
     timestamp: Date.now()
   });
 
@@ -337,7 +339,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
       const connectMsg: ChatMessage = {
         id: `connect_${Date.now()}`,
         role: UserRole.MODEL,
-        text: `Hey there! I'm ${agent.first}, a Scout Support Specialist. I've reviewed your conversation so far — how can I help you today?`,
+        text: `Hey there! I'm ${agent.first}, a TotalAssist Support Specialist. I've reviewed your conversation so far — how can I help you today?`,
         timestamp: Date.now(),
         agentName: `${agent.first} ${agent.last}`
       };
@@ -401,7 +403,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Scout-Transcript-${Date.now()}.txt`;
+    a.download = `TotalAssist-Transcript-${Date.now()}.txt`;
     a.click();
     setShowOptionsMenu(false);
   };
@@ -620,11 +622,11 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
 
   const displayName = isLiveAgentMode && currentAgent
     ? `${currentAgent.first} ${currentAgent.last}`
-    : 'Scout AI';
+    : botAgentNameRef.current.first;
 
   const displaySubtitle = isLiveAgentMode
     ? 'Support Specialist'
-    : 'AI Tech Support';
+    : 'Tech Support';
 
   // Calculate remaining credits for display
   const chatRemaining = getRemainingCredits('chat');
@@ -730,7 +732,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                       {msg.image && <img src={msg.image} className="w-full h-auto rounded-lg mb-3 border border-light-300 dark:border-midnight-700" />}
                       <div className="leading-relaxed">{renderMarkdown(msg.text)}</div>
                       <div className={`text-[10px] mt-1 ${msg.role === UserRole.USER ? 'text-white/50' : 'text-text-muted'}`}>
-                        {msg.role === UserRole.MODEL ? `${msg.agentName || 'Scout AI'} • ` : ''}
+                        {msg.role === UserRole.MODEL ? `${msg.agentName || botAgentNameRef.current.first} • ` : ''}
                         {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
                     </div>
@@ -876,7 +878,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                 <div className="bg-light-100 dark:bg-midnight-800 rounded-xl p-4 text-center border border-light-300 dark:border-midnight-700">
                   <Lock className="w-6 h-6 text-text-muted mx-auto mb-2" />
                   <p className="text-sm text-text-secondary mb-3">
-                    Scout needs a recharge. Upgrade to continue.
+                    You've reached your limit. Upgrade to continue.
                   </p>
                   <button
                     onClick={() => setShowUpgradeGate(true)}
@@ -917,7 +919,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
               )}
 
               {/* Disclaimer */}
-              <p className="text-[10px] text-text-muted text-center mt-2">Scout can make mistakes. Check important info.</p>
+              <p className="text-[10px] text-text-muted text-center mt-2">Responses may not always be accurate. Check important info.</p>
             </div>
 
             {/* Rate Limit Modal overlay */}
@@ -949,7 +951,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
             className="bg-gradient-to-r from-scout-purple to-electric-indigo text-white rounded-full shadow-[0_0_40px_-5px_rgba(168,85,247,0.6),0_10px_30px_-5px_rgba(0,0,0,0.3)] hover:shadow-[0_0_50px_-5px_rgba(168,85,247,0.8),0_15px_40px_-5px_rgba(0,0,0,0.4)] hover:scale-105 transition-all flex items-center gap-3 font-bold pointer-events-auto px-6 py-4 text-base animate-fade-in-up ring-2 ring-white/20"
           >
             <MessageSquare className="w-5 h-5" />
-            Ask Scout
+            Chat with an Agent
           </button>
         )}
       </div>

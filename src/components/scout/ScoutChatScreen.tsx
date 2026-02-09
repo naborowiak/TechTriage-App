@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, Sparkles, UserPlus, Hash } from 'lucide-react';
+import { Send, UserPlus, Hash, Camera } from 'lucide-react';
 import { EscalationBreadcrumb } from './EscalationBreadcrumb';
-import { ModeDock, ScoutMode } from './ModeDock';
+import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
 import { PhotoCaptureModal } from './PhotoCaptureModal';
-import { VideoSessionModal } from './VideoSessionModal';
+// Video mode disabled for Phase 1 (text + photo only)
+// import { VideoSessionModal } from './VideoSessionModal';
 import { useUsage } from '../../stores/usageStore';
 import { sendMessageToGemini, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
 import { useVoiceSession, VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
@@ -14,6 +15,12 @@ import { useWebSpeech } from '../../hooks/useWebSpeech';
 import { useGeminiVoice } from '../../hooks/useGeminiVoice';
 import { ChatMessage, UserRole, DeviceRecord, EscalationReportData } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+
+// Agent name pool — each session gets a random agent for a realistic team feel
+const AGENT_NAMES = ['Sarah', 'Marcus', 'Emily', 'James', 'Olivia', 'Daniel', 'Priya', 'Chris'];
+function pickAgentName(): string {
+  return AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)];
+}
 
 interface ScoutChatScreenProps {
   embedded?: boolean;
@@ -26,17 +33,21 @@ interface ScoutChatScreenProps {
 }
 
 export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation, onCaseCreated }: ScoutChatScreenProps) {
-  const { tier, canUse, incrementUsage } = useUsage();
+  const { canUse, incrementUsage } = useUsage();
   const { user, isAuthenticated } = useAuth();
 
+  // Pick a consistent agent name for this session (stable across re-renders)
+  const agentNameRef = useRef(pickAgentName());
+  const agentName = agentNameRef.current;
   const [activeMode, setActiveMode] = useState<ScoutMode>(initialMode || 'chat');
   const [visitedModes, setVisitedModes] = useState<Set<string>>(new Set([initialMode || 'chat']));
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       role: UserRole.MODEL,
-      text: "Hi! I'm Scout, your AI tech support assistant. I can help you troubleshoot Wi-Fi issues, smart devices, appliances, and more. What's going on?",
+      text: `Hey, thanks for reaching out. I'm ${agentNameRef.current} from TotalAssist. What's going on?`,
       timestamp: Date.now(),
+      agentName: agentNameRef.current,
     },
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -58,7 +69,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   // Modal states
   const [showVoiceOverlay, setShowVoiceOverlay] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  const [showVideoModal, setShowVideoModal] = useState(false);
+  // Video mode disabled for Phase 1
+  // const [showVideoModal, setShowVideoModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
@@ -289,18 +301,29 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     }
 
     try {
+      const responseStartTime = Date.now();
       const response = await sendMessageToGemini(
         messages,
         text.trim(),
         imageBase64,
-        getDeviceContext()
+        getDeviceContext(),
+        agentName
       );
+
+      // Add a realistic delay so responses don't appear instantly (feels more human)
+      const elapsed = Date.now() - responseStartTime;
+      const minDelay = 1200 + Math.random() * 800; // 1.2-2.0 seconds minimum
+      const remaining = minDelay - elapsed;
+      if (remaining > 0) {
+        await new Promise(resolve => setTimeout(resolve, remaining));
+      }
 
       const assistantMessage: ChatMessage = {
         id: generateId(),
         role: UserRole.MODEL,
         text: response.text,
         timestamp: Date.now(),
+        agentName,
       };
 
       const updatedMessages = [...newMessages, assistantMessage];
@@ -478,7 +501,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         setShowPhotoModal(true);
         break;
       case 'video':
-        setShowVideoModal(true);
+        // Video mode disabled for Phase 1
         break;
       default:
         // Chat mode - focus input
@@ -486,10 +509,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     }
   };
 
-  const handleLockedModeClick = (mode: ScoutMode) => {
-    setLockedFeature(mode);
-    setShowUpgradeModal(true);
-  };
+  void lockedFeature; // used in upgrade modal rendering
 
   const startVoiceMode = useCallback(() => {
     voiceSession.startSession();
@@ -597,9 +617,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const handlePhotoCaptured = useCallback((imageBase64: string) => {
     setShowPhotoModal(false);
 
-    // If in voice mode, handle photo for voice session
-    if (showVoiceOverlay && voiceSession.session.photoRequestPending) {
+    // If in voice mode, send the photo to the AI via WebSocket so it can see it
+    if (showVoiceOverlay) {
       voiceSession.addPhoto(imageBase64, voiceSession.session.currentPhotoPrompt || 'Photo captured', '');
+      // Send the image to Gemini live so the AI can analyze it in real-time
+      geminiVoice.sendImage(imageBase64);
       return;
     }
 
@@ -607,7 +629,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     const photoMessage = "I've attached a photo for you to analyze.";
     sendMessage(photoMessage, imageBase64);
     setActiveMode('chat');
-  }, [showVoiceOverlay, voiceSession, sendMessage]);
+  }, [showVoiceOverlay, voiceSession, geminiVoice, sendMessage]);
 
   const handleDeviceSelect = useCallback((device: DeviceRecord | null) => {
     setSelectedDevice(device);
@@ -672,14 +694,14 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         <div>
           <header className="flex items-center justify-between px-4 py-3 bg-[#151922] border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6366F1] to-[#06B6D4] flex items-center justify-center text-white font-semibold text-sm">
+                A
               </div>
               <div>
-                <h1 className="text-white font-semibold text-lg">Scout AI</h1>
+                <h1 className="text-white font-semibold text-lg">{agentName}</h1>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-white/60 text-xs">Online</span>
+                  <div className="w-2 h-2 rounded-full bg-emerald-400" aria-label="Online" />
+                  <span className="text-white/70 text-sm">TotalAssist Support</span>
                   {caseId && (
                     <span className="text-white/40 text-xs ml-2 flex items-center gap-1">
                       <Hash className="w-3 h-3" />
@@ -690,18 +712,16 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* Escalate Button */}
               {hasActiveSession && isAuthenticated && (
                 <button
                   onClick={() => setShowEscalateConfirm(true)}
                   disabled={isEscalating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-xs font-medium"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-sm font-medium"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  {isEscalating ? 'Escalating...' : 'Escalate'}
+                  {isEscalating ? 'Escalating...' : 'Get a Pro'}
                 </button>
               )}
-              <Sparkles className="w-5 h-5 text-[#A855F7]" />
             </div>
           </header>
           {hasActiveSession && (
@@ -748,10 +768,10 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               <button
                 onClick={() => setShowEscalateConfirm(true)}
                 disabled={isEscalating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-xs font-medium"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-sm font-medium"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                {isEscalating ? 'Escalating...' : 'Escalate to Human'}
+                {isEscalating ? 'Working on it...' : 'Get a Pro'}
               </button>
             )}
           </div>
@@ -762,23 +782,23 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       {showDevicePicker && !hasPickedDevice && devices.length > 0 && (
         <div className="px-4 py-3 bg-[#151922]/80 border-b border-white/5">
           <div className="max-w-3xl mx-auto">
-            <p className="text-white/60 text-xs mb-2">What device needs help?</p>
+            <p className="text-white/70 text-sm mb-3">Which device are you having trouble with?</p>
             <div className="flex flex-wrap gap-2">
               {devices.map(device => (
                 <button
                   key={device.id}
                   onClick={() => handleDeviceSelect(device)}
-                  className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/80 text-xs hover:bg-white/10 hover:border-[#06B6D4]/30 transition-colors"
+                  className="px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/80 text-sm hover:bg-white/10 hover:border-[#06B6D4]/30 transition-colors"
                 >
                   {device.name}
-                  {device.brand && <span className="text-white/40 ml-1">({device.brand})</span>}
+                  {device.brand && <span className="text-white/50 ml-1">({device.brand})</span>}
                 </button>
               ))}
               <button
                 onClick={() => handleDeviceSelect(null)}
-                className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-xs hover:bg-white/10 transition-colors"
+                className="px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 transition-colors"
               >
-                Something new
+                Not sure / Something else
               </button>
             </div>
           </div>
@@ -786,7 +806,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" role="log" aria-label="Support conversation" aria-live="polite">
         <div className="max-w-3xl mx-auto space-y-4">
         {messages.map((message) => (
           <div
@@ -805,14 +825,14 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               {message.image && (
                 <img
                   src={message.image}
-                  alt="Attached"
+                  alt={message.role === UserRole.USER ? "Photo you sent for diagnosis" : "Photo from support"}
                   className="rounded-lg mb-2 max-h-48 w-auto"
                 />
               )}
-              <div className="text-sm leading-relaxed">
+              <div className="text-[15px] leading-relaxed">
                 {renderMarkdown(message.text)}
               </div>
-              <div className={`text-xs mt-2 ${message.role === UserRole.USER ? 'text-white/60' : 'text-white/40'}`}>
+              <div className={`text-xs mt-2 ${message.role === UserRole.USER ? 'text-white/70' : 'text-white/50'}`}>
                 {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
@@ -820,15 +840,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         ))}
 
         {isLoading && (
-          <div className="flex justify-start">
+          <div className="flex justify-start" role="status" aria-label={`${agentName} is typing a response`}>
             <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-[#A855F7] animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-[#6366F1] animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-[#06B6D4] animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span className="text-white/60 text-sm">Scout is typing...</span>
+                <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse" />
+                <span className="text-white/60 text-sm">{agentName} is typing</span>
               </div>
             </div>
           </div>
@@ -841,30 +857,31 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       {/* Input Area */}
       <div className="px-4 pb-4 bg-[#0B0E14]">
         <div className="max-w-3xl mx-auto">
-        {/* Mode Dock */}
-        <ModeDock
-          activeMode={activeMode}
-          onModeSelect={handleModeSelect}
-          userTier={tier}
-          onLockedModeClick={handleLockedModeClick}
-        />
-
-        {/* Text Input */}
-        <form onSubmit={handleSubmit} className="flex items-center gap-3">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+          {/* Photo attach button */}
+          <button
+            type="button"
+            onClick={() => setShowPhotoModal(true)}
+            className="w-12 h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+            aria-label="Attach a photo"
+          >
+            <Camera className="w-5 h-5 text-white/60" />
+          </button>
           <div className="flex-1 relative">
             <input
               ref={inputRef}
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask Scout anything..."
-              className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-5 py-3 text-white placeholder-white/40 focus:outline-none focus:border-[#6366F1]/50 focus:ring-1 focus:ring-[#6366F1]/30 transition-all"
+              placeholder="Describe your issue..."
+              className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-5 py-3.5 text-white text-base placeholder-white/40 focus:outline-none focus:border-[#6366F1]/50 focus:ring-1 focus:ring-[#6366F1]/30 transition-all"
               disabled={isLoading}
             />
           </div>
           <button
             type="submit"
             disabled={!inputValue.trim() || isLoading}
+            aria-label="Send message"
             className={`
               w-12 h-12 rounded-full flex items-center justify-center transition-all
               ${inputValue.trim() && !isLoading
@@ -913,32 +930,21 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         />
       )}
 
-      {/* Video Session Modal */}
-      {showVideoModal && (
-        <VideoSessionModal
-          onClose={async () => {
-            setShowVideoModal(false);
-            setActiveMode('chat');
-          }}
-          caseId={caseId || undefined}
-        />
-      )}
-
       {/* Escalation Confirmation Modal */}
       {showEscalateConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="escalate-dialog-title">
           <div className="bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-white/10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
                 <UserPlus className="w-5 h-5 text-orange-400" />
               </div>
-              <h3 className="text-white text-xl font-semibold">Escalate to Human</h3>
+              <h3 id="escalate-dialog-title" className="text-white text-xl font-semibold">Get a Pro Involved</h3>
             </div>
             <p className="text-white/70 mb-2 text-sm">
-              This will generate a detailed diagnostic report and mark this case for human review.
+              I'll put together a detailed report of everything we've covered so a professional can pick up right where we left off.
             </p>
             <p className="text-white/50 mb-4 text-xs">
-              The report will include your conversation, any photos shared, and Scout's analysis to help a professional pick up where we left off.
+              The report includes your conversation, any photos, and my analysis — so you won't have to repeat anything.
             </p>
             <div className="flex gap-3">
               <button
@@ -960,14 +966,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="upgrade-dialog-title">
           <div className="bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-white/10">
-            <h3 className="text-white text-xl font-semibold mb-2">Upgrade Required</h3>
+            <h3 id="upgrade-dialog-title" className="text-white text-xl font-semibold mb-2">Upgrade Your Plan</h3>
             <p className="text-white/70 mb-4">
-              {lockedFeature === 'voice' && "Voice mode requires a Home or Pro subscription."}
-              {lockedFeature === 'photo' && "Photo analysis requires a Free account or higher."}
-              {lockedFeature === 'video' && "Video sessions require a Home or Pro subscription."}
-              {lockedFeature === 'chat' && "You've reached your chat limit. Upgrade for unlimited messages."}
+              {lockedFeature === 'chat' && "You've used all your free messages for this month. Upgrade for unlimited support."}
+              {lockedFeature === 'photo' && "Photo support is available on our paid plans."}
+              {lockedFeature !== 'chat' && lockedFeature !== 'photo' && "This feature is available on our paid plans."}
             </p>
             <div className="flex gap-3">
               <button

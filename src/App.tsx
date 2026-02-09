@@ -799,7 +799,7 @@ const Hero: React.FC<{
               <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-electric-indigo/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full mb-4 sm:mb-6 border border-electric-indigo/40 shadow-sm">
                 <ScoutSignalIcon size={18} animate={true} />
                 <span className="text-electric-indigo font-semibold text-xs sm:text-sm">
-                  Scout AI available 24/7
+                  Support available 24/7
                 </span>
               </div>
             </AnimatedElement>
@@ -822,7 +822,7 @@ const Hero: React.FC<{
                     filter: 'drop-shadow(0 2px 4px rgba(99,102,241,0.4))',
                   }}
                 >
-                  — with Scout AI.
+                  — with TotalAssist.
                 </span>
               </h1>
             </AnimatedElement>
@@ -834,7 +834,7 @@ const Hero: React.FC<{
                 }}
               >
                 <span className="dark:[text-shadow:0_1px_8px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]">
-                  TotalAssist leverages the power of Scout AI to provide a 24/7 lifeline for your home. No hold music, no complex menus—just an intelligent assistant that walks you through every fix.
+                  TotalAssist is your 24/7 lifeline for home tech problems. No hold music, no complex menus—just a friendly support team that walks you through every fix.
                 </span>
               </p>
             </AnimatedElement>
@@ -1014,7 +1014,7 @@ const HowItWorksSimple: React.FC = () => {
     {
       step: "1.",
       title: "Tell Us",
-      desc: '"My Wi-Fi keeps dropping" or "There\'s a weird error code"—just describe it like you would to a friend. Scout AI understands and guides you through it.',
+      desc: '"My Wi-Fi keeps dropping" or "There\'s a weird error code"—just describe it like you would to a friend. Our team understands and guides you through it.',
       icon: <MessageSquare className="w-7 h-7" />,
     },
     {
@@ -1168,8 +1168,8 @@ const WhyTotalAssist: React.FC = () => {
     },
     {
       icon: <Camera className="w-8 h-8" />,
-      title: "Snapshot + Scout AI",
-      desc: "Snap a photo of that blinking light or error code. Scout analyzes it instantly—no confusing descriptions needed.",
+      title: "Photo Analysis",
+      desc: "Snap a photo of that blinking light or error code. We analyze it instantly—no confusing descriptions needed.",
     },
     {
       icon: <CheckCircle2 className="w-8 h-8" />,
@@ -1198,13 +1198,13 @@ const WhyTotalAssist: React.FC = () => {
         {/* Header */}
         <AnimatedElement animation="fadeInUp" className="text-center mb-12">
           <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
-            Why Scout AI
+            Why TotalAssist
           </span>
           <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight text-text-primary dark:text-white">
             Skip the wait. Get answers instantly.
           </h2>
           <p className="text-text-secondary text-xl max-w-2xl mx-auto">
-            Scout AI diagnoses tech and home issues in seconds — no calls, no waiting, no transfers.
+            TotalAssist diagnoses tech and home issues in seconds — no calls, no waiting, no transfers.
           </p>
         </AnimatedElement>
 
@@ -1221,10 +1221,10 @@ const WhyTotalAssist: React.FC = () => {
               <div className="p-4 lg:p-6 flex items-center justify-center gap-2 lg:gap-3 border-x border-light-300 dark:border-midnight-700 bg-gradient-to-b from-electric-indigo/10 to-transparent">
                 <img
                   src="/scout_logo.png"
-                  alt="Scout AI"
+                  alt="TotalAssist"
                   className="w-6 h-6 lg:w-8 lg:h-8 object-contain"
                 />
-                <span className="font-bold text-text-primary dark:text-white text-sm lg:text-base">Scout AI</span>
+                <span className="font-bold text-text-primary dark:text-white text-sm lg:text-base">TotalAssist</span>
               </div>
               <div className="p-4 lg:p-6 flex items-center justify-center">
                 <span className="font-bold text-text-secondary text-sm lg:text-base">Phone Support</span>
@@ -1281,17 +1281,17 @@ const UseCasesSection: React.FC = () => {
   const useCases = [
     {
       scenario: "Wi-Fi keeps dropping",
-      solution: "Describe the issue or snap a photo of your router's lights. Scout identifies the problem and walks you through the fix.",
+      solution: "Describe the issue or snap a photo of your router's lights. We identify the problem and walk you through the fix.",
       icon: <Wifi className="w-7 h-7" />,
     },
     {
       scenario: "Smart TV won't connect",
-      solution: "Upload a photo of the error screen. Scout reads it, diagnoses the issue, and provides step-by-step setup instructions.",
+      solution: "Upload a photo of the error screen. Our team reads it, diagnoses the issue, and provides step-by-step setup instructions.",
       icon: <Tv className="w-7 h-7" />,
     },
     {
       scenario: "Mysterious error code",
-      solution: "Just show Scout the error. Whether it's a blinking light pattern or cryptic message, Scout decodes it and tells you what to do.",
+      solution: "Just show us the error. Whether it's a blinking light pattern or cryptic message, we decode it and tell you what to do.",
       icon: <AlertTriangle className="w-7 h-7" />,
     },
   ];
@@ -1304,10 +1304,10 @@ const UseCasesSection: React.FC = () => {
             Real Problems, Real Solutions
           </span>
           <h2 className="text-4xl font-black mb-4 text-text-primary dark:text-white">
-            When tech breaks, Scout helps
+            When tech breaks, we help
           </h2>
           <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            No matter the issue, Scout AI is ready to diagnose and guide you to a fix.
+            No matter the issue, TotalAssist is ready to diagnose and guide you to a fix.
           </p>
         </AnimatedElement>
         <div className="grid md:grid-cols-3 gap-8">
@@ -1336,24 +1336,24 @@ const FAQSection: React.FC = () => {
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const faqs = [
     {
-      q: "What is Scout AI?",
-      a: "Scout is our AI-powered assistant that provides instant tech support via chat, photo analysis, and live voice guidance. Scout responds immediately—no waiting.",
+      q: "What is TotalAssist?",
+      a: "TotalAssist is your dedicated support team that provides instant tech help via chat, photo analysis, and live voice guidance. We respond immediately—no waiting.",
     },
     {
-      q: "What devices and issues can Scout help with?",
-      a: "Scout helps with Wi-Fi connectivity, smart home devices (Alexa, Google, Ring, Nest), TVs, laptops, printers, phones, and more. If it's tech in your home, Scout can diagnose and guide you to a fix.",
+      q: "What devices and issues can TotalAssist help with?",
+      a: "TotalAssist helps with Wi-Fi connectivity, smart home devices (Alexa, Google, Ring, Nest), TVs, laptops, printers, phones, and more. If it's tech in your home, our support team can diagnose and guide you to a fix.",
     },
     {
       q: "How does the photo diagnosis feature work?",
-      a: "Simply snap a photo of an error screen, blinking lights, or any visual issue. Scout AI analyzes the image instantly and provides step-by-step troubleshooting guidance tailored to what it sees.",
+      a: "Simply snap a photo of an error screen, blinking lights, or any visual issue. Our support team analyzes the image instantly and provides step-by-step troubleshooting guidance tailored to what they see.",
     },
     {
-      q: "Is Scout available 24/7?",
-      a: "Yes! Scout AI is available 24/7, 365 days a year. No seasonal limitations, no business hours—get help whenever you need it, day or night.",
+      q: "Is TotalAssist available 24/7?",
+      a: "Yes! TotalAssist support is available 24/7, 365 days a year. No seasonal limitations, no business hours—get help whenever you need it, day or night.",
     },
     {
       q: "What are the pricing options?",
-      a: "We offer flexible plans: Basic (free with limited features), Pro ($20/mo for unlimited access), and Premium ($199/year with priority support). All paid plans include unlimited Scout Chat, Snapshot analysis, and more.",
+      a: "We offer flexible plans: Basic (free with limited features), Pro ($20/mo for unlimited access), and Premium ($199/year with priority support). All paid plans include unlimited chat support, photo analysis, and more.",
     },
   ];
 
@@ -1371,7 +1371,7 @@ const FAQSection: React.FC = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-text-secondary text-lg max-w-xl mx-auto">
-            Find quick answers to common questions about Scout AI and TotalAssist.
+            Find quick answers to common questions about TotalAssist.
           </p>
         </AnimatedElement>
 
@@ -1495,7 +1495,7 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
-              <span>Scout AI available 24/7</span>
+              <span>Support available 24/7</span>
             </div>
           </div>
         </AnimatedElement>
@@ -1525,7 +1525,7 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
               <Logo variant="light" />
             </button>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              Your 24/7 technical safety net. TotalAssist uses the intelligence of Scout AI to diagnose and fix your home's Wi-Fi, gadgets, and appliances instantly. Expert support is now just a heartbeat away.
+              Your 24/7 technical safety net. TotalAssist diagnoses and fixes your home's Wi-Fi, gadgets, and appliances instantly. Expert support is now just a heartbeat away.
             </p>
           </div>
 
@@ -2300,7 +2300,7 @@ const App: React.FC = () => {
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center">
                         <Zap className="w-4 h-4 text-white" />
                       </div>
-                      <span className="text-white font-medium text-sm">Scout AI Preview</span>
+                      <span className="text-white font-medium text-sm">TotalAssist Preview</span>
                       <span className="text-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">Free preview</span>
                     </div>
                     <button

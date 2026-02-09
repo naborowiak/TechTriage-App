@@ -123,7 +123,7 @@ function getFooterHtml(): string {
         <img src="${IMAGE_BASE_URL}/total_assist_logo-new.png" alt="TotalAssist" width="100" style="display: block; max-width: 100px; height: auto; margin-bottom: 20px; opacity: 0.9;">
 
         <p style="margin: 0 0 8px; color: #64748b; font-size: 13px;">
-          Powered by Scout AI
+          Powered by TotalAssist
         </p>
 
         <p style="color: #475569; font-size: 12px; margin: 0 0 15px;">
@@ -169,23 +169,22 @@ function getWelcomeEmailText(firstName: string): string {
 
 Hey ${displayName},
 
-Welcome to TotalAssist! You now have access to AI-powered tech support that actually understands your problems.
+Welcome to TotalAssist! You now have access to expert tech support that actually understands your problems.
 
 No more waiting on hold, no more explaining the same issue three times, no more frustration. Just smart, fast help whenever you need it.
 
 What you can do:
-- Scout AI Chat: Get instant answers to tech questions
+- Support Chat: Get instant answers to tech questions
 - Photo Analysis: Snap a photo, get a diagnosis
-- Live Video: Real-time guided support
 - Session History: All solutions saved for you
 
 Ready to solve your first tech problem?
-Open Scout AI and describe what's going on.
+Open TotalAssist and describe what's going on.
 
 Launch TotalAssist: ${APP_BASE_URL}/dashboard
 
 ---
-Powered by Scout AI
+Powered by TotalAssist
 (c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
 Privacy Policy: ${APP_BASE_URL}/privacy
 Terms of Service: ${APP_BASE_URL}/terms`;
@@ -201,7 +200,7 @@ Thanks for signing up for TotalAssist! Your verification code is:
 
 ${code}
 
-Enter this code in the app to activate your account and start getting AI-powered tech support.
+Enter this code in the app to activate your account and start getting expert tech support.
 
 This code will expire in 30 minutes. If you didn't create an account, you can safely ignore this email.
 
@@ -209,7 +208,7 @@ Security Notice:
 We'll never ask for your password via email. If you didn't request this verification, please ignore this message.
 
 ---
-Powered by Scout AI
+Powered by TotalAssist
 (c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
 Privacy Policy: ${APP_BASE_URL}/privacy
 Terms of Service: ${APP_BASE_URL}/terms`;
@@ -232,7 +231,7 @@ Password Tips:
 - Consider using a password manager for better security
 
 ---
-Powered by Scout AI
+Powered by TotalAssist
 (c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
 Privacy Policy: ${APP_BASE_URL}/privacy
 Terms of Service: ${APP_BASE_URL}/terms`;
@@ -256,12 +255,11 @@ Hey ${displayName},
 
 Your free trial of TotalAssist is coming to an end. Trial expires on ${formattedDate}.
 
-To continue enjoying unlimited AI-powered tech support, upgrade your plan before the trial expires.
+To continue enjoying unlimited tech support, upgrade your plan before the trial expires.
 
 What you'll lose without a subscription:
-- Unlimited Scout AI chat sessions
+- Unlimited support chat sessions
 - Photo analysis for instant diagnostics
-- Live video support sessions
 - Your saved session history
 
 As a thank you for trying TotalAssist, your first billing cycle will be discounted when you subscribe today!
@@ -271,7 +269,7 @@ Upgrade Now: ${APP_BASE_URL}/pricing
 Plans start at just $25/month.
 
 ---
-Powered by Scout AI
+Powered by TotalAssist
 (c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
 Privacy Policy: ${APP_BASE_URL}/privacy
 Terms of Service: ${APP_BASE_URL}/terms`;
@@ -290,7 +288,7 @@ function getSessionGuideEmailText(userName: string, summary: string, sessionDate
 
 Hey ${displayName},
 
-Thank you for using TotalAssist! We've put together a personalized guide based on your recent support session with Scout AI.
+Thank you for using TotalAssist! We've put together a personalized guide based on your recent support session.
 
 Session Summary:
 ${summary || "Session completed successfully"}
@@ -305,7 +303,7 @@ Save this guide for future reference - it's tailored specifically to your situat
 Need More Help? ${APP_BASE_URL}/dashboard
 
 ---
-Powered by Scout AI
+Powered by TotalAssist
 (c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
 Privacy Policy: ${APP_BASE_URL}/privacy
 Terms of Service: ${APP_BASE_URL}/terms`;
@@ -330,7 +328,7 @@ function getWelcomeEmailHtml(firstName: string): string {
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
-    ${getPreheaderHtml(`Welcome ${displayName}! Your AI-powered tech support is ready. Get instant help with Scout AI chat, photo analysis, and live video support.`)}
+    ${getPreheaderHtml(`Welcome ${displayName}! Your tech support is ready. Get instant help with chat and photo analysis.`)}
 
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
@@ -340,7 +338,7 @@ function getWelcomeEmailHtml(firstName: string): string {
 
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-            ${getHeaderHtml("Welcome to TotalAssist", "Your AI-powered tech support is ready.")}
+            ${getHeaderHtml("Welcome to TotalAssist", "Your tech support is ready.")}
 
             <!-- Hero Image Section -->
             <tr>
@@ -356,7 +354,7 @@ function getWelcomeEmailHtml(firstName: string): string {
                         Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
                     </p>
                     <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
-                        Welcome to <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! You now have access to AI-powered tech support that actually understands your problems.
+                        Welcome to <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! You now have access to expert tech support that actually understands your problems.
                     </p>
                     <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
                         No more waiting on hold, no more explaining the same issue three times, no more frustration. Just smart, fast help whenever you need it.
@@ -376,7 +374,7 @@ function getWelcomeEmailHtml(firstName: string): string {
                                     <tr>
                                         <td style="padding: 20px;">
                                             <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">💬</div>
-                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Scout AI Chat</p>
+                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Support Chat</p>
                                             <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Get instant answers to tech questions</p>
                                         </td>
                                     </tr>
@@ -399,23 +397,14 @@ function getWelcomeEmailHtml(firstName: string): string {
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
                                     <tr>
                                         <td style="padding: 20px;">
-                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricCyan}, ${BRAND.scoutPurple}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">🎥</div>
-                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Live Video</p>
-                                            <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Real-time guided support</p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                            <td width="50%" valign="top" style="padding-left: 10px;">
-                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
-                                    <tr>
-                                        <td style="padding: 20px;">
                                             <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">📚</div>
                                             <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Session History</p>
                                             <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">All solutions saved for you</p>
                                         </td>
                                     </tr>
                                 </table>
+                            </td>
+                            <td width="50%" valign="top" style="padding-left: 10px;">
                             </td>
                         </tr>
                     </table>
@@ -432,7 +421,7 @@ function getWelcomeEmailHtml(firstName: string): string {
                     <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Ready to solve your first<br>tech problem?</h2>
 
                     <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        Open Scout AI and describe what's going on.
+                        Open TotalAssist and describe what's going on.
                     </p>
 
                     ${getPrimaryButtonHtml("Launch TotalAssist", APP_BASE_URL + "/dashboard")}
@@ -450,7 +439,7 @@ function getWelcomeEmailHtml(firstName: string): string {
                         <tr>
                             <td style="padding: 30px;">
                                 <p class="light-text" style="margin: 0 0 20px; font-family: Georgia, serif; font-style: italic; color: ${BRAND.slate}; font-size: 17px; line-height: 1.7;">
-                                    "I was skeptical about AI support, but <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> actually understood my router problem and fixed it in under 5 minutes. Incredible."
+                                    "I was skeptical at first, but <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> actually understood my router problem and fixed it in under 5 minutes. Incredible."
                                 </p>
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                                     <tr>
@@ -723,7 +712,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
-    ${getPreheaderHtml(`${urgencyText} - Upgrade now to keep unlimited AI tech support. Plans start at $25/month.`)}
+    ${getPreheaderHtml(`${urgencyText} - Upgrade now to keep unlimited tech support. Plans start at $25/month.`)}
 
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
@@ -733,7 +722,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
 
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-            ${getHeaderHtml("Your Trial is Ending Soon", "Don't lose access to Scout AI")}
+            ${getHeaderHtml("Your Trial is Ending Soon", "Don't lose access to TotalAssist")}
 
             <!-- Urgency Banner -->
             <tr>
@@ -763,7 +752,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
                         Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
                     </p>
                     <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
-                        Your free trial of <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> is coming to an end. To continue enjoying unlimited AI-powered tech support, upgrade your plan before the trial expires.
+                        Your free trial of <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> is coming to an end. To continue enjoying unlimited tech support, upgrade your plan before the trial expires.
                     </p>
                     <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
                         As a thank you for trying TotalAssist, your first billing cycle will be discounted when you subscribe today!
@@ -782,7 +771,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
                                 <span style="color: #ef4444; font-size: 16px;">✗</span>
                             </td>
                             <td valign="top" style="padding-bottom: 12px;">
-                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Unlimited Scout AI chat sessions</p>
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Unlimited support chat sessions</p>
                             </td>
                         </tr>
                         <tr>
@@ -791,14 +780,6 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
                             </td>
                             <td valign="top" style="padding-bottom: 12px;">
                                 <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Photo analysis for instant diagnostics</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
-                                <span style="color: #ef4444; font-size: 16px;">✗</span>
-                            </td>
-                            <td valign="top" style="padding-bottom: 12px;">
-                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Live video support sessions</p>
                             </td>
                         </tr>
                         <tr>
@@ -820,7 +801,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
                         Limited Time Offer
                     </div>
 
-                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Keep your access to<br>Scout AI</h2>
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Keep your access to<br>TotalAssist</h2>
 
                     <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
                         Subscribe now and lock in your trial benefits.
@@ -961,7 +942,7 @@ export async function sendWelcomeEmail(
     const data = await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: "Welcome to TotalAssist - Your AI Tech Support is Ready!",
+      subject: "Welcome to TotalAssist - Your Tech Support is Ready!",
       html: getWelcomeEmailHtml(firstName || ""),
       text: getWelcomeEmailText(firstName || ""),
     });
@@ -1100,7 +1081,7 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
                         Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
                     </p>
                     <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
-                        Thank you for using <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! We've put together a personalized guide based on your recent support session with Scout AI.
+                        Thank you for using <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! We've put together a personalized guide based on your recent support session.
                     </p>
                 </td>
             </tr>
@@ -1254,7 +1235,7 @@ export async function sendSpecialistResponseEmail(
     </center>
 </body>
 </html>`,
-      text: `Hey ${displayName},\n\nA specialist has reviewed your case "${caseTitle}" and submitted their professional assessment.\n\nLog in to view: ${APP_BASE_URL}/dashboard\n\n---\nPowered by Scout AI\n(c) ${new Date().getFullYear()} Smart Tek Labs.`,
+      text: `Hey ${displayName},\n\nA specialist has reviewed your case "${caseTitle}" and submitted their professional assessment.\n\nLog in to view: ${APP_BASE_URL}/dashboard\n\n---\nPowered by TotalAssist\n(c) ${new Date().getFullYear()} Smart Tek Labs.`,
     });
 
     if (data.error) {
@@ -1320,7 +1301,7 @@ export async function sendEscalationEmail(
                         "${caseTitle}"
                     </p>
                     <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
-                        Click the button below to review the full case details, chat history, and AI analysis. You can then submit your professional assessment.
+                        Click the button below to review the full case details, chat history, and preliminary analysis. You can then submit your professional assessment.
                     </p>
                 </td>
             </tr>
@@ -1334,7 +1315,7 @@ export async function sendEscalationEmail(
     </center>
 </body>
 </html>`,
-      text: `New Escalation: ${caseTitle}\n\nA customer case has been escalated and requires specialist review.\n\nReview the case: ${specialistUrl}\n\n---\nPowered by Scout AI\n(c) ${new Date().getFullYear()} Smart Tek Labs.`,
+      text: `New Escalation: ${caseTitle}\n\nA customer case has been escalated and requires specialist review.\n\nReview the case: ${specialistUrl}\n\n---\nPowered by TotalAssist\n(c) ${new Date().getFullYear()} Smart Tek Labs.`,
       attachments,
     });
 

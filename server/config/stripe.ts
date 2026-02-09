@@ -107,15 +107,15 @@ export const PLAN_INFO = {
     name: 'Free',
     monthlyPrice: 0,
     annualPrice: 0,
-    description: 'Try Scout AI with limited access',
-    highlights: ['5 AI chat sessions/month', '1 photo analysis/month', 'Purchase video credits as needed'],
+    description: 'Try TotalAssist with limited access',
+    highlights: ['5 chat sessions/month', '1 photo analysis/month', 'Purchase video credits as needed'],
   },
   home: {
     name: 'Home',
     monthlyPrice: 25,
     annualPrice: 228, // $19/mo billed annually
     description: 'Perfect for homeowners',
-    highlights: ['Unlimited AI chat', 'Unlimited photo analysis', '1 video session/week included', 'Buy extra video credits anytime'],
+    highlights: ['Unlimited chat support', 'Unlimited photo analysis', '1 video session/week included', 'Buy extra video credits anytime'],
   },
   pro: {
     name: 'Pro',
@@ -133,7 +133,7 @@ export const CREDIT_PACK_INFO = {
       name: 'Video Diagnostic',
       price: 5,
       credits: 1,
-      description: 'One live video diagnostic session with AI assistance',
+      description: 'One live video diagnostic session with expert assistance',
     },
     pack: {
       name: 'Video Diagnostic 3-Pack',

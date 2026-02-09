@@ -534,11 +534,11 @@ export const getUpgradeReason = (tier: UserTier, feature: keyof UsageLimits | 'v
   if (limit === 0) {
     switch (feature) {
       case 'signal':
-        return 'Scout Voice requires TotalAssist Home or Pro';
+        return 'Voice support requires TotalAssist Home or Pro';
       case 'voice':
         return 'Voice Mode requires TotalAssist Home or Pro';
       case 'photo':
-        return 'Scout Snapshot requires a free account';
+        return 'Photo analysis requires a free account';
       default:
         return 'This feature requires an upgrade';
     }
@@ -561,7 +561,7 @@ export const VIDEO_CREDIT_PRICES = {
 
 // Tier display info
 export const TIER_INFO: Record<UserTier, { name: string; price: string; tagline: string }> = {
-  guest: { name: 'Guest', price: 'Free', tagline: 'Try Scout' },
+  guest: { name: 'Guest', price: 'Free', tagline: 'Try TotalAssist' },
   free: { name: 'TotalAssist Free', price: 'Free', tagline: 'The Taste Test' },
   home: { name: 'TotalAssist Home', price: '$9.99/mo', tagline: 'The Daily Driver' },
   pro: { name: 'TotalAssist Pro', price: '$19.99/mo', tagline: 'The Power User' },

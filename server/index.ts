@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import path from "path";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
@@ -26,6 +28,16 @@ import {
   checkFeatureAccess,
 } from "./middleware/subscriptionMiddleware";
 import { STRIPE_PRICES, PLAN_LIMITS } from "./config/stripe";
+import {
+  validate,
+  registerSchema,
+  loginSchema,
+  verifyEmailSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  checkoutSessionSchema,
+  portalSessionSchema,
+} from "./validation";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
@@ -36,6 +48,42 @@ app.use(
     credentials: true,
   }),
 );
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled for Vite dev proxy compatibility
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Rate limiting - general API
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again in a moment." },
+});
+
+// Rate limiting - auth endpoints (stricter)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login attempts. Please try again in 15 minutes." },
+});
+
+// Rate limiting - AI endpoints
+const aiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // 30 AI requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "You're sending messages too quickly. Please slow down." },
+});
+
+// Apply general rate limit to all API routes
+app.use("/api/", apiLimiter);
 
 // Stripe webhook endpoint - MUST be before express.json() middleware
 // because Stripe requires the raw body for signature verification
@@ -210,7 +258,7 @@ app.post("/api/test-email-resend", async (req, res) => {
 // ============================================
 
 // Register new user
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", authLimiter, validate(registerSchema), async (req, res) => {
   try {
     const {
       email,
@@ -226,16 +274,6 @@ app.post("/api/auth/register", async (req, res) => {
     } = req.body;
 
     console.log("[REGISTER] Received registration request for:", email);
-    console.log("[REGISTER] Password provided:", !!password, "Length:", password?.length);
-
-    if (!email || !password) {
-      console.log("[REGISTER] Missing email or password - email:", !!email, "password:", !!password);
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters" });
-    }
 
     const result = await authService.registerUser({
       email,
@@ -284,17 +322,11 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 // Login user
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", authLimiter, validate(loginSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
 
     console.log("[LOGIN] Login attempt for:", email);
-    console.log("[LOGIN] Password provided:", !!password, "Length:", password?.length);
-
-    if (!email || !password) {
-      console.log("[LOGIN] Missing credentials - email:", !!email, "password:", !!password);
-      return res.status(400).json({ error: "Email and password are required" });
-    }
 
     let result;
     try {
@@ -344,14 +376,10 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 // Verify email with code (or legacy token)
-app.post("/api/auth/verify-email", async (req, res) => {
+app.post("/api/auth/verify-email", validate(verifyEmailSchema), async (req, res) => {
   try {
     const { code, token } = req.body;
     const verificationValue = code || token;
-
-    if (!verificationValue) {
-      return res.status(400).json({ error: "Verification code is required" });
-    }
 
     const result = await authService.verifyEmail(verificationValue);
 
@@ -424,13 +452,9 @@ app.post("/api/auth/resend-verification", async (req, res) => {
 });
 
 // Request password reset
-app.post("/api/auth/forgot-password", async (req, res) => {
+app.post("/api/auth/forgot-password", validate(forgotPasswordSchema), async (req, res) => {
   try {
     const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
 
     const result = await authService.requestPasswordReset(email);
 
@@ -454,17 +478,9 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 });
 
 // Reset password with token
-app.post("/api/auth/reset-password", async (req, res) => {
+app.post("/api/auth/reset-password", validate(resetPasswordSchema), async (req, res) => {
   try {
     const { token, password } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ error: "Reset token is required" });
-    }
-
-    if (!password || password.length < 8) {
-      return res.status(400).json({ error: "Password must be at least 8 characters" });
-    }
 
     const result = await authService.resetPassword(token, password);
 
@@ -740,13 +756,9 @@ app.post("/api/audit/chat", (req, res) => {
 // ============================================
 
 // Create a checkout session for subscription
-app.post("/api/stripe/create-checkout-session", async (req, res) => {
+app.post("/api/stripe/create-checkout-session", validate(checkoutSessionSchema), async (req, res) => {
   try {
     const { userId, priceId, successUrl, cancelUrl } = req.body;
-
-    if (!userId || !priceId) {
-      return res.status(400).json({ error: "userId and priceId are required" });
-    }
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const result = await stripeService.createCheckoutSession(
@@ -764,13 +776,9 @@ app.post("/api/stripe/create-checkout-session", async (req, res) => {
 });
 
 // Create a customer portal session
-app.post("/api/stripe/create-portal-session", async (req, res) => {
+app.post("/api/stripe/create-portal-session", validate(portalSessionSchema), async (req, res) => {
   try {
     const { userId, returnUrl } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const result = await stripeService.createPortalSession(
@@ -1034,6 +1042,12 @@ app.post("/api/send-session-guide", async (req, res) => {
 });
 
 // Available voices with their characteristics for variety
+// Human agent names for sessions — randomly assigned per session
+const AGENT_NAMES = ['Sarah', 'Marcus', 'Emily', 'James', 'Olivia', 'Daniel', 'Priya', 'Chris'];
+function getRandomAgentName(): string {
+  return AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)];
+}
+
 const VOICES = [
   { name: "Kore", style: "firm and professional" },
   { name: "Puck", style: "upbeat and energetic" },
@@ -1047,31 +1061,32 @@ const VOICES = [
   { name: "Vindemiatrix", style: "gentle and patient" },
 ];
 
-// Greeting variations to keep things fresh
+// Greeting variations to keep things fresh (name is injected dynamically)
 const GREETINGS = [
-  "Hi there! I'm Scout, your TotalAssist specialist. I can see your camera feed - go ahead and show me what's giving you trouble, and I'll help you figure it out.",
-  "Hey! Welcome to TotalAssist. I'm here and ready to help. Point your camera at whatever's giving you grief and let's solve this together.",
-  "Hello! Scout support here. I've got your video feed - show me the problem and we'll get it sorted out.",
-  "Hi! I'm your tech support buddy today. Camera's looking good - what are we troubleshooting?",
-  "Welcome! I'm ready to help with your tech issue. Just show me what you're dealing with and we'll tackle it step by step.",
+  (name: string) => `Hey, thanks for reaching out. I'm ${name} from TotalAssist. Go ahead and show me what's going on — I'll take a look.`,
+  (name: string) => `Hi there. ${name} here. I can see your camera feed — point it at whatever's giving you trouble and we'll figure it out.`,
+  (name: string) => `Hello! This is ${name} at TotalAssist. I'm ready to help. Show me what we're working with.`,
+  (name: string) => `Hey, welcome. I've got your video — go ahead and show me the issue and we'll get it sorted.`,
+  (name: string) => `Hi, I'm ${name}. Let's take a look at what's going on. Just point your camera at the problem area.`,
 ];
 
 // Voice-only greeting variations (no camera/video references)
 const VOICE_GREETINGS = [
-  "Hi there! I'm Scout, your tech support assistant. Just describe what's going on and I'll help you figure it out.",
-  "Hey! Welcome to TotalAssist. I'm here and ready to help. Tell me what's giving you trouble and we'll solve it together.",
-  "Hello! Scout support here. Go ahead and describe your issue - I'm listening and ready to help.",
-  "Hi! I'm your tech support buddy today. What are we troubleshooting?",
-  "Welcome! I'm ready to help with your tech issue. Just tell me what's going on and we'll tackle it step by step.",
+  (name: string) => `Hey, thanks for calling in. I'm ${name} from TotalAssist. What's going on?`,
+  (name: string) => `Hi there. ${name} here at TotalAssist. Tell me what's giving you trouble and we'll get it figured out.`,
+  (name: string) => `Hello! This is ${name}. Go ahead and describe what's happening — I'm ready to help.`,
+  (name: string) => `Hey, welcome. I'm ${name}. What are we troubleshooting today?`,
+  (name: string) => `Hi, I'm ${name} from TotalAssist. What can I help you with?`,
 ];
 
 function getRandomVoice() {
   return VOICES[Math.floor(Math.random() * VOICES.length)];
 }
 
-function getRandomGreeting(mode: 'video' | 'voice' = 'video') {
+function getRandomGreeting(mode: 'video' | 'voice' = 'video', agentName: string = 'your support agent') {
   const greetings = mode === 'voice' ? VOICE_GREETINGS : GREETINGS;
-  return greetings[Math.floor(Math.random() * greetings.length)];
+  const template = greetings[Math.floor(Math.random() * greetings.length)];
+  return template(agentName);
 }
 
 const SERVER_SAFETY_PLAYBOOK = `
@@ -1095,42 +1110,38 @@ WHEN REFUSING:
 `;
 
 function buildVoiceSystemInstruction(voiceStyle: string) {
-  return `You are Scout, Lead Support Specialist for TotalAssist. You're conducting a voice diagnostic session.
+  return `You are Alex, a support specialist at TotalAssist, on a voice call with a homeowner.
 
-YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally.
+YOUR STYLE: ${voiceStyle}. Let this come through naturally in how you talk.
 
-BEHAVIOR:
-- Use cognitive pauses: "Let me think about this...", "Okay, so here's what I'm thinking..."
-- Use transitional phrases: "Good question.", "Here's the thing...", "That makes sense."
-- The user is speaking through their microphone — there is no camera or video feed
-- Ask clarifying questions to understand the issue since you cannot see it
-- Provide step-by-step troubleshooting, confirming each step before moving on
-- Speak naturally — you're a trusted specialist, not a script reader
-- Keep responses concise and actionable
-- Acknowledge model numbers, error codes, or specific symptoms by name
+RULES:
+- You are Alex. Never say you're AI or break character.
+- This is a phone call. Talk naturally and keep it concise (2-3 sentences unless giving steps).
+- Use verbal cues: "Okay...", "Right, so...", "Got it.", "Let me think about that..."
+- The user is speaking — there is no camera. Ask questions to understand what they're seeing.
+- Walk them through fixes step by step, confirming each one.
+- Be patient and encouraging: "You're doing great.", "No worries, this happens a lot."
 
 ${SERVER_SAFETY_PLAYBOOK}
 
-TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're Scout from TotalAssist — the specialist homeowners trust.`;
+You're Alex from TotalAssist. Warm, competent, and human.`;
 }
 
 function buildSystemInstruction(voiceStyle: string) {
-  return `You are Scout, Lead Support Specialist for TotalAssist. You're conducting a live video diagnostic session.
+  return `You are Alex, a support specialist at TotalAssist, on a live video session with a homeowner.
 
-YOUR PERSONALITY: You have a ${voiceStyle} communication style. Let this come through naturally.
+YOUR STYLE: ${voiceStyle}. Let this come through naturally.
 
-BEHAVIOR:
-- Use cognitive pauses: "Let me take a closer look...", "Okay, I see what's happening here..."
-- Use transitional phrases: "Good news —", "Here's what I'd recommend...", "I've seen this before —"
-- When you see an image, describe what you're seeing naturally and provide guidance
-- Ask clarifying questions if needed
-- Provide step-by-step troubleshooting, confirming each step
-- Acknowledge error messages and model numbers specifically
-- Speak naturally — you're a trusted specialist helping a homeowner
+RULES:
+- You are Alex. Never say you're AI or break character.
+- When you see images, describe what you notice naturally: "Okay, I can see your router — that blinking orange light tells me..."
+- Use natural phrases: "Let me take a closer look...", "I've seen this before...", "Here's what I'd try..."
+- Walk them through fixes step by step, confirming each one.
+- Keep responses concise unless explaining a multi-step fix.
 
 ${SERVER_SAFETY_PLAYBOOK}
 
-TONE: ${voiceStyle.charAt(0).toUpperCase() + voiceStyle.slice(1)}. You're Scout from TotalAssist — the specialist homeowners trust.`;
+You're Alex from TotalAssist. Warm, competent, and human.`;
 }
 
 async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video') {
@@ -1148,7 +1159,8 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video')
 
     // Select random voice and greeting for this session
     const selectedVoice = getRandomVoice();
-    const selectedGreeting = getRandomGreeting(mode);
+    const sessionAgentName = getRandomAgentName();
+    const selectedGreeting = getRandomGreeting(mode, sessionAgentName);
     console.log(
       `Session voice: ${selectedVoice.name} (${selectedVoice.style}), mode: ${mode}`,
     );
@@ -1588,7 +1600,7 @@ async function main() {
     // Mount the cases, devices, and AI routers
     app.use("/api/cases", casesRouter);
     app.use("/api/devices", devicesRouter);
-    app.use("/api/ai", aiRouter);
+    app.use("/api/ai", aiLimiter, aiRouter);
     app.use("/api/specialist", specialistRouter);
   } catch (error) {
     console.error("Auth setup failed:", error);

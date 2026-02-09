@@ -150,9 +150,9 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
         <div className="w-20 h-20 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-scout-purple/30">
           <BotAvatar className="w-12 h-12" />
         </div>
-        <h2 className="text-white font-bold text-lg">Scout Voice</h2>
+        <h2 className="text-white font-bold text-lg">Voice Support</h2>
         <p className="text-text-secondary text-sm">
-          {isSpeaking ? 'Scout is speaking...' : isListening ? 'Listening...' : 'Ready'}
+          {isSpeaking ? 'Your agent is speaking...' : isListening ? 'Listening...' : 'Ready'}
         </p>
       </div>
 
@@ -277,7 +277,7 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
 
       {/* Status text */}
       <div className="mt-6 text-text-muted text-xs text-center">
-        <p>Speak naturally. Scout will guide you through the diagnostic.</p>
+        <p>Speak naturally. Your agent will guide you through the diagnostic.</p>
         {session.transcript.length > 0 && (
           <p className="mt-1">
             {session.transcript.length} exchange{session.transcript.length !== 1 ? 's' : ''} in this session

@@ -26,11 +26,11 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
       case 'videoDiagnostic':
         return "Video Diagnostic requires TotalAssist Home or Pro.";
       case 'signal':
-        return "Scout Voice requires TotalAssist Home or Pro.";
+        return "Voice support requires TotalAssist Home or Pro.";
       case 'voice':
         return "Voice Mode requires TotalAssist Home or Pro for 15-minute AI-guided diagnostics.";
       default:
-        return "Upgrade to unlock more Scout features.";
+        return "Upgrade to unlock more TotalAssist features.";
     }
   };
 
@@ -74,7 +74,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
 
           {/* Heading */}
           <h2 className="text-2xl font-black text-white text-center mb-2">
-            Unlock Scout's Full Potential
+            Unlock the Full TotalAssist Experience
           </h2>
 
           {/* Feature-specific message */}
@@ -93,21 +93,21 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
               <div className="w-8 h-8 rounded-lg bg-electric-indigo/20 flex items-center justify-center">
                 <MessageSquare className="w-4 h-4 text-electric-indigo" />
               </div>
-              <span className="text-sm">Unlimited Scout Chat</span>
+              <span className="text-sm">Unlimited Text Support</span>
               <Check className="w-4 h-4 text-electric-cyan ml-auto" />
             </div>
             <div className="flex items-center gap-3 text-text-secondary">
               <div className="w-8 h-8 rounded-lg bg-electric-indigo/20 flex items-center justify-center">
                 <Camera className="w-4 h-4 text-electric-indigo" />
               </div>
-              <span className="text-sm">Unlimited Scout Snapshot</span>
+              <span className="text-sm">Unlimited Photo Analysis</span>
               <Check className="w-4 h-4 text-electric-cyan ml-auto" />
             </div>
             <div className="flex items-center gap-3 text-text-secondary">
               <div className="w-8 h-8 rounded-lg bg-electric-indigo/20 flex items-center justify-center">
                 <Mic className="w-4 h-4 text-electric-indigo" />
               </div>
-              <span className="text-sm">Scout Voice (Voice Mode)</span>
+              <span className="text-sm">Voice Support</span>
               <Check className="w-4 h-4 text-electric-cyan ml-auto" />
             </div>
             <div className="flex items-center gap-3 text-text-secondary">
@@ -189,7 +189,7 @@ export const SignupGateModal: React.FC<SignupGateModalProps> = ({ isOpen, onClos
 
           {/* Description */}
           <p className="text-text-secondary text-center mb-8 leading-relaxed">
-            Create a free account to continue chatting with Scout and save your troubleshooting history. No credit card required.
+            Create a free account to continue chatting with our support team and save your troubleshooting history. No credit card required.
           </p>
 
           {/* Benefits */}

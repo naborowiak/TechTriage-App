@@ -447,7 +447,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             >
               <PanelLeft className="w-5 h-5" />
             </button>
-            <span className="text-sm font-semibold text-text-primary dark:text-white">Scout AI</span>
+            <span className="text-sm font-semibold text-text-primary dark:text-white">TotalAssist</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -554,7 +554,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Disclaimer */}
               <p className="text-xs text-text-muted mt-3">
-                Scout can make mistakes. Check important info.
+                Responses may not always be accurate. Check important info.
               </p>
             </div>
           </div>

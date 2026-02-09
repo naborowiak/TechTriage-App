@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Video, Shield, Clock, Home, Users, Zap, Loader2, Mic, Lock, Plus, Minus, HelpCircle } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Shield, Clock, Home, Users, Zap, Loader2, Lock, Plus, Minus, HelpCircle } from 'lucide-react';
 import { PageView } from '../types';
 import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
 import { useAuth } from '../hooks/useAuth';
@@ -17,7 +17,6 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   const [isAnnual, setIsAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
-  const [isBuyingCredits, setIsBuyingCredits] = useState<'single' | 'pack' | null>(null);
 
   const { user, isLoading: authLoading } = useAuth();
   const { tier: currentTier, prices, startCheckout, isLoading: subLoading } = useSubscription(user?.id);
@@ -105,32 +104,6 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     return originalCta;
   };
 
-  // Credit pack price IDs (from Stripe)
-  const creditPrices = {
-    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $5 - 1 credit
-    pack: 'price_1SxBgLPeLuLIM8GmkJ27pvdX',    // $12 - 3 credits
-  };
-
-  // Handle credit pack purchase
-  const handleCreditPurchase = async (packType: 'single' | 'pack') => {
-    // If user is not logged in, navigate to signup first
-    if (!user) {
-      onNavigate(PageView.SIGNUP);
-      return;
-    }
-
-    setIsBuyingCredits(packType);
-    try {
-      const priceId = creditPrices[packType];
-      await startCheckout(priceId);
-    } catch (error) {
-      console.error('Credit purchase error:', error);
-      alert('Failed to start checkout. Please try again.');
-    } finally {
-      setIsBuyingCredits(null);
-    }
-  };
-
   // Check if button should be disabled
   const isButtonDisabled = (planName: string): boolean => {
     const tier = planToTier[planName];
@@ -144,39 +117,36 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   const plans = [
     {
       name: 'TotalAssist Free',
-      tagline: 'The Taste Test',
+      tagline: 'Try It Out',
       monthlyPrice: 0,
       annualPrice: 0,
       isFree: true,
-      description: 'Try Scout AI and see how easy tech support can be. No credit card required.',
+      description: 'See how easy tech support can be. No credit card required.',
       icon: MessageSquare,
       features: [
-        '3 Scout Chat messages to start',
-        '1 Scout Snapshot photo analysis',
-        'Access to knowledge base',
-        'Basic troubleshooting guides',
+        '5 support messages per month',
+        '1 photo analysis per month',
+        'Case history saved to your account',
+        'Diagnostic reports for every case',
       ],
-      lockedFeatures: [
-        'Scout Voice (Voice) — Upgrade to unlock',
-        'Live Video Support — Upgrade to unlock',
-      ],
+      lockedFeatures: [] as string[],
       cta: 'Sign Up Free',
       ctaStyle: 'outlined',
     },
     {
       name: 'TotalAssist Home',
-      tagline: 'The Daily Driver',
+      tagline: 'Unlimited Support',
       monthlyPrice: 9.99,
       annualPrice: 7.99,
-      description: 'Complete coverage for your home. Chat, snap, talk, or go live with Scout AI.',
+      description: 'Unlimited support for your home. Chat and send photos anytime — your tech support is always on.',
       icon: Home,
       features: [
-        'Unlimited Scout Chat',
-        'Unlimited Scout Snapshot',
-        'Scout Voice (Voice Mode)',
-        '1 Live Video session per week',
-        'Priority support queue',
-        '15% off onsite service visits',
+        'Unlimited support messages',
+        'Unlimited photo analysis',
+        'Full case history and search',
+        'PDF diagnostic reports',
+        'Device inventory tracking',
+        'Email case summaries',
       ],
       cta: 'Get Started',
       ctaStyle: 'primary',
@@ -184,19 +154,18 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     },
     {
       name: 'TotalAssist Pro',
-      tagline: 'The Power User',
+      tagline: 'For Families & Landlords',
       monthlyPrice: 19.99,
       annualPrice: 15.99,
-      description: 'Maximum coverage with premium AI. Ideal for families, landlords, and Airbnb hosts.',
+      description: 'Everything in Home, plus multi-property support. Ideal for families, landlords, and Airbnb hosts.',
       icon: Users,
       features: [
         'Everything in Home, plus:',
-        '15 Live Video sessions per month',
-        'Premium AI model for all features',
         'Multi-home support (up to 5)',
-        '$100 annual onsite service credit',
         'Family member accounts',
-        'Dedicated support line',
+        'Professional escalation reports',
+        'Voice support (coming soon)',
+        'Priority response times',
       ],
       cta: 'Get Started',
       ctaStyle: 'secondary',
@@ -205,43 +174,23 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
 
   const products = [
     {
-      name: 'Scout Chat',
+      name: 'Chat Support',
       icon: MessageSquare,
-      description: 'AI-powered text support for instant answers to your tech questions.',
+      description: 'Text with a real support specialist who walks you through any tech issue, step by step.',
       availability: 'All Plans',
     },
     {
-      name: 'Scout Snapshot',
+      name: 'Photo Analysis',
       icon: Camera,
-      description: 'Upload a photo and get an AI diagnosis of what\'s wrong—no waiting.',
+      description: 'Send a photo of an error message, blinking light, or broken device — get a diagnosis in seconds.',
       availability: 'All Plans',
-    },
-    {
-      name: 'Scout Voice',
-      icon: Mic,
-      description: 'Voice-powered support—just talk to Scout like you would a real technician.',
-      availability: 'Home & Pro',
-    },
-    {
-      name: 'Live Video Support',
-      icon: Video,
-      description: 'Start a live video session with Scout AI for real-time visual diagnosis and guidance.',
-      availability: 'Home & Pro',
     },
   ];
 
   const faqs = [
     {
-      q: 'What is Scout Snapshot?',
-      a: 'Scout Snapshot is our photo diagnosis feature. Upload a photo of an error message, blinking light, or device issue, and Scout analyzes it instantly to provide troubleshooting guidance.',
-    },
-    {
-      q: 'How does Live Video Support work?',
-      a: 'Start a live video session directly from your browser. Scout AI watches in real-time as you show the issue, provides instant diagnosis, and guides you through the fix step-by-step while you work.',
-    },
-    {
-      q: 'How do Live Video sessions work?',
-      a: 'TotalAssist Home members receive 1 Live Video session per week (resets every 7 days). TotalAssist Pro members receive 15 sessions per month. Need more? You can purchase additional sessions anytime.',
+      q: 'How does photo analysis work?',
+      a: 'Send a photo of an error message, blinking light, or device issue during your chat. Our support team analyzes it instantly and walks you through what\'s wrong and how to fix it.',
     },
     {
       q: 'What is your cancellation policy?',
@@ -249,15 +198,19 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     },
     {
       q: 'What\'s the difference between Home and Pro?',
-      a: 'Both plans include unlimited Chat, Snapshot, and Signal (voice). The key differences: Home gets 1 Live Video session per week with standard AI, while Pro gets 15 per month with our premium AI model for all features. Pro also includes multi-home support and family accounts.',
+      a: 'Both plans include unlimited chat and photo analysis. Pro adds multi-home support (up to 5 properties), family member accounts, professional escalation reports, and priority response times. It\'s ideal for landlords, Airbnb hosts, or families managing multiple homes.',
     },
     {
       q: 'What types of issues do you support?',
       a: 'We specialize in consumer technology: Wi-Fi and networking, computers and laptops, smart home devices (Alexa, Google Home, Ring, Nest), TVs and streaming, printers, smart thermostats, and general tech troubleshooting.',
     },
     {
+      q: 'Is there a real person on the other end?',
+      a: 'Our support team is available 24/7, including weekends and holidays. You\'ll never be put on hold or transferred to a call center. Just describe your issue and get help immediately.',
+    },
+    {
       q: 'Do you offer a mobile app?',
-      a: 'TotalAssist currently works directly in your web browser with no download required. Our mobile app is coming soon for an even more convenient experience—stay tuned for updates.',
+      a: 'TotalAssist works directly in your web browser with no download required — just visit the site on your phone, tablet, or computer. A dedicated mobile app is coming soon.',
     },
   ];
 
@@ -289,7 +242,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           <AnimatedElement animation="fadeInDown">
             <div className="inline-flex items-center gap-2 bg-electric-indigo/10 backdrop-blur px-4 py-2 rounded-full text-electric-indigo text-sm mb-6 border border-electric-indigo/30">
               <ScoutSignalIcon size={18} animate={true} />
-              <span className="font-semibold">Scout AI available 24/7</span>
+              <span className="font-semibold">Support available 24/7</span>
             </div>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1}>
@@ -300,7 +253,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2}>
             <p className="text-text-secondary text-lg mb-8 max-w-2xl mx-auto">
-              Wi-Fi down? Smart TV acting up? Describe your problem, snap a photo, or start a video walkthrough—TotalAssist guides you to a fix instantly.
+              Wi-Fi down? Smart TV acting up? Describe your problem or snap a photo — our team will walk you through the fix, step by step.
             </p>
           </AnimatedElement>
           <AnimatedElement animation="fadeIn" delay={0.4}>
@@ -464,7 +417,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   )}
                 </div>
 
-                <p className="text-text-secondary mb-6 text-sm leading-relaxed">
+                <p className="text-text-secondary mb-6 text-[15px] leading-relaxed">
                   {plan.description}
                 </p>
 
@@ -489,7 +442,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
 
                 <ul className="space-y-3">
                   {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-start gap-3 text-sm">
+                    <li key={j} className="flex items-start gap-3 text-[15px]">
                       <Check className={`w-5 h-5 shrink-0 mt-0.5 ${
                         plan.highlight ? 'text-electric-cyan' : 'text-electric-indigo'
                       }`} />
@@ -539,11 +492,11 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px]">
+                <table className="w-full min-w-[600px]" role="table" aria-label="Feature comparison by plan">
                   <thead>
                     <tr className="border-b border-light-300 dark:border-midnight-700">
-                      <th className="text-left py-4 px-4 text-text-secondary font-medium">Feature</th>
-                      <th className="py-4 px-4 text-center">
+                      <th scope="col" className="text-left py-4 px-4 text-text-secondary font-medium">Feature</th>
+                      <th scope="col" className="py-4 px-4 text-center">
                         <div className="text-text-primary dark:text-white font-bold">Free</div>
                         <div className="text-xs text-text-muted">$0/mo</div>
                       </th>
@@ -558,7 +511,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Scout Chat */}
+                    {/* Chat Support */}
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
@@ -566,13 +519,13 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                             <MessageSquare className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
-                            <div className="font-medium text-text-primary dark:text-white">Scout Chat</div>
-                            <div className="text-xs text-text-muted">AI text support</div>
+                            <div className="font-medium text-text-primary dark:text-white">Chat Support</div>
+                            <div className="text-xs text-text-muted">Text-based troubleshooting</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">3 to start</span>
+                        <span className="text-sm text-text-secondary">5/month</span>
                       </td>
                       <td className="py-4 px-4 text-center bg-electric-indigo/5">
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
@@ -581,7 +534,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
                       </td>
                     </tr>
-                    {/* Scout Snapshot */}
+                    {/* Photo Analysis */}
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
@@ -589,8 +542,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                             <Camera className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
-                            <div className="font-medium text-text-primary dark:text-white">Scout Snapshot</div>
-                            <div className="text-xs text-text-muted">Photo diagnosis</div>
+                            <div className="font-medium text-text-primary dark:text-white">Photo Analysis</div>
+                            <div className="text-xs text-text-muted">Send photos for diagnosis</div>
                           </div>
                         </div>
                       </td>
@@ -604,79 +557,27 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
                       </td>
                     </tr>
-                    {/* Scout Voice */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-scout-purple/10 flex items-center justify-center">
-                            <Mic className="w-4 h-4 text-scout-purple" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Scout Voice</div>
-                            <div className="text-xs text-text-muted">15-min voice diagnostics</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1 text-text-muted">
-                          <Lock className="w-3 h-3" />
-                          <span className="text-xs">Locked</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                    </tr>
-                    {/* Live Video */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-scout-purple/10 flex items-center justify-center">
-                            <Video className="w-4 h-4 text-scout-purple" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Live Video</div>
-                            <div className="text-xs text-text-muted">Real-time video support</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1 text-text-muted">
-                          <Lock className="w-3 h-3" />
-                          <span className="text-xs">Locked</span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
-                        <span className="text-sm text-text-secondary">1/week</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-scout-purple">15/month</span>
-                      </td>
-                    </tr>
-                    {/* AI Model */}
+                    {/* Case History */}
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-electric-cyan/10 flex items-center justify-center">
-                            <Zap className="w-4 h-4 text-electric-cyan" />
+                            <Clock className="w-4 h-4 text-electric-cyan" />
                           </div>
                           <div>
-                            <div className="font-medium text-text-primary dark:text-white">AI Model</div>
-                            <div className="text-xs text-text-muted">Intelligence level</div>
+                            <div className="font-medium text-text-primary dark:text-white">Case History</div>
+                            <div className="text-xs text-text-muted">Saved conversations</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">Standard</span>
+                        <span className="text-sm text-text-secondary">Last 5</span>
                       </td>
                       <td className="py-4 px-4 text-center bg-electric-indigo/5">
-                        <span className="text-sm text-text-secondary">Standard</span>
+                        <span className="text-sm font-semibold text-electric-cyan">Full history</span>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-gradient-electric">Premium</span>
+                        <span className="text-sm font-semibold text-electric-cyan">Full history</span>
                       </td>
                     </tr>
                     {/* Multi-home */}
@@ -708,224 +609,6 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             </div>
           </AnimatedElement>
 
-          {/* Credit Packs Section */}
-          <AnimatedElement animation="fadeInUp" delay={0.7}>
-            <div className="mt-16 pt-12 border-t border-light-300 dark:border-midnight-700">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center gap-2 bg-scout-purple/10 px-4 py-2 rounded-full text-scout-purple text-sm mb-4 border border-scout-purple/30">
-                  <Video className="w-4 h-4" />
-                  <span className="font-semibold">Add-On</span>
-                </div>
-                <h3 className="text-2xl font-black text-text-primary dark:text-white mb-2">
-                  Need More Video Sessions?
-                </h3>
-                <p className="text-text-secondary max-w-lg mx-auto">
-                  Purchase video diagnostic credits anytime — no subscription required. Perfect for one-off issues or when you need extra sessions.
-                </p>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                {/* Single Credit */}
-                <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 border border-light-300 dark:border-midnight-700 hover:border-scout-purple/50 transition-all hover:-translate-y-1">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-scout-purple/10 flex items-center justify-center">
-                      <Video className="w-6 h-6 text-scout-purple" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-text-primary dark:text-white">Video Diagnostic</h4>
-                      <p className="text-sm text-text-muted">1 live session</p>
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-3xl font-black text-text-primary dark:text-white">$5</span>
-                    <span className="text-text-muted">per credit</span>
-                  </div>
-                  <button
-                    onClick={() => handleCreditPurchase('single')}
-                    disabled={isBuyingCredits !== null}
-                    className="w-full py-3 rounded-xl font-semibold text-sm border-2 border-scout-purple text-scout-purple hover:bg-scout-purple hover:text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isBuyingCredits === 'single' ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      'Buy 1 Credit'
-                    )}
-                  </button>
-                </div>
-
-                {/* 3-Pack */}
-                <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 border-2 border-scout-purple relative hover:-translate-y-1 transition-all shadow-lg shadow-scout-purple/10">
-                  <div className="absolute -top-3 right-4 bg-gradient-to-r from-scout-purple to-electric-indigo text-white text-xs font-bold px-3 py-1 rounded-full">
-                    SAVE $3
-                  </div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center">
-                      <Video className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-text-primary dark:text-white">Video Diagnostic 3-Pack</h4>
-                      <p className="text-sm text-text-muted">3 live sessions</p>
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-3xl font-black text-text-primary dark:text-white">$12</span>
-                    <span className="text-text-muted line-through">$15</span>
-                    <span className="text-sm text-scout-purple font-medium">($4/session)</span>
-                  </div>
-                  <button
-                    onClick={() => handleCreditPurchase('pack')}
-                    disabled={isBuyingCredits !== null}
-                    className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-scout-purple to-electric-indigo text-white hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-scout-purple/25"
-                  >
-                    {isBuyingCredits === 'pack' ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      'Buy 3-Pack'
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-center text-sm text-text-muted mt-6">
-                Credits never expire. Use them whenever you need live video support.
-              </p>
-            </div>
-          </AnimatedElement>
-
-          {/* Referral Program Section */}
-          <AnimatedElement animation="fadeInUp" delay={0.75}>
-            <div className="mt-16 pt-12 border-t border-light-300 dark:border-midnight-700">
-              <div className="bg-gradient-to-br from-scout-purple/10 to-electric-indigo/10 rounded-3xl p-8 md:p-10 border border-scout-purple/20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-electric-cyan/10 rounded-full blur-3xl" />
-
-                <div className="relative grid md:grid-cols-2 gap-8 items-center">
-                  <div>
-                    <div className="inline-flex items-center gap-2 bg-scout-purple/20 px-3 py-1 rounded-full text-scout-purple text-xs font-bold mb-4">
-                      <Users className="w-3 h-3" />
-                      REFERRAL PROGRAM
-                    </div>
-                    <h3 className="text-2xl md:text-3xl font-black text-text-primary dark:text-white mb-4">
-                      Give a Month,<br />
-                      <span className="text-gradient-electric">Get a Month</span>
-                    </h3>
-                    <p className="text-text-secondary mb-6">
-                      Share TotalAssist with friends and family. When they subscribe to Home or Pro, you both get a free month added to your subscription.
-                    </p>
-                    <ul className="space-y-2 text-sm text-text-secondary mb-6">
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-electric-cyan" />
-                        No limit on referrals
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-electric-cyan" />
-                        Credits applied automatically
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-electric-cyan" />
-                        Track referrals in your dashboard
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 border border-light-300 dark:border-midnight-700 shadow-lg">
-                    <div className="text-sm font-medium text-text-secondary mb-2">Your Referral Link</div>
-                    <div className="flex gap-2 mb-4">
-                      <input
-                        type="text"
-                        readOnly
-                        value={user ? `totalassist.com/r/${user.id.slice(0, 8)}` : 'Sign in to get your link'}
-                        className="flex-1 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 rounded-lg px-4 py-3 text-sm text-text-primary dark:text-white"
-                      />
-                      <button
-                        onClick={() => {
-                          if (user) {
-                            navigator.clipboard.writeText(`https://totalassist.com/r/${user.id.slice(0, 8)}`);
-                          }
-                        }}
-                        className="px-4 py-3 bg-electric-indigo text-white rounded-lg font-medium text-sm hover:bg-electric-indigo/90 transition-colors"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                    <div className="text-xs text-text-muted">
-                      {user ? (
-                        <span>Share this link to start earning free months!</span>
-                      ) : (
-                        <span>
-                          <button onClick={() => onNavigate(PageView.SIGNUP)} className="text-electric-indigo hover:underline">
-                            Sign in
-                          </button>
-                          {' '}to get your personal referral link
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </AnimatedElement>
-
-          {/* Student & Special Discounts */}
-          <AnimatedElement animation="fadeInUp" delay={0.8}>
-            <div className="mt-12 grid sm:grid-cols-2 gap-6">
-              {/* Student Discount */}
-              <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 border border-light-300 dark:border-midnight-700 hover:border-electric-cyan/50 transition-all hover:-translate-y-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-electric-cyan/10 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-electric-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-primary dark:text-white">Student Discount</h4>
-                    <div className="text-sm text-electric-cyan font-semibold">50% off Home & Pro</div>
-                  </div>
-                </div>
-                <p className="text-sm text-text-secondary mb-4">
-                  Verify your student status with SheerID and get half off any paid plan for your entire time in school.
-                </p>
-                <button className="w-full py-3 rounded-xl font-semibold text-sm border-2 border-electric-cyan text-electric-cyan hover:bg-electric-cyan hover:text-white transition-all">
-                  Verify Student Status
-                </button>
-              </div>
-
-              {/* Partner Promo */}
-              <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 border border-light-300 dark:border-midnight-700 hover:border-scout-purple/50 transition-all hover:-translate-y-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-scout-purple/10 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-scout-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-primary dark:text-white">Have a Promo Code?</h4>
-                    <div className="text-sm text-scout-purple font-semibold">Partner discounts available</div>
-                  </div>
-                </div>
-                <p className="text-sm text-text-secondary mb-4">
-                  Got a promo code from a partner, ISP, or organization? Enter it here to claim your special discount.
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter promo code"
-                    className="flex-1 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 rounded-lg px-4 py-3 text-sm text-text-primary dark:text-white placeholder:text-text-muted"
-                  />
-                  <button className="px-4 py-3 bg-scout-purple text-white rounded-lg font-medium text-sm hover:bg-scout-purple/90 transition-colors">
-                    Apply
-                  </button>
-                </div>
-              </div>
-            </div>
-          </AnimatedElement>
         </div>
       </div>
 
@@ -941,9 +624,9 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   Why wait on hold when you don't have to?
                 </h3>
                 <p className="text-lg text-text-secondary mb-6 leading-relaxed max-w-xl mx-auto">
-                  Scout AI is available <span className="text-gradient-electric font-bold">24/7</span> —
-                  weekends, holidays, 3am. Describe your issue, snap a photo, or start a video walkthrough
-                  and get guidance instantly.
+                  Our support team is available <span className="text-gradient-electric font-bold">24/7</span> —
+                  weekends, holidays, 3am. Describe your issue or snap a photo
+                  and get expert guidance instantly.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4 text-sm">
                   <span className="px-4 py-2 bg-electric-indigo/10 text-electric-indigo rounded-full font-medium">No appointments</span>
@@ -988,6 +671,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   <button
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     className="w-full p-5 flex items-center justify-between text-left"
+                    aria-expanded={openFaq === i}
+                    aria-controls={`faq-answer-${i}`}
                   >
                     <span className={`font-semibold text-lg text-text-primary dark:text-white`}>
                       {faq.q}
@@ -1005,11 +690,14 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     </div>
                   </button>
                   <div
+                    id={`faq-answer-${i}`}
+                    role="region"
+                    aria-hidden={openFaq !== i}
                     className={`overflow-hidden transition-all duration-300 ${
                       openFaq === i ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                     }`}
                   >
-                    <div className="px-5 pb-5 leading-relaxed text-text-secondary">
+                    <div className="px-5 pb-5 leading-relaxed text-[15px] text-text-secondary">
                       {faq.a}
                     </div>
                   </div>

@@ -108,7 +108,7 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({
         <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-white mb-2">Analysis Failed</h3>
         <p className="text-text-secondary text-sm">
-          Scout couldn't analyze this video. Please try again with a clearer recording.
+          Analysis failed. Please try again with a clearer recording.
         </p>
       </div>
     );
@@ -124,7 +124,7 @@ export const DiagnosticReport: React.FC<DiagnosticReportProps> = ({
               <Search className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-white">Scout Diagnostic Report</h3>
+              <h3 className="font-bold text-white">Diagnostic Report</h3>
               <p className="text-xs text-text-secondary">
                 {new Date(report.createdAt).toLocaleString()}
               </p>
@@ -327,7 +327,7 @@ export const DiagnosticAnalyzing: React.FC = () => {
         </div>
       </div>
 
-      <h3 className="text-xl font-bold text-white mb-2">Scout is Analyzing...</h3>
+      <h3 className="text-xl font-bold text-white mb-2">Analyzing...</h3>
       <p className="text-text-secondary text-sm mb-6">{stages[stage]}</p>
 
       {/* Progress bar */}

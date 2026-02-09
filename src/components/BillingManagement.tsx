@@ -761,7 +761,7 @@ const UpgradePlansSection: React.FC<{
       </div>
 
       <p className="text-xs text-text-muted text-center mt-4">
-        Cancel anytime. All plans include access to Scout AI.
+        Cancel anytime. All plans include access to TotalAssist support.
       </p>
     </div>
   );

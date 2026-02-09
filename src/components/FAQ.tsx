@@ -58,16 +58,16 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       color: '#1F2937',
       faqs: [
         {
-          question: 'What is Scout Chat?',
-          answer: 'Scout Chat is our AI-powered text support. Describe your tech problem in plain English, and get instant troubleshooting guidance. It\'s available 24/7 and included in all plans.',
+          question: 'What is Text Support?',
+          answer: 'Text Support is our chat-based troubleshooting service. Describe your tech problem in plain English, and get instant troubleshooting guidance. It\'s available 24/7 and included in all plans.',
         },
         {
-          question: 'What is Scout Snapshot?',
-          answer: 'Scout Snapshot lets you upload a photo of an error message, blinking light, or device issue. Our AI analyzes the image instantly and provides specific troubleshooting steps based on what it sees.',
+          question: 'What is Photo Analysis?',
+          answer: 'Photo Analysis lets you upload a photo of an error message, blinking light, or device issue. The image is analyzed instantly and specific troubleshooting steps are provided based on what it sees.',
         },
         {
           question: 'What is Live Video Support?',
-          answer: 'Live Video Support lets you start a real-time video session with Scout AI. Show your tech issue live and get instant guidance as Scout watches and diagnoses the problem, guiding you through the fix step-by-step.',
+          answer: 'Live Video Support is coming soon. In the meantime, use text chat and photo analysis for expert troubleshooting assistance.',
         },
         {
           question: 'What types of tech issues do you support?',
@@ -83,7 +83,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       faqs: [
         {
           question: 'How does photo diagnosis work?',
-          answer: 'Simply take a photo of the issue—an error message, a blinking router light, a confusing screen—and upload it through Scout Snapshot. Our AI analyzes the image and identifies the problem, often providing a solution within seconds.',
+          answer: 'Simply take a photo of the issue—an error message, a blinking router light, a confusing screen—and upload it through Photo Analysis. The image is analyzed and identifies the problem, often providing a solution within seconds.',
         },
         {
           question: 'What kinds of photos should I take?',
@@ -97,25 +97,25 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
     },
     {
       id: 'scout-signal',
-      name: 'Scout Voice (Voice)',
+      name: 'Voice Support',
       icon: Mic,
       color: '#06B6D4',
       faqs: [
         {
-          question: 'What is Scout Voice?',
-          answer: 'Scout Voice is our voice-powered support feature. Instead of typing, just talk to Scout like you would a real technician. Describe your issue out loud, and Scout listens and responds with spoken guidance. Perfect for hands-free troubleshooting.',
+          question: 'What is Voice Support?',
+          answer: 'Voice Support is our voice-powered support feature. Instead of typing, just talk to your agent like you would a real technician. Describe your issue out loud, and your agent listens and responds with spoken guidance. Perfect for hands-free troubleshooting.',
         },
         {
-          question: 'How do I use Scout Voice?',
-          answer: 'Press the microphone button to start speaking. Describe your tech problem naturally—no special commands needed. Scout will process your voice and respond with helpful guidance. You can have a back-and-forth conversation just like talking to a support agent.',
+          question: 'How do I use Voice Support?',
+          answer: 'Press the microphone button to start speaking. Describe your tech problem naturally — no special commands needed. Your agent will respond with helpful guidance. You can have a back-and-forth conversation just like talking to a real person.',
         },
         {
-          question: 'Which plans include Scout Voice?',
-          answer: 'Scout Voice (voice mode) is available on TotalAssist Home ($9.99/mo) and TotalAssist Pro ($19.99/mo) plans. Free users can upgrade anytime to unlock voice support.',
+          question: 'Which plans include Voice Support?',
+          answer: 'Voice Support is available on TotalAssist Home ($9.99/mo) and TotalAssist Pro ($19.99/mo) plans. Free users can upgrade anytime to unlock voice support.',
         },
         {
-          question: 'Can Scout Voice understand accents?',
-          answer: 'Yes! Scout Voice is built on advanced speech recognition that handles a wide variety of accents and speaking styles. If Scout has trouble understanding, you can always switch to text chat.',
+          question: 'Can Voice Support understand accents?',
+          answer: 'Yes! Voice Support is built on advanced speech recognition that handles a wide variety of accents and speaking styles. If there is trouble understanding, you can always switch to text chat.',
         },
       ],
     },
@@ -127,11 +127,11 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       faqs: [
         {
           question: 'How does Live Video Support work?',
-          answer: 'Start a live video session directly from your browser. Point your camera at the issue, and Scout AI watches in real-time, providing instant diagnosis and step-by-step guidance while you work on the fix.',
+          answer: 'Live Video Support is coming soon. Once available, you will be able to start a session directly from your browser for real-time diagnosis and step-by-step guidance.',
         },
         {
           question: 'What should I show during a live video session?',
-          answer: 'Point your camera at the device showing the problem—blinking lights, error screens, unusual behavior. Scout can see what you see and guide you through troubleshooting in real-time.',
+          answer: 'Point your camera at the device showing the problem—blinking lights, error screens, unusual behavior. Our team can see what you see and guide you through troubleshooting in real-time.',
         },
         {
           question: 'Do I need to download anything for video sessions?',
@@ -139,7 +139,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
         },
         {
           question: 'How long can a live video session last?',
-          answer: 'Sessions can last as long as needed to resolve your issue. Most problems are solved within 10-15 minutes with Scout\'s real-time guidance.',
+          answer: 'Sessions can last as long as needed to resolve your issue. Most problems are solved within 10-15 minutes with real-time support.',
         },
       ],
     },
@@ -151,7 +151,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       faqs: [
         {
           question: 'What\'s included in TotalAssist Free?',
-          answer: 'TotalAssist Free includes 5 chat messages and 1 photo analysis per month. It\'s a great way to experience Scout AI. Voice (Scout Voice) and Video Diagnostic require TotalAssist Home or Pro.',
+          answer: 'TotalAssist Free includes 5 chat messages and 1 photo analysis per month. It\'s a great way to experience TotalAssist. Voice support and additional features require TotalAssist Home or Pro.',
         },
         {
           question: 'What\'s the difference between Home and Pro plans?',
@@ -183,11 +183,11 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
         },
         {
           question: 'How fast is your response time?',
-          answer: 'Scout Chat responses are instant—typically under 30 seconds. For Live video sessions, wait times depend on your plan tier, with Pro members getting the fastest priority access.',
+          answer: 'Text support responses are instant--typically under 30 seconds. For Live video sessions, wait times depend on your plan tier, with Pro members getting the fastest priority access.',
         },
         {
           question: 'What hours is support available?',
-          answer: 'Scout Chat and Scout Snapshot are available 24/7. Live video support with human specialists is available 7am-10pm in your local time zone, 7 days a week.',
+          answer: 'Text support and Photo Analysis are available 24/7. Live video support with human specialists is available 7am-10pm in your local time zone, 7 days a week.',
         },
         {
           question: 'Can you help with business or commercial tech issues?',
@@ -230,7 +230,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             </AnimatedElement>
             <AnimatedElement animation="fadeInUp" delay={0.2}>
               <p className="text-text-secondary text-lg max-w-2xl mx-auto">
-                Find quick answers to common questions about Scout AI and TotalAssist.
+                Find quick answers to common questions about TotalAssist.
               </p>
             </AnimatedElement>
           </div>

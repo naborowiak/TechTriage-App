@@ -16,6 +16,7 @@ export interface UseGeminiVoiceReturn {
   transcriptHistory: TranscriptEntry[];
   connect: () => void;
   disconnect: () => void;
+  sendImage: (base64: string) => void;
   toggleMute: () => void;
   isMuted: boolean;
   outputAnalyser: AnalyserNode | null;
@@ -336,6 +337,14 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     }
   }, []);
 
+  // Send an image to the Gemini live session for analysis
+  const sendImage = useCallback((base64: string) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    // Strip data URL prefix if present
+    const data = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
+    wsRef.current.send(JSON.stringify({ type: 'image', data }));
+  }, []);
+
   return {
     status,
     isConnected,
@@ -343,6 +352,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     transcriptHistory,
     connect,
     disconnect,
+    sendImage,
     toggleMute,
     isMuted,
     outputAnalyser,

@@ -317,7 +317,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
               // Save transcript to case if we have a caseId
               if (caseId) {
                 const transcriptText = transcriptHistory
-                  .map(t => `${t.role === 'user' ? 'User' : 'Scout'}: ${t.text}`)
+                  .map(t => `${t.role === 'user' ? 'User' : 'Support'}: ${t.text}`)
                   .join('\n');
                 fetch(`/api/cases/${caseId}/recordings`, {
                   method: 'POST',
@@ -409,7 +409,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-white font-semibold">Scout Video</h1>
+              <h1 className="text-white font-semibold">Video Support</h1>
               <div className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${status === 'connecting' ? 'bg-yellow-400' : 'bg-emerald-400'} animate-pulse`} />
                 <span className="text-white/60 text-xs capitalize">{status}</span>
@@ -474,7 +474,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
                     <User className="w-3 h-3 text-white" />
                   )}
                   <span className="text-xs text-white/70">
-                    {entry.role === 'model' ? 'Scout' : (user?.firstName || user?.username || 'You')}
+                    {entry.role === 'model' ? 'Support' : (user?.firstName || user?.username || 'You')}
                   </span>
                 </div>
                 <div

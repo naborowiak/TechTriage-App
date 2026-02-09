@@ -26,7 +26,7 @@ export const RateLimitModal: React.FC<RateLimitModalProps> = ({ isOpen, onLogin,
         </div>
 
         <h3 className="text-lg font-bold text-text-primary dark:text-white text-center mb-2">
-          Thanks for trying Scout AI
+          Thanks for trying TotalAssist
         </h3>
         <p className="text-sm text-text-secondary text-center mb-6">
           Log in or sign up to get smarter responses, upload files and images, and more.

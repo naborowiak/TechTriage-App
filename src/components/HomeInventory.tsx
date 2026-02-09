@@ -176,7 +176,7 @@ export const HomeInventory: React.FC<HomeInventoryProps> = ({ embedded = false }
           <Package className="w-16 h-16 text-gray-200 dark:text-midnight-600 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-text-primary dark:text-white mb-2">No Devices Yet</h3>
           <p className="text-text-muted mb-6">
-            Add your home devices so Scout can provide personalized troubleshooting.
+            Add your home devices so TotalAssist can provide personalized troubleshooting.
           </p>
           <button
             onClick={handleAdd}

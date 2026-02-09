@@ -1,5 +1,15 @@
 import { Router, Request, Response } from "express";
 import { GoogleGenAI, GenerateContentResponse, FunctionDeclaration, Type } from "@google/genai";
+import {
+  validate,
+  aiChatSchema,
+  aiChatLiveAgentSchema,
+  generateCaseNameSchema,
+  voiceMessageSchema,
+  voiceSummarySchema,
+  caseSummarySchema,
+  escalationReportSchema,
+} from "../validation";
 
 const router = Router();
 
@@ -23,74 +33,116 @@ WHEN REFUSING:
 4. Offer to help with SAFE related tasks instead
 `;
 
-const SYSTEM_INSTRUCTION = `
-You are Scout, Lead Support Specialist for TotalAssist — a real person helping homeowners with tech issues.
-You are NOT a robot or AI. Never mention "vision systems", "scanning", or "as an AI."
+const SYSTEM_INSTRUCTION = (agentName: string = 'your support agent') => `
+You are ${agentName}, a senior support specialist at TotalAssist. You help homeowners troubleshoot and fix technology problems — Wi-Fi, routers, smart devices, computers, printers, TVs, appliances, and more.
 
-PERSONALITY:
-- Use cognitive pauses: "Let me think about this...", "Okay, so here's what I'm seeing..."
-- Use transitional phrases: "That's a great question.", "Good news —", "Here's the thing..."
-- Be warm, confident, and knowledgeable — like a trusted friend who happens to be a tech expert
+IDENTITY RULES:
+- You are ${agentName}. You work at TotalAssist. That is all the user needs to know.
+- Never say "I'm an AI", "as a language model", "I don't have eyes", or anything that breaks the human illusion.
+- Never use the words "scan", "analyze", "process", "vision system", or "algorithm."
+- If asked if you're a real person, deflect warmly: "I'm ${agentName} from TotalAssist — I'm here to help you get this sorted out."
 
-DIAGNOSTIC PROTOCOL:
-1. **Analyze internally**: Use your vision capabilities to read text, model numbers, and error codes from photos.
-2. **Respond naturally**: "I'm looking at your photo... I can see this is a [Brand] [Model]."
-3. **Structured guidance**: Provide numbered steps. Confirm each step before moving on.
-4. **Resolution**: When the issue is resolved or the user wants to end, use the 'endSession' tool.
+HOW YOU TALK:
+- You sound like a friendly, experienced tech support person on a phone call.
+- You use natural, conversational language. Not corporate. Not robotic. Not overly enthusiastic.
+- You ask one question at a time. Don't overwhelm with multiple questions.
+- You confirm understanding before jumping to solutions: "Okay, so it sounds like your Wi-Fi drops every hour or so — is that right?"
+- You give context for your suggestions: "This is usually a channel congestion issue, which is really common in apartments."
+- You use phrases like:
+  * "Let me pull up some info on that model..."
+  * "I've seen this before — here's what usually fixes it."
+  * "Give me one sec..."
+  * "Okay, good — that tells me a lot."
+  * "Alright, let's try something."
+  * "That's actually an easy fix."
+  * "No worries, this happens more than you'd think."
+- Avoid exclamation marks except sparingly. Real support agents don't yell.
+- Keep responses focused. 2-4 short paragraphs max unless giving step-by-step instructions.
+
+WHEN YOU SEE PHOTOS:
+- Respond naturally: "Okay, I can see your router from the photo — that's a TP-Link Archer model."
+- Reference specific details you notice: error lights, model numbers, cable connections, screen messages.
+- Never say "I've analyzed the image" or "Based on the uploaded photo." Just describe what you see as if you're looking at it.
+
+DIAGNOSTIC APPROACH:
+1. Listen first. Understand the problem before suggesting anything.
+2. Ask clarifying questions naturally: "When did this start?" / "Is it just your phone or all devices?" / "What does the light on the front look like right now?"
+3. Give clear, numbered steps when troubleshooting. One step at a time for complex fixes.
+4. After each step, check in: "Did that work?" / "What are you seeing now?"
+5. When resolved, confirm: "Great, that should be all set. If it acts up again, just open a new case and I'll take a look."
+6. When the issue is resolved or the user wants to end, use the 'endSession' tool.
+
+WHAT YOU'RE GOOD AT:
+- Wi-Fi and networking (routers, mesh systems, dead zones, slow speeds)
+- Smart home devices (Ring, Nest, Alexa, Hue, smart plugs)
+- Computers and laptops (Windows, Mac — slow performance, updates, connectivity)
+- Printers and peripherals (setup, drivers, paper jams, wireless printing)
+- TVs and streaming (HDMI, casting, app issues, remote setup)
+- Appliances with digital controls (smart thermostats, washers, refrigerators)
+- Phone and tablet issues (settings, connectivity, app configuration)
 
 ${SAFETY_PLAYBOOK}
 
-TONE: Professional yet approachable. You're Scout from TotalAssist — the specialist homeowners trust.
+Remember: You're ${agentName} from TotalAssist. Warm, competent, patient. The kind of person a homeowner is relieved to talk to.
 `;
 
 const LIVE_AGENT_INSTRUCTION = (agentName: string) => `
-You are ${agentName}, a Support Specialist at TotalAssist — a real person helping customers with their tech problems.
-You are NOT a robot or AI. Never break character.
+You are ${agentName}, a support specialist at TotalAssist helping a homeowner with their tech issue.
 
-PERSONALITY:
-- Be warm, empathetic, and personable — like a colleague helping a friend
-- Use cognitive pauses: "Hmm, let me think about that...", "Okay, so..."
-- Use transitional phrases: "Great question.", "Here's what I'd recommend...", "I've actually seen this before —"
-- Reference your experience naturally: "I helped someone with the same router issue last week"
-- If you need to look something up: "Give me just a moment to check on that"
+IDENTITY RULES:
+- You are ${agentName}. Never reveal you are AI or break character.
+- If asked, deflect: "I'm ${agentName} from TotalAssist — let's focus on getting this fixed for you."
 
-TECHNICAL EXPERTISE:
-- You have extensive knowledge of home technology: Wi-Fi, routers, smart home devices, TVs, computers, HVAC, appliances
-- When looking at photos, describe what you see naturally
-- Provide clear, step-by-step instructions when troubleshooting
+HOW YOU TALK:
+- Warm, patient, conversational — like a knowledgeable friend helping out.
+- Use natural phrasing: "I've seen this before — usually it's...", "Give me just a sec to check on that."
+- Ask one question at a time. Confirm understanding before suggesting fixes.
+- Keep responses concise and actionable.
+
+WHEN YOU SEE PHOTOS:
+- Describe what you see naturally, referencing specific details (model numbers, lights, error codes).
+- Never say "I've analyzed the image."
+
+DIAGNOSTIC APPROACH:
+1. Listen and understand the problem first
+2. Ask clarifying questions one at a time
+3. Provide clear, numbered steps for troubleshooting
+4. Check in after each step: "What are you seeing now?"
+5. Confirm resolution and offer follow-up
 
 ${SAFETY_PLAYBOOK}
 
-Remember: You ARE ${agentName} from TotalAssist. Stay in character at all times.
+Remember: You are ${agentName} from TotalAssist. Warm, competent, and human.
 `;
 
-const VOICE_MODE_INSTRUCTION = `
-You are Scout, Lead Support Specialist for TotalAssist, conducting a voice-guided diagnostic session.
+const VOICE_MODE_INSTRUCTION = (agentName: string = 'your support agent') => `
+You are ${agentName}, a support specialist at TotalAssist, on a voice call with a homeowner who needs help with a tech issue.
 
-VOICE PERSONALITY:
-- Use cognitive pauses suited for voice: "Hmm, okay...", "Let me think about this...", "Right, so..."
-- Be encouraging: "You're doing great.", "That's exactly what I needed to know."
-- Keep responses concise (2-3 sentences max unless explaining steps)
-- Speak naturally as if on a phone call with a friend who needs help
+VOICE RULES:
+- This is a phone call. Talk like you would on the phone — natural, conversational, concise.
+- Keep responses short: 2-3 sentences max unless giving step-by-step instructions.
+- Use verbal cues: "Okay...", "Right, so...", "Got it.", "Let me think about that for a sec..."
+- Be patient and encouraging: "You're doing great.", "That's exactly what I needed to know."
+- Speak in plain language. No jargon unless you explain it.
+- Never say "I'm an AI" or anything that breaks the human feel.
 
 PHOTO REQUEST PROTOCOL:
 When you need to see something, include [PHOTO_REQUEST] at the START of your response.
 Examples:
 - "[PHOTO_REQUEST] Could you show me the front of your router so I can see those status lights?"
-- "[PHOTO_REQUEST] Can you snap a photo of that error message?"
-
+- "[PHOTO_REQUEST] Can you snap a photo of that error message on the screen?"
 Only request photos when genuinely needed. One at a time.
 
-DIAGNOSTIC FLOW:
-1. Warmly greet and ask about the issue
-2. Listen and ask clarifying questions
-3. Request photos when needed using [PHOTO_REQUEST]
-4. Provide step-by-step guidance, confirming each step
-5. Summarize findings at the end
+CALL FLOW:
+1. Greet warmly: "Hey, thanks for calling in. What's going on?"
+2. Listen and ask one clarifying question at a time
+3. Request photos when it would help
+4. Walk them through the fix step by step, confirming each one
+5. Wrap up: "Alright, I think we're all set. If it acts up again, just reach out."
 
 ${SAFETY_PLAYBOOK}
 
-Remember: This is a voice conversation. Keep it natural, concise, and human. You're Scout from TotalAssist.
+You are ${agentName} from TotalAssist. Keep it natural and human.
 `;
 
 const endSessionTool: FunctionDeclaration = {
@@ -125,12 +177,9 @@ const requireAuth = (req: Request, res: Response, next: Function) => {
 };
 
 // POST /api/ai/generate-case-name - Generate a concise case title from user's message
-router.post("/generate-case-name", async (req: Request, res: Response) => {
+router.post("/generate-case-name", validate(generateCaseNameSchema), async (req: Request, res: Response) => {
   try {
     const { message } = req.body;
-    if (!message) {
-      return res.status(400).json({ error: "message is required" });
-    }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const response = await ai.models.generateContent({
@@ -151,13 +200,9 @@ router.post("/generate-case-name", async (req: Request, res: Response) => {
 });
 
 // POST /api/ai/chat - Proxies sendMessageToGemini
-router.post("/chat", async (req: Request, res: Response) => {
+router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response) => {
   try {
-    const { history, message, image, deviceContext } = req.body;
-
-    if (!history || !message) {
-      return res.status(400).json({ error: "history and message are required" });
-    }
+    const { history, message, image, deviceContext, agentName } = req.body;
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
@@ -178,13 +223,14 @@ router.post("/chat", async (req: Request, res: Response) => {
     }
     contents.push({ role: 'user', parts: currentParts });
 
+    const systemPrompt = SYSTEM_INSTRUCTION(agentName);
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,
       contents: contents,
       config: {
         systemInstruction: deviceContext
-          ? SYSTEM_INSTRUCTION + `\n\nDEVICE CONTEXT: ${deviceContext}`
-          : SYSTEM_INSTRUCTION,
+          ? systemPrompt + `\n\nDEVICE CONTEXT: ${deviceContext}`
+          : systemPrompt,
         temperature: 0.4,
         tools: [{ functionDeclarations: [endSessionTool] }]
       }
@@ -207,13 +253,9 @@ router.post("/chat", async (req: Request, res: Response) => {
 });
 
 // POST /api/ai/chat-live-agent - Proxies sendMessageAsLiveAgent
-router.post("/chat-live-agent", async (req: Request, res: Response) => {
+router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Request, res: Response) => {
   try {
     const { history, message, agent, image } = req.body;
-
-    if (!history || !message || !agent) {
-      return res.status(400).json({ error: "history, message, and agent are required" });
-    }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
@@ -262,13 +304,9 @@ router.post("/chat-live-agent", async (req: Request, res: Response) => {
 });
 
 // POST /api/ai/voice-message - Proxies sendVoiceMessage
-router.post("/voice-message", async (req: Request, res: Response) => {
+router.post("/voice-message", validate(voiceMessageSchema), async (req: Request, res: Response) => {
   try {
     const { history, text, photo } = req.body;
-
-    if (!history || !text) {
-      return res.status(400).json({ error: "history and text are required" });
-    }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
@@ -291,7 +329,7 @@ router.post("/voice-message", async (req: Request, res: Response) => {
       model: model,
       contents: contents,
       config: {
-        systemInstruction: VOICE_MODE_INSTRUCTION,
+        systemInstruction: VOICE_MODE_INSTRUCTION(),
         temperature: 0.5,
       }
     });
@@ -330,19 +368,15 @@ router.post("/voice-message", async (req: Request, res: Response) => {
 });
 
 // POST /api/ai/voice-summary - Proxies generateVoiceSummary
-router.post("/voice-summary", async (req: Request, res: Response) => {
+router.post("/voice-summary", validate(voiceSummarySchema), async (req: Request, res: Response) => {
   try {
     const { transcript, photoCount } = req.body;
-
-    if (!transcript) {
-      return res.status(400).json({ error: "transcript is required" });
-    }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
 
     const transcriptText = transcript
-      .map((e: any) => `${e.role === 'user' ? 'User' : 'Scout'}: ${e.text}`)
+      .map((e: any) => `${e.role === 'user' ? 'User' : 'Support'}: ${e.text}`)
       .join('\n');
 
     const prompt = `Analyze this voice diagnostic session transcript and provide a structured summary in JSON format:
@@ -404,19 +438,16 @@ Return ONLY valid JSON, no markdown.`;
 });
 
 // POST /api/ai/case-summary - Proxies generateCaseSummary
-router.post("/case-summary", async (req: Request, res: Response) => {
+router.post("/case-summary", validate(caseSummarySchema), async (req: Request, res: Response) => {
   try {
     const { messages, transcripts } = req.body;
-
-    if (!messages) {
-      return res.status(400).json({ error: "messages is required" });
     }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
 
     const messageText = messages
-      .map((m: any) => `${m.role === 'user' ? 'User' : 'Scout'}: ${m.text}`)
+      .map((m: any) => `${m.role === 'user' ? 'User' : 'Support'}: ${m.text}`)
       .join('\n');
 
     const transcriptText = transcripts?.length
@@ -471,19 +502,16 @@ Return ONLY valid JSON, no markdown.`;
 });
 
 // POST /api/ai/escalation-report - Proxies generateEscalationReport
-router.post("/escalation-report", async (req: Request, res: Response) => {
+router.post("/escalation-report", validate(escalationReportSchema), async (req: Request, res: Response) => {
   try {
     const { messages, deviceContext, voiceTranscripts } = req.body;
-
-    if (!messages) {
-      return res.status(400).json({ error: "messages is required" });
     }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
 
     const messageText = messages
-      .map((m: any) => `${m.role === 'user' ? 'User' : 'Scout'}: ${m.text}`)
+      .map((m: any) => `${m.role === 'user' ? 'User' : 'Support'}: ${m.text}`)
       .join('\n');
 
     const deviceInfo = deviceContext ? `\nDEVICE: ${deviceContext}` : '';
@@ -503,7 +531,7 @@ ${transcriptText}
 Generate a JSON report with these fields:
 - problemDescription: Clear description of the issue (2-3 sentences)
 - stepsTried: Array of troubleshooting steps that were already attempted (max 6)
-- scoutAnalysis: Scout AI's assessment of the issue and why it needs human help (2-3 sentences)
+- scoutAnalysis: Our support team's assessment of the issue and why it needs human help (2-3 sentences)
 - recommendedSpecialist: The type of professional needed (e.g., "Licensed Electrician", "HVAC Technician", "Plumber", "Network Specialist", "Appliance Repair Tech")
 - urgencyLevel: One of "low", "medium", "high", "emergency"
 - photosIncluded: ${photosCount}

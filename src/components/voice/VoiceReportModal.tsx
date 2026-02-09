@@ -91,7 +91,7 @@ export const VoiceReportModal: React.FC<VoiceReportModalProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Scout_Voice_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+    a.download = `TotalAssist_Voice_Report_${new Date().toISOString().split('T')[0]}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

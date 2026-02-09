@@ -63,11 +63,11 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             2. Device Permissions (Camera & Microphone)
           </h3>
           <p>
-            To use features like "Scout Snapshot" or "Live Video Support," our web
+            To use features like "Photo Analysis" or "Live Video Support," our web
             application may request access to your device's camera and
             microphone. You may revoke these permissions at any time via your
             browser settings.
-            <strong className="text-white"> Note:</strong> Denying permissions will limit Scout AI's
+            <strong className="text-white"> Note:</strong> Denying permissions will limit TotalAssist's
             ability to visually diagnose your issue.
           </p>
 
@@ -80,8 +80,8 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
               To provide immediate, AI-driven technical support responses.
             </li>
             <li>
-              To analyze uploaded videos and generate diagnostic reports using
-              Scout AI (Video Diagnostic feature).
+              To analyze uploaded photos and generate diagnostic reports using
+              TotalAssist.
             </li>
             <li>
               To improve our AI models (anonymized chat logs may be used to

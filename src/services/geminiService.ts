@@ -8,7 +8,8 @@ export const sendMessageToGemini = async (
   history: ChatMessage[],
   newMessage: string,
   image?: string,
-  deviceContext?: string
+  deviceContext?: string,
+  agentName?: string
 ): Promise<{ text: string, functionCall?: { name: string; args: Record<string, unknown> } }> => {
   try {
     const historyPayload = history.map(msg => ({
@@ -26,6 +27,7 @@ export const sendMessageToGemini = async (
         message: newMessage,
         image,
         deviceContext,
+        agentName,
       }),
     });
 

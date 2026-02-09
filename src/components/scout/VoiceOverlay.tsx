@@ -158,7 +158,7 @@ export function VoiceOverlay({
           </button>
 
           <div className="flex items-center gap-2.5">
-            <span className="text-white font-semibold text-sm">Scout Voice</span>
+            <span className="text-white font-semibold text-sm">Voice Support</span>
             {geminiStatus === 'listening' || geminiStatus === 'speaking' ? (
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             ) : null}
@@ -211,11 +211,11 @@ export function VoiceOverlay({
             <div className="text-center mb-4">
               <span className="text-white/40 text-xs font-medium">
                 {isSpeaking ? (
-                  <span className="text-[#A855F7]">Scout is speaking<span className="animate-pulse">...</span></span>
+                  <span className="text-[#A855F7]">Your agent is speaking<span className="animate-pulse">...</span></span>
                 ) : isListening ? (
                   <span className="text-[#06B6D4]">Listening<span className="animate-pulse">...</span></span>
                 ) : hasTranscript ? '' : (
-                  'Start speaking — Scout is ready'
+                  'Start speaking — your agent is ready'
                 )}
               </span>
             </div>
@@ -306,7 +306,7 @@ export function VoiceOverlay({
                   <Mic className="w-7 h-7 text-[#A855F7]" />
                 </div>
                 <p className="text-white/50 text-sm text-center">
-                  {transcript || `Speak naturally${userName ? `, ${userName}` : ''} — Scout will respond`}
+                  {transcript || `Speak naturally${userName ? `, ${userName}` : ''} — your agent will respond`}
                 </p>
               </div>
             )}

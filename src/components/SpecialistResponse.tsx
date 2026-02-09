@@ -162,7 +162,7 @@ export const SpecialistResponse: React.FC<SpecialistResponseProps> = ({ token })
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Scout AI Analysis</h3>
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Support Team Analysis</h3>
                 <p className="text-gray-800">{report.scoutAnalysis}</p>
               </div>
 
