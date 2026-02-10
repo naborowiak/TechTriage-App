@@ -46,13 +46,14 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     {
       id: 'welcome',
       role: UserRole.MODEL,
-      text: `Hey, thanks for reaching out. I'm ${agentNameRef.current} from TotalAssist. What's going on?`,
+      text: `Welcome to TotalAssist! Describe your issue below and we'll connect you with a support technician.`,
       timestamp: Date.now(),
-      agentName: agentNameRef.current,
     },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const hasConnectedRef = useRef(!!initialCaseId);
 
   // Case tracking
   const [caseId, setCaseId] = useState<string | null>(initialCaseId || null);
@@ -297,6 +298,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     setInputValue('');
     setIsLoading(true);
 
+    // Detect first interaction (agent hasn't "connected" yet)
+    const isFirstInteraction = !hasConnectedRef.current;
+    if (isFirstInteraction) {
+      hasConnectedRef.current = true;
+      setIsConnecting(true);
+    }
+
     // Auto-create case on first user message
     const currentCaseId = await ensureCase(text.trim(), activeMode);
 
@@ -311,22 +319,50 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     }
 
     try {
-      const responseStartTime = Date.now();
-      const response = await sendMessageToGemini(
-        messages,
-        text.trim(),
-        imageBase64,
-        getDeviceContext(),
-        agentName
-      );
+      let response;
 
-      // Realistic delay scaled by response length (~55 WPM typing feel)
-      const elapsed = Date.now() - responseStartTime;
-      const charDelay = (response.text?.length || 0) * 18; // 18ms per character
-      const targetDelay = Math.max(2000, Math.min(8000, 1500 + charDelay));
-      const remaining = targetDelay - elapsed;
-      if (remaining > 0) {
-        await new Promise(resolve => setTimeout(resolve, remaining));
+      if (isFirstInteraction) {
+        // Run API call and connection timer in parallel (5-10 seconds)
+        const connectDelay = 5000 + Math.random() * 5000;
+        const [apiResponse] = await Promise.all([
+          sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName),
+          new Promise<void>(resolve => setTimeout(resolve, connectDelay)),
+        ]);
+        response = apiResponse;
+
+        setIsConnecting(false);
+
+        // Add "agent joined" message
+        const joinMsg: ChatMessage = {
+          id: generateId(),
+          role: UserRole.MODEL,
+          text: `${agentName} has connected to your session.`,
+          timestamp: Date.now(),
+          agentName,
+        };
+        newMessages = [...newMessages, joinMsg];
+        setMessages(newMessages);
+
+        // Brief pause before showing response (agent "reading" the issue)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      } else {
+        const responseStartTime = Date.now();
+        response = await sendMessageToGemini(
+          messages,
+          text.trim(),
+          imageBase64,
+          getDeviceContext(),
+          agentName
+        );
+
+        // Realistic delay scaled by response length (~55 WPM typing feel)
+        const elapsed = Date.now() - responseStartTime;
+        const charDelay = (response.text?.length || 0) * 18; // 18ms per character
+        const targetDelay = Math.max(2000, Math.min(8000, 1500 + charDelay));
+        const remaining = targetDelay - elapsed;
+        if (remaining > 0) {
+          await new Promise(resolve => setTimeout(resolve, remaining));
+        }
       }
 
       // Convert guided fix function calls to GuidedAction (with defensive validation)
@@ -933,7 +969,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         })()}
 
         {isLoading && (
-          <div className="flex justify-start" role="status" aria-label={`${agentName} is researching your issue`}>
+          <div className="flex justify-start" role="status" aria-label={isConnecting ? 'Connecting you with a support technician' : `${agentName} is researching your issue`}>
             <div className="bg-light-200 dark:bg-white/5 backdrop-blur-md border border-light-300 dark:border-white/10 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -941,7 +977,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   <div className="w-1.5 h-1.5 rounded-full bg-[#818CF8] animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.2s' }} />
                   <div className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.2s' }} />
                 </div>
-                <span className="text-text-muted dark:text-white/60 text-sm">{agentName} is researching your issue...</span>
+                <span className="text-text-muted dark:text-white/60 text-sm">
+                  {isConnecting ? 'Connecting you with a support technician...' : `${agentName} is researching your issue...`}
+                </span>
               </div>
             </div>
           </div>
