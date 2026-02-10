@@ -522,33 +522,6 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
               </div>
             ))}
 
-            {/* Assist Pills in sidebar */}
-            {guidedAction && (
-              <div className="mt-2">
-                {guidedAction.type === 'presentChoices' && (
-                  <ChoicePills
-                    action={guidedAction}
-                    messageId="video-pill"
-                    onSelect={(_id, _action, text) => sendText(text)}
-                    disabled={false}
-                    variant="compact"
-                  />
-                )}
-                {guidedAction.type === 'showStep' && (
-                  <StepCard action={guidedAction} variant="compact" />
-                )}
-                {guidedAction.type === 'confirmResult' && (
-                  <ConfirmButtons
-                    action={guidedAction}
-                    messageId="video-pill"
-                    onSelect={(_id, _action, text) => sendText(text)}
-                    disabled={false}
-                    variant="compact"
-                  />
-                )}
-              </div>
-            )}
-
             <div ref={transcriptEndRef} />
           </div>
         </div>
@@ -574,7 +547,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
         )}
 
         {/* Floating Assist Pills when sidebar is closed */}
-        {guidedAction && !isTranscriptOpen && !isSessionEnded && !connectionError && (
+        {guidedAction && !isSessionEnded && !connectionError && (
           <div className="absolute bottom-36 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-20">
             <div className="bg-black/80 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
               {guidedAction.type === 'presentChoices' && (

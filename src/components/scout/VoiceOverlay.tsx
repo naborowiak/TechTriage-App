@@ -303,33 +303,6 @@ export function VoiceOverlay({
                   </div>
                 )}
 
-                {/* Assist Pills — visual interaction during voice */}
-                {guidedAction && onGuidedAction && (
-                  <div className="mt-3 px-1">
-                    {guidedAction.type === 'presentChoices' && (
-                      <ChoicePills
-                        action={guidedAction}
-                        messageId="voice-pill"
-                        onSelect={(_id, updatedAction, text) => onGuidedAction(updatedAction, text)}
-                        disabled={false}
-                        variant="compact"
-                      />
-                    )}
-                    {guidedAction.type === 'showStep' && (
-                      <StepCard action={guidedAction} variant="compact" />
-                    )}
-                    {guidedAction.type === 'confirmResult' && (
-                      <ConfirmButtons
-                        action={guidedAction}
-                        messageId="voice-pill"
-                        onSelect={(_id, updatedAction, text) => onGuidedAction(updatedAction, text)}
-                        disabled={false}
-                        variant="compact"
-                      />
-                    )}
-                  </div>
-                )}
-
                 <div ref={transcriptEndRef} />
               </div>
             ) : (
@@ -343,6 +316,35 @@ export function VoiceOverlay({
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── Floating Assist Pills Overlay ─── */}
+        {guidedAction && onGuidedAction && !connectionError && geminiStatus !== 'connecting' && (
+          <div className="shrink-0 px-4 pb-3 pt-2">
+            <div className="bg-white/[0.06] backdrop-blur-md rounded-2xl p-4 border border-white/[0.12] shadow-[0_-4px_30px_rgba(99,102,241,0.15)]">
+              {guidedAction.type === 'presentChoices' && (
+                <ChoicePills
+                  action={guidedAction}
+                  messageId="voice-pill"
+                  onSelect={(_id, updatedAction, text) => onGuidedAction(updatedAction, text)}
+                  disabled={false}
+                  variant="compact"
+                />
+              )}
+              {guidedAction.type === 'showStep' && (
+                <StepCard action={guidedAction} variant="compact" />
+              )}
+              {guidedAction.type === 'confirmResult' && (
+                <ConfirmButtons
+                  action={guidedAction}
+                  messageId="voice-pill"
+                  onSelect={(_id, updatedAction, text) => onGuidedAction(updatedAction, text)}
+                  disabled={false}
+                  variant="compact"
+                />
+              )}
+            </div>
           </div>
         )}
 
