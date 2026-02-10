@@ -17,6 +17,9 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendTestEmailWithResendDomain, sendSessionGuideEmail } from "./services/emailService";
 import { authStorage } from "./replit_integrations/auth/storage";
+import { db } from "./db";
+import { usersTable } from "../shared/schema/schema";
+import { eq } from "drizzle-orm";
 
 import * as stripeService from "./services/stripeService";
 import * as promoCodeService from "./services/promoCodeService";
@@ -1109,11 +1112,74 @@ WHEN REFUSING:
 4. Offer to help with SAFE related tasks instead
 `;
 
-function buildVoiceSystemInstruction(voiceStyle: string) {
+interface UserContext {
+  firstName: string;
+  techComfort?: string;
+  homeType?: string;
+  primaryIssues?: string[];
+}
+
+// Simple in-memory cache for user context (5 min TTL)
+const userContextCache = new Map<string, { data: UserContext | null; expires: number }>();
+
+async function fetchUserContext(userId: string): Promise<UserContext | null> {
+  const cached = userContextCache.get(userId);
+  if (cached && cached.expires > Date.now()) return cached.data;
+
+  try {
+    const [user] = await db
+      .select({
+        firstName: usersTable.firstName,
+        techComfort: usersTable.techComfort,
+        homeType: usersTable.homeType,
+        primaryIssues: usersTable.primaryIssues,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    if (!user) {
+      userContextCache.set(userId, { data: null, expires: Date.now() + 5 * 60 * 1000 });
+      return null;
+    }
+
+    const ctx: UserContext = {
+      firstName: user.firstName || 'there',
+      techComfort: user.techComfort || undefined,
+      homeType: user.homeType || undefined,
+      primaryIssues: user.primaryIssues || undefined,
+    };
+
+    userContextCache.set(userId, { data: ctx, expires: Date.now() + 5 * 60 * 1000 });
+    return ctx;
+  } catch (err) {
+    console.error('[WS] Failed to fetch user context:', (err as Error).message);
+    return null;
+  }
+}
+
+// SECURITY: Do not log this output — contains user PII
+function buildUserContextBlock(ctx: UserContext): string {
+  let block = `\n\nUSER CONTEXT:\n- Name: ${ctx.firstName}\n`;
+  if (ctx.techComfort === 'beginner') {
+    block += `- Tech comfort: beginner — use simple, plain language. Avoid jargon entirely. Explain every step as if they've never done it before. Be extra patient.\n`;
+  } else if (ctx.techComfort === 'intermediate') {
+    block += `- Tech comfort: intermediate — clear language, can use common tech terms with brief explanation.\n`;
+  } else if (ctx.techComfort === 'advanced') {
+    block += `- Tech comfort: advanced — feel free to use technical terms and skip basics.\n`;
+  } else {
+    block += `- Tech comfort: unknown — use clear, friendly language suitable for all tech levels.\n`;
+  }
+  if (ctx.homeType) block += `- Home type: ${ctx.homeType}\n`;
+  if (ctx.primaryIssues?.length) block += `- Common issues: ${ctx.primaryIssues.join(', ')}\n`;
+  return block;
+}
+
+function buildVoiceSystemInstruction(voiceStyle: string, userContext?: UserContext | null) {
   return `You are Alex, a support specialist at TotalAssist, on a voice call with a homeowner.
 
 YOUR STYLE: ${voiceStyle}. Let this come through naturally in how you talk.
-
+${userContext ? buildUserContextBlock(userContext) : ''}
 RULES:
 - You are Alex. Never say you're AI or break character.
 - This is a phone call. Talk naturally and keep it concise (2-3 sentences unless giving steps).
@@ -1127,11 +1193,11 @@ ${SERVER_SAFETY_PLAYBOOK}
 You're Alex from TotalAssist. Warm, competent, and human.`;
 }
 
-function buildSystemInstruction(voiceStyle: string) {
+function buildSystemInstruction(voiceStyle: string, userContext?: UserContext | null) {
   return `You are Alex, a support specialist at TotalAssist, on a live video session with a homeowner.
 
 YOUR STYLE: ${voiceStyle}. Let this come through naturally.
-
+${userContext ? buildUserContextBlock(userContext) : ''}
 RULES:
 - You are Alex. Never say you're AI or break character.
 - When you see images, describe what you notice naturally: "Okay, I can see your router — that blinking orange light tells me..."
@@ -1144,7 +1210,7 @@ ${SERVER_SAFETY_PLAYBOOK}
 You're Alex from TotalAssist. Warm, competent, and human.`;
 }
 
-async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video') {
+async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video', userContext?: UserContext | null) {
   const apiKey = process.env.GEMINI_API_KEY_TOTALASSIST;
   if (!apiKey) {
     ws.send(
@@ -1331,7 +1397,7 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video')
       config: {
         responseModalities: [Modality.AUDIO],
         systemInstruction: {
-          parts: [{ text: mode === 'voice' ? buildVoiceSystemInstruction(selectedVoice.style) : buildSystemInstruction(selectedVoice.style) }],
+          parts: [{ text: mode === 'voice' ? buildVoiceSystemInstruction(selectedVoice.style, userContext) : buildSystemInstruction(selectedVoice.style, userContext) }],
         },
         speechConfig: {
           voiceConfig: {
@@ -1634,6 +1700,8 @@ async function main() {
     const mode = (url.searchParams.get("mode") === "voice" ? "voice" : "video") as "voice" | "video";
     console.log(`New WebSocket connection for ${mode} session`);
 
+    let userContext: UserContext | null = null;
+
     if (userId) {
       // Check if user has access to live sessions (voice and video share the same quota)
       const accessCheck = await checkFeatureAccess(userId, "live");
@@ -1661,9 +1729,12 @@ async function main() {
       // Increment usage when connection is established
       await incrementUsage(userId, "liveSessions");
       console.log(`[${mode.toUpperCase()}] Session started for user ${userId}`);
+
+      // Fetch user context for personalization
+      userContext = await fetchUserContext(userId);
     }
 
-    setupGeminiLive(ws, mode);
+    setupGeminiLive(ws, mode, userContext);
   });
 
   server.listen(PORT, "0.0.0.0", () => {

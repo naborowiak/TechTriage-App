@@ -1581,9 +1581,12 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
               <li>
-                <span className="text-gray-500 cursor-default">
-                  Help Center (Coming Soon)
-                </span>
+                <button
+                  onClick={() => handleNav(PageView.FAQ)}
+                  className="hover:text-electric-indigo transition-colors"
+                >
+                  Help Center
+                </button>
               </li>
             </ul>
           </div>

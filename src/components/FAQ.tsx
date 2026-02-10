@@ -67,7 +67,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
         },
         {
           question: 'What is Live Video Support?',
-          answer: 'Live Video Support is coming soon. In the meantime, use text chat and photo analysis for expert troubleshooting assistance.',
+          answer: 'Live Video Support lets you connect with a support specialist through real-time video. Click "Show Me on Camera" from your Dashboard, grant camera and microphone access, and get step-by-step guidance while our specialist sees exactly what you see. Available on Home and Pro plans.',
         },
         {
           question: 'What types of tech issues do you support?',
@@ -127,7 +127,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       faqs: [
         {
           question: 'How does Live Video Support work?',
-          answer: 'Live Video Support is coming soon. Once available, you will be able to start a session directly from your browser for real-time diagnosis and step-by-step guidance.',
+          answer: 'From your Dashboard, click the "Show Me on Camera" tile. Your browser will ask for camera and microphone permission — tap Allow. You\'ll be connected to a live session where you can point your camera at the device with the issue and get real-time guidance. No downloads required.',
         },
         {
           question: 'What should I show during a live video session?',
@@ -235,7 +235,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             </AnimatedElement>
           </div>
 
-          {/* Help Center Coming Soon Banner */}
+          {/* Browse by Category Banner */}
           <AnimatedElement animation="fadeInUp" delay={0.3}>
             <div className="relative max-w-2xl mx-auto">
               <div className="bg-white dark:bg-midnight-800 backdrop-blur-sm border border-scout-purple/30 rounded-2xl p-6 text-center shadow-sm">
@@ -243,13 +243,10 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center">
                     <Search className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-text-primary dark:text-white">Help Center</h3>
-                  <span className="px-3 py-1 bg-scout-purple/20 text-scout-purple text-xs font-bold rounded-full">
-                    Coming Soon
-                  </span>
+                  <h3 className="text-xl font-bold text-text-primary dark:text-white">Browse by Category</h3>
                 </div>
                 <p className="text-text-secondary text-sm">
-                  AI-powered search to find answers instantly. For now, browse by category below.
+                  Use the topic filters below to find answers quickly.
                 </p>
               </div>
             </div>

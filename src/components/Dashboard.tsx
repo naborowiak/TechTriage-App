@@ -21,6 +21,7 @@ import {
   Lock,
   ArrowRight,
   Clock,
+  X,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useSubscription } from "../hooks/useSubscription";
@@ -121,6 +122,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [chatInput, setChatInput] = useState("");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<'chat' | 'photo' | 'signal' | 'videoDiagnostic'>('chat');
+  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(
+    () => localStorage.getItem('ta_welcome_dismissed') === 'true'
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -131,7 +136,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const { tier } = useUsage();
 
   // Subscription
-  useSubscription(user.id);
+  const { videoCredits, startCheckout } = useSubscription(user.id);
 
   const confirmLogout = () => {
     setShowLogoutConfirm(false);
@@ -492,6 +497,91 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <ArrowRight className="w-6 h-6 text-white shrink-0 hidden sm:block" />
               </button>
 
+              {/* Welcome Banner (new users with 0 cases) */}
+              {cases.length === 0 && !welcomeDismissed && (
+                <div className="relative bg-gradient-to-br from-scout-purple/5 to-electric-indigo/5 dark:from-scout-purple/10 dark:to-electric-indigo/10 rounded-2xl border border-scout-purple/30 p-6 sm:p-8">
+                  <button
+                    onClick={() => {
+                      setWelcomeDismissed(true);
+                      localStorage.setItem('ta_welcome_dismissed', 'true');
+                    }}
+                    className="absolute top-4 right-4 w-8 h-8 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-700 flex items-center justify-center text-text-muted hover:text-text-primary dark:hover:text-white transition-colors"
+                    aria-label="Dismiss welcome message"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="w-14 h-14 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-2xl flex items-center justify-center shrink-0">
+                      <Zap className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-text-primary dark:text-white mb-2">
+                        Welcome to TotalAssist, {user.firstName}!
+                      </h2>
+                      <p className="text-text-secondary text-base">
+                        Get instant help with your tech issues — no waiting, no phone trees, just solutions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3 p-4 bg-white dark:bg-midnight-800 rounded-xl border border-light-300 dark:border-midnight-700">
+                      <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                        <MessageSquare className="w-4 h-4 text-electric-indigo" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Type a Question</h3>
+                        <p className="text-text-muted text-xs leading-relaxed">Describe your problem in plain English and get instant troubleshooting help.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-4 bg-white dark:bg-midnight-800 rounded-xl border border-light-300 dark:border-midnight-700">
+                      <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                        <Camera className="w-4 h-4 text-electric-indigo" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Show the Problem</h3>
+                        <p className="text-text-muted text-xs leading-relaxed">Snap a photo of an error message or blinking light for visual diagnosis.</p>
+                      </div>
+                    </div>
+                    {(tier === 'home' || tier === 'pro') && (
+                      <>
+                        <div className="flex items-start gap-3 p-4 bg-white dark:bg-midnight-800 rounded-xl border border-light-300 dark:border-midnight-700">
+                          <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                            <Mic className="w-4 h-4 text-electric-indigo" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Talk to Support</h3>
+                            <p className="text-text-muted text-xs leading-relaxed">Prefer speaking? Use voice mode for hands-free troubleshooting.</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-4 bg-white dark:bg-midnight-800 rounded-xl border border-light-300 dark:border-midnight-700">
+                          <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                            <Video className="w-4 h-4 text-electric-indigo" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Show Me on Camera</h3>
+                            <p className="text-text-muted text-xs leading-relaxed">For complex issues, point your camera at the device for live guidance.</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      onClick={() => {
+                        setWelcomeDismissed(true);
+                        localStorage.setItem('ta_welcome_dismissed', 'true');
+                      }}
+                      className="px-6 py-2.5 rounded-xl bg-light-200 dark:bg-midnight-700 text-text-primary dark:text-white font-semibold hover:bg-light-300 dark:hover:bg-midnight-600 transition-colors text-sm min-h-[44px]"
+                    >
+                      Got it, thanks!
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Section 2: Triage Grid */}
               <div>
                 <h2 className="text-xl font-bold text-text-primary dark:text-white mb-4">How can we help?</h2>
@@ -582,6 +672,70 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   })}
                 </div>
               </div>
+
+              {/* Video Credit CTA (home/pro users with low credits) */}
+              {(tier === 'home' || tier === 'pro') && videoCredits.remaining <= 1 && (
+                <div className="bg-gradient-to-br from-scout-purple/10 to-electric-indigo/10 dark:from-scout-purple/20 dark:to-electric-indigo/20 rounded-2xl border border-scout-purple/30 p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-xl flex items-center justify-center shrink-0">
+                        <Video className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-text-primary dark:text-white mb-1">
+                          {videoCredits.remaining === 0 ? 'Out of Video Credits' : 'Low on Video Credits'}
+                        </h3>
+                        <p className="text-text-secondary text-sm">
+                          {videoCredits.remaining === 0
+                            ? "You've used all your live video sessions. Purchase more to continue getting real-time help."
+                            : 'You have 1 video credit remaining. Top up now so you\'re ready when you need help.'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                      <button
+                        onClick={async () => {
+                          setIsPurchasing('single');
+                          try {
+                            await startCheckout('price_1SxBftPeLuLIM8GmX9sxeASx');
+                          } catch {
+                            alert('Failed to start checkout. Please try again.');
+                          } finally {
+                            setIsPurchasing(null);
+                          }
+                        }}
+                        disabled={isPurchasing !== null}
+                        className="px-5 py-3 rounded-xl bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white font-semibold hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors text-sm whitespace-nowrap min-h-[44px] disabled:opacity-50"
+                        aria-label="Purchase 1 video credit for $5"
+                      >
+                        {isPurchasing === 'single' ? 'Loading...' : '1 Credit — $5'}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setIsPurchasing('pack');
+                          try {
+                            await startCheckout('price_1SxBgLPeLuLIM8GmkJ27pvdX');
+                          } catch {
+                            alert('Failed to start checkout. Please try again.');
+                          } finally {
+                            setIsPurchasing(null);
+                          }
+                        }}
+                        disabled={isPurchasing !== null}
+                        className="px-5 py-3 rounded-xl bg-gradient-to-r from-scout-purple to-electric-indigo text-white font-semibold hover:opacity-90 transition-opacity text-sm whitespace-nowrap flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-50"
+                        aria-label="Purchase 3 video credits for $12, save $3"
+                      >
+                        {isPurchasing === 'pack' ? 'Loading...' : (
+                          <>
+                            <span>3 Credits — $12</span>
+                            <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs">Save $3</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Section 3: Quick-Start Chips */}
               <div>

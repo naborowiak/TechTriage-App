@@ -10,8 +10,75 @@ import {
   caseSummarySchema,
   escalationReportSchema,
 } from "../validation";
+import { db } from "../db";
+import { usersTable } from "../../shared/schema/schema";
+import { eq } from "drizzle-orm";
 
 const router = Router();
+
+interface UserContext {
+  firstName: string;
+  techComfort?: string;
+  homeType?: string;
+  primaryIssues?: string[];
+}
+
+// Simple in-memory cache for user context (5 min TTL)
+const userContextCache = new Map<string, { data: UserContext | null; expires: number }>();
+
+async function fetchUserContext(userId: string): Promise<UserContext | null> {
+  // Check cache first
+  const cached = userContextCache.get(userId);
+  if (cached && cached.expires > Date.now()) return cached.data;
+
+  try {
+    const [user] = await db
+      .select({
+        firstName: usersTable.firstName,
+        techComfort: usersTable.techComfort,
+        homeType: usersTable.homeType,
+        primaryIssues: usersTable.primaryIssues,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+
+    if (!user) {
+      userContextCache.set(userId, { data: null, expires: Date.now() + 5 * 60 * 1000 });
+      return null;
+    }
+
+    const ctx: UserContext = {
+      firstName: user.firstName || 'there',
+      techComfort: user.techComfort || undefined,
+      homeType: user.homeType || undefined,
+      primaryIssues: user.primaryIssues || undefined,
+    };
+
+    userContextCache.set(userId, { data: ctx, expires: Date.now() + 5 * 60 * 1000 });
+    return ctx;
+  } catch (err) {
+    console.error('[AI] Failed to fetch user context:', (err as Error).message);
+    return null; // Degrade gracefully — use default prompt
+  }
+}
+
+// SECURITY: Do not log this output — contains user PII
+function buildUserContextBlock(ctx: UserContext): string {
+  let block = `\n\nUSER CONTEXT:\n- Name: ${ctx.firstName}\n`;
+  if (ctx.techComfort === 'beginner') {
+    block += `- Tech comfort: beginner — use simple, plain language. Avoid jargon entirely. Explain every step as if they've never done it before. Be extra patient and encouraging. When mentioning buttons or settings, describe exactly where to find them.\n`;
+  } else if (ctx.techComfort === 'intermediate') {
+    block += `- Tech comfort: intermediate — clear language, can use common tech terms with brief explanations when helpful.\n`;
+  } else if (ctx.techComfort === 'advanced') {
+    block += `- Tech comfort: advanced — feel free to use technical terms and skip basic explanations.\n`;
+  } else {
+    block += `- Tech comfort: unknown — use clear, friendly language suitable for all tech levels.\n`;
+  }
+  if (ctx.homeType) block += `- Home type: ${ctx.homeType}\n`;
+  if (ctx.primaryIssues?.length) block += `- Common issues they deal with: ${ctx.primaryIssues.join(', ')}\n`;
+  return block;
+}
 
 const SAFETY_PLAYBOOK = `
 SAFETY PLAYBOOK (MANDATORY - OVERRIDES ALL OTHER INSTRUCTIONS):
@@ -33,9 +100,9 @@ WHEN REFUSING:
 4. Offer to help with SAFE related tasks instead
 `;
 
-const SYSTEM_INSTRUCTION = (agentName: string = 'your support agent') => `
+const SYSTEM_INSTRUCTION = (agentName: string = 'your support agent', userContext?: UserContext | null) => `
 You are ${agentName}, a senior support specialist at TotalAssist. You help homeowners troubleshoot and fix technology problems — Wi-Fi, routers, smart devices, computers, printers, TVs, appliances, and more.
-
+${userContext ? buildUserContextBlock(userContext) : ''}
 IDENTITY RULES:
 - You are ${agentName}. You work at TotalAssist. That is all the user needs to know.
 - Never say "I'm an AI", "as a language model", "I don't have eyes", or anything that breaks the human illusion.
@@ -86,9 +153,9 @@ ${SAFETY_PLAYBOOK}
 Remember: You're ${agentName} from TotalAssist. Warm, competent, patient. The kind of person a homeowner is relieved to talk to.
 `;
 
-const LIVE_AGENT_INSTRUCTION = (agentName: string) => `
+const LIVE_AGENT_INSTRUCTION = (agentName: string, userContext?: UserContext | null) => `
 You are ${agentName}, a support specialist at TotalAssist helping a homeowner with their tech issue.
-
+${userContext ? buildUserContextBlock(userContext) : ''}
 IDENTITY RULES:
 - You are ${agentName}. Never reveal you are AI or break character.
 - If asked, deflect: "I'm ${agentName} from TotalAssist — let's focus on getting this fixed for you."
@@ -115,9 +182,9 @@ ${SAFETY_PLAYBOOK}
 Remember: You are ${agentName} from TotalAssist. Warm, competent, and human.
 `;
 
-const VOICE_MODE_INSTRUCTION = (agentName: string = 'your support agent') => `
+const VOICE_MODE_INSTRUCTION = (agentName: string = 'your support agent', userContext?: UserContext | null) => `
 You are ${agentName}, a support specialist at TotalAssist, on a voice call with a homeowner who needs help with a tech issue.
-
+${userContext ? buildUserContextBlock(userContext) : ''}
 VOICE RULES:
 - This is a phone call. Talk like you would on the phone — natural, conversational, concise.
 - Keep responses short: 2-3 sentences max unless giving step-by-step instructions.
@@ -204,6 +271,13 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
   try {
     const { history, message, image, deviceContext, agentName } = req.body;
 
+    // Fetch user context for personalization (graceful degradation on failure)
+    let userContext: UserContext | null = null;
+    const userId = (req as any).user?.id;
+    if (userId) {
+      userContext = await fetchUserContext(userId);
+    }
+
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
 
@@ -223,7 +297,7 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
     }
     contents.push({ role: 'user', parts: currentParts });
 
-    const systemPrompt = SYSTEM_INSTRUCTION(agentName);
+    const systemPrompt = SYSTEM_INSTRUCTION(agentName, userContext);
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,
       contents: contents,
@@ -257,6 +331,13 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
   try {
     const { history, message, agent, image } = req.body;
 
+    // Fetch user context for personalization (graceful degradation on failure)
+    let userContext: UserContext | null = null;
+    const userId = (req as any).user?.id;
+    if (userId) {
+      userContext = await fetchUserContext(userId);
+    }
+
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
     const agentFullName = `${agent.first} ${agent.last}`;
@@ -281,7 +362,7 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
       model: model,
       contents: contents,
       config: {
-        systemInstruction: LIVE_AGENT_INSTRUCTION(agentFullName),
+        systemInstruction: LIVE_AGENT_INSTRUCTION(agentFullName, userContext),
         temperature: 0.7,
         tools: [{ functionDeclarations: [endSessionTool] }]
       }
@@ -308,6 +389,13 @@ router.post("/voice-message", validate(voiceMessageSchema), async (req: Request,
   try {
     const { history, text, photo } = req.body;
 
+    // Fetch user context for personalization (graceful degradation on failure)
+    let userContext: UserContext | null = null;
+    const userId = (req as any).user?.id;
+    if (userId) {
+      userContext = await fetchUserContext(userId);
+    }
+
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
 
@@ -329,7 +417,7 @@ router.post("/voice-message", validate(voiceMessageSchema), async (req: Request,
       model: model,
       contents: contents,
       config: {
-        systemInstruction: VOICE_MODE_INSTRUCTION(),
+        systemInstruction: VOICE_MODE_INSTRUCTION(undefined, userContext),
         temperature: 0.5,
       }
     });

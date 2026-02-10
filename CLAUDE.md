@@ -275,6 +275,28 @@ If The_Skeptic and a Dev agent disagree:
 - **Verdict**: APPROVED_WITH_CONDITIONS by The_Skeptic
 - **Conditions**: All met by plan — 18-20px text, 44px+ touch targets, tier gating with plain-language text on locked tiles, graceful empty case state, keyboard/ARIA accessibility, native `<button>` elements throughout
 
+### Phase 3: Polish & Personalize (Feb 10, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **FAQ.tsx, App.tsx** — Small Change Exemption: Fixed 3 stale "Coming Soon" references for video support, made footer Help Center link functional
+2. **server/routes/ai.ts** — AI personalization: Added `fetchUserContext()` with 5-min cache, `buildUserContextBlock()`, injected user onboarding data (techComfort, homeType, primaryIssues) into all 3 system prompts (chat, live-agent, voice)
+3. **server/index.ts** — WebSocket personalization: Same pattern for live voice/video sessions via `setupGeminiLive()`
+4. **Dashboard.tsx** — Added dismissible welcome banner for 0-case users, video credit purchase CTA for home/pro users with ≤1 credit remaining
+
+#### Key Skeptic Conditions Applied:
+- Auth check before personalization (graceful null fallback)
+- 5-minute in-memory cache to avoid per-message DB queries
+- No PII logged; only firstName used in prompts
+- Loading/disabled state on purchase buttons
+- Aria-labels on all interactive elements
+- Mobile-responsive welcome banner
+
+#### Risks Accepted:
+- Hardcoded Stripe price IDs duplicated across BillingManagement.tsx and Dashboard.tsx
+- In-memory cache not shared across server instances (acceptable for single-instance deployment)
+
 <!-- DECISIONS END -->
 
 ---
