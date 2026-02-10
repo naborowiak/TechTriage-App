@@ -528,6 +528,10 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     sendMessage(responseText);
   }, [sendMessage]);
 
+  // Stable ref for sendMessage so the initialMessage effect doesn't re-trigger on sendMessage changes
+  const sendMessageRef = useRef(sendMessage);
+  useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
+
   // Auto-send initial message from Dashboard empty-state input
   const initialMessageSentRef = useRef(false);
   useEffect(() => {
@@ -535,12 +539,12 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       initialMessageSentRef.current = true;
       // Small delay to let the component fully mount
       const timer = setTimeout(() => {
-        sendMessage(initialMessage);
+        sendMessageRef.current(initialMessage);
         onInitialMessageSent?.();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [initialMessage, sendMessage, onInitialMessageSent]);
+  }, [initialMessage, onInitialMessageSent]);
 
   // Handle session end - save summary and mark resolved
   const handleSessionEnd = useCallback(async (currentCaseId: string | null, msgs: ChatMessage[], endSummary?: string) => {
