@@ -2156,7 +2156,7 @@ const App: React.FC = () => {
               >
                 <div className="flex h-full">
                   <div className="flex-1 min-w-0">
-                    <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
+                    <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} onBackToDashboard={handleBackToDashboard} />
                   </div>
                   <div className="hidden xl:block w-80 flex-shrink-0">
                     <ScoutInfoPanel />
@@ -2231,7 +2231,7 @@ const App: React.FC = () => {
                 >
                   <div className="flex h-full">
                     <div className="flex-1 min-w-0">
-                      <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} />
+                      <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} onBackToDashboard={handleBackToDashboard} />
                     </div>
                     <div className="hidden xl:block w-80 flex-shrink-0">
                       <ScoutInfoPanel />

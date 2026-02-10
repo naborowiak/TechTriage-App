@@ -13,12 +13,14 @@ interface TranscriptEntry {
 interface VideoSessionModalProps {
   onClose: () => void;
   caseId?: string;
+  onCaseCreated?: (caseId: string) => void;
 }
 
-export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
+export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessionModalProps) {
   const { user } = useAuth();
 
   const [isMuted, setIsMuted] = useState(false);
+  // resolvedCaseIdRef (below) tracks the case ID — no state needed since we only read via ref
   const [status, setStatus] = useState<'connecting' | 'listening' | 'speaking'>('connecting');
   const [transcriptHistory, setTranscriptHistory] = useState<TranscriptEntry[]>([]);
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
@@ -40,6 +42,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
   const outputAnalyserRef = useRef<AnalyserNode | null>(null);
   const inputAnalyserRef = useRef<AnalyserNode | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const transcriptHistoryRef = useRef<TranscriptEntry[]>([]);
 
   const TARGET_SAMPLE_RATE = 16000;
 
@@ -57,10 +60,87 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
     }
   }, []);
 
+  // Lazily create a case for this video session if one doesn't exist
+  const resolvedCaseIdRef = useRef<string | null>(caseId || null);
+  const ensureVideoCase = useCallback(async (): Promise<string | null> => {
+    if (resolvedCaseIdRef.current) return resolvedCaseIdRef.current;
+    try {
+      const title = `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - Video Support Session`;
+      const res = await fetch('/api/cases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ title, sessionMode: 'video' }),
+      });
+      if (!res.ok) return null;
+      const newCase = await res.json();
+      resolvedCaseIdRef.current = newCase.id;
+      onCaseCreated?.(newCase.id);
+      return newCase.id;
+    } catch {
+      return null;
+    }
+  }, [onCaseCreated]);
+
+  // Save transcript, recording, and resolve case
+  const saveAndResolveCase = useCallback(async (finalSummary: string) => {
+    const activeCaseId = await ensureVideoCase();
+    if (!activeCaseId) return;
+
+    // Save transcript as case messages
+    const currentTranscript = transcriptHistoryRef.current;
+    if (currentTranscript.length > 0) {
+      const msgData = currentTranscript.map(t => ({
+        role: t.role === 'user' ? 'user' : 'model',
+        text: t.text,
+        timestamp: t.timestamp,
+      }));
+      fetch(`/api/cases/${activeCaseId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ messages: msgData }),
+      }).catch(() => {});
+    }
+
+    // Save recording
+    const transcriptText = currentTranscript
+      .map(t => `${t.role === 'user' ? 'User' : 'Support'}: ${t.text}`)
+      .join('\n');
+    if (transcriptText) {
+      fetch(`/api/cases/${activeCaseId}/recordings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          sessionType: 'live_video',
+          transcript: transcriptText,
+        }),
+      }).catch(() => {});
+    }
+
+    // Resolve case → triggers recap email
+    fetch(`/api/cases/${activeCaseId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        status: 'resolved',
+        aiSummary: finalSummary,
+      }),
+    }).catch(() => {});
+  }, [ensureVideoCase]);
+
   const handleEndSession = useCallback(() => {
     stopAllHardware();
-    onClose();
-  }, [stopAllHardware, onClose]);
+    // Save any content before closing
+    const currentTranscript = transcriptHistoryRef.current;
+    if (currentTranscript.length > 0 && !isSessionEnded) {
+      saveAndResolveCase('Video support session completed.').finally(() => onClose());
+    } else {
+      onClose();
+    }
+  }, [stopAllHardware, onClose, saveAndResolveCase, isSessionEnded]);
 
   const sendText = useCallback((text: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -299,15 +379,17 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
               lastSpeakingTimeRef.current = Date.now();
               playAudio(message.data);
             } else if (message.type === 'aiTranscript') {
-              setTranscriptHistory((prev) => [
-                ...prev,
-                { role: 'model', text: message.data, timestamp: Date.now() },
-              ]);
+              setTranscriptHistory((prev) => {
+                const next = [...prev, { role: 'model' as const, text: message.data, timestamp: Date.now() }];
+                transcriptHistoryRef.current = next;
+                return next;
+              });
             } else if (message.type === 'userTranscript') {
-              setTranscriptHistory((prev) => [
-                ...prev,
-                { role: 'user', text: message.data, timestamp: Date.now() },
-              ]);
+              setTranscriptHistory((prev) => {
+                const next = [...prev, { role: 'user' as const, text: message.data, timestamp: Date.now() }];
+                transcriptHistoryRef.current = next;
+                return next;
+              });
             } else if (message.type === 'turnComplete') {
               // Debounce transition to listening to prevent flicker
               const timeSinceSpeaking = Date.now() - lastSpeakingTimeRef.current;
@@ -331,31 +413,8 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
               setIsSessionEnded(true);
               stopAllHardware();
 
-              // Save transcript to case if we have a caseId
-              if (caseId) {
-                const transcriptText = transcriptHistory
-                  .map(t => `${t.role === 'user' ? 'User' : 'Support'}: ${t.text}`)
-                  .join('\n');
-                fetch(`/api/cases/${caseId}/recordings`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    sessionType: 'live_video',
-                    transcript: transcriptText,
-                  }),
-                }).catch(() => {});
-                // Update case status
-                fetch(`/api/cases/${caseId}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: 'include',
-                  body: JSON.stringify({
-                    status: 'resolved',
-                    aiSummary: finalSummary,
-                  }),
-                }).catch(() => {});
-              }
+              // Create case if needed, save transcript + recording, resolve → triggers email
+              saveAndResolveCase(finalSummary);
             }
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);

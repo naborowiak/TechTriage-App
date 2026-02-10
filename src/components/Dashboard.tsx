@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Lock,
   ArrowRight,
+  ArrowLeft,
   Clock,
   X,
 } from "lucide-react";
@@ -266,8 +267,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-sm font-medium border border-light-300 dark:border-midnight-700"
           >
-            <Plus className="w-4 h-4" />
-            New chat
+            {activeView === "main" ? (
+              <>
+                <Plus className="w-4 h-4" />
+                New chat
+              </>
+            ) : (
+              <>
+                <ArrowLeft className="w-4 h-4" />
+                Dashboard
+              </>
+            )}
           </button>
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
@@ -473,7 +483,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         ) : (
           /* Control Center */
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto dashboard-mesh-bg">
             <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8">
 
               {/* Section 1: Emergency Bar */}

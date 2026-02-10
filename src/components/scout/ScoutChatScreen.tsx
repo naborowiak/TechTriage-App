@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, UserPlus, Hash, Camera } from 'lucide-react';
+import { Send, UserPlus, Hash, Camera, ArrowLeft } from 'lucide-react';
 import { EscalationBreadcrumb } from './EscalationBreadcrumb';
 import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
@@ -30,9 +30,10 @@ interface ScoutChatScreenProps {
   onInitialMessageSent?: () => void;
   onEscalation?: (report: EscalationReportData, caseId: string) => void;
   onCaseCreated?: (newCase: { id: string; caseNumber?: number; title: string; status: string; sessionMode: string; createdAt: string; updatedAt: string }) => void;
+  onBackToDashboard?: () => void;
 }
 
-export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation, onCaseCreated }: ScoutChatScreenProps) {
+export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation, onCaseCreated, onBackToDashboard }: ScoutChatScreenProps) {
   const { canUse, incrementUsage, canUseVideoCredit, useVideoCredit } = useUsage();
   const { user, isAuthenticated } = useAuth();
 
@@ -640,7 +641,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       setVoiceReport(typedReport);
       setShowVoiceReport(true);
 
-      // Update case with AI summary
+      // Resolve case with AI summary → triggers recap email
       const summary = typedReport.summary;
       if (summary) {
         fetch(`/api/cases/${currentCaseId}`, {
@@ -648,7 +649,19 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
+            status: 'resolved',
             aiSummary: `Issue: ${summary.issue || 'N/A'}\nDiagnosis: ${summary.diagnosis || 'N/A'}`,
+          }),
+        }).catch(() => {});
+      } else {
+        // Summary generation failed — still resolve the case so email fires
+        fetch(`/api/cases/${currentCaseId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            status: 'resolved',
+            aiSummary: 'Voice support session completed.',
           }),
         }).catch(() => {});
       }
@@ -779,9 +792,19 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         </div>
       )}
 
-      {/* Embedded header with case ID, breadcrumb, and escalation */}
-      {embedded && (caseId || hasActiveSession) && (
+      {/* Embedded header with back button, case ID, breadcrumb, and escalation */}
+      {embedded && (onBackToDashboard || caseId || hasActiveSession) && (
         <div className="px-4 py-2 bg-light-100/50 dark:bg-[#151922]/50 border-b border-light-200 dark:border-white/5">
+          {onBackToDashboard && (
+            <button
+              onClick={onBackToDashboard}
+              className="flex items-center gap-1.5 mb-1.5 px-2 py-1.5 -ml-1 rounded-lg text-text-secondary dark:text-white/60 hover:bg-light-200 dark:hover:bg-white/10 transition-colors text-sm font-medium"
+              aria-label="Back to Dashboard"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Dashboard
+            </button>
+          )}
           {hasActiveSession && (
             <EscalationBreadcrumb
               activeMode={activeMode}
@@ -1004,6 +1027,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             setActiveMode('chat');
           }}
           caseId={caseId || undefined}
+          onCaseCreated={(newId) => {
+            setCaseId(newId);
+          }}
         />
       )}
 
