@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, UserPlus, Hash, Camera } from 'lucide-react';
+import { Send, UserPlus, Hash, Camera, Check, Lightbulb } from 'lucide-react';
 import { EscalationBreadcrumb } from './EscalationBreadcrumb';
 import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
@@ -12,13 +12,158 @@ import { VoiceReportModal } from '../voice/VoiceReportModal';
 import { saveVoiceReportToHistory } from '../../services/voiceReportService';
 import { useWebSpeech } from '../../hooks/useWebSpeech';
 import { useGeminiVoice } from '../../hooks/useGeminiVoice';
-import { ChatMessage, UserRole, DeviceRecord, EscalationReportData } from '../../types';
+import { ChatMessage, UserRole, DeviceRecord, EscalationReportData, GuidedAction, PresentChoicesAction, ShowStepAction, ConfirmResultAction } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 
 // Agent name pool — each session gets a random agent for a realistic team feel
 const AGENT_NAMES = ['Sarah', 'Marcus', 'Emily', 'James', 'Olivia', 'Daniel', 'Priya', 'Chris'];
 function pickAgentName(): string {
   return AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)];
+}
+
+// --- Guided Fix Engine: Rendering Components ---
+
+function ChoicePills({
+  action,
+  messageId,
+  onSelect,
+  disabled,
+}: {
+  action: PresentChoicesAction;
+  messageId: string;
+  onSelect: (messageId: string, action: GuidedAction, text: string) => void;
+  disabled: boolean;
+}) {
+  const isAnswered = !!action.selectedChoice;
+
+  return (
+    <div className="mt-3 space-y-2" role="group" aria-label={action.prompt}>
+      {action.prompt && (
+        <p className="text-white/70 text-sm font-medium">{action.prompt}</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {action.choices.map((choice, i) => {
+          const isSelected = action.selectedChoice === choice;
+          return (
+            <button
+              key={i}
+              onClick={() => {
+                if (isAnswered || disabled) return;
+                onSelect(messageId, { ...action, selectedChoice: choice }, choice);
+              }}
+              disabled={isAnswered || disabled}
+              aria-pressed={isSelected}
+              aria-label={choice}
+              className={`
+                px-5 py-3 rounded-xl text-base font-medium transition-all
+                ${isSelected
+                  ? 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white ring-2 ring-white/30'
+                  : isAnswered
+                    ? 'bg-white/5 text-white/30 cursor-default'
+                    : 'bg-white/10 border border-white/20 text-white hover:bg-white/20 hover:border-[#06B6D4]/50 active:scale-95'
+                }
+              `}
+            >
+              {isSelected && <Check className="w-4 h-4 inline mr-1.5" />}
+              {choice}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StepCard({ action }: { action: ShowStepAction }) {
+  return (
+    <div
+      className="mt-3 bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
+      role="article"
+      aria-label={`Step ${action.stepNumber}: ${action.title}`}
+    >
+      <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#6366F1]/20 to-[#06B6D4]/20 border-b border-white/10">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#6366F1] to-[#06B6D4] flex items-center justify-center text-white font-bold text-sm shrink-0">
+          {action.stepNumber}
+        </div>
+        <h4 className="text-white font-semibold text-base">{action.title}</h4>
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-white/90 text-base leading-relaxed">{action.instruction}</p>
+      </div>
+      {action.tip && (
+        <div className="px-4 py-2.5 bg-amber-500/10 border-t border-white/5 flex items-start gap-2">
+          <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <p className="text-amber-200/90 text-sm">{action.tip}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConfirmButtons({
+  action,
+  messageId,
+  onSelect,
+  disabled,
+}: {
+  action: ConfirmResultAction;
+  messageId: string;
+  onSelect: (messageId: string, action: GuidedAction, text: string) => void;
+  disabled: boolean;
+}) {
+  const isAnswered = !!action.selectedAnswer;
+  const yesLabel = action.yesLabel || 'Yes';
+  const noLabel = action.noLabel || 'No';
+
+  return (
+    <div className="mt-3 space-y-3" role="group" aria-label={action.question}>
+      <p className="text-white/80 text-base font-medium">{action.question}</p>
+      <div className="flex gap-3">
+        <button
+          onClick={() => {
+            if (isAnswered || disabled) return;
+            onSelect(messageId, { ...action, selectedAnswer: 'yes' }, yesLabel);
+          }}
+          disabled={isAnswered || disabled}
+          aria-pressed={action.selectedAnswer === 'yes'}
+          aria-label={`${yesLabel} — confirm yes`}
+          className={`
+            flex-1 py-3.5 rounded-xl text-base font-semibold transition-all
+            ${action.selectedAnswer === 'yes'
+              ? 'bg-emerald-500 text-white ring-2 ring-emerald-400/30'
+              : isAnswered
+                ? 'bg-white/5 text-white/30 cursor-default'
+                : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 active:scale-95'
+            }
+          `}
+        >
+          {action.selectedAnswer === 'yes' && <Check className="w-4 h-4 inline mr-1.5" />}
+          {yesLabel}
+        </button>
+        <button
+          onClick={() => {
+            if (isAnswered || disabled) return;
+            onSelect(messageId, { ...action, selectedAnswer: 'no' }, noLabel);
+          }}
+          disabled={isAnswered || disabled}
+          aria-pressed={action.selectedAnswer === 'no'}
+          aria-label={`${noLabel} — confirm no`}
+          className={`
+            flex-1 py-3.5 rounded-xl text-base font-semibold transition-all
+            ${action.selectedAnswer === 'no'
+              ? 'bg-red-500 text-white ring-2 ring-red-400/30'
+              : isAnswered
+                ? 'bg-white/5 text-white/30 cursor-default'
+                : 'bg-red-500/20 border border-red-500/40 text-red-300 hover:bg-red-500/30 active:scale-95'
+            }
+          `}
+        >
+          {action.selectedAnswer === 'no' && <Check className="w-4 h-4 inline mr-1.5" />}
+          {noLabel}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 interface ScoutChatScreenProps {
@@ -108,12 +253,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (data?.messages?.length > 0) {
-            const loaded = data.messages.map((m: { role: string; text: string; image?: string; timestamp: number }, i: number) => ({
+            const loaded = data.messages.map((m: { role: string; text: string; image?: string; timestamp: number; guidedAction?: GuidedAction }, i: number) => ({
               id: `loaded_${i}`,
               role: m.role === 'user' ? UserRole.USER : UserRole.MODEL,
               text: m.text,
               image: m.image,
               timestamp: m.timestamp,
+              guidedAction: m.guidedAction,
             }));
             setMessages(loaded);
           }
@@ -167,6 +313,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           text: m.text,
           image: m.image,
           timestamp: m.timestamp,
+          guidedAction: m.guidedAction,
         }));
         navigator.sendBeacon(
           `/api/cases/${currentCaseId}/messages`,
@@ -244,6 +391,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       text: m.text,
       image: m.image,
       timestamp: m.timestamp,
+      guidedAction: m.guidedAction,
     }));
     fetch(`/api/cases/${currentCaseId}/messages`, {
       method: 'POST',
@@ -316,12 +464,26 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         await new Promise(resolve => setTimeout(resolve, remaining));
       }
 
+      // Convert guided fix function calls to GuidedAction (with defensive validation)
+      let guidedAction: GuidedAction | undefined;
+      if (response.functionCall && response.functionCall.name !== 'endSession') {
+        const { name, args } = response.functionCall;
+        if (name === 'presentChoices' && Array.isArray(args.choices) && args.choices.length > 0) {
+          guidedAction = { type: 'presentChoices', prompt: String(args.prompt || ''), choices: args.choices.map(String).slice(0, 6) };
+        } else if (name === 'showStep' && typeof args.instruction === 'string') {
+          guidedAction = { type: 'showStep', stepNumber: typeof args.stepNumber === 'number' ? args.stepNumber : 1, title: String(args.title || ''), instruction: args.instruction, tip: args.tip ? String(args.tip) : undefined };
+        } else if (name === 'confirmResult' && typeof args.question === 'string') {
+          guidedAction = { type: 'confirmResult', question: args.question, yesLabel: args.yesLabel ? String(args.yesLabel) : undefined, noLabel: args.noLabel ? String(args.noLabel) : undefined };
+        }
+      }
+
       const assistantMessage: ChatMessage = {
         id: generateId(),
         role: UserRole.MODEL,
         text: response.text,
         timestamp: Date.now(),
         agentName,
+        guidedAction,
       };
 
       const updatedMessages = [...newMessages, assistantMessage];
@@ -352,6 +514,14 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     }
   }, [messages, canUse, incrementUsage, ensureCase, activeMode, getDeviceContext, saveMessages]);
 
+  // Handle guided action interaction (user taps choice/confirm)
+  const handleGuidedAction = useCallback((messageId: string, updatedAction: GuidedAction, responseText: string) => {
+    setMessages(prev => prev.map(m =>
+      m.id === messageId ? { ...m, guidedAction: updatedAction } : m
+    ));
+    sendMessage(responseText);
+  }, [sendMessage]);
+
   // Auto-send initial message from Dashboard empty-state input
   const initialMessageSentRef = useRef(false);
   useEffect(() => {
@@ -377,6 +547,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         text: m.text,
         image: m.image,
         timestamp: m.timestamp,
+        guidedAction: m.guidedAction,
       }));
       await fetch(`/api/cases/${currentCaseId}/messages`, {
         method: 'POST',
@@ -836,6 +1007,20 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               <div className="text-[15px] leading-relaxed">
                 {renderMarkdown(message.text)}
               </div>
+              {/* Guided Fix Engine: Interactive elements */}
+              {message.guidedAction && message.role === UserRole.MODEL && (
+                <>
+                  {message.guidedAction.type === 'presentChoices' && (
+                    <ChoicePills action={message.guidedAction} messageId={message.id} onSelect={handleGuidedAction} disabled={isLoading} />
+                  )}
+                  {message.guidedAction.type === 'showStep' && (
+                    <StepCard action={message.guidedAction} />
+                  )}
+                  {message.guidedAction.type === 'confirmResult' && (
+                    <ConfirmButtons action={message.guidedAction} messageId={message.id} onSelect={handleGuidedAction} disabled={isLoading} />
+                  )}
+                </>
+              )}
               <div className={`text-xs mt-2 ${message.role === UserRole.USER ? 'text-white/70' : 'text-white/50'}`}>
                 {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>

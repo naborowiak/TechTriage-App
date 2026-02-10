@@ -13,7 +13,34 @@ export interface ChatMessage {
   timestamp: number;
   agentName?: string;
   cannedFollowUp?: string[]; // For non-authenticated user canned responses
+  guidedAction?: GuidedAction; // Phase 4: Guided Fix Engine
 }
+
+// Guided Fix Engine types
+export interface PresentChoicesAction {
+  type: 'presentChoices';
+  prompt: string;
+  choices: string[];
+  selectedChoice?: string;
+}
+
+export interface ShowStepAction {
+  type: 'showStep';
+  stepNumber: number;
+  title: string;
+  instruction: string;
+  tip?: string;
+}
+
+export interface ConfirmResultAction {
+  type: 'confirmResult';
+  question: string;
+  yesLabel?: string;
+  noLabel?: string;
+  selectedAnswer?: 'yes' | 'no';
+}
+
+export type GuidedAction = PresentChoicesAction | ShowStepAction | ConfirmResultAction;
 
 export interface SavedSession {
   id: string;

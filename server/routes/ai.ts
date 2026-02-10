@@ -139,6 +139,20 @@ DIAGNOSTIC APPROACH:
 5. When resolved, confirm: "Great, that should be all set. If it acts up again, just open a new case and I'll take a look."
 6. When the issue is resolved or the user wants to end, use the 'endSession' tool.
 
+GUIDED FIX MODE:
+You have three tools for creating an interactive, step-by-step experience:
+
+1. presentChoices(prompt, choices[]) — Present 2-4 tappable options to narrow down the problem. Use at the START of troubleshooting and whenever the answer is one of a known set.
+2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. Wait for their response before giving the next step.
+3. confirmResult(question, yesLabel?, noLabel?) — Ask a yes/no question to check the outcome. Customize labels when "Yes"/"No" aren't quite right (e.g., "Green light" / "Red or off").
+
+RULES:
+- ALWAYS prefer guided tools over asking the user to type when the answer is predictable.
+- Include conversational text alongside any tool call — the text appears as a chat bubble above the interactive element.
+- ONE tool call per response maximum. Never stack multiple tools.
+- If a user types a free-form message instead of tapping a button, continue naturally.
+- Do NOT use guided tools when you genuinely need the user to describe something in their own words.
+
 WHAT YOU'RE GOOD AT:
 - Wi-Fi and networking (routers, mesh systems, dead zones, slow speeds)
 - Smart home devices (Ring, Nest, Alexa, Hue, smart plugs)
@@ -176,6 +190,20 @@ DIAGNOSTIC APPROACH:
 3. Provide clear, numbered steps for troubleshooting
 4. Check in after each step: "What are you seeing now?"
 5. Confirm resolution and offer follow-up
+
+GUIDED FIX MODE:
+You have three tools for creating an interactive, step-by-step experience:
+
+1. presentChoices(prompt, choices[]) — Present 2-4 tappable options to narrow down the problem. Use at the START of troubleshooting and whenever the answer is one of a known set.
+2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. Wait for their response before giving the next step.
+3. confirmResult(question, yesLabel?, noLabel?) — Ask a yes/no question to check the outcome. Customize labels when "Yes"/"No" aren't quite right (e.g., "Green light" / "Red or off").
+
+RULES:
+- ALWAYS prefer guided tools over asking the user to type when the answer is predictable.
+- Include conversational text alongside any tool call — the text appears as a chat bubble above the interactive element.
+- ONE tool call per response maximum. Never stack multiple tools.
+- If a user types a free-form message instead of tapping a button, continue naturally.
+- Do NOT use guided tools when you genuinely need the user to describe something in their own words.
 
 ${SAFETY_PLAYBOOK}
 
@@ -224,6 +252,48 @@ const endSessionTool: FunctionDeclaration = {
       }
     },
     required: ['summary']
+  }
+};
+
+const presentChoicesTool: FunctionDeclaration = {
+  name: 'presentChoices',
+  parameters: {
+    type: Type.OBJECT,
+    description: 'Present 2-4 tappable choices to narrow down the issue. Use this instead of asking open-ended questions when the likely answers are predictable.',
+    properties: {
+      prompt: { type: Type.STRING, description: 'A short question displayed above the choice buttons, e.g. "Which best describes your situation?"' },
+      choices: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'Array of 2-4 short choice labels. Keep each under 40 characters. Use plain language.' }
+    },
+    required: ['prompt', 'choices']
+  }
+};
+
+const showStepTool: FunctionDeclaration = {
+  name: 'showStep',
+  parameters: {
+    type: Type.OBJECT,
+    description: 'Show a numbered step card with a clear instruction for the user to follow. Use this when guiding someone through a multi-step fix. One step at a time.',
+    properties: {
+      stepNumber: { type: Type.INTEGER, description: 'The step number (1, 2, 3, etc.)' },
+      title: { type: Type.STRING, description: 'A short title for the step, e.g. "Check the power light"' },
+      instruction: { type: Type.STRING, description: 'The detailed instruction for this step. Use plain, simple language. Maximum 2-3 sentences.' },
+      tip: { type: Type.STRING, description: 'An optional helpful tip or "what to look for" hint.' }
+    },
+    required: ['stepNumber', 'title', 'instruction']
+  }
+};
+
+const confirmResultTool: FunctionDeclaration = {
+  name: 'confirmResult',
+  parameters: {
+    type: Type.OBJECT,
+    description: 'Ask the user a yes/no question to confirm the result of a step or check.',
+    properties: {
+      question: { type: Type.STRING, description: 'The yes/no question to ask, e.g. "Is the power light on now?"' },
+      yesLabel: { type: Type.STRING, description: 'Custom label for the Yes button. Defaults to "Yes" if not provided.' },
+      noLabel: { type: Type.STRING, description: 'Custom label for the No button. Defaults to "No" if not provided.' }
+    },
+    required: ['question']
   }
 };
 
@@ -306,7 +376,7 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
           ? systemPrompt + `\n\nDEVICE CONTEXT: ${deviceContext}`
           : systemPrompt,
         temperature: 0.4,
-        tools: [{ functionDeclarations: [endSessionTool] }]
+        tools: [{ functionDeclarations: [endSessionTool, presentChoicesTool, showStepTool, confirmResultTool] }]
       }
     });
 
@@ -364,7 +434,7 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
       config: {
         systemInstruction: LIVE_AGENT_INSTRUCTION(agentFullName, userContext),
         temperature: 0.7,
-        tools: [{ functionDeclarations: [endSessionTool] }]
+        tools: [{ functionDeclarations: [endSessionTool, presentChoicesTool, showStepTool, confirmResultTool] }]
       }
     });
 

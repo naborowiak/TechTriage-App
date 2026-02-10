@@ -297,6 +297,27 @@ If The_Skeptic and a Dev agent disagree:
 - Hardcoded Stripe price IDs duplicated across BillingManagement.tsx and Dashboard.tsx
 - In-memory cache not shared across server instances (acceptable for single-instance deployment)
 
+### Phase 4: Guided Fix Engine (Feb 10, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **server/routes/ai.ts** — Added 3 Gemini function declarations (`presentChoices`, `showStep`, `confirmResult`), GUIDED FIX MODE prompt block in `SYSTEM_INSTRUCTION` and `LIVE_AGENT_INSTRUCTION`, registered tools in both chat endpoints
+2. **src/types.ts** — Added `GuidedAction` union type (`PresentChoicesAction | ShowStepAction | ConfirmResultAction`), extended `ChatMessage` with `guidedAction` field
+3. **src/components/scout/ScoutChatScreen.tsx** — Added `ChoicePills`, `StepCard`, `ConfirmButtons` rendering components, function-call-to-guidedAction conversion with defensive validation, `handleGuidedAction` callback, guidedAction persistence in message saves/loads
+
+#### Key Skeptic Conditions Applied:
+- No `dangerouslySetInnerHTML` in guided components (plain JSX text rendering)
+- All interactive elements are semantic `<button>` elements
+- Defensive type validation: `Array.isArray()` on choices, `typeof` on stepNumber, fallback to no guided action if malformed
+- Choices array capped at 6 to prevent UI overflow
+- Disabled state during loading to prevent double-taps
+
+#### Risks Accepted:
+- Gemini may not consistently use guided tools (graceful fallback to plain text)
+- No function-response pairing — user choices sent as text, Gemini infers from context
+- Pre-existing XSS in `renderMarkdown` via `dangerouslySetInnerHTML` not addressed
+
 <!-- DECISIONS END -->
 
 ---
