@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Mic, Video, Shield, Clock, Home, Users, Zap, Loader2, Lock, Plus, Minus, HelpCircle } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Mic, Video, Shield, Clock, Home, Users, Zap, Loader2, Lock, Plus, Minus, HelpCircle, FileText, Sparkles } from 'lucide-react';
 import { PageView } from '../types';
 import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
 import { useAuth } from '../hooks/useAuth';
@@ -126,8 +126,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       features: [
         '5 support messages per month',
         '1 photo analysis per month',
+        'Guided fix steps (Assist Pills)',
         'Case history saved to your account',
-        'Diagnostic reports for every case',
       ],
       lockedFeatures: [] as string[],
       cta: 'Sign Up Free',
@@ -145,9 +145,9 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
         'Unlimited photo analysis',
         'Voice support — talk through issues',
         'Video diagnostic — 1 credit/week',
-        'Full case history and search',
+        'Guided fix steps (Assist Pills)',
         'PDF diagnostic reports',
-        'Device inventory tracking',
+        'Full case history and search',
         'Email case summaries',
       ],
       cta: 'Get Started',
@@ -165,8 +165,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
         'Everything in Home, plus:',
         'Multi-home support (up to 5)',
         'Family member accounts',
-        'Professional escalation reports',
         'Video diagnostics — 15 credits/month',
+        'Professional escalation reports (PDF)',
         'Priority response times',
       ],
       cta: 'Get Started',
@@ -245,6 +245,10 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     {
       q: 'Do you offer a mobile app?',
       a: 'TotalAssist works directly in your web browser with no download required — just visit the site on your phone, tablet, or computer. No app needed.',
+    },
+    {
+      q: 'Why not just use ChatGPT or Google Gemini?',
+      a: 'General-purpose AI chatbots can answer tech questions, but they can\'t see your devices through photo or video, walk you through fixes with interactive step-by-step assist pills, or generate a professional diagnostic report. TotalAssist is built specifically for home tech support — it understands your devices, remembers your history, and gives you a clear path to resolution.',
     },
   ];
 
@@ -397,7 +401,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             {plans.map((plan, i) => (
               <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
                 <div
-                  className={`bg-white dark:bg-midnight-800 rounded-3xl p-8 relative overflow-hidden transition-all border h-full hover:-translate-y-1 shadow-sm ${
+                  className={`bg-white dark:bg-midnight-800 rounded-3xl p-8 relative overflow-hidden transition-all border h-full flex flex-col hover:-translate-y-1 shadow-sm ${
                     user && currentTier === planToTier[plan.name]
                       ? 'border-electric-cyan shadow-glow-cyan scale-[1.02] md:scale-105'
                       : plan.highlight
@@ -409,7 +413,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   className="absolute inset-0 opacity-[0.07] dark:opacity-[0.05] pointer-events-none z-0"
                   style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}
                 />
-                <div className="relative z-[1] [text-shadow:0_1px_2px_rgba(0,0,0,0.06)] dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">
+                <div className="relative z-[1] flex flex-col flex-1 [text-shadow:0_1px_2px_rgba(0,0,0,0.06)] dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">
                 {user && currentTier === planToTier[plan.name] && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-electric-cyan text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
                     YOUR PLAN
@@ -484,7 +488,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   {getButtonText(plan.name, plan.cta)}
                 </button>
 
-                <ul className="space-y-3">
+                <ul className="space-y-3 flex-1">
                   {plan.features.map((feature, j) => (
                     <li key={j} className="flex items-start gap-3 text-[15px]">
                       <Check className={`w-5 h-5 shrink-0 mt-0.5 ${
@@ -669,6 +673,52 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className="text-sm font-semibold text-electric-cyan">Full history</span>
+                      </td>
+                    </tr>
+                    {/* Assist Pills */}
+                    <tr className="border-b border-light-200 dark:border-midnight-800">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-scout-purple/10 flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-scout-purple" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-text-primary dark:text-white">Assist Pills</div>
+                            <div className="text-xs text-text-muted">Guided step-by-step fixes</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
+                      </td>
+                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
+                      </td>
+                    </tr>
+                    {/* PDF Reports */}
+                    <tr className="border-b border-light-200 dark:border-midnight-800">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/10 flex items-center justify-center">
+                            <FileText className="w-4 h-4 text-electric-indigo" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-text-primary dark:text-white">PDF Reports</div>
+                            <div className="text-xs text-text-muted">Diagnostic case reports</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
+                      </td>
+                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
                       </td>
                     </tr>
                     {/* Multi-home */}

@@ -49,6 +49,10 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
           question: 'Is my information secure?',
           answer: 'Absolutely. We use bank-level encryption to protect your data. We never share your personal information with third parties, and you can delete your account and data at any time.',
         },
+        {
+          question: 'Why not just use ChatGPT or Google Gemini?',
+          answer: 'General AI chatbots are great for general questions, but they can\'t see your devices, guide you step-by-step with interactive assist pills, or produce a professional diagnostic report you can hand to a technician. TotalAssist is purpose-built for home tech support — it understands routers, smart home devices, and error codes out of the box, and it remembers your devices and past issues across sessions.',
+        },
       ],
     },
     {

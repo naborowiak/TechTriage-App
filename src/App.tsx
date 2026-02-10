@@ -20,6 +20,9 @@ import {
   HelpCircle,
   Sun,
   Moon,
+  Video,
+  Sparkles,
+  FileText,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -1179,21 +1182,25 @@ const WhyTotalAssist: React.FC = () => {
     { benefit: "Under 30-second average response", scoutAI: true, phoneSupport: false },
   ];
 
-  const benefits = [
+  const differentiators = [
     {
-      icon: <Zap className="w-8 h-8" />,
-      title: "Instant Guidance",
-      desc: "No hold music. No phone trees. Just describe your issue and get clear, step-by-step guidance in seconds.",
+      icon: <Camera className="w-7 h-7" />,
+      secondIcon: <Video className="w-5 h-5" />,
+      title: "See It, Don't Explain It",
+      desc: "Most AI chatbots make you describe your problem in words. TotalAssist lets you snap a photo or point your camera — we see what you see and diagnose it instantly.",
+      gradient: "from-scout-purple to-electric-indigo",
     },
     {
-      icon: <Camera className="w-8 h-8" />,
-      title: "Photo Analysis",
-      desc: "Snap a photo of that blinking light or error code. We analyze it instantly—no confusing descriptions needed.",
+      icon: <Sparkles className="w-7 h-7" />,
+      title: "Tap, Don't Type",
+      desc: "No more typing long messages. TotalAssist guides you with interactive assist pills — just tap choices, confirm results, and follow step-by-step cards to a fix.",
+      gradient: "from-electric-indigo to-electric-cyan",
     },
     {
-      icon: <CheckCircle2 className="w-8 h-8" />,
-      title: "Remote-First Fixes",
-      desc: "Most issues are resolved without anyone stepping foot in your home. Onsite visits only if absolutely necessary.",
+      icon: <FileText className="w-7 h-7" />,
+      title: "A Repair Record, Not Just a Chat",
+      desc: "Every session produces a professional PDF diagnostic report — what went wrong, what was fixed, and what to watch for. Share it with a technician if you ever need onsite help.",
+      gradient: "from-electric-cyan to-scout-purple",
     },
   ];
 
@@ -1217,20 +1224,42 @@ const WhyTotalAssist: React.FC = () => {
         {/* Header */}
         <AnimatedElement animation="fadeInUp" className="text-center mb-12">
           <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
-            Why TotalAssist
+            Why TotalAssist Is Different
           </span>
           <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight text-text-primary dark:text-white">
-            Skip the wait. Get answers instantly.
+            Not just another chatbot.
           </h2>
           <p className="text-text-secondary text-xl max-w-2xl mx-auto">
-            TotalAssist diagnoses tech and home issues in seconds — no calls, no waiting, no transfers.
+            TotalAssist goes beyond text — it sees your devices, guides you interactively, and documents every fix.
           </p>
         </AnimatedElement>
 
-        {/* Comparison Table Section */}
-        <AnimatedElement animation="fadeInUp" delay={0.2} className="mb-20">
+        {/* Differentiator Cards */}
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
+          {differentiators.map((item, i) => (
+            <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
+              <div className="group p-8 rounded-2xl bg-white dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 transition-all duration-300 hover:-translate-y-1 h-full shadow-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className={`w-14 h-14 bg-gradient-to-br ${item.gradient} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-scout-purple/20 group-hover:scale-110 transition-transform`}>
+                    {item.icon}
+                  </div>
+                  {item.secondIcon && (
+                    <div className="w-10 h-10 bg-gradient-to-br from-electric-indigo/20 to-scout-purple/20 rounded-xl flex items-center justify-center text-electric-indigo dark:text-electric-cyan border border-electric-indigo/20">
+                      {item.secondIcon}
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-text-primary dark:text-white mb-3">
+                  {item.title}
+                </h3>
+                <p className="text-text-secondary leading-relaxed">{item.desc}</p>
+              </div>
+            </AnimatedElement>
+          ))}
+        </div>
 
-          {/* Comparison Table */}
+        {/* Comparison Table Section */}
+        <AnimatedElement animation="fadeInUp" delay={0.5}>
           <div className="relative overflow-hidden rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-lg">
             {/* Table Header Row */}
             <div className="grid grid-cols-3 bg-light-100 dark:bg-midnight-800 border-b border-light-300 dark:border-midnight-700">
@@ -1273,23 +1302,6 @@ const WhyTotalAssist: React.FC = () => {
             ))}
           </div>
         </AnimatedElement>
-
-        {/* Benefit Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mt-16">
-          {benefits.map((benefit, i) => (
-            <AnimatedElement key={i} animation="fadeInUp" delay={0.3 + i * 0.15}>
-              <div className="group p-8 rounded-2xl bg-white dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 transition-all duration-300 hover:-translate-y-1 h-full shadow-sm">
-                <div className="w-16 h-16 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-scout-purple/20 group-hover:scale-110 transition-transform">
-                  {benefit.icon}
-                </div>
-                <h3 className="text-xl font-bold text-text-primary dark:text-white mb-3">
-                  {benefit.title}
-                </h3>
-                <p className="text-text-secondary leading-relaxed">{benefit.desc}</p>
-              </div>
-            </AnimatedElement>
-          ))}
-        </div>
 
       </div>
     </section>
@@ -1372,7 +1384,7 @@ const FAQSection: React.FC = () => {
     },
     {
       q: "What are the pricing options?",
-      a: "We offer flexible plans: Basic (free with limited features), Pro ($20/mo for unlimited access), and Premium ($199/year with priority support). All paid plans include unlimited chat support, photo analysis, and more.",
+      a: "We offer three plans: Free (5 chats and 1 photo analysis per month), Home ($9.99/mo for unlimited chat, photo, voice, and weekly video diagnostics), and Pro ($19.99/mo — everything in Home plus 15 video credits/month and multi-home support). All plans include guided assist pills and PDF diagnostic reports.",
     },
   ];
 
