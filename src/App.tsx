@@ -667,7 +667,7 @@ const Hero: React.FC<{
       <div
         className="absolute inset-0 bg-cover bg-no-repeat bg-[center_bottom] lg:hidden"
         style={{
-          backgroundImage: "url(/mobile-hero.png)",
+          backgroundImage: "url(/hero_mobile1.jpg)",
         }}
       ></div>
 
@@ -675,107 +675,98 @@ const Hero: React.FC<{
       <div
         className="absolute inset-0 bg-cover bg-no-repeat hidden lg:block bg-[position:85%_55%] xl:bg-[position:90%_50%] 2xl:bg-[position:92%_48%]"
         style={{
-          backgroundImage: "url(/homepage-hero.jpg)",
+          backgroundImage: "url(/hero_image1.jpg)",
         }}
       ></div>
 
       {/* ===== GRADIENT OVERLAYS (separate from background images) ===== */}
 
       {/* ===== LIGHT MODE - MOBILE (top to bottom, layered) ===== */}
-      {/* Layer 1: Primary top-to-bottom gradient - extended coverage */}
+      {/* Layer 1: Primary top-to-bottom gradient */}
       <div className="absolute inset-0 lg:hidden dark:hidden" style={{
         background: `linear-gradient(180deg,
-          rgba(255,255,255,0.99) 0%,
-          rgba(255,255,255,0.98) 25%,
-          rgba(250,250,255,0.95) 45%,
-          rgba(243,244,255,0.85) 60%,
-          rgba(238,242,255,0.6) 75%,
-          rgba(238,242,255,0.3) 85%,
-          transparent 95%)`
+          rgba(255,255,255,0.92) 0%,
+          rgba(255,255,255,0.85) 20%,
+          rgba(250,250,255,0.65) 40%,
+          rgba(243,244,255,0.4) 55%,
+          rgba(238,242,255,0.18) 70%,
+          transparent 85%)`
       }}></div>
       {/* Layer 2: Diagonal gradient for natural edge */}
       <div className="absolute inset-0 lg:hidden dark:hidden" style={{
         background: `linear-gradient(160deg,
-          rgba(255,255,255,0.95) 0%,
-          rgba(248,247,255,0.9) 35%,
-          rgba(243,244,255,0.6) 55%,
-          rgba(168,85,247,0.08) 70%,
-          transparent 85%)`
+          rgba(255,255,255,0.8) 0%,
+          rgba(248,247,255,0.55) 30%,
+          rgba(243,244,255,0.25) 50%,
+          transparent 70%)`
       }}></div>
 
-      {/* ===== LIGHT MODE - DESKTOP (split overlay: strong left, light right) ===== */}
-      {/* Layer 1: Primary split gradient - strong text area, transparent phone area */}
+      {/* ===== LIGHT MODE - DESKTOP (split overlay: readable left, transparent right) ===== */}
+      {/* Layer 1: Primary split gradient */}
       <div className="absolute inset-0 hidden lg:block dark:hidden z-[1]" style={{
         background: `linear-gradient(90deg,
-          rgba(255,255,255,0.98) 0%,
-          rgba(255,255,255,0.92) 30%,
-          rgba(255,255,255,0.55) 48%,
-          rgba(255,255,255,0.15) 60%,
-          transparent 72%)`
+          rgba(255,255,255,0.92) 0%,
+          rgba(255,255,255,0.78) 25%,
+          rgba(255,255,255,0.38) 44%,
+          rgba(255,255,255,0.1) 56%,
+          transparent 68%)`
       }}></div>
       {/* Layer 2: Diagonal gradient for organic edge */}
       <div className="absolute inset-0 hidden lg:block dark:hidden" style={{
         background: `linear-gradient(135deg,
-          rgba(255,255,255,0.85) 0%,
-          rgba(250,249,255,0.6) 25%,
-          rgba(243,244,255,0.3) 40%,
-          transparent 55%)`
-      }}></div>
-      {/* Light mode phone spotlight - subtle brightness behind phone */}
-      <div className="absolute inset-0 hidden lg:block dark:hidden pointer-events-none z-[2]" style={{
-        background: `radial-gradient(circle at 78% 55%,
-          rgba(255,255,255,0.18) 0%,
-          rgba(255,255,255,0.10) 18%,
-          rgba(255,255,255,0.00) 45%)`
+          rgba(255,255,255,0.6) 0%,
+          rgba(250,249,255,0.35) 22%,
+          rgba(243,244,255,0.12) 38%,
+          transparent 52%)`
       }}></div>
 
       {/* ===== DARK MODE - MOBILE (top to bottom, layered) ===== */}
-      {/* Layer 1: Primary top-to-bottom gradient with brand tint - extended coverage */}
+      {/* Layer 1: Primary top-to-bottom gradient with brand tint */}
       <div className="absolute inset-0 lg:dark:hidden hidden dark:block" style={{
         background: `linear-gradient(180deg,
-          rgba(11,14,30,0.99) 0%,
-          rgba(11,14,30,0.98) 20%,
-          rgba(18,16,42,0.96) 40%,
-          rgba(30,24,58,0.88) 55%,
-          rgba(45,35,75,0.7) 70%,
-          rgba(99,102,241,0.25) 85%,
-          transparent 98%)`
+          rgba(11,14,30,0.92) 0%,
+          rgba(11,14,30,0.85) 18%,
+          rgba(18,16,42,0.68) 38%,
+          rgba(30,24,58,0.45) 52%,
+          rgba(45,35,75,0.22) 68%,
+          rgba(99,102,241,0.1) 82%,
+          transparent 95%)`
       }}></div>
       {/* Layer 2: Diagonal gradient for natural edge */}
       <div className="absolute inset-0 lg:dark:hidden hidden dark:block" style={{
         background: `linear-gradient(160deg,
-          rgba(15,12,35,0.95) 0%,
-          rgba(25,20,50,0.85) 30%,
-          rgba(35,28,65,0.7) 50%,
-          rgba(168,85,247,0.15) 70%,
-          transparent 88%)`
+          rgba(15,12,35,0.78) 0%,
+          rgba(25,20,50,0.55) 28%,
+          rgba(35,28,65,0.3) 48%,
+          rgba(168,85,247,0.08) 65%,
+          transparent 82%)`
       }}></div>
 
-      {/* ===== DARK MODE - DESKTOP (matches nav bar, split overlay) ===== */}
-      {/* Layer 1: Primary split gradient - anchored to midnight-900 like nav */}
+      {/* ===== DARK MODE - DESKTOP (split overlay) ===== */}
+      {/* Layer 1: Primary split gradient */}
       <div className="absolute inset-0 hidden lg:dark:block z-[1]" style={{
         background: `linear-gradient(90deg,
-          rgba(15,18,32,0.98) 0%,
-          rgba(15,18,32,0.96) 18%,
-          rgba(27,24,58,0.86) 34%,
-          rgba(45,35,85,0.62) 48%,
-          rgba(99,102,241,0.25) 62%,
-          transparent 76%)`
+          rgba(15,18,32,0.92) 0%,
+          rgba(15,18,32,0.82) 16%,
+          rgba(27,24,58,0.55) 32%,
+          rgba(45,35,85,0.3) 46%,
+          rgba(99,102,241,0.1) 58%,
+          transparent 72%)`
       }}></div>
       {/* Layer 2: Diagonal gradient for organic edge */}
       <div className="absolute inset-0 hidden lg:dark:block" style={{
         background: `linear-gradient(135deg,
-          rgba(15,18,32,0.9) 0%,
-          rgba(25,22,52,0.7) 22%,
-          rgba(40,32,72,0.4) 40%,
-          transparent 58%)`
+          rgba(15,18,32,0.65) 0%,
+          rgba(25,22,52,0.4) 20%,
+          rgba(40,32,72,0.18) 38%,
+          transparent 54%)`
       }}></div>
       {/* Dark mode phone spotlight - brand-colored glow behind phone */}
       <div className="absolute inset-0 hidden lg:dark:block pointer-events-none z-[2]" style={{
         background: `radial-gradient(circle at 78% 55%,
-          rgba(99,102,241,0.22) 0%,
-          rgba(168,85,247,0.12) 22%,
-          rgba(0,0,0,0.00) 52%)`
+          rgba(99,102,241,0.15) 0%,
+          rgba(168,85,247,0.08) 22%,
+          rgba(0,0,0,0.00) 50%)`
       }}></div>
 
       {/* Hexagon pattern for visual distinction */}

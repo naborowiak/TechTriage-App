@@ -605,6 +605,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       lockedForTiers: [] as string[],
                       action: () => { if (onOpenScout) onOpenScout(); },
                       feature: 'chat' as const,
+                      iconBg: 'bg-[#06B6D4]/10 dark:bg-[#06B6D4]/20',
+                      iconColor: 'text-[#06B6D4]',
+                      hoverBorder: 'hover:border-[#06B6D4]',
+                      hoverShadow: 'hover:shadow-[0_4px_20px_rgba(6,182,212,0.15)]',
                     },
                     {
                       id: 'photo' as const,
@@ -614,6 +618,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       lockedForTiers: [] as string[],
                       action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('photo'); else if (onOpenScout) onOpenScout(); },
                       feature: 'photo' as const,
+                      iconBg: 'bg-electric-indigo/10 dark:bg-electric-indigo/20',
+                      iconColor: 'text-electric-indigo',
+                      hoverBorder: 'hover:border-electric-indigo',
+                      hoverShadow: 'hover:shadow-[0_4px_20px_rgba(99,102,241,0.15)]',
                     },
                     {
                       id: 'voice' as const,
@@ -623,6 +631,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       lockedForTiers: ['guest', 'free'],
                       action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('voice'); else if (onOpenScout) onOpenScout(); },
                       feature: 'signal' as const,
+                      iconBg: 'bg-[#8B5CF6]/10 dark:bg-[#8B5CF6]/20',
+                      iconColor: 'text-[#8B5CF6]',
+                      hoverBorder: 'hover:border-[#8B5CF6]',
+                      hoverShadow: 'hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)]',
                     },
                     {
                       id: 'video' as const,
@@ -632,6 +644,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       lockedForTiers: ['guest', 'free'],
                       action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('video'); else if (onOpenScout) onOpenScout(); },
                       feature: 'videoDiagnostic' as const,
+                      iconBg: 'bg-scout-purple/10 dark:bg-scout-purple/20',
+                      iconColor: 'text-scout-purple',
+                      hoverBorder: 'hover:border-scout-purple',
+                      hoverShadow: 'hover:shadow-[0_4px_20px_rgba(168,85,247,0.15)]',
                     },
                   ].map((tile) => {
                     const Icon = tile.icon;
@@ -654,7 +670,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           transition-all duration-200
                           ${isLocked
                             ? 'bg-light-100 dark:bg-midnight-800/50 border-light-300 dark:border-midnight-700 opacity-70 cursor-not-allowed'
-                            : 'bg-white dark:bg-midnight-800 border-light-300 dark:border-midnight-700 hover:border-electric-indigo hover:shadow-lg active:scale-[0.98]'
+                            : `bg-white dark:bg-midnight-800 border-light-300 dark:border-midnight-700 ${tile.hoverBorder} ${tile.hoverShadow} active:scale-[0.98]`
                           }
                         `}
                         aria-label={`${tile.label}${isLocked ? ' — requires upgrade' : ''}`}
@@ -667,9 +683,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
                           isLocked
                             ? 'bg-light-300 dark:bg-midnight-700'
-                            : 'bg-electric-indigo/10 dark:bg-electric-indigo/20'
+                            : tile.iconBg
                         }`}>
-                          <Icon className={`w-7 h-7 ${isLocked ? 'text-text-muted' : 'text-electric-indigo'}`} />
+                          <Icon className={`w-7 h-7 ${isLocked ? 'text-text-muted' : tile.iconColor}`} />
                         </div>
                         <span className={`text-lg font-bold leading-tight ${isLocked ? 'text-text-muted' : 'text-text-primary dark:text-white'}`}>
                           {tile.label}
