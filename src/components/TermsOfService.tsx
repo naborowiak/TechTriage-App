@@ -60,9 +60,9 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
             TotalAssist provides AI-powered technical support assistance through "Scout," our artificial intelligence assistant. The Service includes:
           </p>
           <ul className="list-disc pl-5 space-y-2 mt-3">
-            <li><strong className="text-text-primary dark:text-white">Scout Chat:</strong> Text-based AI conversations for troubleshooting tech issues</li>
-            <li><strong className="text-text-primary dark:text-white">Scout Snapshot:</strong> Photo analysis for visual diagnosis of devices and error messages</li>
-            <li><strong className="text-text-primary dark:text-white">Scout Voice:</strong> Voice-powered interactive support sessions</li>
+            <li><strong className="text-text-primary dark:text-white">Chat Support:</strong> Text-based AI conversations for troubleshooting tech issues</li>
+            <li><strong className="text-text-primary dark:text-white">Photo Analysis:</strong> Photo-based visual diagnosis of devices and error messages</li>
+            <li><strong className="text-text-primary dark:text-white">Voice Support:</strong> Voice-powered interactive support sessions</li>
             <li><strong className="text-text-primary dark:text-white">Live Video Support:</strong> Real-time video diagnostic sessions with AI guidance</li>
             <li><strong className="text-text-primary dark:text-white">Diagnostic Reports:</strong> PDF summaries of support sessions emailed to you</li>
           </ul>

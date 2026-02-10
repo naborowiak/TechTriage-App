@@ -93,7 +93,7 @@ export function ScoutInfoPanel({ activeMode = 'chat' }: ScoutInfoPanelProps) {
           {!isPaidTier && (
             <div>
               <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Snapshots</span>
+                <span className="text-text-secondary">Photos</span>
                 <span className={`font-medium ${photoRemaining === 0 ? 'text-red-400' : 'text-text-primary dark:text-white'}`}>
                   {photoRemaining === 0 ? 'Used' : `${photoRemaining}/1`}
                 </span>

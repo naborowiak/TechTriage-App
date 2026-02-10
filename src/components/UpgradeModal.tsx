@@ -84,7 +84,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
 
           {/* Description */}
           <p className="text-text-secondary text-center mb-8">
-            Get unlimited Chat, Snapshot, Voice Mode, and Video Diagnostics with {plan.name}.
+            Get unlimited chat, photo analysis, voice support, and video diagnostics with {plan.name}.
           </p>
 
           {/* Feature list */}
@@ -93,7 +93,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
               <div className="w-8 h-8 rounded-lg bg-electric-indigo/20 flex items-center justify-center">
                 <MessageSquare className="w-4 h-4 text-electric-indigo" />
               </div>
-              <span className="text-sm">Unlimited Text Support</span>
+              <span className="text-sm">Unlimited Chat Support</span>
               <Check className="w-4 h-4 text-electric-cyan ml-auto" />
             </div>
             <div className="flex items-center gap-3 text-text-secondary">
@@ -338,7 +338,7 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
                 <div className="flex-1">
                   <div className="text-white font-medium">Upgrade to TotalAssist Pro</div>
                   <div className="text-sm text-text-secondary">
-                    Get 15 credits/month + premium AI — $19.99/mo
+                    Get 15 credits/month + multi-home support — $19.99/mo
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-text-muted" />

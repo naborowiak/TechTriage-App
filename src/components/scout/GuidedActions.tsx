@@ -1,4 +1,4 @@
-import { Check, Lightbulb } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Lightbulb } from 'lucide-react';
 import { GuidedAction, PresentChoicesAction, ShowStepAction, ConfirmResultAction } from '../../types';
 
 export const SOMETHING_ELSE_LABEL = "It's Something Else";
@@ -80,8 +80,21 @@ export function ChoicePills({
   );
 }
 
-export function StepCard({ action, variant = 'chat' }: { action: ShowStepAction; variant?: 'chat' | 'compact' }) {
+export function StepCard({
+  action,
+  variant = 'chat',
+  onNext,
+  onBack,
+  disabled,
+}: {
+  action: ShowStepAction;
+  variant?: 'chat' | 'compact';
+  onNext?: () => void;
+  onBack?: () => void;
+  disabled?: boolean;
+}) {
   const textClass = variant === 'compact' ? 'text-base' : 'text-base';
+  const hasNav = onNext || onBack;
   return (
     <div
       className="mt-3 bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 rounded-2xl overflow-hidden"
@@ -101,6 +114,32 @@ export function StepCard({ action, variant = 'chat' }: { action: ShowStepAction;
         <div className="px-4 py-2.5 bg-amber-500/10 border-t border-light-200 dark:border-white/5 flex items-start gap-2">
           <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
           <p className="text-amber-700 dark:text-amber-200/90 text-sm">{action.tip}</p>
+        </div>
+      )}
+      {hasNav && (
+        <div className="flex gap-2 px-4 py-3 border-t border-light-300 dark:border-white/10">
+          {onBack && action.stepNumber > 1 && (
+            <button
+              onClick={onBack}
+              disabled={disabled}
+              aria-label="Go back to previous step"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-medium text-sm min-h-[44px] transition-all bg-transparent border border-gray-300 dark:border-white/15 text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-white/70 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Go back
+            </button>
+          )}
+          {onNext && (
+            <button
+              onClick={onNext}
+              disabled={disabled}
+              aria-label="Done with this step, continue to next"
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-medium text-sm min-h-[44px] transition-all ml-auto bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white hover:shadow-lg hover:shadow-[#6366F1]/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Done, next step
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
         </div>
       )}
     </div>

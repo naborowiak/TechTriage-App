@@ -43,7 +43,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
         },
         {
           question: 'Do I need to download an app?',
-          answer: 'No download required! TotalAssist works directly in your web browser. Our mobile app is coming soon for an even more convenient experience.',
+          answer: 'No download required! TotalAssist works directly in your web browser — on your phone, tablet, or computer. No app needed.',
         },
         {
           question: 'Is my information secure?',
@@ -58,8 +58,8 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       color: '#1F2937',
       faqs: [
         {
-          question: 'What is Text Support?',
-          answer: 'Text Support is our chat-based troubleshooting service. Describe your tech problem in plain English, and get instant troubleshooting guidance. It\'s available 24/7 and included in all plans.',
+          question: 'What is Chat Support?',
+          answer: 'Chat Support is our text-based troubleshooting service. Describe your tech problem in plain English, and get instant troubleshooting guidance. It\'s available 24/7 and included in all plans.',
         },
         {
           question: 'What is Photo Analysis?',
@@ -91,7 +91,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
         },
         {
           question: 'Is photo diagnosis accurate?',
-          answer: 'Our AI has been trained on millions of tech issues and is highly accurate for common problems. For unusual cases, it will recommend connecting with a live specialist for personalized help.',
+          answer: 'Our AI has been trained on millions of tech issues and is highly accurate for common problems. For unusual cases, it will recommend trying voice or video mode for a more hands-on walkthrough.',
         },
       ],
     },
@@ -155,7 +155,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
         },
         {
           question: 'What\'s the difference between Home and Pro plans?',
-          answer: 'TotalAssist Home ($9.99/mo) includes unlimited Chat, Snapshot, and Signal (voice), plus 1 Live Video session per week. TotalAssist Pro ($19.99/mo) includes everything in Home plus 15 Live Video sessions per month, premium AI for all features, multi-home support for up to 5 properties, and a $100 annual onsite service credit.',
+          answer: 'TotalAssist Home ($9.99/mo) includes unlimited chat, photo analysis, and voice support, plus 1 video diagnostic per week. TotalAssist Pro ($19.99/mo) adds 15 video diagnostics per month, multi-home support (up to 5 properties), family member accounts, professional escalation reports, and priority response times. Ideal for landlords, Airbnb hosts, or families managing multiple homes.',
         },
         {
           question: 'Can I change my plan later?',
@@ -179,15 +179,15 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       faqs: [
         {
           question: 'What if I need onsite help?',
-          answer: 'If your issue can\'t be resolved remotely, we can connect you with a vetted local technician. Home plan members get 15% off, and Pro members receive a $100 annual service credit.',
+          answer: 'If your issue can\'t be resolved remotely, your support agent will provide a detailed diagnostic report you can share with a local technician — so they can hit the ground running without re-diagnosing the problem.',
         },
         {
           question: 'How fast is your response time?',
-          answer: 'Text support responses are instant--typically under 30 seconds. For Live video sessions, wait times depend on your plan tier, with Pro members getting the fastest priority access.',
+          answer: 'Chat, voice, and photo support responses are instant — typically under 30 seconds. Video diagnostic sessions connect immediately when you have available credits.',
         },
         {
           question: 'What hours is support available?',
-          answer: 'Text support and Photo Analysis are available 24/7. Live video support with human specialists is available 7am-10pm in your local time zone, 7 days a week.',
+          answer: 'All support modes — chat, photo analysis, voice, and video — are available 24/7, including weekends and holidays.',
         },
         {
           question: 'Can you help with business or commercial tech issues?',

@@ -244,7 +244,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     },
     {
       q: 'Do you offer a mobile app?',
-      a: 'TotalAssist works directly in your web browser with no download required — just visit the site on your phone, tablet, or computer. A dedicated mobile app is coming soon.',
+      a: 'TotalAssist works directly in your web browser with no download required — just visit the site on your phone, tablet, or computer. No app needed.',
     },
   ];
 

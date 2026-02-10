@@ -320,10 +320,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         agentName
       );
 
-      // Add a realistic delay so responses don't appear instantly (feels more human)
+      // Realistic delay scaled by response length (~55 WPM typing feel)
       const elapsed = Date.now() - responseStartTime;
-      const minDelay = 1200 + Math.random() * 800; // 1.2-2.0 seconds minimum
-      const remaining = minDelay - elapsed;
+      const charDelay = (response.text?.length || 0) * 18; // 18ms per character
+      const targetDelay = Math.max(2000, Math.min(8000, 1500 + charDelay));
+      const remaining = targetDelay - elapsed;
       if (remaining > 0) {
         await new Promise(resolve => setTimeout(resolve, remaining));
       }
@@ -872,7 +873,12 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" role="log" aria-label="Support conversation" aria-live="polite">
         <div className="max-w-3xl mx-auto space-y-4">
-        {messages.map((message) => (
+        {(() => {
+          // Find the last showStep message to attach navigation pills
+          const lastStepId = [...messages].reverse().find(
+            m => m.role === UserRole.MODEL && m.guidedAction?.type === 'showStep'
+          )?.id;
+          return messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.role === UserRole.USER ? 'justify-end' : 'justify-start'}`}
@@ -906,7 +912,12 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                     <ChoicePills action={message.guidedAction} messageId={message.id} onSelect={handleGuidedAction} disabled={isLoading} />
                   )}
                   {message.guidedAction.type === 'showStep' && (
-                    <StepCard action={message.guidedAction} />
+                    <StepCard
+                      action={message.guidedAction}
+                      onNext={message.id === lastStepId && !isLoading ? () => sendMessage("Done with this step — what's next?") : undefined}
+                      onBack={message.id === lastStepId && !isLoading && message.guidedAction.stepNumber > 1 ? () => sendMessage("Can you go back to the previous step?") : undefined}
+                      disabled={isLoading}
+                    />
                   )}
                   {message.guidedAction.type === 'confirmResult' && (
                     <ConfirmButtons action={message.guidedAction} messageId={message.id} onSelect={handleGuidedAction} disabled={isLoading} />
@@ -918,7 +929,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               </div>
             </div>
           </div>
-        ))}
+        ));
+        })()}
 
         {isLoading && (
           <div className="flex justify-start" role="status" aria-label={`${agentName} is researching your issue`}>

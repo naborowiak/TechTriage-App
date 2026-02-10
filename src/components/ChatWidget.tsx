@@ -77,7 +77,7 @@ export interface ChatWidgetHandle {
 // Canned responses for non-logged in users (sales/conversion focused)
 const CANNED_RESPONSES: Record<string, { text: string; followUp?: string[] }> = {
   pricing: {
-    text: "Great question! We have three plans:\n\n• **TotalAssist Free** - 5 chat messages + 1 photo/month\n• **TotalAssist Home ($9.99/mo)** - Unlimited chat, photos, voice + 1 Live Video session/week\n• **TotalAssist Pro ($19.99/mo)** - Everything unlimited + 15 Live Video sessions/month + premium support\n\nWould you like to see the full pricing details?",
+    text: "Great question! We have three plans:\n\n• **TotalAssist Free** - 5 chat messages + 1 photo/month\n• **TotalAssist Home ($9.99/mo)** - Unlimited chat, photos, voice + 1 video diagnostic/week\n• **TotalAssist Pro ($19.99/mo)** - Everything unlimited + 15 video diagnostics/month + multi-home support\n\nWould you like to see the full pricing details?",
     followUp: ["View pricing", "Sign up free", "What's included?"]
   },
   help: {
