@@ -8,6 +8,69 @@ import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
 
+// Shared helper: build PDF data from a case + its messages + user info
+async function buildCasePDFData(
+  caseId: string,
+  userId: string
+): Promise<{
+  pdfData: CasePDFData;
+  user: {
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    sessionGuideEmails: boolean | null;
+  };
+} | null> {
+  // Fetch case with ownership check
+  const [caseDetails] = await db
+    .select()
+    .from(casesTable)
+    .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, userId)))
+    .limit(1);
+
+  if (!caseDetails) return null;
+
+  // Fetch user info
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
+
+  // Fetch messages
+  const [messageRecord] = await db
+    .select()
+    .from(caseMessagesTable)
+    .where(eq(caseMessagesTable.caseId, caseId))
+    .limit(1);
+
+  const userName = user
+    ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || undefined
+    : undefined;
+
+  const pdfData: CasePDFData = {
+    caseId,
+    title: caseDetails.title,
+    status: caseDetails.status || "open",
+    sessionMode: caseDetails.sessionMode,
+    aiSummary: caseDetails.aiSummary,
+    escalationReport: caseDetails.escalationReport as CasePDFData["escalationReport"],
+    messages: (messageRecord?.messages as CasePDFData["messages"]) || [],
+    createdAt: caseDetails.createdAt?.toISOString() || new Date().toISOString(),
+    userName,
+  };
+
+  return {
+    pdfData,
+    user: {
+      email: user?.email || null,
+      firstName: user?.firstName || null,
+      lastName: user?.lastName || null,
+      sessionGuideEmails: user?.sessionGuideEmails ?? null,
+    },
+  };
+}
+
 // GET: Fetch all cases for the logged-in user
 router.get("/", async (req, res) => {
   if (!req.isAuthenticated() || !req.user) {
@@ -393,6 +456,83 @@ router.get("/:id/messages", async (req, res) => {
   } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// GET: Download case report as PDF
+router.get("/:id/report", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const { id } = req.params;
+
+  try {
+    const result = await buildCasePDFData(id, req.user.id);
+
+    if (!result) {
+      return res.status(404).json({ error: "Case not found" });
+    }
+
+    const pdfBase64 = generateCaseGuidePDF(result.pdfData);
+    const pdfBuffer = Buffer.from(pdfBase64, "base64");
+
+    const safeTitle = (result.pdfData.title || "Report")
+      .replace(/[^a-zA-Z0-9_\- ]/g, "")
+      .substring(0, 50)
+      .trim();
+    const dateStr = new Date().toISOString().split("T")[0];
+    const filename = `TotalAssist_Report_${safeTitle}_${dateStr}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", pdfBuffer.length);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Error generating case report PDF:", error);
+    res.status(500).json({ error: "Failed to generate report" });
+  }
+});
+
+// POST: Email case report PDF to the user
+router.post("/:id/report/email", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const { id } = req.params;
+
+  try {
+    const result = await buildCasePDFData(id, req.user.id);
+
+    if (!result) {
+      return res.status(404).json({ error: "Case not found" });
+    }
+
+    if (!result.user.email) {
+      return res.status(400).json({ error: "No email address on file" });
+    }
+
+    const pdfBase64 = generateCaseGuidePDF(result.pdfData);
+
+    const emailResult = await sendSessionGuideEmail(
+      result.user.email,
+      result.user.firstName || "there",
+      result.pdfData.aiSummary || result.pdfData.title,
+      pdfBase64,
+      new Date(result.pdfData.createdAt)
+    );
+
+    if (!emailResult.success) {
+      console.error(`[CASE] Failed to email report for case ${id}:`, emailResult.error);
+      return res.status(500).json({ error: "Failed to send report email" });
+    }
+
+    console.log(`[CASE] Emailed report PDF for case ${id} to ${result.user.email}`);
+    res.json({ success: true, simulated: emailResult.simulated || false });
+  } catch (error) {
+    console.error("Error emailing case report:", error);
+    res.status(500).json({ error: "Failed to send report email" });
   }
 });
 

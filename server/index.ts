@@ -20,6 +20,9 @@ import { authStorage } from "./replit_integrations/auth/storage";
 import { db } from "./db";
 import { usersTable } from "../shared/schema/schema";
 import { eq } from "drizzle-orm";
+import cookie from "cookie";
+import cookieSignature from "cookie-signature";
+import type { IncomingMessage } from "http";
 
 import * as stripeService from "./services/stripeService";
 import * as promoCodeService from "./services/promoCodeService";
@@ -44,6 +47,9 @@ import {
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
+
+// Session secret extracted to a named constant for reuse in WebSocket auth
+const SESSION_SECRET = process.env.SESSION_SECRET || "totalassist_dev_secret_change_in_prod";
 
 app.use(
   cors({
@@ -176,7 +182,7 @@ const sessionStore = new PgStore({
 app.use(
   session({
     store: sessionStore,
-    secret: process.env.SESSION_SECRET || "totalassist_dev_secret_change_in_prod",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -187,6 +193,92 @@ app.use(
     },
   }),
 );
+
+// ============================================
+// WebSocket Authentication Helper
+// ============================================
+
+/**
+ * Authenticates a WebSocket connection by parsing the session cookie from
+ * the HTTP upgrade request headers, unsigning it, looking up the session
+ * in PostgreSQL, and extracting the Passport user.
+ *
+ * SECURITY NOTES:
+ * - Does NOT log raw cookie values or session IDs
+ * - Every failure branch returns null gracefully
+ * - Wrapped in try/catch to prevent any unhandled exceptions
+ *
+ * @returns The session user object ({ id, email, ... }) or null if authentication fails
+ */
+async function authenticateWebSocket(req: IncomingMessage): Promise<{ id: string; email?: string; firstName?: string; [key: string]: any } | null> {
+  try {
+    // 1. Parse cookies from the upgrade request headers
+    const cookieHeader = req.headers.cookie;
+    if (!cookieHeader) {
+      const ip = req.socket.remoteAddress || "unknown";
+      console.log(`[WS AUTH] No cookie header present (IP: ${ip})`);
+      return null;
+    }
+
+    const cookies = cookie.parse(cookieHeader);
+
+    // 2. Extract the connect.sid session cookie
+    const signedCookie = cookies["connect.sid"];
+    if (!signedCookie) {
+      const ip = req.socket.remoteAddress || "unknown";
+      console.log(`[WS AUTH] No session cookie found (IP: ${ip})`);
+      return null;
+    }
+
+    // 3. The cookie value starts with "s:" prefix when signed by express-session
+    //    Strip the "s:" prefix before unsigning
+    let cookieValue = signedCookie;
+    if (cookieValue.startsWith("s:")) {
+      cookieValue = cookieValue.slice(2);
+    }
+
+    // 4. Unsign the cookie to get the session ID
+    const sessionId = cookieSignature.unsign(cookieValue, SESSION_SECRET);
+    if (sessionId === false) {
+      const ip = req.socket.remoteAddress || "unknown";
+      console.log(`[WS AUTH] Invalid session cookie signature (IP: ${ip})`);
+      return null;
+    }
+
+    // 5. Look up the session in the PostgreSQL session store
+    const sessionData = await new Promise<any>((resolve) => {
+      sessionStore.get(sessionId, (err, session) => {
+        if (err) {
+          console.error("[WS AUTH] Session store lookup failed");
+          resolve(null);
+          return;
+        }
+        resolve(session);
+      });
+    });
+
+    if (!sessionData) {
+      const ip = req.socket.remoteAddress || "unknown";
+      console.log(`[WS AUTH] Session not found or expired (IP: ${ip})`);
+      return null;
+    }
+
+    // 6. Extract the Passport user from the session
+    //    Passport stores the serialized user in session.passport.user
+    const passportUser = sessionData?.passport?.user;
+    if (!passportUser || !passportUser.id) {
+      const ip = req.socket.remoteAddress || "unknown";
+      console.log(`[WS AUTH] No authenticated user in session (IP: ${ip})`);
+      return null;
+    }
+
+    return passportUser;
+  } catch (err) {
+    const ip = req.socket.remoteAddress || "unknown";
+    console.error(`[WS AUTH] Authentication failed (IP: ${ip})`);
+    return null;
+  }
+}
 
 // Passport middleware - MUST be before any auth routes
 app.use(passport.initialize());
@@ -299,8 +391,8 @@ app.post("/api/auth/register", authLimiter, validate(registerSchema), async (req
     if (result.verificationToken) {
       // FIX: Correct argument order (email, token, firstName) and ensure firstName is string | undefined
       sendVerificationEmail(
-        email, 
-        result.verificationToken, 
+        email,
+        result.verificationToken,
         firstName || undefined
       ).catch((err) => {
         console.error("[EMAIL] Failed to send verification email:", err);
@@ -439,8 +531,8 @@ app.post("/api/auth/resend-verification", async (req, res) => {
     if (result.verificationToken) {
       // FIX: Correct argument order (email, token, firstName) and handle nulls
       sendVerificationEmail(
-        email, 
-        result.verificationToken, 
+        email,
+        result.verificationToken,
         result.user?.firstName || undefined
       ).catch((err) => {
         console.error("[EMAIL] Failed to send verification email:", err);
@@ -1813,45 +1905,55 @@ async function main() {
   const wss = new WebSocketServer({ server, path: "/live" });
 
   wss.on("connection", async (ws, req) => {
-    // Parse query params for access control and mode
+    // Parse query params for mode only (userId is NO LONGER trusted from query params)
     const url = new URL(req.url || "", `http://${req.headers.host}`);
-    const userId = url.searchParams.get("userId");
     const mode = (url.searchParams.get("mode") === "voice" ? "voice" : "video") as "voice" | "video";
-    console.log(`New WebSocket connection for ${mode} session`);
+    const clientIp = req.socket.remoteAddress || "unknown";
+    console.log(`[WS] New WebSocket connection for ${mode} session (IP: ${clientIp})`);
+
+    // SECURITY: Authenticate via session cookie — userId query param is completely ignored
+    const sessionUser = await authenticateWebSocket(req);
+    if (!sessionUser) {
+      console.log(`[WS] Unauthenticated connection rejected (IP: ${clientIp})`);
+      ws.close(4401, "Authentication required");
+      return;
+    }
+
+    // Use authenticated session user's ID as sole source of truth
+    const userId = sessionUser.id;
+    console.log(`[WS] Authenticated ${mode} session for user ${userId}`);
 
     let userContext: UserContext | null = null;
 
-    if (userId) {
-      // Check if user has access to live sessions (voice and video share the same quota)
-      const accessCheck = await checkFeatureAccess(userId, "live");
-      if (!accessCheck.allowed) {
-        console.log(
-          `[${mode.toUpperCase()}] Access denied for user ${userId}: ${accessCheck.reason}`,
-        );
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            code: accessCheck.reason,
-            message:
-              accessCheck.reason === "LIMIT_REACHED"
-                ? `You've used all your ${mode} support sessions for this billing period.`
-                : `${mode === 'voice' ? 'Voice' : 'Live'} support is not available on your current plan.`,
-            tier: accessCheck.tier,
-            usage: accessCheck.usage,
-            limits: accessCheck.limits,
-          }),
-        );
-        ws.close();
-        return;
-      }
-
-      // Increment usage when connection is established
-      await incrementUsage(userId, "liveSessions");
-      console.log(`[${mode.toUpperCase()}] Session started for user ${userId}`);
-
-      // Fetch user context for personalization
-      userContext = await fetchUserContext(userId);
+    // Check if user has access to live sessions (voice and video share the same quota)
+    const accessCheck = await checkFeatureAccess(userId, "live");
+    if (!accessCheck.allowed) {
+      console.log(
+        `[${mode.toUpperCase()}] Access denied for user ${userId}: ${accessCheck.reason}`,
+      );
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          code: accessCheck.reason,
+          message:
+            accessCheck.reason === "LIMIT_REACHED"
+              ? `You've used all your ${mode} support sessions for this billing period.`
+              : `${mode === 'voice' ? 'Voice' : 'Live'} support is not available on your current plan.`,
+          tier: accessCheck.tier,
+          usage: accessCheck.usage,
+          limits: accessCheck.limits,
+        }),
+      );
+      ws.close();
+      return;
     }
+
+    // Increment usage when connection is established
+    await incrementUsage(userId, "liveSessions");
+    console.log(`[${mode.toUpperCase()}] Session started for user ${userId}`);
+
+    // Fetch user context for personalization
+    userContext = await fetchUserContext(userId);
 
     setupGeminiLive(ws, mode, userContext);
   });

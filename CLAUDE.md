@@ -318,6 +318,31 @@ If The_Skeptic and a Dev agent disagree:
 - No function-response pairing — user choices sent as text, Gemini infers from context
 - Pre-existing XSS in `renderMarkdown` via `dangerouslySetInnerHTML` not addressed
 
+### Phase 5: WebSocket Auth Fix + Case Completion Report (Feb 10, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **server/index.ts** — WebSocket auth bypass fix: Extract session secret to constant, add `authenticateWebSocket()` helper that parses session cookie, unsigns it, looks up session in PostgreSQL store, extracts Passport user. Replace WS connection handler to use authenticated userId instead of untrusted query param. Reject unauthenticated connections with 4401.
+2. **server/routes/cases.ts** — Two new endpoints: `GET /api/cases/:id/report` (PDF download), `POST /api/cases/:id/report/email` (email PDF). Shared `buildCasePDFData()` helper. Auth + ownership checks on both.
+3. **src/components/scout/CaseCompletionModal.tsx** — New modal shown after chat case resolution with Download PDF and Email Report buttons. Loading/error/success states.
+4. **src/components/scout/ScoutChatScreen.tsx** — Trigger CaseCompletionModal from `handleSessionEnd` (chat path only, not voice/video).
+5. **package.json** — Add `cookie` and `cookie-signature` as explicit dependencies.
+
+#### Key Skeptic Conditions Applied:
+- Do not log raw cookie values or session IDs; log only IP + generic failure message
+- Every branch in `authenticateWebSocket` returns null gracefully (wrapped in try/catch)
+- `userId` query param completely ignored after auth; `sessionUser.id` is sole source of truth
+- Generic error messages on 500 responses (no stack traces)
+- `URL.revokeObjectURL()` called after download
+- Error text uses `role="alert"` for screen reader announcement
+- `overflow: hidden` on body when modal is open
+
+#### Risks Accepted:
+- PDF generation is synchronous/CPU-bound (matches existing PATCH handler pattern)
+- General rate limiter (100 req/min) covers report endpoints (may need tightening later)
+- `cookie`/`cookie-signature` already transitive deps; making explicit adds no new code
+
 <!-- DECISIONS END -->
 
 ---

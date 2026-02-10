@@ -9,6 +9,7 @@ import { useUsage } from '../../stores/usageStore';
 import { sendMessageToGemini, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
 import { useVoiceSession, VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
 import { VoiceReportModal } from '../voice/VoiceReportModal';
+import { CaseCompletionModal } from './CaseCompletionModal';
 import { saveVoiceReportToHistory } from '../../services/voiceReportService';
 import { useWebSpeech } from '../../hooks/useWebSpeech';
 import { useGeminiVoice } from '../../hooks/useGeminiVoice';
@@ -78,6 +79,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [lockedFeature, setLockedFeature] = useState<ScoutMode | null>(null);
   const [voiceReport, setVoiceReport] = useState<VoiceDiagnosticReport | null>(null);
   const [showVoiceReport, setShowVoiceReport] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Voice session hooks
   const voiceSession = useVoiceSession();
@@ -479,6 +481,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           aiSummary: summaryText,
         }),
       });
+
+      // Show completion modal (chat path only — voice/video have their own flows)
+      setShowCompletionModal(true);
     } catch (e) {
       console.error('Failed to finalize case:', e);
     }
@@ -1160,6 +1165,16 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           }}
           userEmail={user?.email || undefined}
           userName={user?.firstName || user?.username || undefined}
+        />
+      )}
+
+      {/* Case Completion Modal (chat path) */}
+      {showCompletionModal && caseId && (
+        <CaseCompletionModal
+          caseId={caseId}
+          caseTitle={caseTitle}
+          onClose={() => setShowCompletionModal(false)}
+          userEmail={user?.email || undefined}
         />
       )}
     </div>
