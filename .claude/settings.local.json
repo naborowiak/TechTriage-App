@@ -74,7 +74,19 @@
       "Bash(printenv:*)",
       "Bash(GEMINI_API_KEY_TOTALASSIST=$GEMINI_API_KEY npx tsx:*)",
       "WebFetch(domain:www.youtube.com)",
-      "WebFetch(domain:deepwiki.com)"
+      "WebFetch(domain:deepwiki.com)",
+      "Bash(git -C /home/runner/workspace status)",
+      "Bash(git -C /home/runner/workspace diff --stat)",
+      "Bash(git -C /home/runner/workspace log --oneline -5)",
+      "Bash(git -C /home/runner/workspace diff)",
+      "Bash(git -C /home/runner/workspace add src/components/ChatWidget.tsx src/components/Dashboard.tsx src/components/FAQ.tsx src/components/Pricing.tsx src/components/TermsOfService.tsx src/components/UpgradeModal.tsx src/components/scout/GuidedActions.tsx src/components/scout/ScoutChatScreen.tsx src/components/scout/ScoutInfoPanel.tsx src/App.tsx)",
+      "Bash(git -C /home/runner/workspace commit -m \"$\\(cat <<''EOF''\nUX polish: hero parallax, welcome modal, response timing, step nav, copy audit\n\n- Hero section: multi-layer scroll parallax \\(bg images, staggered text, orbs\\),\n  opacity fade on scroll, fixed mobile content positioning, removed desktop\n  height cap so hero fills viewport\n- Welcome banner converted to centered modal overlay with single clear CTA\n- Agent response timing now scales by message length \\(2-8s\\) instead of\n  fixed 1.2-2s delay\n- StepCard guided fix engine: added \"Done, next step\" and \"Go back\"\n  navigation pills on the most recent step\n- Noise texture added to pricing cards and dashboard help tiles\n- Pricing card text shadows for readability over noise\n- Trust badge visibility improved \\(larger text, stronger color\\)\n- Site-wide copy audit: removed outdated product names \\(Snapshot, Signal,\n  Text Support\\), phantom features \\($100 onsite credit, premium AI, human\n  specialists\\), and stale \"coming soon\" claims across FAQ, Pricing,\n  ChatWidget, UpgradeModal, TermsOfService, and ScoutInfoPanel\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /home/runner/workspace add src/App.tsx src/components/FAQ.tsx src/components/Pricing.tsx)",
+      "Bash(git -C /home/runner/workspace commit -m \"$\\(cat <<''EOF''\nFeature prominence: differentiator section, pricing parity, competitor FAQ\n\n- Replace WhyTotalAssist section with 3 differentiator cards highlighting\n  unique value props: photo/video diagnostics \\(\"See It, Don't Explain It\"\"\\),\n  guided assist pills \\(\"\"Tap, Don't Type\"\\), and PDF case reports\n  \\(\"A Repair Record, Not Just a Chat\"\\)\n- Equal-height pricing cards via flex-col + flex-1 on feature lists\n- Add Assist Pills and PDF Reports to all tier feature lists and\n  feature comparison table \\(2 new rows\\)\n- Add \"Why not just use ChatGPT or Google Gemini?\" FAQ to both\n  FAQ page \\(Getting Started\\) and Pricing page\n- Fix stale homepage FAQ pricing \\(was \"Basic/Pro $20/Premium $199\",\n  now correct Free/Home $9.99/Pro $19.99\\)\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /home/runner/workspace diff src/components/scout/ScoutChatScreen.tsx)",
+      "Bash(git -C /home/runner/workspace log --oneline -3)",
+      "Bash(git -C /home/runner/workspace add src/components/scout/ScoutChatScreen.tsx)",
+      "Bash(git -C /home/runner/workspace commit -m \"$\\(cat <<''EOF''\nRealistic agent connection flow: 5-10s delay before technician joins\n\n- Replace instant agent greeting with neutral welcome prompt that\n  requires user interaction before connecting\n- On first message: show \"Connecting you with a support technician...\"\n  for 5-10 seconds \\(randomized\\) while API call runs in parallel\n- After connection delay, show \"{Agent} has connected to your session\"\n  message, then 1.5s pause before displaying the actual response\n- Subsequent messages use existing length-based response timing\n- Skip connection flow when reopening existing cases \\(initialCaseId\\)\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
