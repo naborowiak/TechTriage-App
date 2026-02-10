@@ -546,10 +546,11 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
           </div>
         )}
 
-        {/* Floating Assist Pills when sidebar is closed */}
+        {/* Floating Assist Pills overlay */}
         {guidedAction && !isSessionEnded && !connectionError && (
-          <div className="absolute bottom-36 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-20">
-            <div className="bg-black/80 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+          <div className="absolute bottom-36 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-20 animate-[fadeIn_0.3s_ease-out]">
+            <div className="bg-[#0B0E14]/90 backdrop-blur-xl rounded-2xl p-5 border border-[#6366F1]/30 shadow-[0_0_40px_rgba(99,102,241,0.25)]">
+              <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Tap to choose</p>
               {guidedAction.type === 'presentChoices' && (
                 <ChoicePills
                   action={guidedAction}

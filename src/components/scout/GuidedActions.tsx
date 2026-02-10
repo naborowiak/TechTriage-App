@@ -18,12 +18,12 @@ export function ChoicePills({
 }) {
   const isAnswered = !!action.selectedChoice;
   const isSomethingElseSelected = action.selectedChoice === SOMETHING_ELSE_LABEL;
-  const pillClass = variant === 'compact' ? 'px-3 py-2 rounded-lg text-sm' : 'px-5 py-3 rounded-xl text-base';
+  const pillClass = variant === 'compact' ? 'px-4 py-3 rounded-xl text-base' : 'px-5 py-3 rounded-xl text-base';
 
   return (
     <div className="mt-3 space-y-2" role="group" aria-label={action.prompt}>
       {action.prompt && (
-        <p className="text-text-secondary dark:text-white/70 text-sm font-medium">{action.prompt}</p>
+        <p className={`font-semibold ${variant === 'compact' ? 'text-white text-base mb-1' : 'text-text-secondary dark:text-white/70 text-sm'}`}>{action.prompt}</p>
       )}
       <div className="flex flex-wrap gap-2">
         {action.choices.map((choice, i) => {
@@ -81,7 +81,7 @@ export function ChoicePills({
 }
 
 export function StepCard({ action, variant = 'chat' }: { action: ShowStepAction; variant?: 'chat' | 'compact' }) {
-  const textClass = variant === 'compact' ? 'text-sm' : 'text-base';
+  const textClass = variant === 'compact' ? 'text-base' : 'text-base';
   return (
     <div
       className="mt-3 bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 rounded-2xl overflow-hidden"
@@ -123,11 +123,11 @@ export function ConfirmButtons({
   const isAnswered = !!action.selectedAnswer;
   const yesLabel = action.yesLabel || 'Yes';
   const noLabel = action.noLabel || 'No';
-  const btnClass = variant === 'compact' ? 'py-2.5 rounded-lg text-sm' : 'py-3.5 rounded-xl text-base';
+  const btnClass = variant === 'compact' ? 'py-3.5 rounded-xl text-base' : 'py-3.5 rounded-xl text-base';
 
   return (
     <div className="mt-3 space-y-3" role="group" aria-label={action.question}>
-      <p className={`text-text-primary dark:text-white/80 ${variant === 'compact' ? 'text-sm' : 'text-base'} font-medium`}>{action.question}</p>
+      <p className={`font-semibold ${variant === 'compact' ? 'text-white text-base' : 'text-text-primary dark:text-white/80 text-base'}`}>{action.question}</p>
       <div className="flex gap-3">
         <button
           onClick={() => {

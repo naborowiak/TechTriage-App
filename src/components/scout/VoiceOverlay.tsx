@@ -321,8 +321,9 @@ export function VoiceOverlay({
 
         {/* ─── Floating Assist Pills Overlay ─── */}
         {guidedAction && onGuidedAction && !connectionError && geminiStatus !== 'connecting' && (
-          <div className="shrink-0 px-4 pb-3 pt-2">
-            <div className="bg-white/[0.06] backdrop-blur-md rounded-2xl p-4 border border-white/[0.12] shadow-[0_-4px_30px_rgba(99,102,241,0.15)]">
+          <div className="shrink-0 px-4 pb-3 pt-2 animate-[fadeIn_0.3s_ease-out]">
+            <div className="bg-[#151922] backdrop-blur-md rounded-2xl p-5 border border-[#6366F1]/30 shadow-[0_-4px_40px_rgba(99,102,241,0.25)]">
+              <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Tap to choose</p>
               {guidedAction.type === 'presentChoices' && (
                 <ChoicePills
                   action={guidedAction}

@@ -58,6 +58,18 @@
   animation: slide-out-to-bottom 0.25s ease-in forwards;
 }
 
+/* Fade-in for floating overlays (voice/video pills) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* OTP success pulse */
 @keyframes success-pulse {
   0% { transform: scale(0.8); opacity: 0; }
