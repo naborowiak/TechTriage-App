@@ -671,7 +671,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           }
                         }}
                         className={`
-                          relative flex flex-col items-center justify-center text-center
+                          relative overflow-hidden flex flex-col items-center justify-center text-center
                           rounded-2xl border p-6 min-h-[180px]
                           transition-all duration-200
                           ${isLocked
@@ -681,6 +681,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         `}
                         aria-label={`${tile.label}${isLocked ? ' — requires upgrade' : ''}`}
                       >
+                        <div
+                          className="absolute inset-0 opacity-[0.07] dark:opacity-[0.05] pointer-events-none"
+                          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}
+                        />
                         {isLocked && (
                           <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-midnight-900/80 dark:bg-midnight-700 flex items-center justify-center" aria-hidden="true">
                             <Lock className="w-4 h-4 text-white/70" />

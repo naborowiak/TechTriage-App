@@ -654,28 +654,38 @@ const Hero: React.FC<{
   onFreeTrial,
   onPricing,
 }) => {
-  const { ref: parallaxRef, offset } = useParallax(0.3);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <section ref={parallaxRef} className="relative overflow-hidden -mt-[72px] pt-[72px]">
-      {/* Constrained height container */}
-      <div className="min-h-screen lg:min-h-[760px] lg:max-h-[900px] relative">
+    <section className="relative overflow-hidden -mt-[72px] pt-[72px]">
+      {/* Full-height container */}
+      <div className="min-h-screen relative">
       {/* Background hero image - different images for mobile vs desktop */}
       {/* Mobile/Tablet: vertical mobile-hero.png, Desktop: horizontal homepage-hero.jpg */}
 
-      {/* Mobile hero image (below lg) */}
+      {/* Mobile hero image (below lg) — parallax layer */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_bottom] lg:hidden"
+        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_bottom] lg:hidden will-change-transform"
         style={{
           backgroundImage: "url(/hero_mobile1.jpg)",
+          transform: `translateY(${scrollY * 0.2}px) scale(1.15)`,
+          transformOrigin: 'center bottom',
         }}
       ></div>
 
-      {/* Desktop hero image (lg and up) - positioned to favor the phone */}
+      {/* Desktop hero image (lg and up) — parallax layer */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat hidden lg:block bg-[position:85%_55%] xl:bg-[position:90%_50%] 2xl:bg-[position:92%_48%]"
+        className="absolute inset-0 bg-cover bg-no-repeat hidden lg:block bg-[position:85%_55%] xl:bg-[position:90%_50%] 2xl:bg-[position:92%_48%] will-change-transform"
         style={{
           backgroundImage: "url(/hero_image1.jpg)",
+          transform: `translateY(${scrollY * 0.2}px) scale(1.15)`,
+          transformOrigin: 'center center',
         }}
       ></div>
 
@@ -770,91 +780,109 @@ const Hero: React.FC<{
       }}></div>
 
       {/* Hexagon pattern for visual distinction */}
-      <HeroHexagonPattern offset={offset} />
+      <HeroHexagonPattern offset={scrollY} />
 
       {/* Gradient orbs for visual interest - with parallax */}
       <div
-        className="absolute top-1/4 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl transition-transform duration-100 z-[2]"
-        style={{ transform: `translateY(${offset * 0.8}px)` }}
+        className="absolute top-1/4 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl will-change-transform z-[2]"
+        style={{ transform: `translateY(${scrollY * 0.35}px)` }}
       ></div>
       <div
-        className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-scout-purple/8 rounded-full blur-3xl transition-transform duration-100 z-[2]"
-        style={{ transform: `translateY(${offset * 0.4}px)` }}
+        className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-scout-purple/8 rounded-full blur-3xl will-change-transform z-[2]"
+        style={{ transform: `translateY(${scrollY * 0.18}px)` }}
       ></div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-8 items-center min-h-[calc(100vh-72px)]">
-          {/* Left side - Content */}
-          <div className="pt-16 sm:pt-12 md:pt-8 lg:pt-0 pb-8 sm:pb-0 max-w-lg sm:max-w-xl lg:max-w-none">
-            <AnimatedElement animation="fadeInDown" delay={0.1}>
-              <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-electric-indigo/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full mb-4 sm:mb-6 border border-electric-indigo/40 shadow-sm">
-                <ScoutSignalIcon size={18} animate={true} />
-                <span className="text-electric-indigo font-semibold text-xs sm:text-sm">
-                  Support available 24/7
-                </span>
-              </div>
-            </AnimatedElement>
-            <AnimatedElement animation="fadeInUp" delay={0.2}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.1] mb-4 sm:mb-6">
-                <span
-                  className="text-text-primary dark:text-white"
-                  style={{
-                    textShadow: '0 1px 2px rgba(0,0,0,0.1), 0 2px 8px rgba(255,255,255,0.5)',
-                  }}
-                >
-                  <span className="dark:[text-shadow:0_2px_12px_rgba(0,0,0,0.8),0_1px_2px_rgba(0,0,0,0.5)]">
-                    Fix your tech in minutes
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-8 items-start lg:items-center min-h-[calc(100vh-72px)]">
+          {/* Left side - Content — parallax fade as user scrolls */}
+          <div
+            className="pt-12 sm:pt-10 lg:pt-0 pb-8 sm:pb-0 max-w-lg sm:max-w-xl lg:max-w-none"
+            style={{
+              opacity: Math.max(0, 1 - scrollY / 700),
+              willChange: 'opacity',
+            }}
+          >
+            {/* Badge — fastest parallax rise */}
+            <div style={{ transform: `translateY(${scrollY * -0.06}px)`, willChange: 'transform' }}>
+              <AnimatedElement animation="fadeIn" delay={0.1}>
+                <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-electric-indigo/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full mb-4 sm:mb-6 border border-electric-indigo/40 shadow-sm">
+                  <ScoutSignalIcon size={18} animate={true} />
+                  <span className="text-electric-indigo font-semibold text-xs sm:text-sm">
+                    Support available 24/7
                   </span>
-                </span>
-                <br />
-                <span
-                  className="text-gradient-electric"
+                </div>
+              </AnimatedElement>
+            </div>
+            {/* Title — medium parallax rise */}
+            <div style={{ transform: `translateY(${scrollY * -0.04}px)`, willChange: 'transform' }}>
+              <AnimatedElement animation="fadeInUp" delay={0.2}>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.1] mb-4 sm:mb-6">
+                  <span
+                    className="text-text-primary dark:text-white"
+                    style={{
+                      textShadow: '0 1px 2px rgba(0,0,0,0.1), 0 2px 8px rgba(255,255,255,0.5)',
+                    }}
+                  >
+                    <span className="dark:[text-shadow:0_2px_12px_rgba(0,0,0,0.8),0_1px_2px_rgba(0,0,0,0.5)]">
+                      Fix your tech in minutes
+                    </span>
+                  </span>
+                  <br />
+                  <span
+                    className="text-gradient-electric"
+                    style={{
+                      filter: 'drop-shadow(0 2px 4px rgba(99,102,241,0.4))',
+                    }}
+                  >
+                    — with TotalAssist.
+                  </span>
+                </h1>
+              </AnimatedElement>
+            </div>
+            {/* Subtitle — gentle parallax rise */}
+            <div style={{ transform: `translateY(${scrollY * -0.025}px)`, willChange: 'transform' }}>
+              <AnimatedElement animation="fadeInUp" delay={0.4}>
+                <p
+                  className="text-base sm:text-lg md:text-xl lg:text-xl font-medium leading-relaxed mb-6 sm:mb-8 md:mb-10 max-w-md sm:max-w-lg lg:max-w-xl text-gray-700 dark:text-gray-200"
                   style={{
-                    filter: 'drop-shadow(0 2px 4px rgba(99,102,241,0.4))',
+                    textShadow: '0 1px 2px rgba(255,255,255,0.8)',
                   }}
                 >
-                  — with TotalAssist.
-                </span>
-              </h1>
-            </AnimatedElement>
-            <AnimatedElement animation="fadeInUp" delay={0.4}>
-              <p
-                className="text-base sm:text-lg md:text-xl lg:text-xl font-medium leading-relaxed mb-6 sm:mb-8 md:mb-10 max-w-md sm:max-w-lg lg:max-w-xl text-gray-700 dark:text-gray-200"
-                style={{
-                  textShadow: '0 1px 2px rgba(255,255,255,0.8)',
-                }}
-              >
-                <span className="dark:[text-shadow:0_1px_8px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]">
-                  TotalAssist is your 24/7 lifeline for home tech problems. No hold music, no complex menus—just a friendly support team that walks you through every fix.
-                </span>
-              </p>
-            </AnimatedElement>
-            <AnimatedElement animation="fadeInUp" delay={0.6}>
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                <button
-                  onClick={onFreeTrial}
-                  className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-electric-indigo text-white font-bold text-sm sm:text-base shadow-lg hover:shadow-electric-indigo/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  Get Started
-                </button>
-                <button
-                  onClick={onPricing}
-                  className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white dark:bg-midnight-800 text-text-primary dark:text-white font-bold text-sm sm:text-base border border-light-300 dark:border-midnight-600 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                  Explore Pricing
-                </button>
-              </div>
-              <div className="flex items-center gap-4 mb-6 sm:mb-8">
-                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
-                  <span>No credit card needed</span>
+                  <span className="dark:[text-shadow:0_1px_8px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]">
+                    TotalAssist is your 24/7 lifeline for home tech problems. No hold music, no complex menus—just a friendly support team that walks you through every fix.
+                  </span>
+                </p>
+              </AnimatedElement>
+            </div>
+            {/* CTA buttons — slowest parallax (anchored feel) */}
+            <div style={{ transform: `translateY(${scrollY * -0.01}px)`, willChange: 'transform' }}>
+              <AnimatedElement animation="fadeInUp" delay={0.6}>
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <button
+                    onClick={onFreeTrial}
+                    className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-electric-indigo text-white font-bold text-sm sm:text-base shadow-lg hover:shadow-electric-indigo/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    Get Started
+                  </button>
+                  <button
+                    onClick={onPricing}
+                    className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white dark:bg-midnight-800 text-text-primary dark:text-white font-bold text-sm sm:text-base border border-light-300 dark:border-midnight-600 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    Explore Pricing
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
-                  <span>24/7 instant answers</span>
+                <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                  <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
+                    <span>No credit card needed</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
+                    <span>24/7 instant answers</span>
+                  </div>
                 </div>
-              </div>
-            </AnimatedElement>
+              </AnimatedElement>
+            </div>
           </div>
 
           {/* Right side - empty to let the background image show */}

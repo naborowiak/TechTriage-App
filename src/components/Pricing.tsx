@@ -397,7 +397,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             {plans.map((plan, i) => (
               <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
                 <div
-                  className={`bg-white dark:bg-midnight-800 rounded-3xl p-8 relative transition-all border h-full hover:-translate-y-1 shadow-sm ${
+                  className={`bg-white dark:bg-midnight-800 rounded-3xl p-8 relative overflow-hidden transition-all border h-full hover:-translate-y-1 shadow-sm ${
                     user && currentTier === planToTier[plan.name]
                       ? 'border-electric-cyan shadow-glow-cyan scale-[1.02] md:scale-105'
                       : plan.highlight
@@ -405,6 +405,11 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       : 'border-light-300 dark:border-midnight-700 hover:border-light-400 dark:hover:border-midnight-600'
                   }`}
                 >
+                <div
+                  className="absolute inset-0 opacity-[0.07] dark:opacity-[0.05] pointer-events-none z-0"
+                  style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}
+                />
+                <div className="relative z-[1] [text-shadow:0_1px_2px_rgba(0,0,0,0.06)] dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.4)]">
                 {user && currentTier === planToTier[plan.name] && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-electric-cyan text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">
                     YOUR PLAN
@@ -495,6 +500,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     </li>
                   ))}
                 </ul>
+                </div>{/* close relative text-shadow wrapper */}
               </div>
               </AnimatedElement>
             ))}
