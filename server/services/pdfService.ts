@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 
 const BRAND_COLORS = {
   primary: [168, 85, 247] as [number, number, number],
