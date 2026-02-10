@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Mic, MicOff, Phone, MessageSquare, ChevronRight, Bot, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import type { GuidedAction } from '../../types';
+import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 
 interface TranscriptEntry {
   role: 'user' | 'model';
@@ -23,6 +25,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
   const [isSessionEnded, setIsSessionEnded] = useState(false);
   const [summary, setSummary] = useState('');
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [guidedAction, setGuidedAction] = useState<GuidedAction | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -58,6 +61,13 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
     stopAllHardware();
     onClose();
   }, [stopAllHardware, onClose]);
+
+  const sendText = useCallback((text: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'text', data: text }));
+      setGuidedAction(null);
+    }
+  }, []);
 
   const toggleMute = useCallback(() => {
     const newMuteState = !isMuted;
@@ -313,6 +323,8 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
               const errorMsg = message.message || 'An error occurred during the video session.';
               setConnectionError(errorMsg);
               stopAllHardware();
+            } else if (message.type === 'guidedAction') {
+              setGuidedAction(message.action);
             } else if (message.type === 'endSession') {
               const finalSummary = message.summary || 'Session completed';
               setSummary(finalSummary);
@@ -509,6 +521,34 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
                 </div>
               </div>
             ))}
+
+            {/* Assist Pills in sidebar */}
+            {guidedAction && (
+              <div className="mt-2">
+                {guidedAction.type === 'presentChoices' && (
+                  <ChoicePills
+                    action={guidedAction}
+                    messageId="video-pill"
+                    onSelect={(_id, _action, text) => sendText(text)}
+                    disabled={false}
+                    variant="compact"
+                  />
+                )}
+                {guidedAction.type === 'showStep' && (
+                  <StepCard action={guidedAction} variant="compact" />
+                )}
+                {guidedAction.type === 'confirmResult' && (
+                  <ConfirmButtons
+                    action={guidedAction}
+                    messageId="video-pill"
+                    onSelect={(_id, _action, text) => sendText(text)}
+                    disabled={false}
+                    variant="compact"
+                  />
+                )}
+              </div>
+            )}
+
             <div ref={transcriptEndRef} />
           </div>
         </div>
@@ -529,6 +569,35 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
                 <div className="text-xs text-white/60 uppercase tracking-wider mb-0.5">Status</div>
                 <div className="text-white font-semibold capitalize">{status}</div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Assist Pills when sidebar is closed */}
+        {guidedAction && !isTranscriptOpen && !isSessionEnded && !connectionError && (
+          <div className="absolute bottom-36 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-20">
+            <div className="bg-black/80 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+              {guidedAction.type === 'presentChoices' && (
+                <ChoicePills
+                  action={guidedAction}
+                  messageId="video-pill-float"
+                  onSelect={(_id, _action, text) => sendText(text)}
+                  disabled={false}
+                  variant="compact"
+                />
+              )}
+              {guidedAction.type === 'showStep' && (
+                <StepCard action={guidedAction} variant="compact" />
+              )}
+              {guidedAction.type === 'confirmResult' && (
+                <ConfirmButtons
+                  action={guidedAction}
+                  messageId="video-pill-float"
+                  onSelect={(_id, _action, text) => sendText(text)}
+                  disabled={false}
+                  variant="compact"
+                />
+              )}
             </div>
           </div>
         )}

@@ -72,7 +72,9 @@
       "Bash(git -C /home/runner/workspace log --all --grep=\"Phase\" --oneline)",
       "Bash(git -C /home/runner/workspace log --all --oneline)",
       "Bash(printenv:*)",
-      "Bash(GEMINI_API_KEY_TOTALASSIST=$GEMINI_API_KEY npx tsx:*)"
+      "Bash(GEMINI_API_KEY_TOTALASSIST=$GEMINI_API_KEY npx tsx:*)",
+      "WebFetch(domain:www.youtube.com)",
+      "WebFetch(domain:deepwiki.com)"
     ]
   }
 }

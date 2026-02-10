@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import type { GuidedAction } from '../types';
 
 interface TranscriptEntry {
   role: 'user' | 'model';
@@ -17,10 +18,12 @@ export interface UseGeminiVoiceReturn {
   connect: () => void;
   disconnect: () => void;
   sendImage: (base64: string) => void;
+  sendText: (text: string) => void;
   toggleMute: () => void;
   isMuted: boolean;
   outputAnalyser: AnalyserNode | null;
   inputAnalyser: AnalyserNode | null;
+  guidedAction: GuidedAction | null;
 }
 
 const TARGET_SAMPLE_RATE = 16000;
@@ -34,6 +37,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
   const [isMuted, setIsMuted] = useState(false);
   const [outputAnalyser, setOutputAnalyser] = useState<AnalyserNode | null>(null);
   const [inputAnalyser, setInputAnalyser] = useState<AnalyserNode | null>(null);
+  const [guidedAction, setGuidedAction] = useState<GuidedAction | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -253,6 +257,8 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
                 setStatus('listening');
                 statusTransitionTimerRef.current = null;
               }, delay);
+            } else if (message.type === 'guidedAction') {
+              setGuidedAction(message.action);
             } else if (message.type === 'error') {
               console.error('Voice session error:', message.message);
               setConnectionError(message.message || 'Voice session encountered an error.');
@@ -323,6 +329,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     setIsConnected(false);
     setConnectionError(null);
     setTranscriptHistory([]);
+    setGuidedAction(null);
     nextStartTimeRef.current = 0;
   }, [stopAllHardware]);
 
@@ -345,6 +352,13 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     wsRef.current.send(JSON.stringify({ type: 'image', data }));
   }, []);
 
+  // Send text to the Gemini live session (used for pill selections)
+  const sendText = useCallback((text: string) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    wsRef.current.send(JSON.stringify({ type: 'text', data: text }));
+    setGuidedAction(null);
+  }, []);
+
   return {
     status,
     isConnected,
@@ -353,9 +367,11 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
     connect,
     disconnect,
     sendImage,
+    sendText,
     toggleMute,
     isMuted,
     outputAnalyser,
     inputAnalyser,
+    guidedAction,
   };
 }

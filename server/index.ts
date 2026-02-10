@@ -1188,6 +1188,19 @@ RULES:
 - Walk them through fixes step by step, confirming each one.
 - Be patient and encouraging: "You're doing great.", "No worries, this happens a lot."
 
+ASSIST PILLS MODE (VOICE + VISUAL):
+While you speak, the app can display interactive buttons on screen. You have tools:
+
+1. presentChoices(prompt, choices[]) — Show 3-5 tappable options on screen while you speak. Use this whenever there are predictable paths. The user can TAP a button OR speak their answer.
+2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card on screen.
+3. confirmResult(question, yesLabel?, noLabel?) — Show a yes/no confirmation on screen.
+
+RULES:
+- Use presentChoices frequently — it helps users who prefer tapping over speaking.
+- When you call a tool, ALSO say the options out loud briefly: "I'm showing some options on screen — you can tap one or just tell me."
+- The app adds "It's Something Else" automatically — don't include it yourself.
+- ONE tool call per turn maximum.
+
 ${SERVER_SAFETY_PLAYBOOK}
 
 You're Alex from TotalAssist. Warm, competent, and human.`;
@@ -1204,6 +1217,19 @@ RULES:
 - Use natural phrases: "Let me take a closer look...", "I've seen this before...", "Here's what I'd try..."
 - Walk them through fixes step by step, confirming each one.
 - Keep responses concise unless explaining a multi-step fix.
+
+ASSIST PILLS MODE (VOICE + VISUAL):
+While you speak, the app can display interactive buttons on screen. You have tools:
+
+1. presentChoices(prompt, choices[]) — Show 3-5 tappable options on screen while you speak. Use this whenever there are predictable paths. The user can TAP a button OR speak their answer.
+2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card on screen.
+3. confirmResult(question, yesLabel?, noLabel?) — Show a yes/no confirmation on screen.
+
+RULES:
+- Use presentChoices frequently — it helps users who prefer tapping over speaking.
+- When you call a tool, ALSO say the options out loud briefly: "I'm showing some options on screen — you can tap one or just tell me."
+- The app adds "It's Something Else" automatically — don't include it yourself.
+- ONE tool call per turn maximum.
 
 ${SERVER_SAFETY_PLAYBOOK}
 
@@ -1354,14 +1380,29 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
             }
 
             if (message.toolCall) {
-              const functionCall = message.toolCall.functionCalls?.[0];
-              if (functionCall?.name === "endSession") {
-                ws.send(
-                  JSON.stringify({
-                    type: "endSession",
-                    summary: functionCall.args?.summary || "Session completed",
-                  }),
-                );
+              const functionCalls = message.toolCall.functionCalls || [];
+              const functionResponses: any[] = [];
+
+              for (const fc of functionCalls) {
+                if (fc.name === "endSession") {
+                  ws.send(JSON.stringify({ type: "endSession", summary: fc.args?.summary || "Session completed" }));
+                  functionResponses.push({ id: fc.id, name: fc.name, response: { result: "session_ended" } });
+                } else if (fc.name === "presentChoices" || fc.name === "showStep" || fc.name === "confirmResult") {
+                  ws.send(JSON.stringify({
+                    type: "guidedAction",
+                    action: { type: fc.name, ...fc.args }
+                  }));
+                  functionResponses.push({ id: fc.id, name: fc.name, response: { result: "displayed_to_user" } });
+                }
+              }
+
+              // Send tool responses to unblock the model
+              if (functionResponses.length > 0) {
+                try {
+                  session.sendToolResponse({ functionResponses });
+                } catch (err) {
+                  console.error("Error sending tool response:", err);
+                }
               }
             }
           } catch (err) {
@@ -1428,6 +1469,73 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
                   required: ["summary"],
                 },
               },
+              {
+                name: "presentChoices",
+                description: "Show 3-5 tappable option buttons on the user's screen. Use whenever there are predictable answer paths.",
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    prompt: {
+                      type: Type.STRING,
+                      description: "A short label or question displayed above the choices.",
+                    },
+                    choices: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: "The list of choice labels to display as tappable buttons.",
+                    },
+                  },
+                  required: ["prompt", "choices"],
+                },
+              },
+              {
+                name: "showStep",
+                description: "Display a numbered step card on the user's screen with a title, instruction, and optional tip.",
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    stepNumber: {
+                      type: Type.INTEGER,
+                      description: "The step number to display.",
+                    },
+                    title: {
+                      type: Type.STRING,
+                      description: "Short title for the step.",
+                    },
+                    instruction: {
+                      type: Type.STRING,
+                      description: "Detailed instruction text for the step.",
+                    },
+                    tip: {
+                      type: Type.STRING,
+                      description: "Optional helpful tip for the step.",
+                    },
+                  },
+                  required: ["stepNumber", "title", "instruction"],
+                },
+              },
+              {
+                name: "confirmResult",
+                description: "Show a yes/no confirmation question on the user's screen.",
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    question: {
+                      type: Type.STRING,
+                      description: "The yes/no question to display.",
+                    },
+                    yesLabel: {
+                      type: Type.STRING,
+                      description: "Custom label for the yes button.",
+                    },
+                    noLabel: {
+                      type: Type.STRING,
+                      description: "Custom label for the no button.",
+                    },
+                  },
+                  required: ["question"],
+                },
+              },
             ],
           },
         ],
@@ -1454,6 +1562,11 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
               data: message.data,
               mimeType: "image/jpeg",
             },
+          });
+        } else if (message.type === "text") {
+          session.sendClientContent({
+            turns: [{ role: "user", parts: [{ text: message.data }] }],
+            turnComplete: true,
           });
         }
       } catch (err) {

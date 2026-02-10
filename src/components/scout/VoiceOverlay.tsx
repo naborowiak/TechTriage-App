@@ -2,6 +2,8 @@ import { useRef, useEffect } from 'react';
 import { X, Mic, MicOff, Camera, Phone, AlertCircle, Loader2 } from 'lucide-react';
 import type { VoiceSessionState } from '../../hooks/useVoiceSession';
 import type { GeminiVoiceStatus } from '../../hooks/useGeminiVoice';
+import type { GuidedAction } from '../../types';
+import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 
 interface TranscriptEntry {
   role: 'user' | 'model';
@@ -27,6 +29,8 @@ interface VoiceOverlayProps {
   connectionError?: string | null;
   transcriptHistory?: TranscriptEntry[];
   userName?: string;
+  guidedAction?: GuidedAction | null;
+  onGuidedAction?: (action: GuidedAction, responseText: string) => void;
 }
 
 // Format a duration in seconds to mm:ss
@@ -55,6 +59,8 @@ export function VoiceOverlay({
   connectionError,
   transcriptHistory,
   userName,
+  guidedAction,
+  onGuidedAction,
 }: VoiceOverlayProps) {
   const isListening = geminiStatus ? geminiStatus === 'listening' : isListeningProp;
   const isSpeaking = geminiStatus ? geminiStatus === 'speaking' : isSpeakingProp;
@@ -294,6 +300,33 @@ export function VoiceOverlay({
                         <img src={photo.base64} alt="Captured" className="w-full h-full object-cover" />
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Assist Pills — visual interaction during voice */}
+                {guidedAction && onGuidedAction && (
+                  <div className="mt-3 px-1">
+                    {guidedAction.type === 'presentChoices' && (
+                      <ChoicePills
+                        action={guidedAction}
+                        messageId="voice-pill"
+                        onSelect={(_id, updatedAction, text) => onGuidedAction(updatedAction, text)}
+                        disabled={false}
+                        variant="compact"
+                      />
+                    )}
+                    {guidedAction.type === 'showStep' && (
+                      <StepCard action={guidedAction} variant="compact" />
+                    )}
+                    {guidedAction.type === 'confirmResult' && (
+                      <ConfirmButtons
+                        action={guidedAction}
+                        messageId="voice-pill"
+                        onSelect={(_id, updatedAction, text) => onGuidedAction(updatedAction, text)}
+                        disabled={false}
+                        variant="compact"
+                      />
+                    )}
                   </div>
                 )}
 
