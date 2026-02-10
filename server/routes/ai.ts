@@ -313,6 +313,69 @@ const confirmResultTool: FunctionDeclaration = {
   }
 };
 
+// Build Gemini contents array from chat history, reconstructing functionCall/functionResponse
+// pairs so the model sees its own tool usage pattern and continues using Assist Pills.
+function buildContents(history: any[]) {
+  const contents: any[] = [];
+  const skipIndices = new Set<number>();
+
+  for (let i = 0; i < history.length; i++) {
+    if (skipIndices.has(i)) continue;
+    const msg = history[i];
+    const isModel = msg.role !== 'user';
+
+    if (isModel && msg.guidedAction) {
+      // Model turn with function call
+      const parts: any[] = [];
+      if (msg.text) parts.push({ text: msg.text });
+
+      const ga = msg.guidedAction;
+      let fcName = '';
+      let fcArgs: Record<string, unknown> = {};
+      switch (ga.type) {
+        case 'presentChoices':
+          fcName = 'presentChoices';
+          fcArgs = { prompt: ga.prompt, choices: ga.choices };
+          break;
+        case 'showStep':
+          fcName = 'showStep';
+          fcArgs = { stepNumber: ga.stepNumber, title: ga.title, instruction: ga.instruction };
+          if (ga.tip) fcArgs.tip = ga.tip;
+          break;
+        case 'confirmResult':
+          fcName = 'confirmResult';
+          fcArgs = { question: ga.question };
+          if (ga.yesLabel) fcArgs.yesLabel = ga.yesLabel;
+          if (ga.noLabel) fcArgs.noLabel = ga.noLabel;
+          break;
+      }
+
+      if (fcName) {
+        parts.push({ functionCall: { name: fcName, args: fcArgs } });
+      }
+      contents.push({ role: 'model', parts });
+
+      // Next user message becomes a functionResponse (Gemini requires this after a functionCall)
+      if (fcName && i + 1 < history.length && history[i + 1].role === 'user') {
+        contents.push({
+          role: 'user',
+          parts: [{ functionResponse: { name: fcName, response: { result: history[i + 1].text } } }]
+        });
+        skipIndices.add(i + 1);
+      }
+    } else {
+      // Regular message
+      const parts: any[] = [{ text: msg.text }];
+      if (msg.image) {
+        const base64Data = msg.image.includes('base64,') ? msg.image.split('base64,')[1] : msg.image;
+        parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+      }
+      contents.push({ role: isModel ? 'model' : 'user', parts });
+    }
+  }
+  return contents;
+}
+
 const getApiKey = (): string => {
   const key = process.env.GEMINI_API_KEY_TOTALASSIST;
   if (!key) {
@@ -367,14 +430,7 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const model = "gemini-2.0-flash";
 
-    const contents = history.map((msg: any) => {
-      const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: msg.text }];
-      if (msg.image) {
-        const base64Data = msg.image.includes('base64,') ? msg.image.split('base64,')[1] : msg.image;
-        parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
-      }
-      return { role: msg.role === 'user' ? 'user' : 'model', parts: parts };
-    });
+    const contents = buildContents(history);
 
     const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
     if (image) {
@@ -428,14 +484,7 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
     const model = "gemini-2.0-flash";
     const agentFullName = `${agent.first} ${agent.last}`;
 
-    const contents = history.map((msg: any) => {
-      const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: msg.text }];
-      if (msg.image) {
-        const base64Data = msg.image.includes('base64,') ? msg.image.split('base64,')[1] : msg.image;
-        parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
-      }
-      return { role: msg.role === 'user' ? 'user' : 'model', parts: parts };
-    });
+    const contents = buildContents(history);
 
     const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
     if (image) {

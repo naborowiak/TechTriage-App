@@ -16,6 +16,7 @@ export const sendMessageToGemini = async (
       role: msg.role === UserRole.USER ? 'user' : 'model',
       text: msg.text,
       image: msg.image,
+      guidedAction: msg.guidedAction,
     }));
 
     const res = await fetch('/api/ai/chat', {
@@ -54,6 +55,7 @@ export const sendMessageAsLiveAgent = async (
       role: msg.role === UserRole.USER ? 'user' : 'model',
       text: msg.text,
       image: msg.image,
+      guidedAction: msg.guidedAction,
     }));
 
     const res = await fetch('/api/ai/chat-live-agent', {
