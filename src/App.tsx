@@ -700,7 +700,7 @@ const Hero: React.FC<{
       <div
         className="absolute inset-0 bg-cover bg-no-repeat hidden lg:block bg-[position:85%_55%] xl:bg-[position:90%_50%] 2xl:bg-[position:92%_48%] will-change-transform"
         style={{
-          backgroundImage: "url(/hero_image1.jpg)",
+          backgroundImage: "url(/homepage-internet.jpg)",
           transform: `translateY(${scrollY * 0.2}px) scale(1.15)`,
           transformOrigin: 'center center',
         }}
