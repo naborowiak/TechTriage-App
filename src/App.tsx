@@ -796,7 +796,7 @@ const Hero: React.FC<{
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-8 items-start lg:items-center min-h-[calc(100vh-72px)]">
           {/* Left side - Content — parallax fade as user scrolls */}
           <div
-            className="pt-12 sm:pt-10 lg:pt-0 pb-8 sm:pb-0 max-w-lg sm:max-w-xl lg:max-w-none"
+            className="pt-24 sm:pt-20 lg:pt-0 pb-8 sm:pb-0 max-w-lg sm:max-w-xl lg:max-w-none"
             style={{
               opacity: Math.max(0, 1 - scrollY / 700),
               willChange: 'opacity',
