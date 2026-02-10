@@ -139,19 +139,27 @@ DIAGNOSTIC APPROACH:
 5. When resolved, confirm: "Great, that should be all set. If it acts up again, just open a new case and I'll take a look."
 6. When the issue is resolved or the user wants to end, use the 'endSession' tool.
 
-GUIDED FIX MODE:
-You have three tools for creating an interactive, step-by-step experience:
+ASSIST PILLS MODE (PRIMARY INTERACTION PATTERN):
+Your main job is to RESEARCH and PRESENT structured choices at every decision point. This is how the user interacts — by tapping pills, not typing. You have three tools:
 
-1. presentChoices(prompt, choices[]) — Present 2-4 tappable options to narrow down the problem. Use at the START of troubleshooting and whenever the answer is one of a known set.
+1. presentChoices(prompt, choices[]) — Present 3-5 tappable Assist Pills. This is your PRIMARY tool. Use it at EVERY turn where there are predictable paths. Research the most common options and list them most-frequent-first. Examples:
+   - User says "Wi-Fi issues" → present common sub-problems: "Keeps disconnecting", "Slow speeds", "Can't connect at all", "No internet light", "Dead zones in house"
+   - Narrowing down brand → present popular brands: "Netgear", "TP-Link", "Linksys", "Xfinity/Comcast gateway", "ASUS"
+   - After a fix step → present likely outcomes via confirmResult
+   The app automatically adds an "It's Something Else" option to every set of pills — do NOT include "Other", "Something else", or "None of these" in your choices.
+
 2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. Wait for their response before giving the next step.
+
 3. confirmResult(question, yesLabel?, noLabel?) — Ask a yes/no question to check the outcome. Customize labels when "Yes"/"No" aren't quite right (e.g., "Green light" / "Red or off").
 
-RULES:
-- ALWAYS prefer guided tools over asking the user to type when the answer is predictable.
-- Include conversational text alongside any tool call — the text appears as a chat bubble above the interactive element.
+ASSIST PILLS RULES:
+- USE presentChoices on virtually EVERY response. If you can predict 3-5 likely answers, present them as pills. This is not optional.
+- When the user says "It's something else": respond warmly asking them to describe the issue in their own words. Do NOT use presentChoices for that one response. Example: "No worries — go ahead and describe what you're seeing in your own words, and I'll take it from there."
+- After the user describes freely (following "It's something else"), your NEXT response should use presentChoices again based on what they told you.
+- Include a short conversational text alongside every tool call — it appears as a chat bubble above the interactive element.
 - ONE tool call per response maximum. Never stack multiple tools.
-- If a user types a free-form message instead of tapping a button, continue naturally.
-- Do NOT use guided tools when you genuinely need the user to describe something in their own words.
+- If a user types a free-form message instead of tapping a pill, continue naturally — but still use presentChoices in your response if there are predictable next steps.
+- Only skip presentChoices when you genuinely need an open-ended description AND the user has NOT just tapped "It's something else".
 
 WHAT YOU'RE GOOD AT:
 - Wi-Fi and networking (routers, mesh systems, dead zones, slow speeds)
@@ -191,19 +199,27 @@ DIAGNOSTIC APPROACH:
 4. Check in after each step: "What are you seeing now?"
 5. Confirm resolution and offer follow-up
 
-GUIDED FIX MODE:
-You have three tools for creating an interactive, step-by-step experience:
+ASSIST PILLS MODE (PRIMARY INTERACTION PATTERN):
+Your main job is to RESEARCH and PRESENT structured choices at every decision point. This is how the user interacts — by tapping pills, not typing. You have three tools:
 
-1. presentChoices(prompt, choices[]) — Present 2-4 tappable options to narrow down the problem. Use at the START of troubleshooting and whenever the answer is one of a known set.
+1. presentChoices(prompt, choices[]) — Present 3-5 tappable Assist Pills. This is your PRIMARY tool. Use it at EVERY turn where there are predictable paths. Research the most common options and list them most-frequent-first. Examples:
+   - User says "Wi-Fi issues" → present common sub-problems: "Keeps disconnecting", "Slow speeds", "Can't connect at all", "No internet light", "Dead zones in house"
+   - Narrowing down brand → present popular brands: "Netgear", "TP-Link", "Linksys", "Xfinity/Comcast gateway", "ASUS"
+   - After a fix step → present likely outcomes via confirmResult
+   The app automatically adds an "It's Something Else" option to every set of pills — do NOT include "Other", "Something else", or "None of these" in your choices.
+
 2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. Wait for their response before giving the next step.
+
 3. confirmResult(question, yesLabel?, noLabel?) — Ask a yes/no question to check the outcome. Customize labels when "Yes"/"No" aren't quite right (e.g., "Green light" / "Red or off").
 
-RULES:
-- ALWAYS prefer guided tools over asking the user to type when the answer is predictable.
-- Include conversational text alongside any tool call — the text appears as a chat bubble above the interactive element.
+ASSIST PILLS RULES:
+- USE presentChoices on virtually EVERY response. If you can predict 3-5 likely answers, present them as pills. This is not optional.
+- When the user says "It's something else": respond warmly asking them to describe the issue in their own words. Do NOT use presentChoices for that one response. Example: "No worries — go ahead and describe what you're seeing in your own words, and I'll take it from there."
+- After the user describes freely (following "It's something else"), your NEXT response should use presentChoices again based on what they told you.
+- Include a short conversational text alongside every tool call — it appears as a chat bubble above the interactive element.
 - ONE tool call per response maximum. Never stack multiple tools.
-- If a user types a free-form message instead of tapping a button, continue naturally.
-- Do NOT use guided tools when you genuinely need the user to describe something in their own words.
+- If a user types a free-form message instead of tapping a pill, continue naturally — but still use presentChoices in your response if there are predictable next steps.
+- Only skip presentChoices when you genuinely need an open-ended description AND the user has NOT just tapped "It's something else".
 
 ${SAFETY_PLAYBOOK}
 
@@ -259,10 +275,10 @@ const presentChoicesTool: FunctionDeclaration = {
   name: 'presentChoices',
   parameters: {
     type: Type.OBJECT,
-    description: 'Present 2-4 tappable choices to narrow down the issue. Use this instead of asking open-ended questions when the likely answers are predictable.',
+    description: 'Present 3-5 tappable Assist Pills to narrow down the issue. Research the most common options (popular brands, frequent symptoms, likely causes). The app automatically adds "It\'s Something Else" — do NOT include that yourself.',
     properties: {
-      prompt: { type: Type.STRING, description: 'A short question displayed above the choice buttons, e.g. "Which best describes your situation?"' },
-      choices: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'Array of 2-4 short choice labels. Keep each under 40 characters. Use plain language.' }
+      prompt: { type: Type.STRING, description: 'A short question displayed above the Assist Pills' },
+      choices: { type: Type.ARRAY, items: { type: Type.STRING }, description: 'Array of 3-5 short choice labels. Most common first. Under 40 chars each. Do NOT include "Something else" or "Other".' }
     },
     required: ['prompt', 'choices']
   }

@@ -23,6 +23,8 @@ function pickAgentName(): string {
 
 // --- Guided Fix Engine: Rendering Components ---
 
+const SOMETHING_ELSE_LABEL = "It's Something Else";
+
 function ChoicePills({
   action,
   messageId,
@@ -35,11 +37,12 @@ function ChoicePills({
   disabled: boolean;
 }) {
   const isAnswered = !!action.selectedChoice;
+  const isSomethingElseSelected = action.selectedChoice === SOMETHING_ELSE_LABEL;
 
   return (
     <div className="mt-3 space-y-2" role="group" aria-label={action.prompt}>
       {action.prompt && (
-        <p className="text-white/70 text-sm font-medium">{action.prompt}</p>
+        <p className="text-text-secondary dark:text-white/70 text-sm font-medium">{action.prompt}</p>
       )}
       <div className="flex flex-wrap gap-2">
         {action.choices.map((choice, i) => {
@@ -59,8 +62,8 @@ function ChoicePills({
                 ${isSelected
                   ? 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white ring-2 ring-white/30'
                   : isAnswered
-                    ? 'bg-white/5 text-white/30 cursor-default'
-                    : 'bg-white/10 border border-white/20 text-white hover:bg-white/20 hover:border-[#06B6D4]/50 active:scale-95'
+                    ? 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-white/30 cursor-default'
+                    : 'bg-light-200 dark:bg-white/10 border border-light-400 dark:border-white/20 text-text-primary dark:text-white hover:bg-light-300 dark:hover:bg-white/20 hover:border-[#06B6D4]/50 active:scale-95'
                 }
               `}
             >
@@ -69,6 +72,28 @@ function ChoicePills({
             </button>
           );
         })}
+        {/* "It's Something Else" escape valve — always appended by frontend */}
+        <button
+          onClick={() => {
+            if (isAnswered || disabled) return;
+            onSelect(messageId, { ...action, selectedChoice: SOMETHING_ELSE_LABEL }, SOMETHING_ELSE_LABEL);
+          }}
+          disabled={isAnswered || disabled}
+          aria-pressed={isSomethingElseSelected}
+          aria-label={SOMETHING_ELSE_LABEL}
+          className={`
+            px-5 py-3 rounded-xl text-base font-medium transition-all
+            ${isSomethingElseSelected
+              ? 'bg-light-300 dark:bg-white/20 text-gray-800 dark:text-white ring-2 ring-gray-300 dark:ring-white/20'
+              : isAnswered
+                ? 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-white/20 cursor-default'
+                : 'bg-transparent border border-gray-300 dark:border-white/15 text-gray-500 dark:text-white/50 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-700 dark:hover:text-white/70 active:scale-95'
+            }
+          `}
+        >
+          {isSomethingElseSelected && <Check className="w-4 h-4 inline mr-1.5" />}
+          {SOMETHING_ELSE_LABEL}
+        </button>
       </div>
     </div>
   );
@@ -77,23 +102,23 @@ function ChoicePills({
 function StepCard({ action }: { action: ShowStepAction }) {
   return (
     <div
-      className="mt-3 bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
+      className="mt-3 bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 rounded-2xl overflow-hidden"
       role="article"
       aria-label={`Step ${action.stepNumber}: ${action.title}`}
     >
-      <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#6366F1]/20 to-[#06B6D4]/20 border-b border-white/10">
+      <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-[#6366F1]/20 to-[#06B6D4]/20 border-b border-light-300 dark:border-white/10">
         <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#6366F1] to-[#06B6D4] flex items-center justify-center text-white font-bold text-sm shrink-0">
           {action.stepNumber}
         </div>
-        <h4 className="text-white font-semibold text-base">{action.title}</h4>
+        <h4 className="text-text-primary dark:text-white font-semibold text-base">{action.title}</h4>
       </div>
       <div className="px-4 py-3">
-        <p className="text-white/90 text-base leading-relaxed">{action.instruction}</p>
+        <p className="text-text-primary dark:text-white/90 text-base leading-relaxed">{action.instruction}</p>
       </div>
       {action.tip && (
-        <div className="px-4 py-2.5 bg-amber-500/10 border-t border-white/5 flex items-start gap-2">
+        <div className="px-4 py-2.5 bg-amber-500/10 border-t border-light-200 dark:border-white/5 flex items-start gap-2">
           <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="text-amber-200/90 text-sm">{action.tip}</p>
+          <p className="text-amber-700 dark:text-amber-200/90 text-sm">{action.tip}</p>
         </div>
       )}
     </div>
@@ -117,7 +142,7 @@ function ConfirmButtons({
 
   return (
     <div className="mt-3 space-y-3" role="group" aria-label={action.question}>
-      <p className="text-white/80 text-base font-medium">{action.question}</p>
+      <p className="text-text-primary dark:text-white/80 text-base font-medium">{action.question}</p>
       <div className="flex gap-3">
         <button
           onClick={() => {
@@ -132,8 +157,8 @@ function ConfirmButtons({
             ${action.selectedAnswer === 'yes'
               ? 'bg-emerald-500 text-white ring-2 ring-emerald-400/30'
               : isAnswered
-                ? 'bg-white/5 text-white/30 cursor-default'
-                : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 active:scale-95'
+                ? 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-white/30 cursor-default'
+                : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/30 active:scale-95'
             }
           `}
         >
@@ -153,8 +178,8 @@ function ConfirmButtons({
             ${action.selectedAnswer === 'no'
               ? 'bg-red-500 text-white ring-2 ring-red-400/30'
               : isAnswered
-                ? 'bg-white/5 text-white/30 cursor-default'
-                : 'bg-red-500/20 border border-red-500/40 text-red-300 hover:bg-red-500/30 active:scale-95'
+                ? 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-white/30 cursor-default'
+                : 'bg-red-500/20 border border-red-500/40 text-red-600 dark:text-red-300 hover:bg-red-500/30 active:scale-95'
             }
           `}
         >
@@ -873,22 +898,22 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const hasActiveSession = messages.length > 1;
 
   return (
-    <div className={`flex flex-col ${embedded ? 'h-full' : 'h-screen'} bg-[#0B0E14]`}>
+    <div className={`flex flex-col ${embedded ? 'h-full' : 'h-screen'} bg-light-50 dark:bg-[#0B0E14]`}>
       {/* Header - only shown in standalone mode */}
       {!embedded && (
         <div>
-          <header className="flex items-center justify-between px-4 py-3 bg-[#151922] border-b border-white/10">
+          <header className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#151922] border-b border-light-300 dark:border-white/10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6366F1] to-[#06B6D4] flex items-center justify-center text-white font-semibold text-sm">
                 A
               </div>
               <div>
-                <h1 className="text-white font-semibold text-lg">{agentName}</h1>
+                <h1 className="text-text-primary dark:text-white font-semibold text-lg">{agentName}</h1>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-emerald-400" aria-label="Online" />
-                  <span className="text-white/70 text-sm">TotalAssist Support</span>
+                  <span className="text-text-secondary dark:text-white/70 text-sm">TotalAssist Support</span>
                   {caseId && (
-                    <span className="text-white/40 text-xs ml-2 flex items-center gap-1">
+                    <span className="text-gray-400 dark:text-white/40 text-xs ml-2 flex items-center gap-1">
                       <Hash className="w-3 h-3" />
                       {caseNumber ? `#${caseNumber}` : caseTitle || caseId.substring(0, 8)}
                     </span>
@@ -910,7 +935,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             </div>
           </header>
           {hasActiveSession && (
-            <div className="px-4 bg-[#151922]/50 border-b border-white/5">
+            <div className="px-4 bg-light-100/50 dark:bg-[#151922]/50 border-b border-light-200 dark:border-white/5">
               <EscalationBreadcrumb
                 activeMode={activeMode}
                 visitedModes={visitedModes}
@@ -925,7 +950,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       {/* Embedded header with case ID, breadcrumb, and escalation */}
       {embedded && (caseId || hasActiveSession) && (
-        <div className="px-4 py-2 bg-[#151922]/50 border-b border-white/5">
+        <div className="px-4 py-2 bg-light-100/50 dark:bg-[#151922]/50 border-b border-light-200 dark:border-white/5">
           {hasActiveSession && (
             <EscalationBreadcrumb
               activeMode={activeMode}
@@ -938,7 +963,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2">
               {caseId && (
-                <span className="text-white/40 text-xs flex items-center gap-1 bg-white/5 px-2 py-1 rounded">
+                <span className="text-gray-400 dark:text-white/40 text-xs flex items-center gap-1 bg-light-200 dark:bg-white/5 px-2 py-1 rounded">
                   <Hash className="w-3 h-3" />
                   {caseNumber ? `#${caseNumber}` : caseTitle || `Case ${caseId.substring(0, 8)}`}
                 </span>
@@ -965,23 +990,23 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       {/* Device Picker */}
       {showDevicePicker && !hasPickedDevice && devices.length > 0 && (
-        <div className="px-4 py-3 bg-[#151922]/80 border-b border-white/5">
+        <div className="px-4 py-3 bg-light-100/80 dark:bg-[#151922]/80 border-b border-light-200 dark:border-white/5">
           <div className="max-w-3xl mx-auto">
-            <p className="text-white/70 text-sm mb-3">Which device are you having trouble with?</p>
+            <p className="text-text-secondary dark:text-white/70 text-sm mb-3">Which device are you having trouble with?</p>
             <div className="flex flex-wrap gap-2">
               {devices.map(device => (
                 <button
                   key={device.id}
                   onClick={() => handleDeviceSelect(device)}
-                  className="px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/80 text-sm hover:bg-white/10 hover:border-[#06B6D4]/30 transition-colors"
+                  className="px-4 py-2.5 rounded-full bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 text-text-primary dark:text-white/80 text-sm hover:bg-light-300 dark:hover:bg-white/10 hover:border-[#06B6D4]/30 transition-colors"
                 >
                   {device.name}
-                  {device.brand && <span className="text-white/50 ml-1">({device.brand})</span>}
+                  {device.brand && <span className="text-gray-400 dark:text-white/50 ml-1">({device.brand})</span>}
                 </button>
               ))}
               <button
                 onClick={() => handleDeviceSelect(null)}
-                className="px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 transition-colors"
+                className="px-4 py-2.5 rounded-full bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 text-text-muted dark:text-white/60 text-sm hover:bg-light-300 dark:hover:bg-white/10 transition-colors"
               >
                 Not sure / Something else
               </button>
@@ -1003,7 +1028,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                 max-w-[85%] rounded-2xl px-4 py-3
                 ${message.role === UserRole.USER
                   ? 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white'
-                  : 'bg-white/5 backdrop-blur-md border border-white/10 text-white/90'
+                  : 'bg-light-200 dark:bg-white/5 backdrop-blur-md border border-light-300 dark:border-white/10 text-text-primary dark:text-white/90'
                 }
               `}
             >
@@ -1034,7 +1059,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   )}
                 </>
               )}
-              <div className={`text-xs mt-2 ${message.role === UserRole.USER ? 'text-white/70' : 'text-white/50'}`}>
+              <div className={`text-xs mt-2 ${message.role === UserRole.USER ? 'text-white/70' : 'text-gray-400 dark:text-white/50'}`}>
                 {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
@@ -1042,11 +1067,15 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         ))}
 
         {isLoading && (
-          <div className="flex justify-start" role="status" aria-label={`${agentName} is typing a response`}>
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3">
+          <div className="flex justify-start" role="status" aria-label={`${agentName} is researching your issue`}>
+            <div className="bg-light-200 dark:bg-white/5 backdrop-blur-md border border-light-300 dark:border-white/10 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-white/50 animate-pulse" />
-                <span className="text-white/60 text-sm">{agentName} is typing</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#6366F1] animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1.2s' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#818CF8] animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1.2s' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.2s' }} />
+                </div>
+                <span className="text-text-muted dark:text-white/60 text-sm">{agentName} is researching your issue...</span>
               </div>
             </div>
           </div>
@@ -1057,17 +1086,17 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       </div>
 
       {/* Input Area */}
-      <div className="px-4 pb-4 bg-[#0B0E14]">
+      <div className="px-4 pb-4 bg-light-50 dark:bg-[#0B0E14]">
         <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           {/* Photo attach button */}
           <button
             type="button"
             onClick={() => setShowPhotoModal(true)}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+            className="w-12 h-12 rounded-full flex items-center justify-center bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 hover:bg-light-300 dark:hover:bg-white/10 transition-colors"
             aria-label="Attach a photo"
           >
-            <Camera className="w-5 h-5 text-white/60" />
+            <Camera className="w-5 h-5 text-text-muted dark:text-white/60" />
           </button>
           <div className="flex-1 relative">
             <input
@@ -1076,7 +1105,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Describe your issue..."
-              className="w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-5 py-3.5 text-white text-base placeholder-white/40 focus:outline-none focus:border-[#6366F1]/50 focus:ring-1 focus:ring-[#6366F1]/30 transition-all"
+              className="w-full bg-white dark:bg-white/5 backdrop-blur-md border border-light-300 dark:border-white/10 rounded-full px-5 py-3.5 text-text-primary dark:text-white text-base placeholder-gray-400 dark:placeholder-white/40 focus:outline-none focus:border-[#6366F1]/50 focus:ring-1 focus:ring-[#6366F1]/30 transition-all"
               disabled={isLoading}
             />
           </div>
@@ -1088,11 +1117,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               w-12 h-12 rounded-full flex items-center justify-center transition-all
               ${inputValue.trim() && !isLoading
                 ? 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:shadow-[0_0_20px_rgba(99,102,241,0.6)]'
-                : 'bg-white/10 cursor-not-allowed'
+                : 'bg-light-300 dark:bg-white/10 cursor-not-allowed'
               }
             `}
           >
-            <Send className={`w-5 h-5 ${inputValue.trim() && !isLoading ? 'text-white' : 'text-white/40'}`} />
+            <Send className={`w-5 h-5 ${inputValue.trim() && !isLoading ? 'text-white' : 'text-gray-400 dark:text-white/40'}`} />
           </button>
         </form>
         </div>
@@ -1146,23 +1175,23 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       {/* Escalation Confirmation Modal */}
       {showEscalateConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="escalate-dialog-title">
-          <div className="bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-white/10">
+          <div className="bg-white dark:bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-light-300 dark:border-white/10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
                 <UserPlus className="w-5 h-5 text-orange-400" />
               </div>
-              <h3 id="escalate-dialog-title" className="text-white text-xl font-semibold">Get a Pro Involved</h3>
+              <h3 id="escalate-dialog-title" className="text-text-primary dark:text-white text-xl font-semibold">Get a Pro Involved</h3>
             </div>
-            <p className="text-white/70 mb-2 text-sm">
+            <p className="text-text-secondary dark:text-white/70 mb-2 text-sm">
               I'll put together a detailed report of everything we've covered so a professional can pick up right where we left off.
             </p>
-            <p className="text-white/50 mb-4 text-xs">
+            <p className="text-gray-400 dark:text-white/50 mb-4 text-xs">
               The report includes your conversation, any photos, and my analysis — so you won't have to repeat anything.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowEscalateConfirm(false)}
-                className="flex-1 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                className="flex-1 px-4 py-2 rounded-lg bg-light-300 dark:bg-white/10 text-text-primary dark:text-white hover:bg-light-400 dark:hover:bg-white/20 transition-colors"
               >
                 Cancel
               </button>
@@ -1180,9 +1209,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="upgrade-dialog-title">
-          <div className="bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-white/10">
-            <h3 id="upgrade-dialog-title" className="text-white text-xl font-semibold mb-2">Upgrade Your Plan</h3>
-            <p className="text-white/70 mb-4">
+          <div className="bg-white dark:bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-light-300 dark:border-white/10">
+            <h3 id="upgrade-dialog-title" className="text-text-primary dark:text-white text-xl font-semibold mb-2">Upgrade Your Plan</h3>
+            <p className="text-text-secondary dark:text-white/70 mb-4">
               {lockedFeature === 'chat' && "You've used all your free messages for this month. Upgrade for unlimited support."}
               {lockedFeature === 'photo' && "Photo support is available on our paid plans."}
               {lockedFeature === 'voice' && "Voice support requires TotalAssist Home or Pro. Upgrade for hands-free troubleshooting."}
@@ -1192,7 +1221,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowUpgradeModal(false)}
-                className="flex-1 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                className="flex-1 px-4 py-2 rounded-lg bg-light-300 dark:bg-white/10 text-text-primary dark:text-white hover:bg-light-400 dark:hover:bg-white/20 transition-colors"
               >
                 Maybe Later
               </button>
