@@ -70,7 +70,9 @@
       "Bash(git -C /home/runner/workspace log --oneline -20)",
       "Bash(git -C /home/runner/workspace show:*)",
       "Bash(git -C /home/runner/workspace log --all --grep=\"Phase\" --oneline)",
-      "Bash(git -C /home/runner/workspace log --all --oneline)"
+      "Bash(git -C /home/runner/workspace log --all --oneline)",
+      "Bash(printenv:*)",
+      "Bash(GEMINI_API_KEY_TOTALASSIST=$GEMINI_API_KEY npx tsx:*)"
     ]
   }
 }

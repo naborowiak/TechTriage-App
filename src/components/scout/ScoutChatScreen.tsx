@@ -228,6 +228,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingGuidedUpdateRef = useRef<{ messageId: string; action: GuidedAction } | null>(null);
 
   // Fetch user devices on mount
   useEffect(() => {
@@ -428,7 +429,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       image: imageBase64,
     };
 
-    const newMessages = [...messages, userMessage];
+    let newMessages = [...messages, userMessage];
+    // Apply pending guided action selection (from handleGuidedAction) to avoid stale closure overwrite
+    const guidedUpdate = pendingGuidedUpdateRef.current;
+    pendingGuidedUpdateRef.current = null;
+    if (guidedUpdate) {
+      newMessages = newMessages.map(m => m.id === guidedUpdate.messageId ? { ...m, guidedAction: guidedUpdate.action } : m);
+    }
     setMessages(newMessages);
     setInputValue('');
     setIsLoading(true);
@@ -516,9 +523,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
   // Handle guided action interaction (user taps choice/confirm)
   const handleGuidedAction = useCallback((messageId: string, updatedAction: GuidedAction, responseText: string) => {
-    setMessages(prev => prev.map(m =>
-      m.id === messageId ? { ...m, guidedAction: updatedAction } : m
-    ));
+    // Store update in ref so sendMessage picks it up atomically (avoids stale closure overwrite)
+    pendingGuidedUpdateRef.current = { messageId, action: updatedAction };
     sendMessage(responseText);
   }, [sendMessage]);
 
@@ -1004,9 +1010,12 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   className="rounded-lg mb-2 max-h-48 w-auto"
                 />
               )}
-              <div className="text-[15px] leading-relaxed">
-                {renderMarkdown(message.text)}
-              </div>
+              {/* Hide fallback text when guided action is the main content */}
+              {!(message.guidedAction && (!message.text || message.text === "I'm processing that for you..." || message.text === "Let me look into that for you...")) && (
+                <div className="text-[15px] leading-relaxed">
+                  {renderMarkdown(message.text)}
+                </div>
+              )}
               {/* Guided Fix Engine: Interactive elements */}
               {message.guidedAction && message.role === UserRole.MODEL && (
                 <>
