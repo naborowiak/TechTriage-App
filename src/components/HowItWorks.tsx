@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Camera, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText } from 'lucide-react';
+import { MessageSquare, Camera, Mic, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText } from 'lucide-react';
 import { ScoutSignalIcon } from './Logo';
 import { AnimatedElement, useParallax } from '../hooks/useAnimations';
 
@@ -41,6 +41,40 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       availability: 'All Plans',
       howItWorks: 'Snap a photo, upload it, get a diagnosis.',
     },
+    {
+      name: 'Voice Support',
+      tagline: 'Talk It Through',
+      icon: Mic,
+      color: 'from-scout-purple to-electric-cyan',
+      bgColor: 'bg-electric-cyan/10',
+      borderColor: 'border-electric-cyan/30',
+      textColor: 'text-electric-cyan',
+      description: 'Talk through your issue hands-free, just like a phone call. Your agent listens, asks follow-up questions, and walks you through the fix in real time.',
+      benefits: [
+        'Hands-free troubleshooting',
+        'Natural back-and-forth conversation',
+        'Send photos mid-call if needed',
+      ],
+      availability: 'Home & Pro',
+      howItWorks: 'Tap the mic, start talking, get guided through the fix.',
+    },
+    {
+      name: 'Video Diagnostic',
+      tagline: 'Show Us Live',
+      icon: Video,
+      color: 'from-electric-indigo to-scout-purple',
+      bgColor: 'bg-electric-indigo/10',
+      borderColor: 'border-electric-indigo/30',
+      textColor: 'text-electric-indigo',
+      description: 'Point your camera at the problem and get real-time diagnosis. Your agent sees exactly what you see and guides you step by step.',
+      benefits: [
+        'Real-time visual diagnosis',
+        'Agent sees what you see',
+        'Session recording saved to your case',
+      ],
+      availability: 'Home & Pro (Credits)',
+      howItWorks: 'Open your camera, point it at the issue, follow the guidance.',
+    },
   ];
 
   const reportSections = [
@@ -73,18 +107,18 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1} className="relative z-10">
             <h1 className="text-5xl font-black text-text-primary dark:text-white mb-6 tracking-tight">
-              Two ways to fix your <span className="text-gradient-electric">tech</span>
+              Four ways to fix your <span className="text-gradient-electric">tech</span>
             </h1>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2} className="relative z-10">
             <p className="text-xl text-text-secondary font-medium">
-              Chat or snap a photo. TotalAssist meets you where you are.
+              Chat, snap a photo, call, or show us on video. TotalAssist meets you where you are.
             </p>
           </AnimatedElement>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-24">
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-24">
           {features.map((feature, i) => (
             <AnimatedElement
               key={i}

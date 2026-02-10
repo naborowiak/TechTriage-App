@@ -22,6 +22,7 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
   const [summary, setSummary] = useState('');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -308,6 +309,10 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
                 setStatus('listening');
                 statusTransitionTimerRef.current = null;
               }, delay);
+            } else if (message.type === 'error') {
+              const errorMsg = message.message || 'An error occurred during the video session.';
+              setConnectionError(errorMsg);
+              stopAllHardware();
             } else if (message.type === 'endSession') {
               const finalSummary = message.summary || 'Session completed';
               setSummary(finalSummary);
@@ -345,8 +350,17 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
           }
         };
 
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
+        ws.onerror = () => {
+          console.error('WebSocket connection error');
+          setConnectionError('Connection lost. Please check your internet connection and try again.');
+        };
+
+        ws.onclose = (event) => {
+          if (!mounted) return;
+          // Only show error for unexpected closes (not clean closures)
+          if (!isSessionEnded && event.code !== 1000 && event.code !== 1005) {
+            setConnectionError('Connection to support was lost. Please try again.');
+          }
         };
 
         scriptProcessor.onaudioprocess = (e) => {
@@ -361,8 +375,15 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
         };
 
         animationFrameRef.current = requestAnimationFrame(() => drawWaveformRef.current?.());
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error starting video session:', e);
+        if (e?.name === 'NotAllowedError' || e?.name === 'PermissionDeniedError') {
+          setConnectionError('Camera and microphone access is required for video support. Please allow access in your browser settings and try again.');
+        } else if (e?.name === 'NotFoundError' || e?.name === 'DevicesNotFoundError') {
+          setConnectionError('No camera or microphone found. Please connect a camera and microphone, then try again.');
+        } else {
+          setConnectionError('Could not start video session. Please check your camera and microphone permissions and try again.');
+        }
       }
     };
 
@@ -508,6 +529,25 @@ export function VideoSessionModal({ onClose, caseId }: VideoSessionModalProps) {
                 <div className="text-xs text-white/60 uppercase tracking-wider mb-0.5">Status</div>
                 <div className="text-white font-semibold capitalize">{status}</div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Connection error */}
+        {connectionError && !isSessionEnded && (
+          <div className="absolute inset-0 flex items-center justify-center p-6 z-40 bg-[#0B0E14]/90">
+            <div className="bg-[#151922] rounded-3xl p-8 max-w-md w-full border border-red-500/20">
+              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
+                <X className="w-8 h-8 text-red-400" />
+              </div>
+              <h3 className="text-white text-2xl font-bold text-center mb-2">Connection Issue</h3>
+              <p className="text-white/70 text-center mb-6">{connectionError}</p>
+              <button
+                onClick={onClose}
+                className="w-full py-3 rounded-full bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white font-semibold"
+              >
+                Close
+              </button>
             </div>
           </div>
         )}

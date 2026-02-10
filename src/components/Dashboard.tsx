@@ -13,11 +13,14 @@ import {
   Plus,
   ChevronUp,
   Camera,
-  Image as ImageIcon,
   Mic,
   Video,
   HelpCircle,
   BarChart3,
+  MessageSquare,
+  Lock,
+  ArrowRight,
+  Clock,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useSubscription } from "../hooks/useSubscription";
@@ -117,13 +120,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [caseSearch, setCaseSearch] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeFeature] = useState<'chat' | 'photo' | 'signal' | 'videoDiagnostic'>('chat');
+  const [upgradeFeature, setUpgradeFeature] = useState<'chat' | 'photo' | 'signal' | 'videoDiagnostic'>('chat');
   const inputRef = useRef<HTMLInputElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showActionMenu, setShowActionMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const actionMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
 
   // Usage store
@@ -172,28 +173,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Click-outside detection for popup menus
   useEffect(() => {
-    if (!showUserMenu && !showActionMenu) return;
+    if (!showUserMenu) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setShowUserMenu(false);
       }
-      if (showActionMenu && actionMenuRef.current && !actionMenuRef.current.contains(e.target as Node)) {
-        setShowActionMenu(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showUserMenu, showActionMenu]);
-
-  // Action menu handler
-  const handleActionMenuSelect = (mode: 'photo' | 'voice' | 'video') => {
-    setShowActionMenu(false);
-    if (onOpenScoutWithMode) {
-      onOpenScoutWithMode(mode);
-    } else if (onOpenScout) {
-      onOpenScout();
-    }
-  };
+  }, [showUserMenu]);
 
   // Handle sending initial message from empty state
   const handleSendFromEmpty = () => {
@@ -479,83 +467,232 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {children}
           </div>
         ) : (
-          /* Empty state: "Ready when you are." */
-          <div className="flex-1 flex flex-col items-center justify-center px-4">
-            <div className="w-full max-w-2xl mx-auto text-center">
-              {/* Heading */}
-              <h1 className="text-3xl sm:text-4xl font-bold text-text-primary dark:text-white mb-8">
-                Ready when you are.
-              </h1>
+          /* Control Center */
+          <div className="flex-1 overflow-y-auto">
+            <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8">
 
-              {/* Input bar */}
-              <div className="relative w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/50 focus-within:ring-2 focus-within:ring-electric-indigo/20 transition-all">
-                {/* + Action menu */}
-                <div className="relative" ref={actionMenuRef}>
-                  <button
-                    className="p-1.5 text-text-muted hover:text-text-primary dark:hover:text-white transition-colors rounded-lg hover:bg-light-200 dark:hover:bg-midnight-700"
-                    title="Actions"
-                    onClick={() => setShowActionMenu(!showActionMenu)}
-                  >
-                    <Plus className={`w-5 h-5 transition-transform ${showActionMenu ? 'rotate-45' : ''}`} />
-                  </button>
-
-                  {showActionMenu && (
-                    <div className="absolute bottom-full left-0 mb-3 bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-xl shadow-xl p-2 z-50 w-56 animate-fade-in-up">
-                      <button
-                        onClick={() => handleActionMenuSelect('photo')}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
-                      >
-                        <Camera className="w-4 h-4 text-text-secondary" />
-                        Take Photo
-                      </button>
-                      <button
-                        onClick={() => handleActionMenuSelect('photo')}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
-                      >
-                        <ImageIcon className="w-4 h-4 text-text-secondary" />
-                        Upload Photo
-                      </button>
-                      <div className="my-1 border-t border-light-200 dark:border-midnight-700" />
-                      <button
-                        onClick={() => handleActionMenuSelect('voice')}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
-                      >
-                        <Mic className="w-4 h-4 text-text-secondary" />
-                        Voice Support
-                      </button>
-                      <button
-                        onClick={() => handleActionMenuSelect('video')}
-                        className="w-full flex items-center gap-3 p-3 hover:bg-light-100 dark:hover:bg-midnight-700 rounded-lg transition-colors text-text-primary dark:text-white text-sm font-medium"
-                      >
-                        <Video className="w-4 h-4 text-text-secondary" />
-                        Video Support
-                      </button>
-                    </div>
-                  )}
+              {/* Section 1: Emergency Bar */}
+              <button
+                onClick={() => {
+                  if (onOpenScout) onOpenScout();
+                  else if (onNewChat) onNewChat("I need help with a tech issue");
+                }}
+                className="w-full bg-electric-indigo hover:bg-[#4F46E5] active:scale-[0.99] rounded-2xl px-6 py-5 flex items-center justify-between transition-all shadow-lg min-h-[72px]"
+                aria-label="Start a new help session now"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Zap className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <h2 className="text-lg sm:text-xl font-bold text-white">Need help right now?</h2>
+                    <p className="text-white/80 text-sm sm:text-base">Start a new case and get instant support.</p>
+                  </div>
                 </div>
+                <ArrowRight className="w-6 h-6 text-white shrink-0 hidden sm:block" />
+              </button>
 
+              {/* Section 2: Triage Grid */}
+              <div>
+                <h2 className="text-xl font-bold text-text-primary dark:text-white mb-4">How can we help?</h2>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    {
+                      id: 'text' as const,
+                      icon: MessageSquare,
+                      label: 'Type a Question',
+                      description: 'Chat with our support agent',
+                      lockedForTiers: [] as string[],
+                      action: () => { if (onOpenScout) onOpenScout(); },
+                      feature: 'chat' as const,
+                    },
+                    {
+                      id: 'photo' as const,
+                      icon: Camera,
+                      label: 'Show the Problem',
+                      description: 'Take or upload a photo for analysis',
+                      lockedForTiers: [] as string[],
+                      action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('photo'); else if (onOpenScout) onOpenScout(); },
+                      feature: 'photo' as const,
+                    },
+                    {
+                      id: 'voice' as const,
+                      icon: Mic,
+                      label: 'Talk to Support',
+                      description: 'Hands-free help, like a phone call',
+                      lockedForTiers: ['guest', 'free'],
+                      action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('voice'); else if (onOpenScout) onOpenScout(); },
+                      feature: 'signal' as const,
+                    },
+                    {
+                      id: 'video' as const,
+                      icon: Video,
+                      label: 'Show Me on Camera',
+                      description: 'Point your camera at the issue',
+                      lockedForTiers: ['guest', 'free'],
+                      action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('video'); else if (onOpenScout) onOpenScout(); },
+                      feature: 'videoDiagnostic' as const,
+                    },
+                  ].map((tile) => {
+                    const Icon = tile.icon;
+                    const isLocked = tile.lockedForTiers.includes(tier);
+
+                    return (
+                      <button
+                        key={tile.id}
+                        onClick={() => {
+                          if (isLocked) {
+                            setUpgradeFeature(tile.feature);
+                            setUpgradeModalOpen(true);
+                          } else {
+                            tile.action();
+                          }
+                        }}
+                        className={`
+                          relative flex flex-col items-center justify-center text-center
+                          rounded-2xl border p-6 min-h-[180px]
+                          transition-all duration-200
+                          ${isLocked
+                            ? 'bg-light-100 dark:bg-midnight-800/50 border-light-300 dark:border-midnight-700 opacity-70 cursor-not-allowed'
+                            : 'bg-white dark:bg-midnight-800 border-light-300 dark:border-midnight-700 hover:border-electric-indigo hover:shadow-lg active:scale-[0.98]'
+                          }
+                        `}
+                        aria-label={`${tile.label}${isLocked ? ' — requires upgrade' : ''}`}
+                      >
+                        {isLocked && (
+                          <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-midnight-900/80 dark:bg-midnight-700 flex items-center justify-center" aria-hidden="true">
+                            <Lock className="w-4 h-4 text-white/70" />
+                          </div>
+                        )}
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
+                          isLocked
+                            ? 'bg-light-300 dark:bg-midnight-700'
+                            : 'bg-electric-indigo/10 dark:bg-electric-indigo/20'
+                        }`}>
+                          <Icon className={`w-7 h-7 ${isLocked ? 'text-text-muted' : 'text-electric-indigo'}`} />
+                        </div>
+                        <span className={`text-lg font-bold leading-tight ${isLocked ? 'text-text-muted' : 'text-text-primary dark:text-white'}`}>
+                          {tile.label}
+                        </span>
+                        <span className="text-sm text-text-secondary dark:text-text-muted mt-1.5">
+                          {isLocked ? 'Requires Home or Pro plan' : tile.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Section 3: Quick-Start Chips */}
+              <div>
+                <h3 className="text-base font-semibold text-text-secondary dark:text-text-muted mb-3">Common issues</h3>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    "Wi-Fi not working",
+                    "Printer won't print",
+                    "Smart device setup",
+                    "Error on my screen",
+                    "Slow internet",
+                    "TV won't connect",
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      onClick={() => onNewChat?.(chip)}
+                      className="px-5 py-3 rounded-full bg-light-200 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white text-sm sm:text-base font-medium hover:bg-light-300 dark:hover:bg-midnight-700 hover:border-electric-indigo/50 active:scale-[0.97] transition-all min-h-[44px]"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 4: Text Input */}
+              <div className="relative w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/50 focus-within:ring-2 focus-within:ring-electric-indigo/20 transition-all">
                 <input
                   ref={inputRef}
                   type="text"
-                  placeholder="Ask anything"
+                  placeholder="Or type your question here..."
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendFromEmpty()}
-                  className="flex-1 bg-transparent outline-none text-sm text-text-primary dark:text-white placeholder:text-text-muted"
+                  className="flex-1 bg-transparent outline-none text-base text-text-primary dark:text-white placeholder:text-text-muted min-h-[44px]"
                 />
                 <button
                   onClick={handleSendFromEmpty}
                   disabled={!chatInput.trim()}
-                  className="p-2 rounded-full bg-midnight-900 dark:bg-white text-white dark:text-midnight-900 disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all"
+                  className="p-3 rounded-full bg-midnight-900 dark:bg-white text-white dark:text-midnight-900 disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label="Send message"
                 >
-                  <ChevronUp className="w-4 h-4" />
+                  <ChevronUp className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Disclaimer */}
-              <p className="text-xs text-text-muted mt-3">
-                Responses may not always be accurate. Check important info.
-              </p>
+              {/* Section 5: Recent Cases */}
+              {cases.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-text-primary dark:text-white">Your Recent Help Sessions</h2>
+                    {cases.length > 6 && (
+                      <button
+                        onClick={onOpenHistory}
+                        className="text-electric-indigo text-sm font-semibold hover:underline min-h-[44px] flex items-center"
+                      >
+                        View all
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {cases.slice(0, 6).map((c) => {
+                      const statusConfig: Record<string, { label: string; className: string }> = {
+                        open: { label: 'Open', className: 'bg-electric-cyan/20 text-electric-cyan' },
+                        resolved: { label: 'Fixed', className: 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' },
+                        escalated: { label: 'Escalated', className: 'bg-orange-500/20 text-orange-500 dark:text-orange-400' },
+                      };
+                      const status = statusConfig[c.status] || statusConfig.open;
+                      const dateStr = new Date(c.updatedAt || c.createdAt).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric',
+                      });
+
+                      return (
+                        <div
+                          key={c.id}
+                          className="bg-white dark:bg-midnight-800 rounded-2xl border border-light-300 dark:border-midnight-700 p-5 flex flex-col gap-3 hover:border-electric-indigo/40 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="text-base font-bold text-text-primary dark:text-white line-clamp-2 leading-snug">
+                              {c.caseNumber ? `#${c.caseNumber} ` : ''}{c.title}
+                            </h3>
+                            <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${status.className}`}>
+                              {status.label}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-text-muted">
+                            <Clock className="w-4 h-4" />
+                            <span>{dateStr}</span>
+                          </div>
+                          <div className="flex gap-2 mt-auto pt-2">
+                            <button
+                              onClick={() => onOpenCase?.(c.id)}
+                              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-light-100 dark:bg-midnight-700 text-text-primary dark:text-white hover:bg-light-200 dark:hover:bg-midnight-600 transition-colors min-h-[44px]"
+                            >
+                              View Report
+                            </button>
+                            {c.status === 'open' && (
+                              <button
+                                onClick={() => onOpenCase?.(c.id)}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-electric-indigo text-white hover:bg-[#4F46E5] transition-colors min-h-[44px]"
+                              >
+                                Continue
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         )}

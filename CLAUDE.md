@@ -259,6 +259,22 @@ If The_Skeptic and a Dev agent disagree:
 
 <!-- DECISIONS START — append new entries below this line -->
 
+### Decision: Phase 2 — Enable Voice + Video Support (2026-02-10)
+- **Scope**: Frontend only (src/**). Backend already complete.
+- **Files**: ScoutChatScreen.tsx, ModeDock.tsx, HowItWorks.tsx, Pricing.tsx, VideoSessionModal.tsx
+- **Verdict**: APPROVED_WITH_CONDITIONS by The_Skeptic
+- **Conditions addressed**:
+  1. Add camera/mic permission error handling in VideoSessionModal
+  2. Add WebSocket error/access-denied handling in VideoSessionModal
+  3. Follow-up ticket: Backend WebSocket auth bypass (server/index.ts:1637 allows connections without userId)
+  4. Upgrade modal text updated for voice/video locked features
+- **Risks accepted**: Client-server credit desync on failed video launch (mitigated by syncVideoCreditsFromServer); ScriptProcessorNode deprecation (works in all current browsers)
+
+### Decision: Dashboard Control Center Overhaul (2026-02-10)
+- **Scope**: Frontend only — `src/components/Dashboard.tsx` (single file)
+- **Verdict**: APPROVED_WITH_CONDITIONS by The_Skeptic
+- **Conditions**: All met by plan — 18-20px text, 44px+ touch targets, tier gating with plain-language text on locked tiles, graceful empty case state, keyboard/ARIA accessibility, native `<button>` elements throughout
+
 <!-- DECISIONS END -->
 
 ---

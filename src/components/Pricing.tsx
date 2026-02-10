@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Shield, Clock, Home, Users, Zap, Loader2, Lock, Plus, Minus, HelpCircle } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Mic, Video, Shield, Clock, Home, Users, Zap, Loader2, Lock, Plus, Minus, HelpCircle } from 'lucide-react';
 import { PageView } from '../types';
 import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
 import { useAuth } from '../hooks/useAuth';
@@ -143,6 +143,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       features: [
         'Unlimited support messages',
         'Unlimited photo analysis',
+        'Voice support — talk through issues',
+        'Video diagnostic — 1 credit/week',
         'Full case history and search',
         'PDF diagnostic reports',
         'Device inventory tracking',
@@ -164,7 +166,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
         'Multi-home support (up to 5)',
         'Family member accounts',
         'Professional escalation reports',
-        'Voice support (coming soon)',
+        'Video diagnostics — 15 credits/month',
         'Priority response times',
       ],
       cta: 'Get Started',
@@ -185,6 +187,18 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       description: 'Send a photo of an error message, blinking light, or broken device — get a diagnosis in seconds.',
       availability: 'All Plans',
     },
+    {
+      name: 'Voice Support',
+      icon: Mic,
+      description: 'Talk through your issue hands-free, just like a phone call. Your agent guides you step by step in real time.',
+      availability: 'Home & Pro',
+    },
+    {
+      name: 'Video Diagnostic',
+      icon: Video,
+      description: 'Point your camera at the problem and get a live, real-time diagnosis from your support agent.',
+      availability: 'Home & Pro (Credits)',
+    },
   ];
 
   const faqs = [
@@ -197,8 +211,16 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       a: 'You can cancel your membership at any time from your account settings. There are no cancellation fees or long-term contracts. Cancellations take effect at the end of your current billing period.',
     },
     {
+      q: 'How does voice support work?',
+      a: 'Tap the microphone button and start talking — it\'s like a phone call with your support agent. They\'ll listen to your issue, ask follow-up questions, and guide you through the fix. You can even send photos mid-call if needed. Available on Home and Pro plans.',
+    },
+    {
+      q: 'How do video credits work?',
+      a: 'Video diagnostics let you point your camera at the problem for a live diagnosis. Home members get 1 video credit per week (resets every 7 days) and Pro members get 15 credits per month. Each video session uses 1 credit.',
+    },
+    {
       q: 'What\'s the difference between Home and Pro?',
-      a: 'Both plans include unlimited chat and photo analysis. Pro adds multi-home support (up to 5 properties), family member accounts, professional escalation reports, and priority response times. It\'s ideal for landlords, Airbnb hosts, or families managing multiple homes.',
+      a: 'Both plans include unlimited chat, photo analysis, and voice support. Pro adds 15 video credits per month (vs. 1/week on Home), multi-home support (up to 5 properties), family member accounts, professional escalation reports, and priority response times. It\'s ideal for landlords, Airbnb hosts, or families managing multiple homes.',
     },
     {
       q: 'What types of issues do you support?',
@@ -555,6 +577,52 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
+                      </td>
+                    </tr>
+                    {/* Voice Support */}
+                    <tr className="border-b border-light-200 dark:border-midnight-800">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-electric-cyan/10 flex items-center justify-center">
+                            <Mic className="w-4 h-4 text-electric-cyan" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-text-primary dark:text-white">Voice Support</div>
+                            <div className="text-xs text-text-muted">Talk through issues hands-free</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Lock className="w-4 h-4 text-text-muted mx-auto" />
+                      </td>
+                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
+                      </td>
+                    </tr>
+                    {/* Video Diagnostic */}
+                    <tr className="border-b border-light-200 dark:border-midnight-800">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-scout-purple/10 flex items-center justify-center">
+                            <Video className="w-4 h-4 text-scout-purple" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-text-primary dark:text-white">Video Diagnostic</div>
+                            <div className="text-xs text-text-muted">Live camera diagnosis</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Lock className="w-4 h-4 text-text-muted mx-auto" />
+                      </td>
+                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                        <span className="text-sm font-semibold text-scout-purple">1/week</span>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <span className="text-sm font-semibold text-scout-purple">15/month</span>
                       </td>
                     </tr>
                     {/* Case History */}

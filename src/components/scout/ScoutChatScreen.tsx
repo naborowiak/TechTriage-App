@@ -4,8 +4,7 @@ import { EscalationBreadcrumb } from './EscalationBreadcrumb';
 import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
 import { PhotoCaptureModal } from './PhotoCaptureModal';
-// Video mode disabled for Phase 1 (text + photo only)
-// import { VideoSessionModal } from './VideoSessionModal';
+import { VideoSessionModal } from './VideoSessionModal';
 import { useUsage } from '../../stores/usageStore';
 import { sendMessageToGemini, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
 import { useVoiceSession, VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
@@ -33,7 +32,7 @@ interface ScoutChatScreenProps {
 }
 
 export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation, onCaseCreated }: ScoutChatScreenProps) {
-  const { canUse, incrementUsage } = useUsage();
+  const { canUse, incrementUsage, canUseVideoCredit, useVideoCredit } = useUsage();
   const { user, isAuthenticated } = useAuth();
 
   // Pick a consistent agent name for this session (stable across re-renders)
@@ -69,8 +68,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   // Modal states
   const [showVoiceOverlay, setShowVoiceOverlay] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
-  // Video mode disabled for Phase 1
-  // const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
@@ -501,7 +499,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         setShowPhotoModal(true);
         break;
       case 'video':
-        // Video mode disabled for Phase 1
+        if (!canUseVideoCredit()) {
+          setLockedFeature('video' as ScoutMode);
+          setShowUpgradeModal(true);
+          return;
+        }
+        useVideoCredit();
+        setShowVideoModal(true);
         break;
       default:
         // Chat mode - focus input
@@ -930,6 +934,17 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         />
       )}
 
+      {/* Video Session Modal */}
+      {showVideoModal && (
+        <VideoSessionModal
+          onClose={() => {
+            setShowVideoModal(false);
+            setActiveMode('chat');
+          }}
+          caseId={caseId || undefined}
+        />
+      )}
+
       {/* Escalation Confirmation Modal */}
       {showEscalateConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="escalate-dialog-title">
@@ -972,7 +987,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             <p className="text-white/70 mb-4">
               {lockedFeature === 'chat' && "You've used all your free messages for this month. Upgrade for unlimited support."}
               {lockedFeature === 'photo' && "Photo support is available on our paid plans."}
-              {lockedFeature !== 'chat' && lockedFeature !== 'photo' && "This feature is available on our paid plans."}
+              {lockedFeature === 'voice' && "Voice support requires TotalAssist Home or Pro. Upgrade for hands-free troubleshooting."}
+              {lockedFeature === 'video' && "Video diagnostics require TotalAssist Home or Pro. Home includes 1 video credit per week."}
+              {lockedFeature !== 'chat' && lockedFeature !== 'photo' && lockedFeature !== 'voice' && lockedFeature !== 'video' && "This feature is available on our paid plans."}
             </p>
             <div className="flex gap-3">
               <button
