@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Gift, Loader2, AlertTriangle, Check, MessageSquare, Camera, Video, History } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ChurnPreventionModalProps {
   isOpen: boolean;
@@ -18,6 +19,8 @@ export const ChurnPreventionModal: React.FC<ChurnPreventionModalProps> = ({
   tier,
   periodEndDate,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose, active: isOpen });
   const [isAccepting, setIsAccepting] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [offerAccepted, setOfferAccepted] = useState(false);
@@ -65,7 +68,7 @@ export const ChurnPreventionModal: React.FC<ChurnPreventionModalProps> = ({
   // Success state after accepting offer
   if (offerAccepted) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
         <div
           className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
           onClick={onClose}
@@ -99,7 +102,7 @@ export const ChurnPreventionModal: React.FC<ChurnPreventionModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"

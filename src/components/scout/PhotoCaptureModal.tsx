@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { X, Camera, RotateCcw, Check, ImageIcon } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface PhotoCaptureModalProps {
   onClose: () => void;
@@ -7,6 +8,8 @@ interface PhotoCaptureModalProps {
 }
 
 export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose });
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,7 +100,7 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden">
       <div className="flex flex-col w-full h-full max-w-2xl relative">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent">

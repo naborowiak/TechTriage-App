@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Mic, MicOff, Phone, MessageSquare, ChevronRight, Bot, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import type { GuidedAction } from '../../types';
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 
@@ -18,6 +19,8 @@ interface VideoSessionModalProps {
 
 export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessionModalProps) {
   const { user } = useAuth();
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose });
 
   const [isMuted, setIsMuted] = useState(false);
   // resolvedCaseIdRef (below) tracks the case ID — no state needed since we only read via ref
@@ -480,7 +483,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
   }, [user?.id, stopAllHardware]);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#0B0E14] flex flex-col overflow-hidden">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-[#0B0E14] flex flex-col overflow-hidden">
       {/* Video background */}
       <div className="relative flex-1 overflow-hidden">
         <video

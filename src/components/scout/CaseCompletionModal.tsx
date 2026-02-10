@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { X, Download, Mail, CheckCircle, Loader2 } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface CaseCompletionModalProps {
   caseId: string;
@@ -9,19 +10,14 @@ interface CaseCompletionModalProps {
 }
 
 export function CaseCompletionModal({ caseId, caseTitle, onClose, userEmail }: CaseCompletionModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
-  // Prevent body scroll while modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+  useFocusTrap(modalRef, { onClose });
 
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
@@ -76,7 +72,7 @@ export function CaseCompletionModal({ caseId, caseTitle, onClose, userEmail }: C
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="completion-title">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 

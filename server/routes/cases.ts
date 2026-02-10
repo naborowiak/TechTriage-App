@@ -210,6 +210,7 @@ router.patch("/:id", async (req, res) => {
     // Generate specialist token on escalation
     if (status === "escalated" && !existing.specialistToken) {
       updates.specialistToken = uuidv4();
+      updates.specialistTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     }
 
     const [updated] = await db

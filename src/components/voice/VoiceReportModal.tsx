@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   X,
   Download,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
 import { generateVoiceReportPDF } from '../../services/voiceReportService';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface VoiceReportModalProps {
   report: VoiceDiagnosticReport;
@@ -41,6 +42,8 @@ export const VoiceReportModal: React.FC<VoiceReportModalProps> = ({
   userEmail,
   userName,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose });
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -137,7 +140,7 @@ export const VoiceReportModal: React.FC<VoiceReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
+    <div ref={modalRef} className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"

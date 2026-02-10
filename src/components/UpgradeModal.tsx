@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Zap, MessageSquare, Mic, Sparkles, Check, Camera, Video, Clock, ShoppingCart, ArrowRight } from 'lucide-react';
 import { VIDEO_CREDIT_PRICES } from '../stores/usageStore';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface UpgradeModalProps {
 }
 
 export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, feature, currentTier = 'free' }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose, active: isOpen });
   if (!isOpen) return null;
 
   const handleUpgrade = () => {
@@ -45,7 +48,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
   const plan = getRecommendedPlan();
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
@@ -152,10 +155,12 @@ interface SignupGateModalProps {
 }
 
 export const SignupGateModal: React.FC<SignupGateModalProps> = ({ isOpen, onClose, onSignup }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose, active: isOpen });
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
@@ -251,6 +256,8 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
   onPurchase,
   onUpgrade,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose, active: isOpen });
   const [selectedOption, setSelectedOption] = useState<'single' | 'pack' | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
@@ -273,7 +280,7 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"

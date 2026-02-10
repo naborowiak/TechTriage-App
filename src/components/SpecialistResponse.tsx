@@ -38,6 +38,7 @@ export const SpecialistResponse: React.FC<SpecialistResponseProps> = ({ token })
   const [userName, setUserName] = useState('User');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -48,6 +49,10 @@ export const SpecialistResponse: React.FC<SpecialistResponseProps> = ({ token })
         const res = await fetch(`/api/specialist/${token}`);
         if (!res.ok) {
           const data = await res.json();
+          if (res.status === 410 || data.expired) {
+            setIsExpired(true);
+            throw new Error(data.error || 'This specialist link has expired');
+          }
           throw new Error(data.error || 'Failed to load case');
         }
         const data = await res.json();
@@ -100,9 +105,20 @@ export const SpecialistResponse: React.FC<SpecialistResponseProps> = ({ token })
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Link Invalid</h1>
-          <p className="text-gray-500">{error || 'This specialist link is invalid or has expired.'}</p>
+          {isExpired ? (
+            <>
+              <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Link Expired</h1>
+              <p className="text-gray-500 mb-4">This specialist link has expired for security purposes. Links are valid for 7 days after the case is escalated.</p>
+              <p className="text-sm text-gray-400">If you still need to respond, please ask the homeowner to contact support for a new link.</p>
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Link Invalid</h1>
+              <p className="text-gray-500">{error || 'This specialist link is invalid or has expired.'}</p>
+            </>
+          )}
         </div>
       </div>
     );

@@ -104,6 +104,7 @@ export const casesTable = pgTable("cases", {
   }>(),
   // Specialist response fields
   specialistToken: varchar("specialist_token", { length: 255 }),
+  specialistTokenExpiresAt: timestamp("specialist_token_expires_at"),
   specialistNotes: text("specialist_notes"),
   specialistRespondedAt: timestamp("specialist_responded_at"),
   createdAt: timestamp("created_at").defaultNow(),

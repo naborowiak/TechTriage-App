@@ -20,6 +20,11 @@ router.get("/:token", async (req, res) => {
       return res.status(404).json({ error: "Invalid or expired specialist link" });
     }
 
+    // Check token expiration (null expiresAt = non-expiring for backward compatibility)
+    if (caseRecord.specialistTokenExpiresAt && new Date() > caseRecord.specialistTokenExpiresAt) {
+      return res.status(410).json({ error: "This specialist link has expired", expired: true });
+    }
+
     // Fetch messages
     const [messageRecord] = await db
       .select()
@@ -76,6 +81,11 @@ router.post("/:token/respond", async (req, res) => {
 
     if (!caseRecord) {
       return res.status(404).json({ error: "Invalid or expired specialist link" });
+    }
+
+    // Check token expiration (null expiresAt = non-expiring for backward compatibility)
+    if (caseRecord.specialistTokenExpiresAt && new Date() > caseRecord.specialistTokenExpiresAt) {
+      return res.status(410).json({ error: "This specialist link has expired", expired: true });
     }
 
     const [updated] = await db

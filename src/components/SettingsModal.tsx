@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Settings, User, Bell, CreditCard, Package, Shield, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { SettingsProfileSection, SettingsNotificationsSection, SettingsPrivacySection } from './Settings';
 import { BillingManagement } from './BillingManagement';
 import { HomeInventory } from './HomeInventory';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export type SettingsTab = 'general' | 'account' | 'notifications' | 'billing' | 'inventory' | 'privacy';
 
@@ -37,6 +38,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   user,
   onUpdateUser,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, { onClose, active: isOpen });
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const { theme, toggleTheme } = useTheme();
 
@@ -46,16 +49,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setActiveTab(initialTab);
     }
   }, [isOpen, initialTab]);
-
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -146,7 +139,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
