@@ -1983,10 +1983,6 @@ const App: React.FC = () => {
   // Handle signup completion - store user and go to dashboard (memoized for Login/SignUp)
   const handleSignupComplete = useCallback(
     (user: DashboardUser) => {
-      console.log("[APP] handleSignupComplete called with user:", user);
-      console.log("[APP] User ID:", user.id);
-      console.log("[APP] User email:", user.email);
-
       if (!user.id) {
         console.error(
           "[APP] WARNING: User has no ID! Billing and other features will not work.",

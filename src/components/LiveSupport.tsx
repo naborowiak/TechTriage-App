@@ -690,7 +690,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         const inputAudioContext = new AudioContext();
         inputAudioContextRef.current = inputAudioContext;
         const nativeSampleRate = inputAudioContext.sampleRate;
-        console.log(`Native audio sample rate: ${nativeSampleRate}Hz`);
 
         // Create AudioContext for output playback
         const outputAudioContext = new AudioContext();
@@ -725,12 +724,10 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         if (caseId) params.append("caseId", caseId);
 
         const wsUrl = `${baseWsUrl}?${params.toString()}`;
-        console.log(`Connecting to WebSocket: ${wsUrl}`);
 
         ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log("WebSocket connected");
           setStatus("listening");
         };
 
@@ -739,7 +736,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
             const message = JSON.parse(event.data);
 
             if (message.type === "ready") {
-              console.log("Gemini session ready");
               setIsConnecting(false);
 
               // Start sending video frames every 2 seconds
@@ -748,7 +744,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
               setStatus("speaking");
               playAudio(message.data);
             } else if (message.type === "aiTranscript") {
-              console.log("AI said:", message.data);
               // Add AI's spoken words to transcript
               setTranscriptHistory((prev) => [
                 ...prev,
@@ -759,7 +754,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
                 },
               ]);
             } else if (message.type === "userTranscript") {
-              console.log("User said:", message.data);
               // Add user's spoken words to transcript
               setTranscriptHistory((prev) => [
                 ...prev,
@@ -776,7 +770,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
               setConnectionError(message.message || "An error occurred with the AI service.");
               setIsConnecting(false);
             } else if (message.type === "endSession") {
-              console.log("Session ended:", message.summary);
               const finalSummary = message.summary || "Session completed";
               setSummary(finalSummary);
               setIsSessionEnded(true);
@@ -804,7 +797,6 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         };
 
         ws.onclose = (event) => {
-          console.log("WebSocket closed", event.code, event.reason);
           if (mounted && !isSessionEndedRef.current) {
             // Only show error if closed unexpectedly (not a clean close)
             if (event.code !== 1000) {

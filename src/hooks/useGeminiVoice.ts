@@ -203,9 +203,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
-        ws.onopen = () => {
-          console.log('Voice WebSocket connected');
-        };
+        ws.onopen = () => {};
 
         ws.onmessage = (event) => {
           try {
@@ -279,8 +277,7 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
           stopAllHardware();
         };
 
-        ws.onclose = (event) => {
-          console.log('Voice WebSocket closed', event.code, event.reason);
+        ws.onclose = () => {
           setIsConnected(false);
           if (statusTransitionTimerRef.current) {
             clearTimeout(statusTransitionTimerRef.current);

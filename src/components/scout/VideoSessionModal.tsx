@@ -361,7 +361,6 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
         wsRef.current = ws;
 
         ws.onopen = () => {
-          console.log('WebSocket connected');
           setStatus('listening');
         };
 

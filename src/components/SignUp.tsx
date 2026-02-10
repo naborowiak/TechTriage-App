@@ -444,8 +444,6 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   };
 
   const handleComplete = async () => {
-    console.log("Onboarding complete:", formData);
-
     try {
       // Determine user ID - OAuth user, or email user who already registered + verified
       const userId = isOAuthUser ? oauthUser?.id : registeredUserId;
@@ -468,8 +466,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
           }),
         });
 
-        const data = await response.json();
-        console.log("User profile updated:", data);
+        await response.json();
       } else {
         console.error("[SIGNUP] WARNING: No user ID available at handleComplete!");
       }

@@ -149,7 +149,6 @@ const logInteraction = async (data: {
   timestamp: number;
 }) => {
   try {
-    console.log('[AUDIT LOG]', JSON.stringify(data, null, 2));
     const logs = JSON.parse(localStorage.getItem('scout_audit_logs') || '[]');
     logs.push(data);
     if (logs.length > 100) logs.shift();
