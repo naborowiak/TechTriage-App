@@ -180,24 +180,36 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       icon: MessageSquare,
       description: 'Text with a real support specialist who walks you through any tech issue, step by step.',
       availability: 'All Plans',
+      gradient: 'from-[#06B6D4] via-[#14D8A8] to-[#34D399]',
+      glow: 'shadow-[0_8px_30px_rgba(6,182,212,0.35)]',
+      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(6,182,212,0.5)]',
     },
     {
       name: 'Photo Analysis',
       icon: Camera,
       description: 'Send a photo of an error message, blinking light, or broken device — get a diagnosis in seconds.',
       availability: 'All Plans',
+      gradient: 'from-[#38BDF8] via-[#60A5FA] to-[#818CF8]',
+      glow: 'shadow-[0_8px_30px_rgba(56,189,248,0.35)]',
+      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(56,189,248,0.5)]',
     },
     {
       name: 'Voice Support',
       icon: Mic,
       description: 'Talk through your issue hands-free, just like a phone call. Your agent guides you step by step in real time.',
       availability: 'Home & Pro',
+      gradient: 'from-[#3B82F6] via-[#4F46E5] to-[#6366F1]',
+      glow: 'shadow-[0_8px_30px_rgba(59,130,246,0.35)]',
+      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(59,130,246,0.5)]',
     },
     {
       name: 'Video Diagnostic',
       icon: Video,
       description: 'Point your camera at the problem and get a live, real-time diagnosis from your support agent.',
       availability: 'Home & Pro (Credits)',
+      gradient: 'from-[#8B5CF6] via-[#A855F7] to-[#C084FC]',
+      glow: 'shadow-[0_8px_30px_rgba(139,92,246,0.35)]',
+      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(139,92,246,0.5)]',
     },
   ];
 
@@ -311,19 +323,24 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {products.map((product, i) => (
               <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.1}>
-                <div className="text-center group">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-gradient-to-br from-electric-indigo to-scout-purple border border-electric-indigo/30 group-hover:border-electric-cyan/50 group-hover:scale-110 transition-all shadow-lg shadow-electric-indigo/20">
-                    <product.icon className="w-7 h-7 text-white" />
+                <div className={`group relative rounded-2xl bg-gradient-to-br ${product.gradient} ${product.glow} ${product.hoverGlow} p-6 text-center overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 cursor-default`}>
+                  {/* Glossy shine overlay */}
+                  <div
+                    className="absolute inset-0 rounded-2xl pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.1) 40%, transparent 60%)',
+                    }}
+                  />
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-white/20 backdrop-blur-sm border border-white/20">
+                      <product.icon className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-base font-bold text-white mb-1">{product.name}</h3>
+                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full mb-2 inline-block bg-white/20 text-white/90 backdrop-blur-sm">
+                      {product.availability}
+                    </span>
+                    <p className="text-white/80 text-xs leading-relaxed">{product.description}</p>
                   </div>
-                  <h3 className="text-base font-bold text-text-primary dark:text-white mb-1">{product.name}</h3>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full mb-2 inline-block ${
-                    product.availability === 'All Plans'
-                      ? 'bg-electric-cyan/20 text-electric-cyan'
-                      : 'bg-scout-purple/20 text-scout-purple'
-                  }`}>
-                    {product.availability}
-                  </span>
-                  <p className="text-text-secondary text-xs leading-relaxed">{product.description}</p>
                 </div>
               </AnimatedElement>
             ))}

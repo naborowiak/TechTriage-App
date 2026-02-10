@@ -261,7 +261,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <button
             onClick={() => {
               setSidebarMobileOpen(false);
-              if (activeView !== "main" && onBackToDashboard) {
+              if (activeView === "main") {
+                if (onOpenScout) onOpenScout();
+              } else if (onBackToDashboard) {
                 onBackToDashboard();
               }
             }}
