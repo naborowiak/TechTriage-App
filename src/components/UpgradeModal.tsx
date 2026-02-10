@@ -382,7 +382,7 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
                 <div className="absolute -top-2 -right-2 bg-scout-glow text-midnight-950 text-xs font-bold px-2 py-0.5 rounded-full">
                   SAVE 20%
                 </div>
-                <div className="text-2xl font-black text-white mb-1">3</div>
+                <div className="text-2xl font-black text-white mb-1">5</div>
                 <div className="text-sm text-text-secondary">Credits</div>
                 <div className="text-electric-cyan font-bold mt-2">${VIDEO_CREDIT_PRICES.pack.price}</div>
               </button>
@@ -401,7 +401,7 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
               }`}
             >
               <ShoppingCart className="w-5 h-5" />
-              {isPurchasing ? 'Processing...' : selectedOption ? `Buy ${selectedOption === 'single' ? '1 Credit' : '3 Credits'}` : 'Select an option'}
+              {isPurchasing ? 'Processing...' : selectedOption ? `Buy ${selectedOption === 'single' ? '1 Credit' : '5 Credits'}` : 'Select an option'}
             </button>
             <button
               onClick={onClose}

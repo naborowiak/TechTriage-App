@@ -555,8 +555,8 @@ export const getCreditsDisplay = (used: number, limit: number): string => {
 
 // Pricing constants for ad-hoc purchases
 export const VIDEO_CREDIT_PRICES = {
-  single: { credits: 1, price: 5.00, label: '1 Credit for $5' },
-  pack: { credits: 3, price: 12.00, label: '3 Credits for $12' },
+  single: { credits: 1, price: 3.00, label: '1 Credit for $3' },
+  pack: { credits: 5, price: 12.00, label: '5 Credits for $12' },
 };
 
 // Tier display info

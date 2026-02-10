@@ -5,12 +5,12 @@
 // ============================================
 export const STRIPE_PRICES = {
   home: {
-    monthly: 'price_1SxBdZPeLuLIM8GmEUA9WuJH',  // $25/month
-    annual: 'price_1SxBKmPeLuLIM8Gmv3EbHR44',   // $228/year ($19/mo)
+    monthly: 'price_1SxBdZPeLuLIM8GmEUA9WuJH',  // $9.99/month
+    annual: 'price_1SxBKmPeLuLIM8Gmv3EbHR44',   // $95.88/year ($7.99/mo)
   },
   pro: {
-    monthly: 'price_1SxBdvPeLuLIM8GmXo3KCqT2',  // $59/month
-    annual: 'price_1SxBefPeLuLIM8GmlwmfnA2C',   // $588/year ($49/mo)
+    monthly: 'price_1SxBdvPeLuLIM8GmXo3KCqT2',  // $19.99/month
+    annual: 'price_1SxBefPeLuLIM8GmlwmfnA2C',   // $191.88/year ($15.99/mo)
   },
 } as const;
 
@@ -21,8 +21,8 @@ export const STRIPE_PRICES = {
 // or subscribers who need more than their included allowance
 export const STRIPE_CREDIT_PRICES = {
   videoDiagnostic: {
-    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $5 - 1 video diagnostic session
-    pack: 'price_1SxBgLPeLuLIM8GmkJ27pvdX',    // $12 - 3 video diagnostic sessions (save $3)
+    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $3 - 1 video diagnostic session
+    pack: 'price_1SzOhPPeLuLIM8GmXLqoj7yt',    // $12 - 5 video diagnostic sessions (save $3)
   },
 } as const;
 
@@ -30,7 +30,7 @@ export const STRIPE_CREDIT_PRICES = {
 export const CREDIT_PACK_QUANTITIES = {
   videoDiagnostic: {
     single: 1,
-    pack: 3,
+    pack: 5,
   },
 } as const;
 
@@ -112,15 +112,15 @@ export const PLAN_INFO = {
   },
   home: {
     name: 'Home',
-    monthlyPrice: 25,
-    annualPrice: 228, // $19/mo billed annually
+    monthlyPrice: 9.99,
+    annualPrice: 95.88, // $7.99/mo billed annually
     description: 'Perfect for homeowners',
     highlights: ['Unlimited chat support', 'Unlimited photo analysis', '1 video session/week included', 'Buy extra video credits anytime'],
   },
   pro: {
     name: 'Pro',
-    monthlyPrice: 59,
-    annualPrice: 588, // $49/mo billed annually
+    monthlyPrice: 19.99,
+    annualPrice: 191.88, // $15.99/mo billed annually
     description: 'Best for families & landlords',
     highlights: ['Everything in Home', '15 video sessions/month included', 'Multi-home support (up to 5)', 'Priority support'],
   },
@@ -131,16 +131,16 @@ export const CREDIT_PACK_INFO = {
   videoDiagnostic: {
     single: {
       name: 'Video Diagnostic',
-      price: 5,
+      price: 3,
       credits: 1,
       description: 'One live video diagnostic session with expert assistance',
     },
     pack: {
-      name: 'Video Diagnostic 3-Pack',
+      name: 'Video Diagnostic 5-Pack',
       price: 12,
-      credits: 3,
-      savings: 3,  // Save $3 vs buying individually
-      description: 'Three live video diagnostic sessions (save $3)',
+      credits: 5,
+      savings: 3,  // Save $3 vs buying individually (5 × $3 = $15)
+      description: 'Five live video diagnostic sessions (save $3)',
     },
   },
 } as const;

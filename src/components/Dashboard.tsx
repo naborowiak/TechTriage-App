@@ -733,9 +733,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         }}
                         disabled={isPurchasing !== null}
                         className="px-5 py-3 rounded-xl bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white font-semibold hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors text-sm whitespace-nowrap min-h-[44px] disabled:opacity-50"
-                        aria-label="Purchase 1 video credit for $5"
+                        aria-label="Purchase 1 video credit for $3"
                       >
-                        {isPurchasing === 'single' ? 'Loading...' : '1 Credit — $5'}
+                        {isPurchasing === 'single' ? 'Loading...' : '1 Credit — $3'}
                       </button>
                       <button
                         onClick={async () => {
@@ -750,11 +750,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         }}
                         disabled={isPurchasing !== null}
                         className="px-5 py-3 rounded-xl bg-gradient-to-r from-scout-purple to-electric-indigo text-white font-semibold hover:opacity-90 transition-opacity text-sm whitespace-nowrap flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-50"
-                        aria-label="Purchase 3 video credits for $12, save $3"
+                        aria-label="Purchase 5 video credits for $12, save $3"
                       >
                         {isPurchasing === 'pack' ? 'Loading...' : (
                           <>
-                            <span>3 Credits — $12</span>
+                            <span>5 Credits — $12</span>
                             <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs">Save $3</span>
                           </>
                         )}

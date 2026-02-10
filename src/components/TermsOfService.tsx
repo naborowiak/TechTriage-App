@@ -137,9 +137,9 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
           </h3>
           <p><strong className="text-text-primary dark:text-white">6.1. Subscription Plans.</strong> We offer the following subscription tiers:</p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
-            <li><strong>Free:</strong> Limited access (5 chat sessions, 2 photo analyses per month)</li>
-            <li><strong>Home ($25/month or $228/year):</strong> Unlimited chat and photo analysis, 2 included video sessions/month</li>
-            <li><strong>Pro ($59/month or $588/year):</strong> All Home features plus 5 video sessions/month, multi-home support, priority support</li>
+            <li><strong>Free:</strong> Limited access (5 chat sessions, 1 photo analysis per month)</li>
+            <li><strong>Home ($9.99/month or $95.88/year):</strong> Unlimited chat and photo analysis, 1 video session/week included</li>
+            <li><strong>Pro ($19.99/month or $191.88/year):</strong> All Home features plus 15 video sessions/month, multi-home support, priority support</li>
           </ul>
 
           <p className="mt-4"><strong className="text-text-primary dark:text-white">6.2. Free Trial.</strong> We may offer a 7-day free trial of paid features. At the end of the trial period, your subscription will automatically convert to a paid subscription unless you cancel before the trial ends. You will be charged the applicable subscription fee at the start of your first billing period.</p>
@@ -148,8 +148,8 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
 
           <p className="mt-4"><strong className="text-text-primary dark:text-white">6.4. Credit Packs.</strong> In addition to subscriptions, you may purchase one-time credit packs for video diagnostic sessions:</p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
-            <li>Single Video Diagnostic: $5 (1 credit)</li>
-            <li>Video Diagnostic 3-Pack: $12 (3 credits, save $3)</li>
+            <li>Single Video Diagnostic: $3 (1 credit)</li>
+            <li>Video Diagnostic 5-Pack: $12 (5 credits, save $3)</li>
           </ul>
           <p className="mt-2">Credits do not expire and are non-refundable once purchased.</p>
 

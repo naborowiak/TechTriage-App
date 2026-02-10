@@ -266,7 +266,7 @@ As a thank you for trying TotalAssist, your first billing cycle will be discount
 
 Upgrade Now: ${APP_BASE_URL}/pricing
 
-Plans start at just $25/month.
+Plans start at just $9.99/month.
 
 ---
 Powered by TotalAssist
@@ -712,7 +712,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
-    ${getPreheaderHtml(`${urgencyText} - Upgrade now to keep unlimited tech support. Plans start at $25/month.`)}
+    ${getPreheaderHtml(`${urgencyText} - Upgrade now to keep unlimited tech support. Plans start at $9.99/month.`)}
 
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
@@ -810,7 +810,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
                     ${getPrimaryButtonHtml("Upgrade Now", APP_BASE_URL + "/pricing")}
 
                     <p style="margin: 25px 0 0; color: #64748b; font-size: 13px;">
-                        Plans start at just $25/month
+                        Plans start at just $9.99/month
                     </p>
                 </td>
             </tr>

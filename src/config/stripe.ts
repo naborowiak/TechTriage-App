@@ -4,7 +4,7 @@
 
 export const STRIPE_CREDIT_PRICES = {
   videoDiagnostic: {
-    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $5 — 1 video diagnostic session
-    pack: 'price_1SxBgLPeLuLIM8GmkJ27pvdX',     // $12 — 3 video diagnostic sessions (save $3)
+    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $3 — 1 video diagnostic session
+    pack: 'price_1SzOhPPeLuLIM8GmXLqoj7yt',     // $12 — 5 video diagnostic sessions (save $3)
   },
 } as const;

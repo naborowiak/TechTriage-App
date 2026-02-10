@@ -342,7 +342,7 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
           <div className="p-4 rounded-xl border border-gray-200 dark:border-midnight-600 hover:border-scout-purple/50 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <span className="font-semibold text-text-primary dark:text-white">1 Credit</span>
-              <span className="text-lg font-bold text-text-primary dark:text-white">$5</span>
+              <span className="text-lg font-bold text-text-primary dark:text-white">$3</span>
             </div>
             <p className="text-xs text-text-muted mb-3">One video diagnostic session</p>
             <button
@@ -361,19 +361,19 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
             </button>
           </div>
 
-          {/* 3-Pack */}
+          {/* 5-Pack */}
           <div className="p-4 rounded-xl border-2 border-scout-purple relative bg-scout-purple/5">
             <div className="absolute -top-2 right-3 bg-scout-purple text-white text-xs font-bold px-2 py-0.5 rounded-full">
               SAVE $3
             </div>
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-text-primary dark:text-white">3 Credits</span>
+              <span className="font-semibold text-text-primary dark:text-white">5 Credits</span>
               <div className="text-right">
                 <span className="text-lg font-bold text-text-primary dark:text-white">$12</span>
                 <span className="text-xs text-text-muted ml-1 line-through">$15</span>
               </div>
             </div>
-            <p className="text-xs text-text-muted mb-3">Three video diagnostic sessions</p>
+            <p className="text-xs text-text-muted mb-3">Five video diagnostic sessions</p>
             <button
               onClick={() => handleBuyCredits('pack')}
               disabled={isBuyingCredits !== null}
@@ -385,7 +385,7 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
                   Processing...
                 </>
               ) : (
-                'Buy 3-Pack'
+                'Buy 5-Pack'
               )}
             </button>
           </div>
@@ -595,15 +595,15 @@ const UpgradePlansSection: React.FC<{
       id: 'home',
       name: 'Home',
       icon: <Home className="w-6 h-6" />,
-      monthlyPrice: 25,
-      annualPrice: 228,
+      monthlyPrice: 9.99,
+      annualPrice: 95.88,
       monthlyPriceId: prices?.home?.monthly,
       annualPriceId: prices?.home?.annual,
       description: 'Perfect for homeowners',
       features: [
         'Unlimited AI chat sessions',
         'Unlimited photo analysis',
-        '2 video sessions/month',
+        '1 video session/week',
         'Session history',
       ],
       color: 'purple', // scout-purple theme
@@ -612,14 +612,14 @@ const UpgradePlansSection: React.FC<{
       id: 'pro',
       name: 'Pro',
       icon: <Building className="w-6 h-6" />,
-      monthlyPrice: 59,
-      annualPrice: 588,
+      monthlyPrice: 19.99,
+      annualPrice: 191.88,
       monthlyPriceId: prices?.pro?.monthly,
       annualPriceId: prices?.pro?.annual,
       description: 'Best for families & landlords',
       features: [
         'Everything in Home',
-        '5 video sessions/month',
+        '15 video sessions/month',
         'Multi-home support (up to 5)',
         'Priority support',
       ],
