@@ -845,12 +845,12 @@ const Hero: React.FC<{
                 </button>
               </div>
               <div className="flex items-center gap-4 mb-6 sm:mb-8">
-                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-electric-cyan" />
+                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
                   <span>No credit card needed</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-electric-cyan" />
+                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
                   <span>24/7 instant answers</span>
                 </div>
               </div>
