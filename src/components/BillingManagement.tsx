@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Calendar, ArrowUpRight, Check, AlertTriangle, Loader2, Zap, MessageSquare, Camera, Video, RefreshCw, Star, Home, Building } from 'lucide-react';
 import { useSubscription, SubscriptionTier, VideoCredits } from '../hooks/useSubscription';
 import { ChurnPreventionModal } from './ChurnPreventionModal';
+import { STRIPE_CREDIT_PRICES } from '../config/stripe';
 
 interface BillingManagementProps {
   userId: string;
@@ -117,11 +118,7 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
     }
   };
 
-  // Credit pack price IDs
-  const creditPrices = {
-    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $5 - 1 credit
-    pack: 'price_1SxBgLPeLuLIM8GmkJ27pvdX',    // $12 - 3 credits
-  };
+  const creditPrices = STRIPE_CREDIT_PRICES.videoDiagnostic;
 
   const handleBuyCredits = async (packType: 'single' | 'pack') => {
     setIsBuyingCredits(packType);

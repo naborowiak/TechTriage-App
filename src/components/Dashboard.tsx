@@ -27,6 +27,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useSubscription } from "../hooks/useSubscription";
 import { useUsage } from "../stores/usageStore";
 import { UpgradeModal } from "./UpgradeModal";
+import { STRIPE_CREDIT_PRICES } from "../config/stripe";
 
 interface DashboardProps {
   user: {
@@ -723,7 +724,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         onClick={async () => {
                           setIsPurchasing('single');
                           try {
-                            await startCheckout('price_1SxBftPeLuLIM8GmX9sxeASx');
+                            await startCheckout(STRIPE_CREDIT_PRICES.videoDiagnostic.single);
                           } catch {
                             alert('Failed to start checkout. Please try again.');
                           } finally {
@@ -740,7 +741,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         onClick={async () => {
                           setIsPurchasing('pack');
                           try {
-                            await startCheckout('price_1SxBgLPeLuLIM8GmkJ27pvdX');
+                            await startCheckout(STRIPE_CREDIT_PRICES.videoDiagnostic.pack);
                           } catch {
                             alert('Failed to start checkout. Please try again.');
                           } finally {
