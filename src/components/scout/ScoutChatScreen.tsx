@@ -734,22 +734,38 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   }, []);
 
   const renderMarkdown = (text: string): React.ReactNode => {
+    // Safe inline formatter: parses **bold** into <strong> React elements (no raw HTML)
+    const processInline = (str: string, lineIndex: number): React.ReactNode[] => {
+      const parts: React.ReactNode[] = [];
+      let remaining = str;
+      let keyIndex = 0;
+
+      while (remaining.length > 0) {
+        const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+        if (boldMatch && boldMatch.index !== undefined) {
+          if (boldMatch.index > 0) {
+            parts.push(remaining.slice(0, boldMatch.index));
+          }
+          parts.push(<strong key={`b-${lineIndex}-${keyIndex++}`} className="font-semibold">{boldMatch[1]}</strong>);
+          remaining = remaining.slice(boldMatch.index + boldMatch[0].length);
+        } else {
+          parts.push(remaining);
+          break;
+        }
+      }
+      return parts;
+    };
+
     const lines = text.split('\n');
 
     return lines.map((line, index) => {
-      // Bold text
-      const boldProcessed = line.replace(
-        /\*\*(.*?)\*\*/g,
-        '<strong class="font-semibold">$1</strong>'
-      );
-
       // Numbered lists
       const numberedMatch = line.match(/^(\d+)\.\s(.+)$/);
       if (numberedMatch) {
         return (
           <div key={index} className="flex gap-2 my-1">
             <span className="text-[#6366F1] font-medium">{numberedMatch[1]}.</span>
-            <span dangerouslySetInnerHTML={{ __html: boldProcessed.replace(/^\d+\.\s/, '') }} />
+            <span>{processInline(numberedMatch[2], index)}</span>
           </div>
         );
       }
@@ -760,7 +776,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         return (
           <div key={index} className="flex gap-2 my-1">
             <span className="text-[#06B6D4]">•</span>
-            <span dangerouslySetInnerHTML={{ __html: boldProcessed.replace(/^[•\-]\s/, '') }} />
+            <span>{processInline(bulletMatch[1], index)}</span>
           </div>
         );
       }
@@ -771,7 +787,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       }
 
       return (
-        <p key={index} dangerouslySetInnerHTML={{ __html: boldProcessed }} />
+        <p key={index}>{processInline(line, index)}</p>
       );
     });
   };

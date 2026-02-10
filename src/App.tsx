@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, lazy, Suspense } from "react";
 import {
   Menu,
   X,
@@ -28,29 +28,43 @@ import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
 import { Logo, ScoutSignalIcon } from "./components/Logo";
 import { PageView } from "./types";
-import { HowItWorks } from "./components/HowItWorks";
-import { Pricing } from "./components/Pricing";
-import { FAQ } from "./components/FAQ";
-import { SignUp } from "./components/SignUp";
-import { Login } from "./components/Login";
-import { Dashboard } from "./components/Dashboard";
-import { SessionHistory } from "./components/SessionHistory";
-import { PrivacyPolicy } from "./components/PrivacyPolicy";
-import { TermsOfService } from "./components/TermsOfService";
-import { CancellationPolicy } from "./components/CancellationPolicy";
 import { useAuth } from "./hooks/useAuth";
 import { LiveSupport } from "./components/LiveSupport";
-import { VerifyEmail } from "./components/VerifyEmail";
-import { ForgotPassword } from "./components/ForgotPassword";
-import { ResetPassword } from "./components/ResetPassword";
 import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
-import { ScoutChatScreen, ScoutInfoPanel } from "./components/scout";
-import { SettingsModal, SettingsTab } from "./components/SettingsModal";
-import { CaseAnalytics } from "./components/CaseAnalytics";
-import { SpecialistResponse } from "./components/SpecialistResponse";
+import type { SettingsTab } from "./components/SettingsModal";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
+
+// Lazy-loaded page components (code splitting)
+const HowItWorks = lazy(() => import("./components/HowItWorks").then(m => ({ default: m.HowItWorks })));
+const Pricing = lazy(() => import("./components/Pricing").then(m => ({ default: m.Pricing })));
+const FAQ = lazy(() => import("./components/FAQ").then(m => ({ default: m.FAQ })));
+const SignUp = lazy(() => import("./components/SignUp").then(m => ({ default: m.SignUp })));
+const Login = lazy(() => import("./components/Login").then(m => ({ default: m.Login })));
+const Dashboard = lazy(() => import("./components/Dashboard").then(m => ({ default: m.Dashboard })));
+const SessionHistory = lazy(() => import("./components/SessionHistory").then(m => ({ default: m.SessionHistory })));
+const PrivacyPolicy = lazy(() => import("./components/PrivacyPolicy").then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfService = lazy(() => import("./components/TermsOfService").then(m => ({ default: m.TermsOfService })));
+const CancellationPolicy = lazy(() => import("./components/CancellationPolicy").then(m => ({ default: m.CancellationPolicy })));
+const VerifyEmail = lazy(() => import("./components/VerifyEmail").then(m => ({ default: m.VerifyEmail })));
+const ForgotPassword = lazy(() => import("./components/ForgotPassword").then(m => ({ default: m.ForgotPassword })));
+const ResetPassword = lazy(() => import("./components/ResetPassword").then(m => ({ default: m.ResetPassword })));
+const ScoutChatScreen = lazy(() => import("./components/scout/ScoutChatScreen").then(m => ({ default: m.ScoutChatScreen })));
+const ScoutInfoPanel = lazy(() => import("./components/scout/ScoutInfoPanel").then(m => ({ default: m.ScoutInfoPanel })));
+const SettingsModal = lazy(() => import("./components/SettingsModal").then(m => ({ default: m.SettingsModal })));
+const CaseAnalytics = lazy(() => import("./components/CaseAnalytics").then(m => ({ default: m.CaseAnalytics })));
+const SpecialistResponse = lazy(() => import("./components/SpecialistResponse").then(m => ({ default: m.SpecialistResponse })));
+
+// Page loading fallback for lazy-loaded routes
+const PageLoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-light-100 dark:bg-midnight-950 transition-colors">
+    <div className="text-center">
+      <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p className="text-text-secondary font-medium">Loading...</p>
+    </div>
+  </div>
+);
 
 // ============================================
 // Animation Hooks & Components
@@ -2391,9 +2405,11 @@ const App: React.FC = () => {
     })();
 
     return (
-      <PageTransition pageKey={currentView}>
-        {content}
-      </PageTransition>
+      <Suspense fallback={<PageLoadingFallback />}>
+        <PageTransition pageKey={currentView}>
+          {content}
+        </PageTransition>
+      </Suspense>
     );
   };
 
