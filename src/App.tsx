@@ -24,7 +24,6 @@ import {
   Sparkles,
   FileText,
   Shield,
-  Clock,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -36,6 +35,7 @@ import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
 import type { SettingsTab } from "./components/SettingsModal";
+import { AnimatedElement, useParallax } from "./hooks/useAnimations";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { usePWAInstall } from "./hooks/usePWAInstall";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
@@ -95,124 +95,8 @@ const PageTransition: React.FC<{ children: React.ReactNode; pageKey: string }> =
   );
 };
 
-// Hook to detect when an element is in viewport
-const useInView = (options?: IntersectionObserverInit) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(false);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setIsInView(true);
-          setHasAnimated(true);
-        }
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px', ...options }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [hasAnimated, options]);
-
-  return { ref, isInView };
-};
-
-// Hook for parallax scroll effect
-const useParallax = (speed: number = 0.5) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [offset, setOffset] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      const scrolled = window.innerHeight - rect.top;
-      if (scrolled > 0 && rect.bottom > 0) {
-        setOffset(scrolled * speed);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial call
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [speed]);
-
-  return { ref, offset };
-};
-
-// Animated wrapper component with various animation types
-const AnimatedElement: React.FC<{
-  children: React.ReactNode;
-  animation?: 'fadeIn' | 'fadeInUp' | 'fadeInDown' | 'fadeInLeft' | 'fadeInRight' | 'scaleIn' | 'none';
-  delay?: number;
-  duration?: number;
-  className?: string;
-}> = ({
-  children,
-  animation = 'fadeInUp',
-  delay = 0,
-  duration = 0.6,
-  className = '',
-}) => {
-  const { ref, isInView } = useInView();
-
-  const baseStyles: React.CSSProperties = {
-    transition: `opacity ${duration}s ease-out, transform ${duration}s ease-out`,
-    transitionDelay: `${delay}s`,
-  };
-
-  const animations: Record<string, { hidden: React.CSSProperties; visible: React.CSSProperties }> = {
-    fadeIn: {
-      hidden: { opacity: 0 },
-      visible: { opacity: 1 },
-    },
-    fadeInUp: {
-      hidden: { opacity: 0, transform: 'translateY(30px)' },
-      visible: { opacity: 1, transform: 'translateY(0)' },
-    },
-    fadeInDown: {
-      hidden: { opacity: 0, transform: 'translateY(-30px)' },
-      visible: { opacity: 1, transform: 'translateY(0)' },
-    },
-    fadeInLeft: {
-      hidden: { opacity: 0, transform: 'translateX(-30px)' },
-      visible: { opacity: 1, transform: 'translateX(0)' },
-    },
-    fadeInRight: {
-      hidden: { opacity: 0, transform: 'translateX(30px)' },
-      visible: { opacity: 1, transform: 'translateX(0)' },
-    },
-    scaleIn: {
-      hidden: { opacity: 0, transform: 'scale(0.9)' },
-      visible: { opacity: 1, transform: 'scale(1)' },
-    },
-    none: {
-      hidden: {},
-      visible: {},
-    },
-  };
-
-  const currentAnimation = animations[animation] || animations.fadeInUp;
-  const animationStyles = isInView ? currentAnimation.visible : currentAnimation.hidden;
-
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{ ...baseStyles, ...animationStyles }}
-    >
-      {children}
-    </div>
-  );
-};
-
 // ============================================
-// End Animation Hooks & Components
+// End Animation Hooks & Components (now imported from useAnimations.tsx)
 // ============================================
 
 // Credit Counter Component - shows usage for logged-in users
@@ -892,11 +776,7 @@ const Hero: React.FC<{
                     <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     24/7 instant answers
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-electric-cyan/20 backdrop-blur-sm"
-                    style={{ background: 'linear-gradient(135deg, #06B6D4 0%, #6366F1 100%)' }}>
-                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    Results in minutes
-                  </span>
+                
                 </div>
               </AnimatedElement>
             </div>
@@ -2348,6 +2228,8 @@ const App: React.FC = () => {
         default:
           return (
             <>
+              {/* Scroll progress bar — fills across top as user scrolls */}
+              <div className="scroll-progress" />
               <Hero
                 onFreeTrial={handleFreeTrial}
                 onPricing={handleNavigateToPricing}

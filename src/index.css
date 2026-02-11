@@ -204,6 +204,130 @@ body {
   opacity: 0.5;
 }
 
+/* ── Animated price counter (CSS @property integer interpolation) ── */
+@property --price-dollars {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+
+@property --price-cents {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+
+.price-animated {
+  transition: --price-dollars 600ms ease-out, --price-cents 600ms ease-out;
+  counter-reset: dollars var(--price-dollars) cents var(--price-cents);
+  font-variant-numeric: tabular-nums;
+}
+
+.price-animated::after {
+  content: "$" counter(dollars) "." counter(cents, decimal-leading-zero);
+}
+
+/* ── Scroll-driven animation keyframes ── */
+@keyframes scroll-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scroll-fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scroll-fadeInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scroll-fadeInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scroll-fadeInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scroll-scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Scroll-driven animation classes (progressive enhancement) */
+@supports (animation-timeline: view()) {
+  .scroll-fade-in {
+    animation: scroll-fadeIn 1ms linear both;
+    animation-timeline: view();
+    animation-range: entry var(--stagger, 0%) entry 100%;
+  }
+
+  .scroll-fade-in-up {
+    animation: scroll-fadeInUp 1ms linear both;
+    animation-timeline: view();
+    animation-range: entry var(--stagger, 0%) entry 100%;
+  }
+
+  .scroll-fade-in-down {
+    animation: scroll-fadeInDown 1ms linear both;
+    animation-timeline: view();
+    animation-range: entry var(--stagger, 0%) entry 100%;
+  }
+
+  .scroll-fade-in-left {
+    animation: scroll-fadeInLeft 1ms linear both;
+    animation-timeline: view();
+    animation-range: entry var(--stagger, 0%) entry 100%;
+  }
+
+  .scroll-fade-in-right {
+    animation: scroll-fadeInRight 1ms linear both;
+    animation-timeline: view();
+    animation-range: entry var(--stagger, 0%) entry 100%;
+  }
+
+  .scroll-scale-in {
+    animation: scroll-scaleIn 1ms linear both;
+    animation-timeline: view();
+    animation-range: entry var(--stagger, 0%) entry 100%;
+  }
+}
+
+/* ── Scroll progress bar ── */
+@keyframes scrollProgress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #6366F1, #06B6D4);
+  transform-origin: left;
+  animation: scrollProgress 1ms linear both;
+  animation-timeline: scroll();
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* ── Accessibility: Respect reduced motion preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ── Safe Viewport Height (accounts for mobile browser chrome) ── */
 :root {
   --app-height: 100vh;

@@ -446,27 +446,22 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     </div>
                   ) : (
                     <>
-                      {/* Animated price slider */}
-                      <div className="relative overflow-hidden h-[48px]">
-                        <div className={`transition-transform duration-500 ease-out ${isAnnual ? '-translate-y-1/2' : 'translate-y-0'}`}>
-                          {/* Monthly price (top) */}
-                          <div className="h-[48px] flex items-baseline gap-1">
-                            <span className="text-4xl font-black text-text-primary dark:text-white">
-                              ${plan.monthlyPrice}
-                            </span>
-                            <span className="text-text-secondary">/mo</span>
-                          </div>
-                          {/* Annual price (bottom — slides up when active) */}
-                          <div className="h-[48px] flex items-baseline gap-2">
-                            <span className="text-xl text-text-muted line-through">
-                              ${plan.monthlyPrice}
-                            </span>
-                            <span className="text-4xl font-black text-text-primary dark:text-white">
-                              ${plan.annualPrice}
-                            </span>
-                            <span className="text-text-secondary">/mo</span>
-                          </div>
-                        </div>
+                      <div className="flex items-baseline gap-2">
+                        {/* Strikethrough original price — slides in when annual */}
+                        <span className={`text-xl text-text-muted line-through transition-all duration-500 ease-out inline-block overflow-hidden whitespace-nowrap ${
+                          isAnnual ? 'max-w-20 opacity-100' : 'max-w-0 opacity-0'
+                        }`}>
+                          ${plan.monthlyPrice}
+                        </span>
+                        {/* Animated counting price via CSS @property */}
+                        <span
+                          className="price-animated text-4xl font-black text-text-primary dark:text-white"
+                          style={{
+                            '--price-dollars': isAnnual ? Math.floor(plan.annualPrice) : Math.floor(plan.monthlyPrice),
+                            '--price-cents': Math.round(((isAnnual ? plan.annualPrice : plan.monthlyPrice) % 1) * 100),
+                          } as React.CSSProperties}
+                        />
+                        <span className="text-text-secondary">/mo</span>
                       </div>
                       {/* Animated billing text */}
                       <div className="relative overflow-hidden h-5">

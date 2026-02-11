@@ -93,7 +93,8 @@
       "Bash(identify:*)",
       "Bash(npx tailwindcss:*)",
       "Bash(npm uninstall:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "WebFetch(domain:css-tricks.com)"
     ]
   }
 }
