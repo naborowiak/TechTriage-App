@@ -690,9 +690,9 @@ const Hero: React.FC<{
 
       {/* Mobile hero image (below lg) — parallax layer */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_bottom] lg:hidden will-change-transform"
+        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_60%] lg:hidden will-change-transform"
         style={{
-          backgroundImage: "url(/hero_mobile1.jpg)",
+          backgroundImage: "url(/mobile_hero.jpg)",
           transform: `translateY(${scrollY * 0.2}px) scale(1.15)`,
           transformOrigin: 'center bottom',
         }}
@@ -702,7 +702,7 @@ const Hero: React.FC<{
       <div
         className="absolute inset-0 bg-cover bg-no-repeat hidden lg:block bg-[position:85%_55%] xl:bg-[position:90%_50%] 2xl:bg-[position:92%_48%] will-change-transform"
         style={{
-          backgroundImage: "url(/homepage-internet.jpg)",
+          backgroundImage: "url(/hero_image_new.jpg)",
           transform: `translateY(${scrollY * 0.2}px) scale(1.15)`,
           transformOrigin: 'center center',
         }}
@@ -711,23 +711,23 @@ const Hero: React.FC<{
       {/* ===== GRADIENT OVERLAYS (separate from background images) ===== */}
 
       {/* ===== LIGHT MODE - MOBILE (top to bottom, layered) ===== */}
-      {/* Layer 1: Primary top-to-bottom gradient */}
+      {/* Layer 1: Primary top-to-bottom gradient — fades out by 58% to reveal phone */}
       <div className="absolute inset-0 lg:hidden dark:hidden" style={{
         background: `linear-gradient(180deg,
-          rgba(255,255,255,0.92) 0%,
-          rgba(255,255,255,0.85) 20%,
-          rgba(250,250,255,0.65) 40%,
-          rgba(243,244,255,0.4) 55%,
-          rgba(238,242,255,0.18) 70%,
-          transparent 85%)`
+          rgba(255,255,255,0.95) 0%,
+          rgba(255,255,255,0.92) 15%,
+          rgba(250,250,255,0.72) 30%,
+          rgba(243,244,255,0.38) 42%,
+          rgba(238,242,255,0.1) 52%,
+          transparent 58%)`
       }}></div>
       {/* Layer 2: Diagonal gradient for natural edge */}
       <div className="absolute inset-0 lg:hidden dark:hidden" style={{
         background: `linear-gradient(160deg,
-          rgba(255,255,255,0.8) 0%,
-          rgba(248,247,255,0.55) 30%,
-          rgba(243,244,255,0.25) 50%,
-          transparent 70%)`
+          rgba(255,255,255,0.85) 0%,
+          rgba(248,247,255,0.5) 22%,
+          rgba(243,244,255,0.15) 38%,
+          transparent 48%)`
       }}></div>
 
       {/* ===== LIGHT MODE - DESKTOP (split overlay: readable left, transparent right) ===== */}
@@ -750,25 +750,30 @@ const Hero: React.FC<{
       }}></div>
 
       {/* ===== DARK MODE - MOBILE (top to bottom, layered) ===== */}
-      {/* Layer 1: Primary top-to-bottom gradient with brand tint */}
+      {/* Layer 1: Primary top-to-bottom gradient — fades by 62% to reveal phone */}
       <div className="absolute inset-0 lg:dark:hidden hidden dark:block" style={{
         background: `linear-gradient(180deg,
-          rgba(11,14,30,0.92) 0%,
-          rgba(11,14,30,0.85) 18%,
-          rgba(18,16,42,0.68) 38%,
-          rgba(30,24,58,0.45) 52%,
-          rgba(45,35,75,0.22) 68%,
-          rgba(99,102,241,0.1) 82%,
-          transparent 95%)`
+          rgba(11,14,20,0.95) 0%,
+          rgba(11,14,20,0.9) 15%,
+          rgba(15,14,35,0.68) 30%,
+          rgba(25,20,50,0.38) 42%,
+          rgba(40,30,65,0.12) 54%,
+          transparent 62%)`
       }}></div>
       {/* Layer 2: Diagonal gradient for natural edge */}
       <div className="absolute inset-0 lg:dark:hidden hidden dark:block" style={{
         background: `linear-gradient(160deg,
-          rgba(15,12,35,0.78) 0%,
-          rgba(25,20,50,0.55) 28%,
-          rgba(35,28,65,0.3) 48%,
-          rgba(168,85,247,0.08) 65%,
-          transparent 82%)`
+          rgba(15,12,35,0.75) 0%,
+          rgba(25,20,50,0.45) 22%,
+          rgba(35,28,65,0.15) 40%,
+          transparent 52%)`
+      }}></div>
+      {/* Dark mode mobile: subtle brand glow behind phone area */}
+      <div className="absolute inset-0 lg:hidden hidden dark:block pointer-events-none" style={{
+        background: `radial-gradient(ellipse at 50% 65%,
+          rgba(99,102,241,0.12) 0%,
+          rgba(168,85,247,0.06) 25%,
+          transparent 55%)`
       }}></div>
 
       {/* ===== DARK MODE - DESKTOP (split overlay) ===== */}

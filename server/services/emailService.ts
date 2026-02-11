@@ -1049,6 +1049,10 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
     day: 'numeric',
     year: 'numeric',
   });
+  const formattedTime = sessionDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -1057,12 +1061,12 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <title>Your TotalAssist Session Guide</title>
+    <title>Your TotalAssist Diagnostic Report</title>
     <style>${getEmailStyles()}</style>
 </head>
 <body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
 
-    ${getPreheaderHtml(`Your personalized guide from ${formattedDate} is attached. Includes step-by-step instructions and troubleshooting tips.`)}
+    ${getPreheaderHtml(`Your diagnostic report from ${formattedDate} is attached. Includes step-by-step instructions and troubleshooting tips.`)}
 
     <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
         <!--[if mso]>
@@ -1072,91 +1076,168 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
 
         <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-            ${getHeaderHtml("Your Session Guide", formattedDate)}
-
-            <!-- Content Section -->
+            <!-- Header - matches PDF gradient -->
             <tr>
-                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
-                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+              <!--[if mso]>
+              <td align="left" bgcolor="${BRAND.electricIndigo}" style="padding: 35px 30px;">
+              <![endif]-->
+              <!--[if !mso]><!-->
+              <td align="left" bgcolor="${BRAND.electricIndigo}" style="background-color: ${BRAND.electricIndigo}; background: linear-gradient(180deg, ${BRAND.electricIndigo} 0%, #4338CA 100%); padding: 35px 30px;">
+              <!--<![endif]-->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td>
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td valign="middle" style="padding-right: 10px;">
+                            <div style="width: 36px; height: 36px; background-color: rgba(255,255,255,0.2); border-radius: 50%; text-align: center; line-height: 36px;">
+                              <img src="${IMAGE_BASE_URL}/total_assist_logo-new.png" alt="TA" width="28" style="display: inline-block; vertical-align: middle; max-width: 28px; height: auto;">
+                            </div>
+                          </td>
+                          <td valign="middle">
+                            <span style="color: #ffffff; font-size: 16px; font-weight: 700; letter-spacing: -0.3px;">TotalAssist</span>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top: 18px;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">Diagnostic Report</h1>
+                      <p style="margin: 6px 0 0; color: rgba(200,210,255,0.9); font-size: 14px; font-weight: 400;">Fast, friendly tech support</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Greeting -->
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 35px 40px 20px;">
+                    <p class="light-text" style="margin: 0 0 15px; color: ${BRAND.slate}; font-size: 17px; line-height: 1.6;">
                         Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
                     </p>
-                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
-                        Thank you for using <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong>! We've put together a personalized guide based on your recent support session.
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.7;">
+                        Thank you for using <strong style="color: ${BRAND.electricIndigo};">TotalAssist</strong>! Your diagnostic report is attached to this email as a PDF.
                     </p>
                 </td>
             </tr>
 
-            <!-- Summary Card -->
+            <!-- Report Summary - table style matching the PDF -->
             <tr>
-                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 0 40px 35px;">
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: linear-gradient(135deg, ${BRAND.scoutPurple}08, ${BRAND.electricIndigo}08); border-radius: 16px; border: 1px solid ${BRAND.scoutPurple}20;">
+                <td class="light-section content-padding" style="background-color: #ffffff; padding: 10px 40px 30px;">
+                    <!-- Section header -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F3F4F6; border-radius: 8px 8px 0 0;">
                         <tr>
-                            <td style="padding: 25px;">
-                                <p style="margin: 0 0 10px; color: ${BRAND.scoutPurple}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Session Summary</p>
-                                <p class="light-text" style="margin: 0; color: ${BRAND.midnight}; font-size: 16px; font-weight: 600; line-height: 1.6;">
+                            <td style="padding: 10px 16px;">
+                                <p style="margin: 0; color: #374151; font-size: 13px; font-weight: 700;">Report Summary</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <!-- Summary rows -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 8px 8px;">
+                        <tr>
+                            <td width="130" style="padding: 10px 16px; color: #6B7280; font-size: 13px; border-bottom: 1px solid #F3F4F6;">Client Name:</td>
+                            <td style="padding: 10px 16px; color: #111827; font-size: 13px; font-weight: 500; border-bottom: 1px solid #F3F4F6;">${displayName}</td>
+                        </tr>
+                        <tr>
+                            <td width="130" style="padding: 10px 16px; color: #6B7280; font-size: 13px; border-bottom: 1px solid #F3F4F6;">Date:</td>
+                            <td style="padding: 10px 16px; color: #111827; font-size: 13px; font-weight: 500; border-bottom: 1px solid #F3F4F6;">${formattedDate}</td>
+                        </tr>
+                        <tr>
+                            <td width="130" style="padding: 10px 16px; color: #6B7280; font-size: 13px;">Time:</td>
+                            <td style="padding: 10px 16px; color: #111827; font-size: 13px; font-weight: 500;">${formattedTime}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Resolution Summary Card -->
+            <tr>
+                <td class="light-section content-padding" style="background-color: #ffffff; padding: 0 40px 30px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F3F4F6; border-radius: 8px 8px 0 0;">
+                        <tr>
+                            <td style="padding: 10px 16px;">
+                                <p style="margin: 0; color: #374151; font-size: 13px; font-weight: 700;">Resolution Summary</p>
+                            </td>
+                        </tr>
+                    </table>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 8px 8px;">
+                        <tr>
+                            <td style="padding: 14px 16px;">
+                                <p class="light-text" style="margin: 0; color: ${BRAND.midnight}; font-size: 14px; font-weight: 500; line-height: 1.6;">
                                     ${summary || "Session completed successfully"}
                                 </p>
                             </td>
                         </tr>
+                        <tr>
+                            <td style="padding: 0 16px 14px;">
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td style="background-color: #DCFCE7; border-radius: 12px; padding: 4px 12px;">
+                                            <span style="color: #22C55E; font-size: 12px; font-weight: 600;">&#10003; Session Complete</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
                     </table>
                 </td>
             </tr>
 
-            <!-- PDF Contents -->
+            <!-- PDF Contents Checklist -->
             <tr>
-                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 35px 40px;">
-                    <p class="light-text-secondary" style="margin: 0 0 20px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
-                        Your complete how-to guide is attached as a PDF. It includes:
-                    </p>
+                <td align="left" class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 30px 40px;">
+                    <p style="margin: 0 0 18px; color: ${BRAND.slate}; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Your attached report includes</p>
 
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
-                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 15px;">
-                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            <td width="28" valign="top" style="padding-right: 10px; padding-bottom: 12px;">
+                                <span style="color: ${BRAND.electricIndigo}; font-size: 15px;">&#10003;</span>
                             </td>
-                            <td valign="top" style="padding-bottom: 15px;">
-                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.5;">Step-by-step instructions we discussed</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 15px;">
-                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
-                            </td>
-                            <td valign="top" style="padding-bottom: 15px;">
-                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.5;">Full conversation transcript</p>
+                            <td valign="top" style="padding-bottom: 12px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Step-by-step instructions discussed</p>
                             </td>
                         </tr>
                         <tr>
-                            <td width="30" valign="top" style="padding-right: 12px;">
-                                <span style="color: ${BRAND.scoutPurple}; font-size: 16px;">✓</span>
+                            <td width="28" valign="top" style="padding-right: 10px; padding-bottom: 12px;">
+                                <span style="color: ${BRAND.electricIndigo}; font-size: 15px;">&#10003;</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 12px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Full conversation transcript</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="28" valign="top" style="padding-right: 10px;">
+                                <span style="color: ${BRAND.electricIndigo}; font-size: 15px;">&#10003;</span>
                             </td>
                             <td valign="top">
-                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.5;">Key troubleshooting tips and next steps</p>
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Details &amp; recommendations</p>
                             </td>
                         </tr>
                     </table>
 
-                    <p class="light-text-secondary" style="margin: 20px 0 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.75;">
-                        Save this guide for future reference - it's tailored specifically to your situation!
+                    <p class="light-text-secondary" style="margin: 18px 0 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.7;">
+                        Save this report for future reference &mdash; it's tailored specifically to your situation.
                     </p>
                 </td>
             </tr>
 
             <!-- CTA Section -->
             <tr>
-                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 20px;">
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 45px 30px;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 18px;">
                       <tr>
-                        <td align="center" valign="middle" width="60" height="60" style="width: 60px; height: 60px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; font-size: 28px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                        <td align="center" valign="middle" width="56" height="56" style="width: 56px; height: 56px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, #4338CA); border-radius: 50%; font-size: 24px; box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);">
                           📎
                         </td>
                       </tr>
                     </table>
 
-                    <h2 style="margin: 0 0 10px; color: #ffffff; font-size: 22px; font-weight: 700;">Check Your Attachment</h2>
+                    <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 20px; font-weight: 700;">Check Your Attachment</h2>
 
-                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
-                        Your personalized guide is attached to this email as a PDF.
+                    <p style="margin: 0 0 25px; color: #94a3b8; font-size: 14px; line-height: 1.6;">
+                        Your full diagnostic report is attached as a PDF.
                     </p>
 
                     ${getPrimaryButtonHtml("Need More Help?", APP_BASE_URL + "/dashboard")}
