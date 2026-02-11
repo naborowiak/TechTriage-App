@@ -12,12 +12,14 @@ export const sendMessageToGemini = async (
   agentName?: string
 ): Promise<{ text: string, functionCall?: { name: string; args: Record<string, unknown> } }> => {
   try {
-    const historyPayload = history.map(msg => ({
-      role: msg.role === UserRole.USER ? 'user' : 'model',
-      text: msg.text,
-      image: msg.image,
-      guidedAction: msg.guidedAction,
-    }));
+    const historyPayload = history
+      .filter(msg => msg.id !== 'welcome')
+      .map(msg => ({
+        role: msg.role === UserRole.USER ? 'user' : 'model',
+        text: msg.text,
+        image: msg.image,
+        guidedAction: msg.guidedAction,
+      }));
 
     const res = await fetch('/api/ai/chat', {
       method: 'POST',
@@ -51,12 +53,14 @@ export const sendMessageAsLiveAgent = async (
   image?: string
 ): Promise<{ text: string, functionCall?: { name: string; args: Record<string, unknown> } }> => {
   try {
-    const historyPayload = history.map(msg => ({
-      role: msg.role === UserRole.USER ? 'user' : 'model',
-      text: msg.text,
-      image: msg.image,
-      guidedAction: msg.guidedAction,
-    }));
+    const historyPayload = history
+      .filter(msg => msg.id !== 'welcome')
+      .map(msg => ({
+        role: msg.role === UserRole.USER ? 'user' : 'model',
+        text: msg.text,
+        image: msg.image,
+        guidedAction: msg.guidedAction,
+      }));
 
     const res = await fetch('/api/ai/chat-live-agent', {
       method: 'POST',

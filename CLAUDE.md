@@ -377,6 +377,16 @@ If The_Skeptic and a Dev agent disagree:
 - beforeinstallprompt is Chrome/Edge-only; banner won't appear on Firefox/Safari (no broken UI)
 - PWA install banner is no-op on iOS (users must use Share > Add to Home Screen)
 
+### Decision: Assist Pills First-Turn Consistency (Feb 11, 2026)
+- **Scope**: Cross-boundary (Frontend + Backend)
+- **Files**: ScoutChatScreen.tsx, geminiService.ts, server/routes/ai.ts
+- **Verdict**: APPROVED by The_Skeptic
+- **Changes**:
+  1. Welcome message now includes hardcoded `presentChoices` guidedAction with 5 categories (Wi-Fi/Internet, Smart Home Devices, Appliances, HVAC/Thermostat, TV/Streaming)
+  2. Welcome message filtered from Gemini API history to prevent invalid functionCall/functionResponse pairing
+  3. Added explicit first-turn instruction to both SYSTEM_INSTRUCTION and LIVE_AGENT_INSTRUCTION
+- **Risks accepted**: Gemini may still occasionally skip pills (graceful fallback to plain text)
+
 <!-- DECISIONS END -->
 
 ---

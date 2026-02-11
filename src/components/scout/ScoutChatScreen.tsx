@@ -47,8 +47,19 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     {
       id: 'welcome',
       role: UserRole.MODEL,
-      text: `Welcome to TotalAssist! Describe your issue below and we'll connect you with a support technician.`,
+      text: `Hi! What can I help you with today?`,
       timestamp: Date.now(),
+      guidedAction: {
+        type: 'presentChoices' as const,
+        prompt: '',
+        choices: [
+          'Wi-Fi / Internet',
+          'Smart Home Devices',
+          'Appliances',
+          'HVAC / Thermostat',
+          'TV / Streaming',
+        ],
+      },
     },
   ]);
   const [inputValue, setInputValue] = useState('');
