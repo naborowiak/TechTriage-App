@@ -2,6 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Base styles ── */
+body {
+  scroll-behavior: smooth;
+}
+
+/* ── Gradient text utilities ── */
+.bg-midnight-gradient {
+  background: linear-gradient(180deg, #0B0E14 0%, #151922 100%);
+}
+
+.text-gradient-electric {
+  background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-locked {
+  background: linear-gradient(135deg, #A855F7 0%, #6366F1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Dark mode text color overrides ── */
+.dark .text-text-muted {
+  color: #D1D5DB !important;
+}
+
+.dark .text-text-secondary {
+  color: #9CA3AF !important;
+}
+
+.dark .text-gray-500 {
+  color: #9CA3AF !important;
+}
+
+.dark .text-gray-400 {
+  color: #D1D5DB !important;
+}
+
+/* ── Button gradients ── */
+.btn-gradient-electric {
+  background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+}
+
+.btn-gradient-electric:hover {
+  background: linear-gradient(135deg, #4F46E5 0%, #0891B2 100%);
+}
+
+/* ── Border gradient ── */
+.border-gradient {
+  border: 1px solid transparent;
+  background: linear-gradient(#151922, #151922) padding-box,
+              linear-gradient(135deg, #6366F1 0%, #06B6D4 100%) border-box;
+}
+
+/* ── Scout glow ── */
+.scout-glow {
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+}
+
+/* ── Radar sweep animation ── */
+.animate-radar-sweep {
+  animation: radarSweep 3s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes radarSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Hide scrollbar but keep scroll functionality for voice overlay */
 .scrollbar-hidden {
   -ms-overflow-style: none;

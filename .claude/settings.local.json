@@ -90,7 +90,10 @@
       "Bash(wc:*)",
       "Bash(git rm:*)",
       "Bash(node --import tsx/esm -e:*)",
-      "Bash(identify:*)"
+      "Bash(identify:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(head:*)"
     ]
   }
 }

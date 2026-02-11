@@ -7,23 +7,23 @@ interface Props {
 
 export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
   return (
-    <div className="min-h-screen bg-midnight-950 pt-24 pb-12 px-6">
-      <div className="max-w-4xl mx-auto bg-midnight-800 rounded-2xl border border-midnight-700 p-8 md:p-12">
+    <div className="min-h-screen bg-light-50 dark:bg-midnight-950 pt-24 pb-12 px-6">
+      <div className="max-w-4xl mx-auto bg-white dark:bg-midnight-800 rounded-2xl border border-light-300 dark:border-midnight-700 p-8 md:p-12">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-text-secondary hover:text-white mb-8 transition-colors"
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary dark:hover:text-white mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </button>
 
-        <div className="border-b border-midnight-700 pb-6 mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
+        <div className="border-b border-light-300 dark:border-midnight-700 pb-6 mb-8">
+          <h1 className="text-3xl font-bold text-text-primary dark:text-white mb-2">
             Privacy Policy
           </h1>
           <p className="text-text-muted">Last Updated: February 1, 2026</p>
         </div>
 
-        <div className="prose prose-invert max-w-none text-text-secondary text-sm leading-relaxed">
+        <div className="prose dark:prose-invert max-w-none text-text-secondary text-sm leading-relaxed">
           <p className="bg-electric-indigo/10 p-4 rounded-lg border border-electric-indigo/30 text-electric-cyan font-medium mb-8">
             Smart Tek Labs ("TotalAssist", "we", "us") is committed to
             protecting your personal information. This policy describes how we
@@ -31,7 +31,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             platform.
           </p>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             1. Information We Collect
           </h3>
           <p>
@@ -40,26 +40,26 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
           </p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
             <li>
-              <strong className="text-white">Account Data:</strong> Name, email address, and password
+              <strong className="text-text-primary dark:text-white">Account Data:</strong> Name, email address, and password
               hash (we do not store raw passwords).
             </li>
             <li>
-              <strong className="text-white">Diagnostic Content:</strong> Photos, video streams, and
+              <strong className="text-text-primary dark:text-white">Diagnostic Content:</strong> Photos, video streams, and
               text descriptions of your technical issues uploaded to our chat
               interface.
             </li>
             <li>
-              <strong className="text-white">Device Metadata:</strong> IP address, browser type, and
+              <strong className="text-text-primary dark:text-white">Device Metadata:</strong> IP address, browser type, and
               operating system information used for security and debugging.
             </li>
             <li>
-              <strong className="text-white">Payment Information:</strong> We use Stripe to process
+              <strong className="text-text-primary dark:text-white">Payment Information:</strong> We use Stripe to process
               payments. We do not store your full credit card number on our
               servers.
             </li>
           </ul>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             2. Device Permissions (Camera & Microphone)
           </h3>
           <p>
@@ -67,11 +67,11 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             application may request access to your device's camera and
             microphone. You may revoke these permissions at any time via your
             browser settings.
-            <strong className="text-white"> Note:</strong> Denying permissions will limit TotalAssist's
+            <strong className="text-text-primary dark:text-white"> Note:</strong> Denying permissions will limit TotalAssist's
             ability to visually diagnose your issue.
           </p>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             3. How We Use Your Information
           </h3>
           <p>We use your data for the following specific purposes:</p>
@@ -94,7 +94,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             </li>
           </ul>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             4. Data Sharing and Third Parties
           </h3>
           <p>
@@ -103,25 +103,25 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
           </p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
             <li>
-              <strong className="text-white">Stripe:</strong> For payment processing and subscription
+              <strong className="text-text-primary dark:text-white">Stripe:</strong> For payment processing and subscription
               management.
             </li>
             <li>
-              <strong className="text-white">Google Cloud / AWS / Supabase:</strong> For secure cloud
+              <strong className="text-text-primary dark:text-white">Google Cloud / AWS / Supabase:</strong> For secure cloud
               hosting and database storage.
             </li>
             <li>
-              <strong className="text-white">AI Providers (e.g., Google Gemini):</strong> To
+              <strong className="text-text-primary dark:text-white">AI Providers (e.g., Google Gemini):</strong> To
               generate the technical support responses. Data sent to these
               providers is strictly for processing your request.
             </li>
             <li>
-              <strong className="text-white">Legal Requirements:</strong> We may disclose information
+              <strong className="text-text-primary dark:text-white">Legal Requirements:</strong> We may disclose information
               if required by law, subpoena, or other legal process.
             </li>
           </ul>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             5. Data Retention
           </h3>
           <p>
@@ -132,7 +132,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             for system improvement.
           </p>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             6. Security
           </h3>
           <p>
@@ -142,7 +142,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             complex and secure.
           </p>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             7. Children's Privacy
           </h3>
           <p>
@@ -152,7 +152,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             we will take steps to delete such information.
           </p>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             8. International Users
           </h3>
           <p>
@@ -162,7 +162,7 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             United States where our servers are located.
           </p>
 
-          <h3 className="text-white font-bold text-lg mt-8 mb-4">
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             9. Changes to this Policy
           </h3>
           <p>
@@ -171,8 +171,8 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
             and updating the "Last Updated" date.
           </p>
 
-          <div className="mt-12 pt-8 border-t border-midnight-700">
-            <p className="font-bold text-white">Contact Us</p>
+          <div className="mt-12 pt-8 border-t border-light-300 dark:border-midnight-700">
+            <p className="font-bold text-text-primary dark:text-white">Contact Us</p>
             <p>
               If you have questions about this policy or your data rights,
               please contact our Privacy Officer:

@@ -116,6 +116,7 @@ export const VoiceReportModal: React.FC<VoiceReportModalProps> = ({
       const response = await fetch('/api/send-session-guide', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email: userEmail,
           userName: userName || 'Valued Customer',

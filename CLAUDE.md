@@ -387,6 +387,52 @@ If The_Skeptic and a Dev agent disagree:
   3. Added explicit first-turn instruction to both SYSTEM_INSTRUCTION and LIVE_AGENT_INSTRUCTION
 - **Risks accepted**: Gemini may still occasionally skip pills (graceful fallback to plain text)
 
+### Phase 7: Security Hardening for Soft Launch (Feb 11, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes (all in `server/index.ts` + 2 exempt fixes):
+1. **HAR file deleted** — `src/components/scout/har files/` contained plaintext credentials (Small Change Exemption)
+2. **Meta description added** — `index.html` SEO tag (Small Change Exemption)
+3. **Session secret validation** — Fail fast with `process.exit(1)` if `SESSION_SECRET` not set in production
+4. **CORS lockdown** — Replaced `origin: true` with domain allowlist (`APP_DOMAINS` env var, defaults to `totalassist.tech`, allows `*.replit.dev`). Dev mode remains permissive.
+5. **CSP enabled** — Production-only Content Security Policy via Helmet with directives for self, Tailwind CDN, Stripe, Google Fonts, WebSocket, data/blob URIs. `unsafe-inline` for scripts/styles (required for inline `<script>` tags and Tailwind). Disabled in dev.
+6. **sameSite cookie** — Changed from `"none"` (production) to `"lax"` (universal). App is same-origin.
+7. **Test endpoints gated** — `/api/test-email`, `/api/email-diagnostics`, `/api/test-email-resend` only registered when `NODE_ENV !== "production"`. API key prefix logging removed.
+8. **Auth on user endpoints** — Added `requireAuth` + `requireSelf` middleware to GET/PUT/DELETE `/api/auth/user/:id`. Users can only access their own profile. Session destroyed after account deletion.
+9. **Auth rate limiting** — Applied `authLimiter` (15min/10 attempts) to `verify-email`, `resend-verification`, `forgot-password`, `reset-password`.
+10. **Auth on session guide** — `/api/send-session-guide` now requires authentication. Email forced to session user's email (not request body).
+11. **Global error handler** — Express 4-arg error middleware returns generic 500. `process.on('uncaughtException')` exits after 1s delay. `process.on('unhandledRejection')` logs warning.
+12. **VoiceReportModal.tsx** — Added missing `credentials: 'include'` to fetch call (required after auth enforcement)
+
+#### Key Skeptic Conditions Applied:
+- `requireAuth` and `requireSelf` defined as new middleware in index.ts
+- Email endpoint uses session user's email, not request body (prevents spam relay)
+- `uncaughtException` handler exits after 1s delay for in-flight responses
+- `unsafe-inline` for script-src documented as required (inline `<script>` tags in index.html)
+- API key prefix logging removed from test endpoints
+
+#### Risks Accepted:
+- `unsafe-inline` in CSP script-src weakens XSS protection (required for theme detection inline script)
+- General rate limiter (100/min) covers email endpoint; dedicated email limiter deferred
+- In-memory user context cache not invalidated by profile updates (pre-existing, not in scope)
+
+### Phase 7b: Tailwind CDN → Compiled CSS + UX Polish (Feb 11, 2026)
+
+**Verdict: Small Change Exemption (theme/style changes) + Frontend_Dev scope**
+
+#### Changes:
+1. **Tailwind migration** — Removed `cdn.tailwindcss.com` CDN script and inline `tailwind.config` from `index.html`. Installed `tailwindcss@3`, `postcss`, `autoprefixer`. Created `tailwind.config.js` and `postcss.config.js`. Moved inline styles to `src/index.css`. Added `import './index.css'` to `src/index.tsx`. Production CSS now compiled to ~111KB static file.
+2. **CSP updated** — Removed `cdn.tailwindcss.com` from CSP `scriptSrc` and `styleSrc` directives (no longer needed)
+3. **PrivacyPolicy.tsx** — Fixed hardcoded dark theme → proper `bg-light-50 dark:bg-midnight-950` pattern
+4. **CancellationPolicy.tsx** — Same fix
+5. **Dashboard.tsx** — Fixed support email from `totalassist.app` to `totalassist.tech`
+6. **404 page** — Added `PageView.NOT_FOUND` enum value. Unknown routes now show a proper 404 page instead of silently redirecting to home.
+7. **VoiceReportModal.tsx** — Added `credentials: 'include'` to session guide fetch
+
+#### Risks Accepted:
+- Tailwind v3 chosen over v4 for compatibility with existing class names and config patterns
+
 <!-- DECISIONS END -->
 
 ---

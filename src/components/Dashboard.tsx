@@ -398,7 +398,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 <div className="border-t border-light-200 dark:border-midnight-700 py-1">
                   <a
-                    href="mailto:support@totalassist.app"
+                    href="mailto:support@totalassist.tech"
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
                   >
                     <HelpCircle className="w-4 h-4 text-text-muted" />

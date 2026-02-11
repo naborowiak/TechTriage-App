@@ -1730,13 +1730,14 @@ const viewToPath: Record<PageView, string> = {
   [PageView.RESET_PASSWORD]: '/reset-password',
   [PageView.SCOUT]: '/scout',
   [PageView.SPECIALIST]: '/specialist',
+  [PageView.NOT_FOUND]: '/404',
 };
 
 // Get initial view from URL
 const getInitialView = (): PageView => {
   const path = window.location.pathname;
   if (path.startsWith('/specialist/')) return PageView.SPECIALIST;
-  return pathToView[path] || PageView.HOME;
+  return pathToView[path] || PageView.NOT_FOUND;
 };
 
 // Dashboard user interface
@@ -1892,7 +1893,7 @@ const App: React.FC = () => {
         setCurrentView(PageView.SPECIALIST);
         return;
       }
-      const view = pathToView[path] || PageView.HOME;
+      const view = pathToView[path] || PageView.NOT_FOUND;
       setCurrentView(view);
     };
 
@@ -2330,6 +2331,21 @@ const App: React.FC = () => {
         // Auth finished but no user - redirect will be handled by useEffect below
         return null;
         
+        case PageView.NOT_FOUND:
+          return (
+            <div className="min-h-screen-safe bg-light-50 dark:bg-midnight-950 flex flex-col items-center justify-center px-6 text-center">
+              <h1 className="text-6xl font-bold text-text-primary dark:text-white mb-4">404</h1>
+              <p className="text-lg text-text-secondary dark:text-gray-400 mb-8">
+                The page you're looking for doesn't exist.
+              </p>
+              <button
+                onClick={() => navigate(PageView.HOME)}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white font-semibold hover:shadow-lg transition-all"
+              >
+                Go Home
+              </button>
+            </div>
+          );
         case PageView.HOME:
         default:
           return (

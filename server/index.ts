@@ -48,19 +48,49 @@ import {
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
 
-// Session secret extracted to a named constant for reuse in WebSocket auth
+// Session secret — fail fast in production if not set
+if (isProduction && !process.env.SESSION_SECRET) {
+  console.error("FATAL: SESSION_SECRET environment variable must be set in production");
+  process.exit(1);
+}
 const SESSION_SECRET = process.env.SESSION_SECRET || "totalassist_dev_secret_change_in_prod";
 
 app.use(
   cors({
-    origin: true,
+    origin: isProduction
+      ? (origin, callback) => {
+          // Allow same-origin requests (no origin header)
+          if (!origin) return callback(null, true);
+          const allowed = (process.env.APP_DOMAINS || "totalassist.tech")
+            .split(",")
+            .map((d: string) => d.trim())
+            .flatMap((d: string) => [`https://${d}`, `http://${d}`]);
+          if (allowed.includes(origin) || origin.endsWith(".replit.dev")) {
+            callback(null, true);
+          } else {
+            callback(new Error("Not allowed by CORS"));
+          }
+        }
+      : true, // Allow all origins in development
     credentials: true,
   }),
 );
 
 // Security headers
 app.use(helmet({
-  contentSecurityPolicy: false, // Disabled for Vite dev proxy compatibility
+  contentSecurityPolicy: isProduction ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "wss:", "https://api.stripe.com"],
+      frameSrc: ["https://js.stripe.com"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  } : false, // Disabled in dev for Vite proxy compatibility
   crossOriginEmbedderPolicy: false,
 }));
 
@@ -188,7 +218,7 @@ app.use(
     cookie: {
       secure: isProduction,
       httpOnly: true,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   }),
@@ -292,61 +322,44 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Test email endpoint (for validating SMTP configuration)
-app.post("/api/test-email", async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: "Email address required" });
-  }
-
-  console.log("[EMAIL TEST] Attempting to send test email to:", email);
-  console.log("[EMAIL TEST] RESEND_API_KEY configured:", !!process.env.RESEND_API_KEY);
-  console.log("[EMAIL TEST] API Key prefix:", process.env.RESEND_API_KEY?.substring(0, 8) + "...");
-
-  try {
-    const result = await sendWelcomeEmail(email, "Test User");
-    // FIX: Just return the result directly to avoid 'success' duplication error
-    res.json(result);
-  } catch (error) {
-    console.error("[EMAIL TEST] Error:", error);
-    res.status(500).json({ error: String(error) });
-  }
-});
-
-// Email diagnostics endpoint
-app.get("/api/email-diagnostics", async (_req, res) => {
-  const hasApiKey = !!process.env.RESEND_API_KEY;
-  const apiKeyPrefix = process.env.RESEND_API_KEY?.substring(0, 8) || "NOT SET";
-
-  res.json({
-    resendConfigured: hasApiKey,
-    apiKeyPrefix: hasApiKey ? apiKeyPrefix + "..." : "NOT SET",
-    configuredSender: process.env.EMAIL_FROM || "TotalAssist <support@totalassist.tech>",
-    appUrl: process.env.APP_URL || "https://totalassist.tech",
-    note: hasApiKey
-      ? "API key is set. If emails fail, verify the domain is fully verified in Resend dashboard (all DNS records green) and the API key belongs to the same account."
-      : "No RESEND_API_KEY found. Emails will be simulated."
+// Test/diagnostic endpoints — development only
+if (!isProduction) {
+  app.post("/api/test-email", async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email address required" });
+    }
+    try {
+      const result = await sendWelcomeEmail(email, "Test User");
+      res.json(result);
+    } catch (error) {
+      console.error("[EMAIL TEST] Error:", error);
+      res.status(500).json({ error: "Email test failed" });
+    }
   });
-});
 
-// Test email with Resend's default sender (bypasses domain verification)
-// Use this to verify your API key is valid
-app.post("/api/test-email-resend", async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: "Email address required" });
-  }
+  app.get("/api/email-diagnostics", async (_req, res) => {
+    res.json({
+      resendConfigured: !!process.env.RESEND_API_KEY,
+      configuredSender: process.env.EMAIL_FROM || "TotalAssist <support@totalassist.tech>",
+      appUrl: process.env.APP_URL || "https://totalassist.tech",
+    });
+  });
 
-  console.log("[EMAIL TEST] Testing Resend API key with default sender to:", email);
-
-  try {
-    const result = await sendTestEmailWithResendDomain(email);
-    res.json(result);
-  } catch (error) {
-    console.error("[EMAIL TEST] Error:", error);
-    res.status(500).json({ error: String(error) });
-  }
-});
+  app.post("/api/test-email-resend", async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email address required" });
+    }
+    try {
+      const result = await sendTestEmailWithResendDomain(email);
+      res.json(result);
+    } catch (error) {
+      console.error("[EMAIL TEST] Error:", error);
+      res.status(500).json({ error: "Email test failed" });
+    }
+  });
+}
 
 // ============================================
 // Authentication API Endpoints (Database)
@@ -471,7 +484,7 @@ app.post("/api/auth/login", authLimiter, validate(loginSchema), async (req, res)
 });
 
 // Verify email with code (or legacy token)
-app.post("/api/auth/verify-email", validate(verifyEmailSchema), async (req, res) => {
+app.post("/api/auth/verify-email", authLimiter, validate(verifyEmailSchema), async (req, res) => {
   try {
     const { code, token } = req.body;
     const verificationValue = code || token;
@@ -513,7 +526,7 @@ app.post("/api/auth/verify-email", validate(verifyEmailSchema), async (req, res)
 });
 
 // Resend verification email
-app.post("/api/auth/resend-verification", async (req, res) => {
+app.post("/api/auth/resend-verification", authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -547,7 +560,7 @@ app.post("/api/auth/resend-verification", async (req, res) => {
 });
 
 // Request password reset
-app.post("/api/auth/forgot-password", validate(forgotPasswordSchema), async (req, res) => {
+app.post("/api/auth/forgot-password", authLimiter, validate(forgotPasswordSchema), async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -573,7 +586,7 @@ app.post("/api/auth/forgot-password", validate(forgotPasswordSchema), async (req
 });
 
 // Reset password with token
-app.post("/api/auth/reset-password", validate(resetPasswordSchema), async (req, res) => {
+app.post("/api/auth/reset-password", authLimiter, validate(resetPasswordSchema), async (req, res) => {
   try {
     const { token, password } = req.body;
 
@@ -590,8 +603,25 @@ app.post("/api/auth/reset-password", validate(resetPasswordSchema), async (req, 
   }
 });
 
+// Authentication middleware — rejects unauthenticated requests
+const requireAuth = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  next();
+};
+
+// Authorization middleware — user can only access their own resources
+const requireSelf = (req: any, res: any, next: any) => {
+  const sessionUserId = (req.user as any)?.id;
+  if (!sessionUserId || sessionUserId !== req.params.id) {
+    return res.status(403).json({ error: "You don't have permission to access this resource" });
+  }
+  next();
+};
+
 // Get user by ID
-app.get("/api/auth/user/:id", async (req, res) => {
+app.get("/api/auth/user/:id", requireAuth, requireSelf, async (req, res) => {
   try {
     const user = await authService.getUserById(req.params.id);
     if (!user) {
@@ -614,7 +644,7 @@ app.get("/api/auth/user/:id", async (req, res) => {
 });
 
 // Update user profile
-app.put("/api/auth/user/:id", async (req, res) => {
+app.put("/api/auth/user/:id", requireAuth, requireSelf, async (req, res) => {
   try {
     const {
       firstName,
@@ -649,9 +679,13 @@ app.put("/api/auth/user/:id", async (req, res) => {
 });
 
 // Delete user account
-app.delete("/api/auth/user/:id", async (req, res) => {
+app.delete("/api/auth/user/:id", requireAuth, requireSelf, async (req, res) => {
   try {
     await authService.deleteUser(req.params.id);
+    // Destroy session after account deletion
+    req.logout(() => {
+      req.session?.destroy(() => {});
+    });
     res.json({ success: true });
   } catch (error) {
     console.error("Delete user error:", error);
@@ -1109,8 +1143,10 @@ app.post("/api/admin/run-trial-notifications", requireAdmin, async (_req, res) =
 });
 
 // Send session guide via email using Resend
-app.post("/api/send-session-guide", async (req, res) => {
-  const { email, userName, summary, pdfBase64, sessionDate } = req.body;
+app.post("/api/send-session-guide", requireAuth, async (req, res) => {
+  const { userName, summary, pdfBase64, sessionDate } = req.body;
+  // Use the authenticated user's email — do not accept arbitrary email addresses
+  const email = (req.user as any)?.email;
 
   if (!email || !pdfBase64) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -1898,6 +1934,13 @@ async function main() {
     console.log("Serving static files from dist/");
   }
 
+  // Global error handler — catch unhandled route errors
+  app.use((err: any, _req: any, res: any, next: any) => {
+    console.error("[UNHANDLED ERROR]", err.message || err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: "An unexpected error occurred. Please try again." });
+  });
+
   // Use port 5000 in production (Replit), 3001 in development
   const PORT = isProduction ? 5000 : 3001;
   const server = createServer(app);
@@ -1965,6 +2008,17 @@ async function main() {
     console.log(`WebSocket server ready at /live`);
   });
 }
+
+// Process-level error handlers for defense-in-depth
+process.on("unhandledRejection", (reason) => {
+  console.error("[PROCESS] Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[PROCESS] Uncaught exception:", err.message);
+  // Allow in-flight responses to complete before exiting
+  setTimeout(() => process.exit(1), 1000);
+});
 
 main().catch((err) => {
   console.error("Fatal error:", err);
