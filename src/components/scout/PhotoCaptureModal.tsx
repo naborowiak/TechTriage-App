@@ -100,7 +100,7 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
   }, []);
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden pt-safe">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden pt-safe">
       <div className="flex flex-col w-full h-full max-w-2xl relative">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 pt-safe bg-gradient-to-b from-black/80 to-transparent">
@@ -119,7 +119,7 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
       </div>
 
       {/* Camera preview / Captured image */}
-      <div className="flex-1 relative bg-black">
+      <div className="flex-1 relative bg-black min-h-0 overflow-hidden">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
