@@ -482,7 +482,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
   }, [user?.id, stopAllHardware]);
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-[#0B0E14] flex flex-col overflow-hidden">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-[#0B0E14] flex flex-col overflow-hidden pt-safe">
       {/* Video background */}
       <div className="relative flex-1 overflow-hidden">
         <video
@@ -497,7 +497,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Header */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent z-20">
+        <div className="absolute top-0 left-0 right-0 p-4 pt-safe flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent z-20">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#A855F7] to-[#6366F1] flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.4)]">
               <Bot className="w-5 h-5 text-white" />
@@ -678,7 +678,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
 
       {/* Bottom controls */}
       {!isSessionEnded && (
-        <div className="h-24 bg-[#0B0E14] flex items-center justify-center gap-6 px-6 border-t border-white/10">
+        <div className="h-auto bg-[#0B0E14] flex items-center justify-center gap-6 px-6 py-4 pb-safe-4 border-t border-white/10">
           <button
             onClick={toggleMute}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${

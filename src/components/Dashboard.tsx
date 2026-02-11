@@ -223,7 +223,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div
-      className={`${isScoutView ? 'h-screen overflow-hidden' : 'h-screen overflow-hidden'} bg-light-50 dark:bg-midnight-950 transition-colors flex`}
+      className={`${isScoutView ? 'h-screen-safe overflow-hidden' : 'h-screen-safe overflow-hidden'} bg-light-50 dark:bg-midnight-950 transition-colors flex`}
       onTouchStart={(e) => {
         touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       }}

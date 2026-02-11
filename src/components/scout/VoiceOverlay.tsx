@@ -151,7 +151,7 @@ export function VoiceOverlay({
   const hasTranscript = transcriptHistory && transcriptHistory.length > 0;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#0B0E14] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-[#0B0E14] flex flex-col overflow-hidden pt-safe pb-safe">
       <div className="flex flex-col w-full h-full max-w-2xl mx-auto">
 
         {/* ─── Header Bar ─── */}
@@ -363,7 +363,7 @@ export function VoiceOverlay({
             </div>
 
             {/* Controls row */}
-            <div className="flex items-center justify-center gap-6 px-6 pt-2 pb-6">
+            <div className="flex items-center justify-center gap-6 px-6 pt-2 pb-safe-6">
               {/* Camera */}
               <button
                 onClick={onCapturePhoto}

@@ -635,7 +635,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     <>
       <div
         className={`fixed z-[60] transition-all duration-300 flex flex-col font-sans ${
-          isFullScreen ? 'inset-0 w-full h-full bg-light-50 dark:bg-midnight-950' :
+          isFullScreen ? 'inset-0 w-full h-full bg-light-50 dark:bg-midnight-950 pt-safe pb-safe' :
           isOpen ? 'bottom-0 right-0 sm:bottom-6 sm:right-6 w-full sm:w-[400px] h-full sm:h-[680px]' :
           'bottom-6 right-6 w-auto h-auto pointer-events-none'
         }`}

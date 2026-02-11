@@ -35,6 +35,8 @@ import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
 import type { SettingsTab } from "./components/SettingsModal";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { usePWAInstall } from "./hooks/usePWAInstall";
+import { PWAInstallBanner } from "./components/PWAInstallBanner";
 
 // Lazy-loaded page components (code splitting)
 const HowItWorks = lazy(() => import("./components/HowItWorks").then(m => ({ default: m.HowItWorks })));
@@ -1769,6 +1771,7 @@ const App: React.FC = () => {
   const [showLiveSupport, setShowLiveSupport] = useState(false);
   const [dashboardView, setDashboardView] = useState<DashboardView>("main");
   const chatRef = useRef<ChatWidgetHandle>(null);
+  const pwaInstall = usePWAInstall();
 
   // Get auth state from session (for OAuth users)
   const {
@@ -2413,9 +2416,10 @@ const App: React.FC = () => {
   // Also show this layout when on dashboard route but still loading (no dashboardUser yet)
   if (currentView === PageView.DASHBOARD) {
     return (
-      <div className={`${dashboardView === 'scout' ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300`}>
+      <div className={`${dashboardView === 'scout' ? 'h-screen-safe overflow-hidden' : 'min-h-screen'} bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300`}>
         {renderContent()}
         {/* ChatWidget removed from dashboard — chat IS the dashboard now */}
+        <PWAInstallBanner {...pwaInstall} />
         <CookieConsentBanner />
       </div>
     );
@@ -2424,7 +2428,7 @@ const App: React.FC = () => {
   // Scout AI has its own full-screen mobile-first layout
   if (currentView === PageView.SCOUT) {
     return (
-      <div className="h-screen overflow-hidden font-['Inter',sans-serif]">
+      <div className="h-screen-safe overflow-hidden font-['Inter',sans-serif]">
         {renderContent()}
       </div>
     );
@@ -2459,6 +2463,7 @@ const App: React.FC = () => {
       <main>{renderContent()}</main>
       <Footer onNavigate={navigate} />
       <ChatWidget ref={chatRef} onNavigate={(v) => navigate(v as PageView)} />
+      <PWAInstallBanner {...pwaInstall} />
       <CookieConsentBanner />
     </div>
   );

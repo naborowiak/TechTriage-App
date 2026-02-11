@@ -43,6 +43,13 @@
       "type": "image/jpeg",
       "form_factor": "wide",
       "label": "TotalAssist Dashboard"
+    },
+    {
+      "src": "/chatgpt-mobile.jpg",
+      "sizes": "1080x2340",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "TotalAssist Mobile Chat"
     }
   ],
   "shortcuts": [

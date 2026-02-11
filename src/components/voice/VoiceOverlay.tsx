@@ -136,11 +136,11 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
   }, [isListening, isSpeaking, isMuted]);
 
   return (
-    <div className="fixed inset-0 z-[70] bg-midnight-950/95 backdrop-blur-md flex flex-col items-center justify-center">
+    <div className="fixed inset-0 z-[70] bg-midnight-950/95 backdrop-blur-md flex flex-col items-center justify-center pt-safe pb-safe">
       {/* Close button */}
       <button
         onClick={onEndSession}
-        className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+        className="absolute top-6 right-6 pt-safe p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
       >
         <X className="w-6 h-6" />
       </button>

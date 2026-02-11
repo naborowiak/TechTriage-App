@@ -100,10 +100,10 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
   }, []);
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden pt-safe">
       <div className="flex flex-col w-full h-full max-w-2xl relative">
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 pt-safe bg-gradient-to-b from-black/80 to-transparent">
         <button
           onClick={onClose}
           className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors"
@@ -168,7 +168,7 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
       </div>
 
       {/* Bottom controls */}
-      <div className="bg-gradient-to-t from-black/90 to-transparent px-6 pb-8 pt-6">
+      <div className="bg-gradient-to-t from-black/90 to-transparent px-6 pb-safe-8 pt-6">
         {capturedImage ? (
           // Preview mode controls
           <div className="flex items-center justify-center gap-8">

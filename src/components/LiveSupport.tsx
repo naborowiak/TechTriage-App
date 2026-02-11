@@ -867,7 +867,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-midnight-900 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[100] bg-midnight-900 flex flex-col overflow-hidden pt-safe pb-safe">
       <div className="relative flex-1 overflow-hidden">
         <video
           ref={videoRef}
@@ -916,7 +916,7 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
           </div>
         )}
 
-        <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-start bg-gradient-to-b from-midnight-900/80 to-transparent z-20">
+        <div className="absolute top-0 left-0 right-0 p-8 pt-safe flex justify-between items-start bg-gradient-to-b from-midnight-900/80 to-transparent z-20">
           <div className="flex items-center gap-3">
             <Logo variant="light" />
             {caseId && (

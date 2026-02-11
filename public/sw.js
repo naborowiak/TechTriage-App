@@ -1,10 +1,7 @@
 // TotalAssist Service Worker
-const CACHE_NAME = 'totalassist-v1';
+const CACHE_NAME = 'totalassist-v2';
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
-  '/total_assist_logo-new.png',
-  '/favicon.ico',
   '/android-chrome-192x192.png',
   '/android-chrome-512x512.png',
 ];
@@ -13,8 +10,12 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching static assets');
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).catch(() => {
+        // Cache what we can — a single 404 should not block SW install
+        return Promise.allSettled(
+          STATIC_ASSETS.map((url) => cache.add(url).catch(() => {}))
+        );
+      });
     })
   );
   // Activate immediately

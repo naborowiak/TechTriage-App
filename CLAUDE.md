@@ -343,6 +343,40 @@ If The_Skeptic and a Dev agent disagree:
 - General rate limiter (100 req/min) covers report endpoints (may need tightening later)
 - `cookie`/`cookie-signature` already transitive deps; making explicit adds no new code
 
+### Phase 6: Mobile Viewport Fix + PWA Install Prompt (Feb 11, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **index.html** — Added `viewport-fit=cover` and `interactive-widget=resizes-content` to viewport meta tag
+2. **src/index.css** — Added CSS utility classes: `.h-screen-safe` (100dvh with 100vh fallback), `.pt-safe`, `.pb-safe`, `.pb-safe-4/6/8` (safe-area-inset + padding)
+3. **src/App.tsx** — Replaced `h-screen` with `h-screen-safe` in dashboard/scout layouts, wired PWA install banner
+4. **src/components/Dashboard.tsx** — Replaced `h-screen` with `h-screen-safe`
+5. **src/components/scout/ScoutChatScreen.tsx** — `h-screen-safe` + `pb-safe-4` on input area
+6. **src/components/scout/VoiceOverlay.tsx** — Added `pt-safe pb-safe` to overlay, `pb-safe-6` to controls
+7. **src/components/scout/VideoSessionModal.tsx** — Added `pt-safe` to overlay/header, `pb-safe-4` to bottom controls
+8. **src/components/scout/PhotoCaptureModal.tsx** — Added `pt-safe` to overlay/header, `pb-safe-8` to controls
+9. **src/components/LiveSupport.tsx** — Added `pt-safe pb-safe` to overlay, `pt-safe` to header
+10. **src/components/voice/VoiceOverlay.tsx** — Added `pt-safe pb-safe` to overlay
+11. **src/components/ChatWidget.tsx** — Added `pt-safe pb-safe` in fullscreen mode
+12. **src/hooks/usePWAInstall.ts** (NEW) — beforeinstallprompt hook, 14-day dismiss, localStorage persistence
+13. **src/components/PWAInstallBanner.tsx** (NEW) — Bottom-anchored dismissible install banner
+14. **public/sw.js** — Bumped CACHE_NAME to v2, removed unreliable assets, added .catch fallback
+15. **public/site.webmanifest** — Added narrow (mobile) screenshot
+
+#### Key Skeptic Conditions Applied:
+- PWA banner bottom-anchored below main CTA, z-index below modals
+- Dismiss interval set to 14 days (not 7)
+- iOS Safari gap documented in usePWAInstall.ts (hook is no-op on iOS)
+- ChatWidget confirmed to have fullscreen mode — kept in plan
+- Narrow screenshot uses existing chatgpt-mobile.jpg (1080x2340)
+- SW CACHE_NAME bumped from v1 to v2
+
+#### Risks Accepted:
+- `100dvh` fallback to `100vh` on browsers without dvh support (negligible in 2026)
+- beforeinstallprompt is Chrome/Edge-only; banner won't appear on Firefox/Safari (no broken UI)
+- PWA install banner is no-op on iOS (users must use Share > Add to Home Screen)
+
 <!-- DECISIONS END -->
 
 ---

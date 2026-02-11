@@ -130,3 +130,42 @@
 .noise-texture-strong::before {
   opacity: 0.5;
 }
+
+/* ── Safe Viewport Height (accounts for mobile browser chrome) ── */
+:root {
+  --app-height: 100vh;
+}
+@supports (height: 100dvh) {
+  :root {
+    --app-height: 100dvh;
+  }
+}
+
+.h-screen-safe {
+  height: var(--app-height);
+}
+
+.min-h-screen-safe {
+  min-height: var(--app-height);
+}
+
+/* ── Safe Area Insets (notch, home indicator, gesture bars) ── */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pb-safe-4 {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pb-safe-6 {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pb-safe-8 {
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+}

@@ -800,7 +800,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const hasActiveSession = messages.length > 1;
 
   return (
-    <div className={`flex flex-col ${embedded ? 'h-full' : 'h-screen'} bg-light-50 dark:bg-[#0B0E14]`}>
+    <div className={`flex flex-col ${embedded ? 'h-full' : 'h-screen-safe'} bg-light-50 dark:bg-[#0B0E14]`}>
       {/* Header - only shown in standalone mode */}
       {!embedded && (
         <div>
@@ -1011,7 +1011,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       </div>
 
       {/* Input Area */}
-      <div className="px-4 pb-4 bg-light-50 dark:bg-[#0B0E14]">
+      <div className="px-4 pb-safe-4 bg-light-50 dark:bg-[#0B0E14]">
         <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           {/* Photo attach button */}
