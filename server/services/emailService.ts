@@ -1165,8 +1165,8 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
                     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 8px 8px;">
                         <tr>
                             <td style="padding: 14px 16px;">
-                                <p class="light-text" style="margin: 0; color: ${BRAND.midnight}; font-size: 14px; font-weight: 500; line-height: 1.6;">
-                                    ${summary || "Session completed successfully"}
+                                <p class="light-text" style="margin: 0; color: ${BRAND.slate}; font-size: 14px; font-weight: 400; line-height: 1.6;">
+                                    <strong style="color: ${BRAND.midnight};">Problem:</strong> ${summary || "Session completed successfully"}
                                 </p>
                             </td>
                         </tr>

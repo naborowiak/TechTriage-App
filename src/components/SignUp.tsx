@@ -257,7 +257,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   const [showPassword, setShowPassword] = useState(false);
   const [trialError, setTrialError] = useState<string | null>(null);
   const [isCheckingTrial, setIsCheckingTrial] = useState(false);
-  const [isOAuthUser, setIsOAuthUser] = useState(false);
+  const [isOAuthUser] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: initialEmail,
     password: "",
@@ -290,31 +290,14 @@ export const SignUp = memo<SignUpProps>(function SignUp({
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  // Handle OAuth users - set up form and step when auth is confirmed (runs only once)
-  const [oauthInitialized, setOauthInitialized] = useState(false);
-
+  // If already authenticated, redirect to dashboard — never show onboarding again
   useEffect(() => {
-    // Only initialize once when auth loads and user is authenticated
-    if (!authLoading && isAuthenticated && oauthUser && !oauthInitialized) {
-      setOauthInitialized(true);
-      setIsOAuthUser(true);
-      // Skip to profile step since they already have credentials via OAuth
-      setCurrentStep("profile");
-      // Pre-fill form data from OAuth user
-      setFormData(prev => ({
-        ...prev,
-        email: oauthUser.email || prev.email,
-        firstName: oauthUser.firstName || prev.firstName,
-        lastName: oauthUser.lastName || prev.lastName,
-      }));
-      // Start trial for OAuth users
-      if (oauthUser.email) {
-        startTrial(oauthUser.email).catch(err => {
-          console.error("Trial start error for OAuth user:", err);
-        });
+    if (!authLoading && isAuthenticated && oauthUser) {
+      if (onNavigate) {
+        onNavigate(PageView.DASHBOARD);
       }
     }
-  }, [authLoading, isAuthenticated, oauthUser, oauthInitialized]);
+  }, [authLoading, isAuthenticated, oauthUser, onNavigate]);
 
   // Show loading state while checking auth
   if (authLoading) {

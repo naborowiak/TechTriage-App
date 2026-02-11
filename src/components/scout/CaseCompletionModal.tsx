@@ -24,7 +24,8 @@ export function CaseCompletionModal({ caseId, caseTitle, onClose, userEmail }: C
     setDownloadError(null);
 
     try {
-      const res = await fetch(`/api/cases/${caseId}/report`, {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch(`/api/cases/${caseId}/report?tz=${encodeURIComponent(tz)}`, {
         credentials: 'include',
       });
 
@@ -53,10 +54,12 @@ export function CaseCompletionModal({ caseId, caseTitle, onClose, userEmail }: C
     setEmailError(null);
 
     try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const res = await fetch(`/api/cases/${caseId}/report/email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        body: JSON.stringify({ tz }),
       });
 
       if (!res.ok) {

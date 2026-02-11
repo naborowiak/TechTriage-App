@@ -43,6 +43,7 @@ export interface CasePDFData {
   createdAt: string;
   userName?: string;
   userEmail?: string;
+  userTimezone?: string;
 }
 
 // ============================================
@@ -64,21 +65,13 @@ function drawGradientHeader(doc: jsPDF, pageWidth: number, reportTitle: string) 
     doc.rect(0, i * stripHeight, pageWidth, stripHeight + 0.5, "F");
   }
 
-  // Logo icon - small filled circle with "TA" text
+  // TotalAssist wordmark
   const logoX = 20;
   const logoY = 20;
-  doc.setFillColor(255, 255, 255);
-  doc.circle(logoX + 5, logoY, 7, "F");
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(PDF_COLORS.headerStart[0], PDF_COLORS.headerStart[1], PDF_COLORS.headerStart[2]);
-  doc.text("TA", logoX + 2.2, logoY + 2.2);
-
-  // TotalAssist wordmark
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
+  doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("TotalAssist", logoX + 16, logoY + 1.5);
+  doc.text("TotalAssist", logoX, logoY + 1.5);
 
   // Report title
   doc.setFontSize(22);
@@ -205,10 +198,12 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
     yPosition = drawTableRow(doc, "E-mail:", data.userEmail, yPosition, margin);
   }
 
+  const tzOpts = data.userTimezone ? { timeZone: data.userTimezone } : {};
   const dateStr = new Date(data.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
+    ...tzOpts,
   });
   yPosition = drawTableRow(doc, "Date:", dateStr, yPosition, margin);
 
@@ -229,6 +224,7 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
       year: "numeric",
       hour: "numeric",
       minute: "2-digit",
+      ...tzOpts,
     });
     const endTime = new Date(lastMsg.timestamp).toLocaleString("en-US", {
       month: "long",
@@ -236,6 +232,7 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
       year: "numeric",
       hour: "numeric",
       minute: "2-digit",
+      ...tzOpts,
     });
 
     yPosition = drawTableRow(doc, "Diagnostics Started:", startTime, yPosition, margin);
@@ -259,12 +256,8 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
   yPosition = drawTableRow(doc, "Issue Detected:", issueText, yPosition, margin);
 
   // Action Taken
-  const actionText = data.aiSummary
-    ? data.aiSummary.length > 150
-      ? data.aiSummary.substring(0, 150) + "..."
-      : data.aiSummary
-    : "Diagnostic session completed.";
-  yPosition = drawTableRow(doc, "Action Taken:", actionText, yPosition, margin);
+  const actionText = data.aiSummary || "Diagnostic session completed.";
+  yPosition = drawTableRow(doc, "Action Taken:", actionText, yPosition, margin, 50);
 
   // Status badge
   const status = (data.status || "resolved").toLowerCase();
@@ -425,6 +418,7 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
       const time = new Date(msg.timestamp).toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
+        ...tzOpts,
       });
 
       // Speaker label

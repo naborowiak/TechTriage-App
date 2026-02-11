@@ -711,15 +711,8 @@ const Hero: React.FC<{
             <div style={{ transform: `translateY(${scrollY * -0.04}px)`, willChange: 'transform' }}>
               <AnimatedElement animation="fadeInUp" delay={0.2}>
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.1] mb-4 sm:mb-6">
-                  <span
-                    className="text-text-primary dark:text-white"
-                    style={{
-                      textShadow: '0 1px 2px rgba(0,0,0,0.1), 0 2px 8px rgba(255,255,255,0.5)',
-                    }}
-                  >
-                    <span className="dark:[text-shadow:0_2px_12px_rgba(0,0,0,0.8),0_1px_2px_rgba(0,0,0,0.5)]">
-                      Fix your tech in minutes
-                    </span>
+                  <span className="text-text-primary dark:text-white dark:[text-shadow:0_2px_12px_rgba(0,0,0,0.8),0_1px_2px_rgba(0,0,0,0.5)]">
+                    Fix your tech in minutes
                   </span>
                   <br />
                   <span
@@ -736,15 +729,8 @@ const Hero: React.FC<{
             {/* Subtitle — gentle parallax rise */}
             <div style={{ transform: `translateY(${scrollY * -0.025}px)`, willChange: 'transform' }}>
               <AnimatedElement animation="fadeInUp" delay={0.4}>
-                <p
-                  className="text-base sm:text-lg md:text-xl lg:text-xl font-medium leading-relaxed mb-6 sm:mb-8 md:mb-10 max-w-md sm:max-w-lg lg:max-w-xl text-gray-700 dark:text-gray-200"
-                  style={{
-                    textShadow: '0 1px 2px rgba(255,255,255,0.8)',
-                  }}
-                >
-                  <span className="dark:[text-shadow:0_1px_8px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]">
-                    TotalAssist is your 24/7 lifeline for home tech problems. No hold music, no complex menus—just a friendly support team that walks you through every fix.
-                  </span>
+                <p className="text-base sm:text-lg md:text-xl lg:text-xl font-medium leading-relaxed mb-6 sm:mb-8 md:mb-10 max-w-md sm:max-w-lg lg:max-w-xl text-gray-700 dark:text-gray-200 dark:[text-shadow:0_1px_8px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]">
+                  TotalAssist is your 24/7 lifeline for home tech problems. No hold music, no complex menus—just a friendly support team that walks you through every fix.
                 </p>
               </AnimatedElement>
             </div>
@@ -1710,27 +1696,12 @@ const App: React.FC = () => {
         setCurrentView(PageView.DASHBOARD);
       }
 
-      // If on signup and authenticated, check if they've completed onboarding
+      // If on signup and authenticated, always redirect to dashboard — never show onboarding again
       if (currentPath === "/signup" && sessionUser.id) {
         setSessionChecked(true);
-        // Fetch full user profile to check onboarding status
-        fetch(`/api/auth/user/${sessionUser.id}`)
-          .then((res) => res.json())
-          .then((data) => {
-            // If user has completed onboarding (has homeType or techComfort), go to dashboard
-            if (data.homeType || data.techComfort) {
-              setDashboardUser(syncedUser);
-              localStorage.setItem(
-                "totalassist_user",
-                JSON.stringify(syncedUser),
-              );
-              navigate(PageView.DASHBOARD);
-            }
-            // Otherwise, let them continue with onboarding in SignUp component
-          })
-          .catch((err) => {
-            console.error("Error checking user profile:", err);
-          });
+        setDashboardUser(syncedUser);
+        localStorage.setItem("totalassist_user", JSON.stringify(syncedUser));
+        navigate(PageView.DASHBOARD);
       }
     }
   }, [authLoading, isAuthenticated, sessionUser, sessionChecked]);

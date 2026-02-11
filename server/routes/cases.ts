@@ -11,7 +11,8 @@ const router = Router();
 // Shared helper: build PDF data from a case + its messages + user info
 async function buildCasePDFData(
   caseId: string,
-  userId: string
+  userId: string,
+  userTimezone?: string
 ): Promise<{
   pdfData: CasePDFData;
   user: {
@@ -58,6 +59,7 @@ async function buildCasePDFData(
     messages: (messageRecord?.messages as CasePDFData["messages"]) || [],
     createdAt: caseDetails.createdAt?.toISOString() || new Date().toISOString(),
     userName,
+    userTimezone,
   };
 
   return {
@@ -221,50 +223,8 @@ router.patch("/:id", async (req, res) => {
 
     res.json(updated);
 
-    // Fire-and-forget: email PDF when case is resolved
-    if (status === "resolved" && updated) {
-      (async () => {
-        try {
-          const [user] = await db
-            .select()
-            .from(usersTable)
-            .where(eq(usersTable.id, req.user!.id))
-            .limit(1);
-
-          if (!user?.email || user.sessionGuideEmails === false) return;
-
-          const [messageRecord] = await db
-            .select()
-            .from(caseMessagesTable)
-            .where(eq(caseMessagesTable.caseId, id))
-            .limit(1);
-
-          const pdfBase64 = generateCaseGuidePDF({
-            caseId: id,
-            title: updated.title,
-            status: updated.status || "resolved",
-            sessionMode: updated.sessionMode,
-            aiSummary: updated.aiSummary,
-            escalationReport: updated.escalationReport as CasePDFData["escalationReport"],
-            messages: (messageRecord?.messages as CasePDFData["messages"]) || [],
-            createdAt: updated.createdAt?.toISOString() || new Date().toISOString(),
-            userName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || undefined,
-          });
-
-          await sendSessionGuideEmail(
-            user.email,
-            user.firstName || "there",
-            updated.aiSummary || updated.title,
-            pdfBase64,
-            updated.createdAt || new Date()
-          );
-
-          console.log(`[CASE] Sent resolution PDF email for case ${id} to ${user.email}`);
-        } catch (err) {
-          console.error(`[CASE] Failed to send resolution email for case ${id}:`, err);
-        }
-      })();
-    }
+    // Note: PDF email is now user-initiated via CaseCompletionModal ("Email Report" button)
+    // rather than auto-sent on resolve, to avoid sending duplicate emails.
 
     // Fire-and-forget: send escalation email with specialist link
     if (status === "escalated" && updated?.specialistToken) {
@@ -467,9 +427,10 @@ router.get("/:id/report", async (req, res) => {
   }
 
   const { id } = req.params;
+  const userTimezone = (req.query.tz as string) || undefined;
 
   try {
-    const result = await buildCasePDFData(id, req.user.id);
+    const result = await buildCasePDFData(id, req.user.id, userTimezone);
 
     if (!result) {
       return res.status(404).json({ error: "Case not found" });
@@ -502,9 +463,10 @@ router.post("/:id/report/email", async (req, res) => {
   }
 
   const { id } = req.params;
+  const userTimezone = req.body?.tz || undefined;
 
   try {
-    const result = await buildCasePDFData(id, req.user.id);
+    const result = await buildCasePDFData(id, req.user.id, userTimezone);
 
     if (!result) {
       return res.status(404).json({ error: "Case not found" });

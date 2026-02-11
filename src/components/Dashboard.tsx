@@ -22,6 +22,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Clock,
+  Download,
+  Mail,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useSubscription } from "../hooks/useSubscription";
@@ -97,6 +101,84 @@ const groupCasesByDate = (cases: Case[]) => {
 
   return groups.filter((g) => g.cases.length > 0);
 };
+
+// Inline report actions for resolved case cards
+function CaseReportActions({ caseId, userEmail }: { caseId: string; userEmail?: string }) {
+  const [downloading, setDownloading] = useState(false);
+  const [emailing, setEmailing] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/cases/${caseId}/report?tz=${encodeURIComponent(tz)}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `TotalAssist_Case_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // silent — button resets
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleEmail = async () => {
+    setEmailing(true);
+    try {
+      const res = await fetch(`/api/cases/${caseId}/report/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ tz }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      setEmailSent(true);
+    } catch {
+      // silent — button resets
+    } finally {
+      setEmailing(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={handleDownload}
+        disabled={downloading}
+        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-light-200 dark:bg-midnight-700 text-text-primary dark:text-white hover:bg-light-300 dark:hover:bg-midnight-600 transition-colors min-h-[44px] disabled:opacity-50"
+        aria-label="Download PDF report"
+      >
+        {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+        PDF
+      </button>
+      {userEmail && (
+        <button
+          onClick={handleEmail}
+          disabled={emailing || emailSent}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-light-200 dark:bg-midnight-700 text-text-primary dark:text-white hover:bg-light-300 dark:hover:bg-midnight-600 transition-colors min-h-[44px] disabled:opacity-50"
+          aria-label={emailSent ? "Email sent" : "Email PDF report"}
+        >
+          {emailSent ? (
+            <><CheckCircle className="w-4 h-4 text-emerald-500" /> Sent</>
+          ) : emailing ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Email</>
+          ) : (
+            <><Mail className="w-4 h-4" /> Email</>
+          )}
+        </button>
+      )}
+    </>
+  );
+}
 
 export const Dashboard: React.FC<DashboardProps> = ({
   user,
@@ -852,12 +934,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <span>{dateStr}</span>
                           </div>
                           <div className="flex gap-2 mt-auto pt-2">
-                            <button
-                              onClick={() => onOpenCase?.(c.id)}
-                              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-light-100 dark:bg-midnight-700 text-text-primary dark:text-white hover:bg-light-200 dark:hover:bg-midnight-600 transition-colors min-h-[44px]"
-                            >
-                              View Report
-                            </button>
+                            <CaseReportActions caseId={c.id} userEmail={user?.email} />
                             {c.status === 'open' && (
                               <button
                                 onClick={() => onOpenCase?.(c.id)}
