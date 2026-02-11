@@ -23,6 +23,8 @@ import {
   Video,
   Sparkles,
   FileText,
+  Shield,
+  Clock,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -688,13 +690,13 @@ const Hero: React.FC<{
       {/* Background hero image - different images for mobile vs desktop */}
       {/* Mobile/Tablet: vertical mobile-hero.png, Desktop: horizontal homepage-hero.jpg */}
 
-      {/* Mobile hero image (below lg) — parallax layer */}
+      {/* Mobile hero image (below lg) — slower parallax so phone feels anchored */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_60%] lg:hidden will-change-transform"
+        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_58%] lg:hidden will-change-transform"
         style={{
           backgroundImage: "url(/mobile_hero.jpg)",
-          transform: `translateY(${scrollY * 0.2}px) scale(1.15)`,
-          transformOrigin: 'center bottom',
+          transform: `translateY(${scrollY * 0.08}px) scale(1.08)`,
+          transformOrigin: 'center 60%',
         }}
       ></div>
 
@@ -710,23 +712,15 @@ const Hero: React.FC<{
 
       {/* ===== GRADIENT OVERLAYS (separate from background images) ===== */}
 
-      {/* ===== LIGHT MODE - MOBILE (top to bottom, layered) ===== */}
-      {/* Layer 1: Primary top-to-bottom gradient — fades out by 58% to reveal phone */}
+      {/* ===== LIGHT MODE - MOBILE (tight top overlay, phone area fully clear) ===== */}
+      {/* Layer 1: Top-down — covers text area only (~40%), then gone */}
       <div className="absolute inset-0 lg:hidden dark:hidden" style={{
         background: `linear-gradient(180deg,
-          rgba(255,255,255,0.95) 0%,
-          rgba(255,255,255,0.92) 15%,
-          rgba(250,250,255,0.72) 30%,
-          rgba(243,244,255,0.38) 42%,
-          rgba(238,242,255,0.1) 52%,
-          transparent 58%)`
-      }}></div>
-      {/* Layer 2: Diagonal gradient for natural edge */}
-      <div className="absolute inset-0 lg:hidden dark:hidden" style={{
-        background: `linear-gradient(160deg,
-          rgba(255,255,255,0.85) 0%,
-          rgba(248,247,255,0.5) 22%,
-          rgba(243,244,255,0.15) 38%,
+          rgba(255,255,255,0.97) 0%,
+          rgba(255,255,255,0.94) 12%,
+          rgba(255,255,255,0.8) 24%,
+          rgba(250,250,255,0.45) 34%,
+          rgba(245,245,255,0.12) 42%,
           transparent 48%)`
       }}></div>
 
@@ -749,31 +743,23 @@ const Hero: React.FC<{
           transparent 52%)`
       }}></div>
 
-      {/* ===== DARK MODE - MOBILE (top to bottom, layered) ===== */}
-      {/* Layer 1: Primary top-to-bottom gradient — fades by 62% to reveal phone */}
+      {/* ===== DARK MODE - MOBILE (tight top overlay, phone area fully clear) ===== */}
+      {/* Layer 1: Top-down — covers text area only (~42%), then gone */}
       <div className="absolute inset-0 lg:dark:hidden hidden dark:block" style={{
         background: `linear-gradient(180deg,
-          rgba(11,14,20,0.95) 0%,
-          rgba(11,14,20,0.9) 15%,
-          rgba(15,14,35,0.68) 30%,
-          rgba(25,20,50,0.38) 42%,
-          rgba(40,30,65,0.12) 54%,
-          transparent 62%)`
+          rgba(11,14,20,0.97) 0%,
+          rgba(11,14,20,0.94) 12%,
+          rgba(11,14,25,0.78) 24%,
+          rgba(15,14,35,0.42) 34%,
+          rgba(25,20,50,0.1) 42%,
+          transparent 48%)`
       }}></div>
-      {/* Layer 2: Diagonal gradient for natural edge */}
-      <div className="absolute inset-0 lg:dark:hidden hidden dark:block" style={{
-        background: `linear-gradient(160deg,
-          rgba(15,12,35,0.75) 0%,
-          rgba(25,20,50,0.45) 22%,
-          rgba(35,28,65,0.15) 40%,
-          transparent 52%)`
-      }}></div>
-      {/* Dark mode mobile: subtle brand glow behind phone area */}
+      {/* Subtle brand glow behind phone area — makes the screen pop */}
       <div className="absolute inset-0 lg:hidden hidden dark:block pointer-events-none" style={{
-        background: `radial-gradient(ellipse at 50% 65%,
-          rgba(99,102,241,0.12) 0%,
-          rgba(168,85,247,0.06) 25%,
-          transparent 55%)`
+        background: `radial-gradient(ellipse 70% 50% at 50% 68%,
+          rgba(99,102,241,0.15) 0%,
+          rgba(168,85,247,0.06) 30%,
+          transparent 60%)`
       }}></div>
 
       {/* ===== DARK MODE - DESKTOP (split overlay) ===== */}
@@ -895,15 +881,22 @@ const Hero: React.FC<{
                     Explore Pricing
                   </button>
                 </div>
-                <div className="flex items-center gap-4 mb-6 sm:mb-8">
-                  <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
-                    <span>No credit card needed</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm sm:text-base text-gray-700 dark:text-gray-200 font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-electric-cyan" />
-                    <span>24/7 instant answers</span>
-                  </div>
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-6 sm:mb-8">
+                  <span className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-electric-indigo/20 backdrop-blur-sm"
+                    style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
+                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    No credit card needed
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-scout-purple/20 backdrop-blur-sm"
+                    style={{ background: 'linear-gradient(135deg, #A855F7 0%, #6366F1 100%)' }}>
+                    <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    24/7 instant answers
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-electric-cyan/20 backdrop-blur-sm"
+                    style={{ background: 'linear-gradient(135deg, #06B6D4 0%, #6366F1 100%)' }}>
+                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    Results in minutes
+                  </span>
                 </div>
               </AnimatedElement>
             </div>
@@ -914,10 +907,10 @@ const Hero: React.FC<{
         </div>
       </div>
 
-      {/* Bottom fade into next section - kills the "black bar" effect */}
-      <div className="absolute inset-x-0 bottom-0 h-40 z-[3] pointer-events-none
-        bg-gradient-to-t from-light-100 via-light-100/70 to-transparent
-        dark:from-midnight-950 dark:via-midnight-950/70" />
+      {/* Bottom fade into next section — thin blend, doesn't cover phone */}
+      <div className="absolute inset-x-0 bottom-0 h-20 lg:h-32 z-[3] pointer-events-none
+        bg-gradient-to-t from-light-100 to-transparent
+        dark:from-midnight-950" />
       </div>{/* Close height constraint container */}
     </section>
   );

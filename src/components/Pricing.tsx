@@ -446,22 +446,38 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-baseline gap-2">
-                        {isAnnual && (
-                          <span className="text-xl text-text-muted line-through">
-                            ${plan.monthlyPrice}
-                          </span>
-                        )}
-                        <span className="text-4xl font-black text-text-primary dark:text-white">
-                          ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                        </span>
-                        <span className="text-text-secondary">/mo</span>
+                      {/* Animated price slider */}
+                      <div className="relative overflow-hidden h-[48px]">
+                        <div className={`transition-transform duration-500 ease-out ${isAnnual ? '-translate-y-1/2' : 'translate-y-0'}`}>
+                          {/* Monthly price (top) */}
+                          <div className="h-[48px] flex items-baseline gap-1">
+                            <span className="text-4xl font-black text-text-primary dark:text-white">
+                              ${plan.monthlyPrice}
+                            </span>
+                            <span className="text-text-secondary">/mo</span>
+                          </div>
+                          {/* Annual price (bottom — slides up when active) */}
+                          <div className="h-[48px] flex items-baseline gap-2">
+                            <span className="text-xl text-text-muted line-through">
+                              ${plan.monthlyPrice}
+                            </span>
+                            <span className="text-4xl font-black text-text-primary dark:text-white">
+                              ${plan.annualPrice}
+                            </span>
+                            <span className="text-text-secondary">/mo</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-text-secondary">
-                        {isAnnual
-                          ? `Billed annually ($${(plan.annualPrice * 12).toFixed(2)}/yr)`
-                          : 'Billed monthly'
-                        }
+                      {/* Animated billing text */}
+                      <div className="relative overflow-hidden h-5">
+                        <div className={`transition-transform duration-500 ease-out delay-75 ${isAnnual ? '-translate-y-1/2' : 'translate-y-0'}`}>
+                          <div className="h-5 text-sm text-text-secondary">
+                            Billed monthly
+                          </div>
+                          <div className="h-5 text-sm text-text-secondary">
+                            Billed annually (${(plan.annualPrice * 12).toFixed(2)}/yr)
+                          </div>
+                        </div>
                       </div>
                     </>
                   )}
