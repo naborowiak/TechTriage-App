@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Search,
   Settings,
   LogOut,
   AlertTriangle,
@@ -9,29 +8,23 @@ import {
   Sun,
   Moon,
   Package,
-  PanelLeft,
-  Plus,
   ChevronUp,
   Camera,
   Mic,
   Video,
   HelpCircle,
-  BarChart3,
   MessageSquare,
   Lock,
-  ArrowRight,
-  ArrowLeft,
-  Clock,
-  Download,
-  Mail,
-  Loader2,
-  CheckCircle,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { useSubscription } from "../hooks/useSubscription";
 import { useUsage } from "../stores/usageStore";
 import { UpgradeModal } from "./UpgradeModal";
-import { STRIPE_CREDIT_PRICES } from "../config/stripe";
+import { SystemStatusBadge } from "./dashboard/SystemStatusBadge";
+import { MobileBottomDock } from "./dashboard/MobileBottomDock";
+import { CurrentCaseCard } from "./dashboard/CurrentCaseCard";
+import { HistoryList } from "./dashboard/HistoryList";
+import { useCaseProgress } from "../hooks/useCaseProgress";
+import type { DashboardTab } from "../types";
 
 interface DashboardProps {
   user: {
@@ -53,7 +46,7 @@ interface DashboardProps {
   onBackToDashboard?: () => void;
   onNewChat?: (message: string) => void;
   onOpenCase?: (caseId: string) => void;
-  onOpenScoutWithMode?: (mode: 'photo' | 'voice' | 'video') => void;
+  onOpenScoutWithMode?: (mode: "photo" | "voice" | "video") => void;
   onOpenAnalytics?: () => void;
   activeView?: "main" | "history" | "scout" | "analytics";
   children?: React.ReactNode;
@@ -74,112 +67,6 @@ interface Case {
   aiSummary?: string;
 }
 
-// Group cases by date buckets
-const groupCasesByDate = (cases: Case[]) => {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-  const lastWeek = new Date(today.getTime() - 7 * 86400000);
-  const lastMonth = new Date(today.getTime() - 30 * 86400000);
-
-  const groups: { label: string; cases: Case[] }[] = [
-    { label: "Today", cases: [] },
-    { label: "Yesterday", cases: [] },
-    { label: "Previous 7 days", cases: [] },
-    { label: "Previous 30 days", cases: [] },
-    { label: "Older", cases: [] },
-  ];
-
-  cases.forEach((c) => {
-    const date = new Date(c.updatedAt || c.createdAt);
-    if (date >= today) groups[0].cases.push(c);
-    else if (date >= yesterday) groups[1].cases.push(c);
-    else if (date >= lastWeek) groups[2].cases.push(c);
-    else if (date >= lastMonth) groups[3].cases.push(c);
-    else groups[4].cases.push(c);
-  });
-
-  return groups.filter((g) => g.cases.length > 0);
-};
-
-// Inline report actions for resolved case cards
-function CaseReportActions({ caseId, userEmail }: { caseId: string; userEmail?: string }) {
-  const [downloading, setDownloading] = useState(false);
-  const [emailing, setEmailing] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      const res = await fetch(`/api/cases/${caseId}/report?tz=${encodeURIComponent(tz)}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `TotalAssist_Case_Report_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch {
-      // silent — button resets
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  const handleEmail = async () => {
-    setEmailing(true);
-    try {
-      const res = await fetch(`/api/cases/${caseId}/report/email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ tz }),
-      });
-      if (!res.ok) throw new Error('Failed');
-      setEmailSent(true);
-    } catch {
-      // silent — button resets
-    } finally {
-      setEmailing(false);
-    }
-  };
-
-  return (
-    <>
-      <button
-        onClick={handleDownload}
-        disabled={downloading}
-        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-light-200 dark:bg-midnight-700 text-text-primary dark:text-white hover:bg-light-300 dark:hover:bg-midnight-600 transition-colors min-h-[44px] disabled:opacity-50"
-        aria-label="Download PDF report"
-      >
-        {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-        PDF
-      </button>
-      {userEmail && (
-        <button
-          onClick={handleEmail}
-          disabled={emailing || emailSent}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-light-200 dark:bg-midnight-700 text-text-primary dark:text-white hover:bg-light-300 dark:hover:bg-midnight-600 transition-colors min-h-[44px] disabled:opacity-50"
-          aria-label={emailSent ? "Email sent" : "Email PDF report"}
-        >
-          {emailSent ? (
-            <><CheckCircle className="w-4 h-4 text-emerald-500" /> Sent</>
-          ) : emailing ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> Email</>
-          ) : (
-            <><Mail className="w-4 h-4" /> Email</>
-          )}
-        </button>
-      )}
-    </>
-  );
-}
-
 export const Dashboard: React.FC<DashboardProps> = ({
   user,
   onStartChat: _onStartChat,
@@ -193,40 +80,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNewChat,
   onOpenCase,
   onOpenScoutWithMode,
-  onOpenAnalytics,
   activeView = "main",
   children,
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [cases, setCases] = useState<Case[]>([]);
-  const [caseSearch, setCaseSearch] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeFeature, setUpgradeFeature] = useState<'chat' | 'photo' | 'signal' | 'videoDiagnostic'>('chat');
-  const [isPurchasing, setIsPurchasing] = useState<string | null>(null);
-  const [welcomeDismissed, setWelcomeDismissed] = useState(
-    () => localStorage.getItem('ta_welcome_dismissed') === 'true'
-  );
+  const [upgradeFeature, setUpgradeFeature] = useState<
+    "chat" | "photo" | "signal" | "videoDiagnostic"
+  >("chat");
+  const [showChips, setShowChips] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
-
-  // Usage store
   const { tier } = useUsage();
-
-  // Subscription
-  const { videoCredits, startCheckout } = useSubscription(user.id);
 
   const confirmLogout = () => {
     setShowLogoutConfirm(false);
     onLogout();
   };
 
-  // Fetch Cases (re-fetch when view changes so sidebar stays fresh after chatting)
+  // Fetch cases
   useEffect(() => {
     if (user?.id) {
       fetch("/api/cases", { credentials: "include" })
@@ -243,35 +119,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [user?.id, activeView]);
 
-  // Listen for real-time case creation from ScoutChatScreen
+  // Listen for real-time case creation
   useEffect(() => {
     const handler = (e: Event) => {
       const newCase = (e as CustomEvent).detail;
       if (newCase?.id) {
-        setCases(prev => {
-          // Avoid duplicates
-          if (prev.some(c => c.id === newCase.id)) return prev;
+        setCases((prev) => {
+          if (prev.some((c) => c.id === newCase.id)) return prev;
           return [newCase, ...prev];
         });
       }
     };
-    window.addEventListener('case-created', handler);
-    return () => window.removeEventListener('case-created', handler);
+    window.addEventListener("case-created", handler);
+    return () => window.removeEventListener("case-created", handler);
   }, []);
 
-  // Click-outside detection for popup menus
+  // Click-outside for user menu
   useEffect(() => {
     if (!showUserMenu) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
         setShowUserMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showUserMenu]);
 
-  // Handle sending initial message from empty state
+  // Handle text input submission
   const handleSendFromEmpty = () => {
     const text = chatInput.trim();
     if (!text) return;
@@ -283,168 +161,167 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setChatInput("");
   };
 
-  // Filter cases for sidebar
-  const filteredCases = caseSearch
-    ? cases.filter(
-        (c) =>
-          c.title.toLowerCase().includes(caseSearch.toLowerCase()) ||
-          (c.aiSummary || "").toLowerCase().includes(caseSearch.toLowerCase())
-      )
-    : cases;
-
-  const groupedCases = groupCasesByDate(filteredCases);
-
-  // Tier badge
-  const getTierLabel = () => {
-    if (tier === "pro") return "Pro";
-    if (tier === "home") return "Home";
-    return "Free";
-  };
+  // Derive current case and history
+  const currentOpenCase = cases.find((c) => c.status === "open") || null;
+  const { steps: caseProgressSteps, isLoading: progressLoading } =
+    useCaseProgress(currentOpenCase?.id || null);
 
   const isScoutView = activeView === "scout";
 
-  return (
-    <div
-      className={`${isScoutView ? 'h-screen-safe overflow-hidden' : 'h-screen-safe overflow-hidden'} bg-light-50 dark:bg-midnight-950 transition-colors flex`}
-      onTouchStart={(e) => {
-        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      }}
-      onTouchEnd={(e) => {
-        if (!touchStartRef.current) return;
-        const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
-        const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
-        // Only trigger if horizontal swipe is dominant
-        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
-          if (deltaX > 0 && touchStartRef.current.x < 30 && !sidebarMobileOpen) {
-            setSidebarMobileOpen(true);
-          } else if (deltaX < 0 && sidebarMobileOpen) {
-            setSidebarMobileOpen(false);
-          }
-        }
-        touchStartRef.current = null;
-      }}
-    >
-      {/* Mobile sidebar overlay */}
-      {sidebarMobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarMobileOpen(false)}
-        />
-      )}
+  // Map activeView to dock tab
+  const activeDockTab: DashboardTab =
+    activeView === "history"
+      ? "history"
+      : activeView === "scout"
+        ? "new"
+        : "home";
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:relative top-0 left-0 h-full bg-white dark:bg-midnight-900 border-r border-light-300 dark:border-midnight-700 z-50 flex flex-col transition-all duration-300 ${
-          sidebarMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        } ${sidebarOpen ? "w-[260px]" : "w-0 lg:w-0 overflow-hidden border-r-0"}`}
-      >
-        {/* Sidebar top: New Chat + Search */}
-        <div className="p-3 space-y-2 shrink-0">
+  const handleDockTabChange = (tab: DashboardTab) => {
+    if (tab === "home") {
+      if (onBackToDashboard) onBackToDashboard();
+    } else if (tab === "new") {
+      if (onOpenScout) onOpenScout();
+    } else if (tab === "history") {
+      onOpenHistory();
+    } else if (tab === "settings") {
+      onOpenSettings();
+    }
+  };
+
+  // Triage tiles config
+  const triageTiles = [
+    {
+      id: "text" as const,
+      icon: MessageSquare,
+      label: "Type a Question",
+      description: "Chat with our support agent",
+      lockedForTiers: [] as string[],
+      action: () => {
+        if (onOpenScout) onOpenScout();
+      },
+      feature: "chat" as const,
+      gradient: "from-[#1a2332] to-[#1e2a3a]",
+      iconColor: "text-[#06B6D4]",
+      iconBg: "bg-[#06B6D4]/15",
+    },
+    {
+      id: "photo" as const,
+      icon: Camera,
+      label: "Show the Problem",
+      description: "Take or upload a photo for analysis",
+      lockedForTiers: [] as string[],
+      action: () => {
+        if (onOpenScoutWithMode) onOpenScoutWithMode("photo");
+        else if (onOpenScout) onOpenScout();
+      },
+      feature: "photo" as const,
+      gradient: "from-[#1e1a2e] to-[#252038]",
+      iconColor: "text-electric-indigo",
+      iconBg: "bg-electric-indigo/15",
+    },
+    {
+      id: "voice" as const,
+      icon: Mic,
+      label: "Talk to Support",
+      description: "Requires Home or Pro plan",
+      lockedForTiers: ["guest", "free"],
+      action: () => {
+        if (onOpenScoutWithMode) onOpenScoutWithMode("voice");
+        else if (onOpenScout) onOpenScout();
+      },
+      feature: "signal" as const,
+      gradient: "from-[#1e1a30] to-[#281e3a]",
+      iconColor: "text-[#8B5CF6]",
+      iconBg: "bg-[#8B5CF6]/15",
+    },
+    {
+      id: "video" as const,
+      icon: Video,
+      label: "Show Me on Camera",
+      description: "Requires Home or Pro plan",
+      lockedForTiers: ["guest", "free"],
+      action: () => {
+        if (onOpenScoutWithMode) onOpenScoutWithMode("video");
+        else if (onOpenScout) onOpenScout();
+      },
+      feature: "videoDiagnostic" as const,
+      gradient: "from-[#201a2e] to-[#2a1e38]",
+      iconColor: "text-scout-purple",
+      iconBg: "bg-scout-purple/15",
+    },
+  ];
+
+  const commonIssues = [
+    "Wi-Fi not working",
+    "Printer won't print",
+    "Slow internet",
+    "Smart device setup",
+    "Error on my screen",
+    "TV won't connect",
+  ];
+
+  return (
+    <div className="h-screen-safe overflow-hidden bg-light-50 dark:bg-midnight-950 transition-colors flex flex-col">
+      {/* Header */}
+      <header className="bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-gradient-to-br from-electric-indigo to-scout-purple rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xs">TA</span>
+          </div>
+          <span className="text-sm font-bold text-text-primary dark:text-white tracking-tight">
+            TotalAssist
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {tier !== "pro" && (
+            <button
+              onClick={() => setUpgradeModalOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-scout-purple to-electric-indigo text-white hover:opacity-90 transition-opacity"
+            >
+              <Zap className="w-3 h-3" />
+              Upgrade
+            </button>
+          )}
           <button
-            onClick={() => {
-              setSidebarMobileOpen(false);
-              if (activeView === "main") {
-                if (onOpenScout) onOpenScout();
-              } else if (onBackToDashboard) {
-                onBackToDashboard();
-              }
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-sm font-medium border border-light-300 dark:border-midnight-700"
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
           >
-            {activeView === "main" ? (
-              <>
-                <Plus className="w-4 h-4" />
-                New chat
-              </>
+            {theme === "light" ? (
+              <Moon className="w-4 h-4" />
             ) : (
-              <>
-                <ArrowLeft className="w-4 h-4" />
-                Dashboard
-              </>
+              <Sun className="w-4 h-4" />
             )}
           </button>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Search chats..."
-              value={caseSearch}
-              onChange={(e) => setCaseSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 border border-light-300 dark:border-midnight-700 rounded-lg bg-light-50 dark:bg-midnight-800 text-text-primary dark:text-white placeholder:text-text-muted text-xs focus:border-electric-indigo focus:outline-none transition-colors"
-            />
-          </div>
-        </div>
 
-        {/* Sidebar middle: Case history */}
-        <div className="flex-1 overflow-y-auto px-2 py-1">
-          {groupedCases.length === 0 && (
-            <div className="px-3 py-8 text-center text-text-muted text-xs">
-              {caseSearch ? `No results for "${caseSearch}"` : "No conversations yet"}
-            </div>
-          )}
-          {groupedCases.map((group) => (
-            <div key={group.label} className="mb-2">
-              <div className="px-3 py-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wide">
-                {group.label}
-              </div>
-              {group.cases.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    setSidebarMobileOpen(false);
-                    if (onOpenCase) {
-                      onOpenCase(c.id);
-                    } else {
-                      onOpenHistory();
-                    }
-                  }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors group"
-                >
-                  <div className="text-sm text-text-primary dark:text-white truncate font-medium group-hover:text-electric-indigo transition-colors">
-                    {c.caseNumber ? <span className="text-text-muted font-normal mr-1">#{c.caseNumber}</span> : null}
-                    {c.title}
-                  </div>
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* Analytics button */}
-        {onOpenAnalytics && (
-          <div className="px-2 pb-1 shrink-0">
+          {/* Avatar with dropdown */}
+          <div ref={userMenuRef} className="relative">
             <button
-              onClick={() => { setSidebarMobileOpen(false); onOpenAnalytics(); }}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeView === 'analytics'
-                  ? 'bg-electric-indigo/10 text-electric-indigo'
-                  : 'text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-100 dark:hover:bg-midnight-800'
-              }`}
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-8 h-8 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs hover:ring-2 hover:ring-electric-indigo/30 transition-all"
+              aria-label="User menu"
             >
-              <BarChart3 className="w-4 h-4" />
-              Analytics
+              {user.firstName.charAt(0)}
             </button>
-          </div>
-        )}
 
-        {/* Sidebar bottom: Clickable user row with popup menu */}
-        <div className="shrink-0 border-t border-light-300 dark:border-midnight-700 p-3" ref={userMenuRef}>
-          <div className="relative">
-            {/* User popup menu */}
             {showUserMenu && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-xl shadow-xl z-50 animate-fade-in-up overflow-hidden">
-                {/* User info header */}
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-xl shadow-xl z-50 overflow-hidden">
                 <div className="px-4 py-3 border-b border-light-200 dark:border-midnight-700">
                   <div className="text-sm font-semibold text-text-primary dark:text-white truncate">
                     {user.firstName} {user.lastName || ""}
                   </div>
-                  <div className="text-xs text-text-muted truncate">{user.email}</div>
+                  <div className="text-xs text-text-muted truncate">
+                    {user.email}
+                  </div>
                 </div>
-
                 <div className="py-1">
                   {tier !== "pro" && (
                     <button
-                      onClick={() => { setShowUserMenu(false); setUpgradeModalOpen(true); }}
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setUpgradeModalOpen(true);
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
                     >
                       <Zap className="w-4 h-4 text-electric-indigo" />
@@ -452,7 +329,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                   )}
                   <button
-                    onClick={() => { setShowUserMenu(false); setSidebarMobileOpen(false); onOpenSettings(); }}
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      onOpenSettings();
+                    }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
                   >
                     <Settings className="w-4 h-4 text-text-muted" />
@@ -460,7 +340,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </button>
                   {onOpenBilling && (
                     <button
-                      onClick={() => { setShowUserMenu(false); setSidebarMobileOpen(false); onOpenBilling(); }}
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        onOpenBilling();
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
                     >
                       <CreditCard className="w-4 h-4 text-text-muted" />
@@ -469,7 +352,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   )}
                   {onOpenInventory && (
                     <button
-                      onClick={() => { setShowUserMenu(false); setSidebarMobileOpen(false); onOpenInventory(); }}
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        onOpenInventory();
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors"
                     >
                       <Package className="w-4 h-4 text-text-muted" />
@@ -477,7 +363,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                   )}
                 </div>
-
                 <div className="border-t border-light-200 dark:border-midnight-700 py-1">
                   <a
                     href="mailto:support@totalassist.tech"
@@ -487,7 +372,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     Help
                   </a>
                   <button
-                    onClick={() => { setShowUserMenu(false); setShowLogoutConfirm(true); }}
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowLogoutConfirm(true);
+                    }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
@@ -496,465 +384,189 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
             )}
-
-            {/* Clickable user row */}
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors"
-            >
-              <div className="w-8 h-8 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0">
-                {user.firstName.charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <div className="text-sm font-medium text-text-primary dark:text-white truncate">
-                  {user.firstName} {user.lastName || ""}
-                </div>
-                <div className="text-[10px] text-text-muted">{getTierLabel()} plan</div>
-              </div>
-            </button>
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0 h-full">
-        {/* Top header bar */}
-        <header className="bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                // On mobile, toggle mobile sidebar; on desktop, toggle collapse
-                if (window.innerWidth < 1024) {
-                  setSidebarMobileOpen(!sidebarMobileOpen);
-                } else {
-                  setSidebarOpen(!sidebarOpen);
-                }
-              }}
-              className="p-2 hover:bg-light-100 dark:hover:bg-midnight-800 rounded-lg text-text-secondary hover:text-text-primary dark:hover:text-white transition-colors"
-            >
-              <PanelLeft className="w-5 h-5" />
-            </button>
-            <span className="text-sm font-semibold text-text-primary dark:text-white">TotalAssist</span>
-          </div>
+      {/* Content area */}
+      {children ? (
+        <div
+          className={
+            isScoutView
+              ? "flex-1 overflow-hidden"
+              : "flex-1 overflow-y-auto p-6 lg:p-8"
+          }
+        >
+          {children}
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto dashboard-mesh-bg pb-20 lg:pb-8">
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
+            {/* System Status */}
+            <SystemStatusBadge />
 
-          <div className="flex items-center gap-2">
-            {tier !== "pro" && (
-              <button
-                onClick={() => setUpgradeModalOpen(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-scout-purple to-electric-indigo text-white hover:opacity-90 transition-opacity"
-              >
-                <Zap className="w-3 h-3" />
-                Get {tier === "home" ? "Pro" : "Pro"}
-              </button>
-            )}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
-              title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-            >
-              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-            </button>
-            <div className="w-8 h-8 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs">
-              {user.firstName.charAt(0)}
-            </div>
-          </div>
-        </header>
+            {/* Triage Tiles */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {triageTiles.map((tile) => {
+                const Icon = tile.icon;
+                const isLocked = tile.lockedForTiers.includes(tier);
 
-        {/* Content area */}
-        {children ? (
-          <div className={isScoutView ? "flex-1 overflow-hidden" : "flex-1 overflow-y-auto p-6 lg:p-8"}>
-            {children}
-          </div>
-        ) : (
-          /* Control Center */
-          <div className="flex-1 overflow-y-auto dashboard-mesh-bg">
-            <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-8">
-
-              {/* Section 1: Emergency Bar */}
-              <button
-                onClick={() => {
-                  if (onOpenScout) onOpenScout();
-                  else if (onNewChat) onNewChat("I need help with a tech issue");
-                }}
-                className="w-full bg-electric-indigo hover:bg-[#4F46E5] active:scale-[0.99] rounded-2xl px-6 py-5 flex items-center justify-between transition-all shadow-lg min-h-[72px]"
-                aria-label="Start a new help session now"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                    <Zap className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h2 className="text-lg sm:text-xl font-bold text-white">Need help right now?</h2>
-                    <p className="text-white/80 text-sm sm:text-base">Start a new case and get instant support.</p>
-                  </div>
-                </div>
-                <ArrowRight className="w-6 h-6 text-white shrink-0 hidden sm:block" />
-              </button>
-
-              {/* Welcome Modal (new users with 0 cases) */}
-              {cases.length === 0 && !welcomeDismissed && (
-                <div className="fixed inset-0 bg-light-100/90 dark:bg-midnight-950/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-                  <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-light-300 dark:border-midnight-700">
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className="w-14 h-14 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-2xl flex items-center justify-center shrink-0">
-                        <Zap className="w-7 h-7 text-white" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-text-primary dark:text-white mb-2">
-                          Welcome to TotalAssist, {user.firstName}!
-                        </h2>
-                        <p className="text-text-secondary text-base">
-                          Get instant help with your tech issues — no waiting, no phone trees, just solutions.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="flex items-start gap-3 p-4 bg-light-100 dark:bg-midnight-900 rounded-xl">
-                        <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                          <MessageSquare className="w-4 h-4 text-electric-indigo" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Type a Question</h3>
-                          <p className="text-text-muted text-xs leading-relaxed">Describe your problem in plain English and get instant help.</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3 p-4 bg-light-100 dark:bg-midnight-900 rounded-xl">
-                        <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                          <Camera className="w-4 h-4 text-electric-indigo" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Show the Problem</h3>
-                          <p className="text-text-muted text-xs leading-relaxed">Snap a photo of an error message or blinking light.</p>
-                        </div>
-                      </div>
-                      {(tier === 'home' || tier === 'pro') && (
-                        <>
-                          <div className="flex items-start gap-3 p-4 bg-light-100 dark:bg-midnight-900 rounded-xl">
-                            <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                              <Mic className="w-4 h-4 text-electric-indigo" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Talk to Support</h3>
-                              <p className="text-text-muted text-xs leading-relaxed">Use voice mode for hands-free troubleshooting.</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3 p-4 bg-light-100 dark:bg-midnight-900 rounded-xl">
-                            <div className="w-8 h-8 bg-electric-indigo/10 dark:bg-electric-indigo/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                              <Video className="w-4 h-4 text-electric-indigo" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-text-primary dark:text-white text-sm mb-1">Show Me on Camera</h3>
-                              <p className="text-text-muted text-xs leading-relaxed">Point your camera at the device for live guidance.</p>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="mt-6 flex justify-center">
-                      <button
-                        onClick={() => {
-                          setWelcomeDismissed(true);
-                          localStorage.setItem('ta_welcome_dismissed', 'true');
-                        }}
-                        className="px-8 py-3 rounded-xl btn-gradient-electric text-white font-semibold shadow-lg hover:shadow-electric-indigo/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-base min-h-[44px]"
+                return (
+                  <button
+                    key={tile.id}
+                    onClick={() => {
+                      if (isLocked) {
+                        setUpgradeFeature(tile.feature);
+                        setUpgradeModalOpen(true);
+                      } else {
+                        tile.action();
+                      }
+                    }}
+                    className={`
+                      relative overflow-hidden flex flex-col items-start text-left
+                      rounded-2xl p-4 sm:p-5 min-h-[120px] sm:min-h-[140px]
+                      transition-all duration-200
+                      ${
+                        isLocked
+                          ? "bg-light-200/80 dark:bg-midnight-800/50 opacity-60 cursor-not-allowed"
+                          : `bg-light-100 dark:bg-gradient-to-br dark:${tile.gradient} hover:scale-[1.02] active:scale-[0.98]`
+                      }
+                      border border-light-300/50 dark:border-white/[0.06]
+                    `}
+                    aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
+                  >
+                    {isLocked && (
+                      <div
+                        className="absolute top-3 right-3 w-6 h-6 rounded-full bg-midnight-900/60 dark:bg-midnight-700 flex items-center justify-center"
+                        aria-hidden="true"
                       >
-                        Got it, let's go!
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Section 2: Triage Grid */}
-              <div>
-                <h2 className="text-xl font-bold text-text-primary dark:text-white mb-4">How can we help?</h2>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    {
-                      id: 'text' as const,
-                      icon: MessageSquare,
-                      label: 'Type a Question',
-                      description: 'Chat with our support agent',
-                      lockedForTiers: [] as string[],
-                      action: () => { if (onOpenScout) onOpenScout(); },
-                      feature: 'chat' as const,
-                      cardBg: 'bg-[#06B6D4]/[0.08] dark:bg-[#06B6D4]/[0.14]',
-                      cardBorder: 'border-[#06B6D4]/25 dark:border-[#06B6D4]/30',
-                      cardHover: 'hover:bg-[#06B6D4]/[0.14] dark:hover:bg-[#06B6D4]/[0.22] hover:border-[#06B6D4]/40 hover:shadow-[0_4px_24px_rgba(6,182,212,0.18)]',
-                      iconCircle: 'bg-[#06B6D4]/20 dark:bg-[#06B6D4]/25',
-                      iconColor: 'text-[#06B6D4]',
-                    },
-                    {
-                      id: 'photo' as const,
-                      icon: Camera,
-                      label: 'Show the Problem',
-                      description: 'Take or upload a photo for analysis',
-                      lockedForTiers: [] as string[],
-                      action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('photo'); else if (onOpenScout) onOpenScout(); },
-                      feature: 'photo' as const,
-                      cardBg: 'bg-electric-indigo/[0.08] dark:bg-electric-indigo/[0.14]',
-                      cardBorder: 'border-electric-indigo/25 dark:border-electric-indigo/30',
-                      cardHover: 'hover:bg-electric-indigo/[0.14] dark:hover:bg-electric-indigo/[0.22] hover:border-electric-indigo/40 hover:shadow-[0_4px_24px_rgba(99,102,241,0.18)]',
-                      iconCircle: 'bg-electric-indigo/20 dark:bg-electric-indigo/25',
-                      iconColor: 'text-electric-indigo',
-                    },
-                    {
-                      id: 'voice' as const,
-                      icon: Mic,
-                      label: 'Talk to Support',
-                      description: 'Hands-free help, like a phone call',
-                      lockedForTiers: ['guest', 'free'],
-                      action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('voice'); else if (onOpenScout) onOpenScout(); },
-                      feature: 'signal' as const,
-                      cardBg: 'bg-[#8B5CF6]/[0.08] dark:bg-[#8B5CF6]/[0.14]',
-                      cardBorder: 'border-[#8B5CF6]/25 dark:border-[#8B5CF6]/30',
-                      cardHover: 'hover:bg-[#8B5CF6]/[0.14] dark:hover:bg-[#8B5CF6]/[0.22] hover:border-[#8B5CF6]/40 hover:shadow-[0_4px_24px_rgba(139,92,246,0.18)]',
-                      iconCircle: 'bg-[#8B5CF6]/20 dark:bg-[#8B5CF6]/25',
-                      iconColor: 'text-[#8B5CF6]',
-                    },
-                    {
-                      id: 'video' as const,
-                      icon: Video,
-                      label: 'Show Me on Camera',
-                      description: 'Point your camera at the issue',
-                      lockedForTiers: ['guest', 'free'],
-                      action: () => { if (onOpenScoutWithMode) onOpenScoutWithMode('video'); else if (onOpenScout) onOpenScout(); },
-                      feature: 'videoDiagnostic' as const,
-                      cardBg: 'bg-scout-purple/[0.08] dark:bg-scout-purple/[0.14]',
-                      cardBorder: 'border-scout-purple/25 dark:border-scout-purple/30',
-                      cardHover: 'hover:bg-scout-purple/[0.14] dark:hover:bg-scout-purple/[0.22] hover:border-scout-purple/40 hover:shadow-[0_4px_24px_rgba(168,85,247,0.18)]',
-                      iconCircle: 'bg-scout-purple/20 dark:bg-scout-purple/25',
-                      iconColor: 'text-scout-purple',
-                    },
-                  ].map((tile) => {
-                    const Icon = tile.icon;
-                    const isLocked = tile.lockedForTiers.includes(tier);
-
-                    return (
-                      <button
-                        key={tile.id}
-                        onClick={() => {
-                          if (isLocked) {
-                            setUpgradeFeature(tile.feature);
-                            setUpgradeModalOpen(true);
-                          } else {
-                            tile.action();
-                          }
-                        }}
-                        className={`
-                          relative overflow-hidden flex flex-col items-center justify-center text-center
-                          rounded-2xl border p-6 min-h-[180px]
-                          transition-all duration-200
-                          ${isLocked
-                            ? 'bg-light-100 dark:bg-midnight-800/50 border-light-300 dark:border-midnight-700 opacity-70 cursor-not-allowed'
-                            : `${tile.cardBg} ${tile.cardBorder} ${tile.cardHover} active:scale-[0.98]`
-                          }
-                        `}
-                        aria-label={`${tile.label}${isLocked ? ' — requires upgrade' : ''}`}
-                      >
-                        <div
-                          className="absolute inset-0 opacity-[0.07] dark:opacity-[0.05] pointer-events-none"
-                          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}
-                        />
-                        {isLocked && (
-                          <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-midnight-900/80 dark:bg-midnight-700 flex items-center justify-center" aria-hidden="true">
-                            <Lock className="w-4 h-4 text-white/70" />
-                          </div>
-                        )}
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
-                          isLocked
-                            ? 'bg-light-300 dark:bg-midnight-700'
-                            : tile.iconCircle
-                        }`}>
-                          <Icon className={`w-7 h-7 ${isLocked ? 'text-text-muted' : tile.iconColor}`} />
-                        </div>
-                        <span className={`text-lg font-bold leading-tight ${isLocked ? 'text-text-muted' : 'text-text-primary dark:text-white'}`}>
-                          {tile.label}
-                        </span>
-                        <span className="text-sm text-text-secondary dark:text-text-muted mt-1.5">
-                          {isLocked ? 'Requires Home or Pro plan' : tile.description}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Video Credit CTA (home/pro users with low credits) */}
-              {(tier === 'home' || tier === 'pro') && videoCredits.remaining <= 1 && (
-                <div className="bg-gradient-to-br from-scout-purple/10 to-electric-indigo/10 dark:from-scout-purple/20 dark:to-electric-indigo/20 rounded-2xl border border-scout-purple/30 p-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-xl flex items-center justify-center shrink-0">
-                        <Video className="w-6 h-6 text-white" />
+                        <Lock className="w-3 h-3 text-white/60" />
                       </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-text-primary dark:text-white mb-1">
-                          {videoCredits.remaining === 0 ? 'Out of Video Credits' : 'Low on Video Credits'}
-                        </h3>
-                        <p className="text-text-secondary text-sm">
-                          {videoCredits.remaining === 0
-                            ? "You've used all your live video sessions. Purchase more to continue getting real-time help."
-                            : 'You have 1 video credit remaining. Top up now so you\'re ready when you need help.'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                      <button
-                        onClick={async () => {
-                          setIsPurchasing('single');
-                          try {
-                            await startCheckout(STRIPE_CREDIT_PRICES.videoDiagnostic.single);
-                          } catch {
-                            alert('Failed to start checkout. Please try again.');
-                          } finally {
-                            setIsPurchasing(null);
-                          }
-                        }}
-                        disabled={isPurchasing !== null}
-                        className="px-5 py-3 rounded-xl bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white font-semibold hover:bg-light-100 dark:hover:bg-midnight-700 transition-colors text-sm whitespace-nowrap min-h-[44px] disabled:opacity-50"
-                        aria-label="Purchase 1 video credit for $3"
-                      >
-                        {isPurchasing === 'single' ? 'Loading...' : '1 Credit — $3'}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          setIsPurchasing('pack');
-                          try {
-                            await startCheckout(STRIPE_CREDIT_PRICES.videoDiagnostic.pack);
-                          } catch {
-                            alert('Failed to start checkout. Please try again.');
-                          } finally {
-                            setIsPurchasing(null);
-                          }
-                        }}
-                        disabled={isPurchasing !== null}
-                        className="px-5 py-3 rounded-xl bg-gradient-to-r from-scout-purple to-electric-indigo text-white font-semibold hover:opacity-90 transition-opacity text-sm whitespace-nowrap flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-50"
-                        aria-label="Purchase 5 video credits for $12, save $3"
-                      >
-                        {isPurchasing === 'pack' ? 'Loading...' : (
-                          <>
-                            <span>5 Credits — $12</span>
-                            <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs">Save $3</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Section 3: Quick-Start Chips */}
-              <div>
-                <h3 className="text-base font-semibold text-text-secondary dark:text-text-muted mb-3">Common issues</h3>
-                <div className="flex flex-wrap gap-3">
-                  {[
-                    "Wi-Fi not working",
-                    "Printer won't print",
-                    "Smart device setup",
-                    "Error on my screen",
-                    "Slow internet",
-                    "TV won't connect",
-                  ].map((chip) => (
-                    <button
-                      key={chip}
-                      onClick={() => onNewChat?.(chip)}
-                      className="px-5 py-3 rounded-full bg-light-200 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white text-sm sm:text-base font-medium hover:bg-light-300 dark:hover:bg-midnight-700 hover:border-electric-indigo/50 active:scale-[0.97] transition-all min-h-[44px]"
-                    >
-                      {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Section 4: Text Input */}
-              <div className="relative w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/50 focus-within:ring-2 focus-within:ring-electric-indigo/20 transition-all">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Or type your question here..."
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendFromEmpty()}
-                  className="flex-1 bg-transparent outline-none text-base text-text-primary dark:text-white placeholder:text-text-muted min-h-[44px]"
-                />
-                <button
-                  onClick={handleSendFromEmpty}
-                  disabled={!chatInput.trim()}
-                  className="p-3 rounded-full bg-midnight-900 dark:bg-white text-white dark:text-midnight-900 disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  aria-label="Send message"
-                >
-                  <ChevronUp className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Section 5: Recent Cases */}
-              {cases.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-text-primary dark:text-white">Your Recent Help Sessions</h2>
-                    {cases.length > 6 && (
-                      <button
-                        onClick={onOpenHistory}
-                        className="text-electric-indigo text-sm font-semibold hover:underline min-h-[44px] flex items-center"
-                      >
-                        View all
-                      </button>
                     )}
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {cases.slice(0, 6).map((c) => {
-                      const statusConfig: Record<string, { label: string; className: string }> = {
-                        open: { label: 'Open', className: 'bg-electric-cyan/20 text-electric-cyan' },
-                        resolved: { label: 'Fixed', className: 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' },
-                        escalated: { label: 'Escalated', className: 'bg-orange-500/20 text-orange-500 dark:text-orange-400' },
-                      };
-                      const status = statusConfig[c.status] || statusConfig.open;
-                      const dateStr = new Date(c.updatedAt || c.createdAt).toLocaleDateString('en-US', {
-                        month: 'short', day: 'numeric', year: 'numeric',
-                      });
-
-                      return (
-                        <div
-                          key={c.id}
-                          className="bg-white dark:bg-midnight-800 rounded-2xl border border-light-300 dark:border-midnight-700 p-5 flex flex-col gap-3 hover:border-electric-indigo/40 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-base font-bold text-text-primary dark:text-white line-clamp-2 leading-snug">
-                              {c.caseNumber ? `#${c.caseNumber} ` : ''}{c.title}
-                            </h3>
-                            <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${status.className}`}>
-                              {status.label}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-text-muted">
-                            <Clock className="w-4 h-4" />
-                            <span>{dateStr}</span>
-                          </div>
-                          <div className="flex gap-2 mt-auto pt-2">
-                            <CaseReportActions caseId={c.id} userEmail={user?.email} />
-                            {c.status === 'open' && (
-                              <button
-                                onClick={() => onOpenCase?.(c.id)}
-                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-electric-indigo text-white hover:bg-[#4F46E5] transition-colors min-h-[44px]"
-                              >
-                                Continue
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                        isLocked
+                          ? "bg-light-300 dark:bg-midnight-700"
+                          : tile.iconBg
+                      }`}
+                    >
+                      <Icon
+                        className={`w-5 h-5 ${isLocked ? "text-text-muted" : tile.iconColor}`}
+                      />
+                    </div>
+                    <span
+                      className={`text-sm sm:text-base font-bold leading-tight ${
+                        isLocked
+                          ? "text-text-muted"
+                          : "text-text-primary dark:text-white"
+                      }`}
+                    >
+                      {tile.label}
+                    </span>
+                    <span className="text-xs text-text-muted mt-1 line-clamp-2">
+                      {isLocked
+                        ? "Requires Home or Pro plan"
+                        : tile.description}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Common Issues */}
+            <div>
+              <h3 className="text-sm font-semibold text-text-secondary dark:text-text-muted mb-2.5">
+                Common Issues
+              </h3>
+              {/* Desktop: show all chips */}
+              <div className="hidden sm:flex flex-wrap gap-2">
+                {commonIssues.map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => onNewChat?.(chip)}
+                    className="px-4 py-2 rounded-full bg-light-200 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:bg-light-300 dark:hover:bg-midnight-700 hover:border-electric-indigo/40 active:scale-[0.97] transition-all min-h-[36px]"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+              {/* Mobile: show first 3 + "Show more" */}
+              <div className="sm:hidden">
+                <div className="flex flex-wrap gap-2">
+                  {(showChips ? commonIssues : commonIssues.slice(0, 3)).map(
+                    (chip) => (
+                      <button
+                        key={chip}
+                        onClick={() => onNewChat?.(chip)}
+                        className="px-4 py-2 rounded-full bg-light-200 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:bg-light-300 dark:hover:bg-midnight-700 active:scale-[0.97] transition-all min-h-[36px]"
+                      >
+                        {chip}
+                      </button>
+                    ),
+                  )}
+                  {!showChips && (
+                    <button
+                      onClick={() => setShowChips(true)}
+                      className="px-4 py-2 rounded-full border border-electric-indigo/30 text-electric-indigo text-sm font-medium hover:bg-electric-indigo/10 transition-all min-h-[36px]"
+                    >
+                      Show more
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Text Input */}
+            <div className="relative w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/50 focus-within:ring-2 focus-within:ring-electric-indigo/20 transition-all">
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Or type your question here..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && handleSendFromEmpty()
+                }
+                className="flex-1 bg-transparent outline-none text-base text-text-primary dark:text-white placeholder:text-text-muted min-h-[44px]"
+              />
+              <button
+                onClick={handleSendFromEmpty}
+                disabled={!chatInput.trim()}
+                className="p-3 rounded-full bg-midnight-900 dark:bg-white text-white dark:text-midnight-900 disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Send message"
+              >
+                <ChevronUp className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Current Case */}
+            {currentOpenCase && (
+              <CurrentCaseCard
+                caseRecord={currentOpenCase}
+                steps={caseProgressSteps}
+                onOpenCase={(id) => onOpenCase?.(id)}
+                isLoading={progressLoading}
+              />
+            )}
+
+            {/* History */}
+            <HistoryList
+              cases={cases}
+              onOpenCase={(id) => onOpenCase?.(id)}
+              onViewAll={onOpenHistory}
+              userEmail={user?.email}
+            />
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Mobile Bottom Dock */}
+      {!isScoutView && (
+        <MobileBottomDock
+          activeTab={activeDockTab}
+          onTabChange={handleDockTabChange}
+        />
+      )}
 
       {/* Upgrade Modal */}
       <UpgradeModal
@@ -973,14 +585,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <AlertTriangle className="w-6 h-6 text-yellow-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-text-primary dark:text-white">Sign Out?</h3>
+                <h3 className="text-lg font-bold text-text-primary dark:text-white">
+                  Sign Out?
+                </h3>
                 <p className="text-sm text-text-secondary">
                   Are you sure you want to sign out?
                 </p>
               </div>
             </div>
             <p className="text-text-secondary mb-6">
-              Your session history and settings will be saved for when you return.
+              Your session history and settings will be saved for when you
+              return.
             </p>
             <div className="flex gap-3">
               <button

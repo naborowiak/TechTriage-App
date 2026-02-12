@@ -433,6 +433,36 @@ If The_Skeptic and a Dev agent disagree:
 #### Risks Accepted:
 - Tailwind v3 chosen over v4 for compatibility with existing class names and config patterns
 
+### Phase 8: Dashboard Overhaul — Desktop + Mobile Redesign (Feb 12, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **src/components/Dashboard.tsx** — Major rewrite: Removed sidebar, emergency bar, welcome modal, card-based recent cases grid, video credit CTA. Replaced with single-panel layout: minimal header with TA logo + avatar dropdown, "Support Available" status badge, compact triage tiles (2x2 mobile / 4-col desktop), common issues chips with mobile "Show more", retained text input, CurrentCaseCard with step progress, compact HistoryList.
+2. **src/components/dashboard/MobileBottomDock.tsx** (NEW) — 4-tab bottom dock: Home, +New Case (center FAB), History, Settings. `lg:hidden`, safe-area padding, 48px touch targets, ARIA tablist.
+3. **src/components/dashboard/CurrentCaseCard.tsx** (NEW) — Shows most recent open case with step-by-step progress (completed/suggested/in-progress) derived from Guided Fix Engine `showStep`/`confirmResult` actions.
+4. **src/components/dashboard/HistoryList.tsx** (NEW) — Compact list of resolved cases with status icon, relative time, inline PDF/Email report actions. Max 5 items with "View all" link.
+5. **src/components/dashboard/SystemStatusBadge.tsx** (NEW) — Online/offline status indicator using navigator.onLine events. Shows "Support Available" or "Reconnecting..." with green/yellow dot.
+6. **src/hooks/useCaseProgress.ts** (NEW) — Fetches messages for active case, extracts guided actions to build progress step array. Handles no-messages, no-actions, and API failure gracefully.
+7. **src/types.ts** — Added `CaseProgressStep` interface and `DashboardTab` type.
+
+#### Key Skeptic Conditions Applied:
+- "Diagnostics" tab removed from dock (jargon for non-technical homeowners) — 4-tab layout: Home, +New, History, Settings
+- Text input retained (removing it was a UX regression — lowest-friction path to help)
+- "System Ready" renamed to "Support Available" (plain language for homeowners)
+- "Unlock more quick actions" renamed to "Show more" (avoids paywall implication)
+- All dock tabs have `aria-label`, `role="tab"`, `aria-selected`, `aria-current="page"`
+- 44px+ touch targets on all interactive elements
+- Status indicators use color + text labels (not color alone) for accessibility
+- `useCaseProgress` handles three edge cases: no messages, no guided actions, API failure
+- (+) New Case dock goes directly to ScoutChatScreen; Home screen tiles allow mode selection (complementary, not redundant)
+
+#### Risks Accepted:
+- Sidebar removal is a one-way door — returning users who relied on always-visible case list must use History tab
+- Bottom dock consumes ~56px vertical space on mobile (acceptable trade-off for always-visible nav)
+- Current Case progress depends on Gemini emitting guided actions (graceful fallback: "Case in progress — tap to continue")
+- Analytics/Diagnostics has no direct navigation path from new dashboard (accessible via header dropdown in App.tsx if needed later)
+
 <!-- DECISIONS END -->
 
 ---

@@ -128,3 +128,12 @@ export interface CaseSummary {
   recommendedFix: string;
   nextSteps: string[];
 }
+
+// Dashboard overhaul types
+export interface CaseProgressStep {
+  label: string;
+  status: 'completed' | 'suggested' | 'in-progress';
+  stepNumber?: number;
+}
+
+export type DashboardTab = 'home' | 'new' | 'history' | 'settings';
