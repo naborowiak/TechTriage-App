@@ -200,9 +200,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         if (onOpenScout) onOpenScout();
       },
       feature: "chat" as const,
-      gradient: "from-[#1a2332] to-[#1e2a3a]",
+      lightBg: "bg-gradient-to-br from-sky-50 to-cyan-50",
+      darkBg: "from-[#0f1a24] via-[#132030] to-[#0d1820]",
       iconColor: "text-[#06B6D4]",
-      iconBg: "bg-[#06B6D4]/15",
+      iconBg: "bg-[#06B6D4]/15 dark:bg-[#06B6D4]/20",
+      glowColor: "rgba(6,182,212,0.15)",
+      accentGradient: "from-[#06B6D4]/20 to-transparent",
     },
     {
       id: "photo" as const,
@@ -215,39 +218,48 @@ export const Dashboard: React.FC<DashboardProps> = ({
         else if (onOpenScout) onOpenScout();
       },
       feature: "photo" as const,
-      gradient: "from-[#1e1a2e] to-[#252038]",
+      lightBg: "bg-gradient-to-br from-indigo-50 to-violet-50",
+      darkBg: "from-[#131024] via-[#1a1530] to-[#0f0d1e]",
       iconColor: "text-electric-indigo",
-      iconBg: "bg-electric-indigo/15",
+      iconBg: "bg-electric-indigo/15 dark:bg-electric-indigo/20",
+      glowColor: "rgba(99,102,241,0.15)",
+      accentGradient: "from-electric-indigo/20 to-transparent",
     },
     {
       id: "voice" as const,
       icon: Mic,
       label: "Talk to Support",
-      description: "Requires Home or Pro plan",
+      description: "Hands-free help, like a phone call",
       lockedForTiers: ["guest", "free"],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("voice");
         else if (onOpenScout) onOpenScout();
       },
       feature: "signal" as const,
-      gradient: "from-[#1e1a30] to-[#281e3a]",
+      lightBg: "bg-gradient-to-br from-violet-50 to-purple-50",
+      darkBg: "from-[#150f28] via-[#1d1535] to-[#110d20]",
       iconColor: "text-[#8B5CF6]",
-      iconBg: "bg-[#8B5CF6]/15",
+      iconBg: "bg-[#8B5CF6]/15 dark:bg-[#8B5CF6]/20",
+      glowColor: "rgba(139,92,246,0.15)",
+      accentGradient: "from-[#8B5CF6]/20 to-transparent",
     },
     {
       id: "video" as const,
       icon: Video,
       label: "Show Me on Camera",
-      description: "Requires Home or Pro plan",
+      description: "Point your camera at the issue",
       lockedForTiers: ["guest", "free"],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("video");
         else if (onOpenScout) onOpenScout();
       },
       feature: "videoDiagnostic" as const,
-      gradient: "from-[#201a2e] to-[#2a1e38]",
+      lightBg: "bg-gradient-to-br from-fuchsia-50 to-pink-50",
+      darkBg: "from-[#1a0f28] via-[#221535] to-[#150d22]",
       iconColor: "text-scout-purple",
-      iconBg: "bg-scout-purple/15",
+      iconBg: "bg-scout-purple/15 dark:bg-scout-purple/20",
+      glowColor: "rgba(168,85,247,0.15)",
+      accentGradient: "from-scout-purple/20 to-transparent",
     },
   ];
 
@@ -263,10 +275,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="h-screen-safe overflow-hidden bg-light-50 dark:bg-midnight-950 transition-colors flex flex-col">
       {/* Header */}
-      <header className="bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
+      <header className="bg-white/80 dark:bg-midnight-900/80 backdrop-blur-xl border-b border-light-300/60 dark:border-white/[0.06] px-4 py-3 flex items-center justify-between shrink-0 z-30">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-electric-indigo to-scout-purple rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">TA</span>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-electric-indigo to-scout-purple rounded-lg flex items-center justify-center shadow-md shadow-electric-indigo/20">
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/20 to-transparent" />
+            <span className="relative text-white font-bold text-xs">TA</span>
           </div>
           <span className="text-sm font-bold text-text-primary dark:text-white tracking-tight">
             TotalAssist
@@ -400,8 +413,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {children}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto dashboard-mesh-bg pb-20 lg:pb-8">
-          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
+        <div className="flex-1 overflow-y-auto dashboard-mesh-bg pb-20 lg:pb-8 relative">
+          {/* Ambient decorative orbs */}
+          <div className="gradient-orb w-64 h-64 -top-20 -left-20" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.3), transparent 70%)" }} />
+          <div className="gradient-orb w-48 h-48 top-40 -right-16" style={{ background: "radial-gradient(circle, rgba(6,182,212,0.2), transparent 70%)" }} />
+          <div className="gradient-orb w-56 h-56 bottom-20 left-1/3" style={{ background: "radial-gradient(circle, rgba(168,85,247,0.15), transparent 70%)" }} />
+
+          <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
             {/* System Status */}
             <SystemStatusBadge />
 
@@ -423,28 +441,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }
                     }}
                     className={`
-                      relative overflow-hidden flex flex-col items-start text-left
+                      tile-card flex flex-col items-start text-left
                       rounded-2xl p-4 sm:p-5 min-h-[120px] sm:min-h-[140px]
                       transition-all duration-200
                       ${
                         isLocked
                           ? "bg-light-200/80 dark:bg-midnight-800/50 opacity-60 cursor-not-allowed"
-                          : `bg-light-100 dark:bg-gradient-to-br dark:${tile.gradient} hover:scale-[1.02] active:scale-[0.98]`
+                          : `${tile.lightBg} dark:bg-gradient-to-br dark:${tile.darkBg} hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg`
                       }
-                      border border-light-300/50 dark:border-white/[0.06]
+                      border border-light-300/40 dark:border-white/[0.06]
                     `}
+                    style={!isLocked ? { "--tile-glow": tile.glowColor } as React.CSSProperties : undefined}
                     aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
                   >
+                    {/* Decorative gradient wave at top */}
+                    {!isLocked && (
+                      <div className={`absolute top-0 left-0 right-0 h-16 bg-gradient-to-b ${tile.accentGradient} rounded-t-2xl pointer-events-none`} />
+                    )}
                     {isLocked && (
                       <div
-                        className="absolute top-3 right-3 w-6 h-6 rounded-full bg-midnight-900/60 dark:bg-midnight-700 flex items-center justify-center"
+                        className="absolute top-3 right-3 w-6 h-6 rounded-full bg-midnight-900/60 dark:bg-midnight-700/80 flex items-center justify-center backdrop-blur-sm"
                         aria-hidden="true"
                       >
                         <Lock className="w-3 h-3 text-white/60" />
                       </div>
                     )}
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                      className={`icon-glow w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
                         isLocked
                           ? "bg-light-300 dark:bg-midnight-700"
                           : tile.iconBg
@@ -484,7 +507,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     key={chip}
                     onClick={() => onNewChat?.(chip)}
-                    className="px-4 py-2 rounded-full bg-light-200 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:bg-light-300 dark:hover:bg-midnight-700 hover:border-electric-indigo/40 active:scale-[0.97] transition-all min-h-[36px]"
+                    className="px-4 py-2 rounded-full bg-white/70 dark:bg-midnight-800/70 border border-light-300/60 dark:border-white/[0.06] text-text-primary dark:text-white text-sm font-medium hover:bg-white dark:hover:bg-midnight-700 hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[36px] backdrop-blur-sm"
                   >
                     {chip}
                   </button>
@@ -498,7 +521,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <button
                         key={chip}
                         onClick={() => onNewChat?.(chip)}
-                        className="px-4 py-2 rounded-full bg-light-200 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:bg-light-300 dark:hover:bg-midnight-700 active:scale-[0.97] transition-all min-h-[36px]"
+                        className="px-4 py-2 rounded-full bg-white/70 dark:bg-midnight-800/70 border border-light-300/60 dark:border-white/[0.06] text-text-primary dark:text-white text-sm font-medium hover:bg-white dark:hover:bg-midnight-700 active:scale-[0.97] transition-all min-h-[36px] backdrop-blur-sm"
                       >
                         {chip}
                       </button>
@@ -507,7 +530,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {!showChips && (
                     <button
                       onClick={() => setShowChips(true)}
-                      className="px-4 py-2 rounded-full border border-electric-indigo/30 text-electric-indigo text-sm font-medium hover:bg-electric-indigo/10 transition-all min-h-[36px]"
+                      className="px-4 py-2 rounded-full border border-electric-indigo/25 text-electric-indigo text-sm font-medium hover:bg-electric-indigo/10 hover:border-electric-indigo/40 transition-all min-h-[36px]"
                     >
                       Show more
                     </button>
@@ -517,7 +540,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Text Input */}
-            <div className="relative w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/50 focus-within:ring-2 focus-within:ring-electric-indigo/20 transition-all">
+            <div className="relative w-full glass-card rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/40 focus-within:ring-2 focus-within:ring-electric-indigo/15 transition-all">
               <input
                 ref={inputRef}
                 type="text"
@@ -532,7 +555,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={handleSendFromEmpty}
                 disabled={!chatInput.trim()}
-                className="p-3 rounded-full bg-midnight-900 dark:bg-white text-white dark:text-midnight-900 disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-3 rounded-full bg-gradient-to-br from-electric-indigo to-scout-purple text-white disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-electric-indigo/25 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Send message"
               >
                 <ChevronUp className="w-5 h-5" />

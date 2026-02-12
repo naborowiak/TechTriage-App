@@ -15,16 +15,25 @@ export const SystemStatusBadge: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex items-center gap-2" role="status" aria-live="polite">
-      <span
-        className={`w-2 h-2 rounded-full shrink-0 ${
-          isOnline
-            ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"
-            : "bg-yellow-500 animate-pulse"
-        }`}
-        aria-hidden="true"
-      />
-      <span className="text-sm text-text-muted font-medium">
+    <div
+      className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-midnight-800/50 border border-light-300/60 dark:border-white/[0.06] backdrop-blur-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <span className="relative flex items-center justify-center w-2.5 h-2.5">
+        {isOnline && (
+          <span className="absolute inset-0 rounded-full bg-emerald-400/40 status-dot-pulse" />
+        )}
+        <span
+          className={`relative w-2 h-2 rounded-full shrink-0 ${
+            isOnline
+              ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+              : "bg-yellow-500 animate-pulse"
+          }`}
+          aria-hidden="true"
+        />
+      </span>
+      <span className="text-sm text-text-muted font-medium tracking-tight">
         {isOnline ? "Support Available" : "Reconnecting..."}
       </span>
     </div>

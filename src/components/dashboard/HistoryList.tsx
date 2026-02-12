@@ -44,10 +44,29 @@ function relativeTime(dateStr: string): string {
   });
 }
 
-const statusConfig: Record<string, { icon: React.ReactNode; color: string }> = {
-  open: { icon: <Clock className="w-3.5 h-3.5" />, color: "text-blue-400" },
-  resolved: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: "text-emerald-500" },
-  escalated: { icon: <AlertTriangle className="w-3.5 h-3.5" />, color: "text-orange-400" },
+const statusConfig: Record<
+  string,
+  {
+    icon: React.ReactNode;
+    dotColor: string;
+    bgColor: string;
+  }
+> = {
+  open: {
+    icon: <Clock className="w-3 h-3" />,
+    dotColor: "text-blue-400",
+    bgColor: "bg-blue-400/15",
+  },
+  resolved: {
+    icon: <CheckCircle className="w-3 h-3" />,
+    dotColor: "text-emerald-500",
+    bgColor: "bg-emerald-500/15",
+  },
+  escalated: {
+    icon: <AlertTriangle className="w-3 h-3" />,
+    dotColor: "text-orange-400",
+    bgColor: "bg-orange-400/15",
+  },
 };
 
 function InlineReportActions({ caseId }: { caseId: string }) {
@@ -59,9 +78,10 @@ function InlineReportActions({ caseId }: { caseId: string }) {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const res = await fetch(`/api/cases/${caseId}/report?tz=${encodeURIComponent(tz)}`, {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/cases/${caseId}/report?tz=${encodeURIComponent(tz)}`,
+        { credentials: "include" },
+      );
       if (!res.ok) throw new Error("Failed");
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -98,19 +118,29 @@ function InlineReportActions({ caseId }: { caseId: string }) {
   };
 
   return (
-    <div className="flex items-center gap-1.5 ml-auto shrink-0">
+    <div className="flex items-center gap-1 ml-auto shrink-0">
       <button
-        onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDownload();
+        }}
         disabled={downloading}
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-200 dark:hover:bg-midnight-700 transition-colors disabled:opacity-50"
+        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-200/80 dark:hover:bg-midnight-600/50 transition-all disabled:opacity-50"
         aria-label="Download PDF report"
       >
-        {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+        {downloading ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <Download className="w-3.5 h-3.5" />
+        )}
       </button>
       <button
-        onClick={(e) => { e.stopPropagation(); handleEmail(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEmail();
+        }}
         disabled={emailing || emailSent}
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-200 dark:hover:bg-midnight-700 transition-colors disabled:opacity-50"
+        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-200/80 dark:hover:bg-midnight-600/50 transition-all disabled:opacity-50"
         aria-label={emailSent ? "Email sent" : "Email PDF report"}
       >
         {emailSent ? (
@@ -139,26 +169,33 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-text-primary dark:text-white">History</h2>
+        <h2 className="text-lg font-bold text-text-primary dark:text-white">
+          History
+        </h2>
         {resolvedCases.length > 5 && (
           <button
             onClick={onViewAll}
-            className="text-sm font-semibold text-electric-indigo hover:text-electric-indigo/80 transition-colors min-h-[44px] flex items-center"
+            className="text-sm font-semibold text-electric-indigo hover:text-electric-indigo/80 transition-colors min-h-[44px] flex items-center gap-1 group"
           >
             View all
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </button>
         )}
       </div>
-      <div className="bg-white/60 dark:bg-midnight-800/60 backdrop-blur-sm rounded-2xl border border-light-300 dark:border-midnight-700 divide-y divide-light-200 dark:divide-midnight-700 overflow-hidden">
+      <div className="glass-card rounded-2xl divide-y divide-light-200/80 dark:divide-white/[0.04] overflow-hidden">
         {displayCases.map((c) => {
           const status = statusConfig[c.status] || statusConfig.open;
           return (
             <button
               key={c.id}
               onClick={() => onOpenCase(c.id)}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-light-100/50 dark:hover:bg-midnight-700/50 transition-colors text-left min-h-[48px] group"
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-light-100/60 dark:hover:bg-white/[0.03] transition-all text-left min-h-[52px] group"
             >
-              <span className={`shrink-0 ${status.color}`} aria-hidden="true">
+              {/* Status icon with colored background */}
+              <span
+                className={`shrink-0 w-7 h-7 rounded-lg ${status.bgColor} ${status.dotColor} flex items-center justify-center`}
+                aria-hidden="true"
+              >
                 {status.icon}
               </span>
               <div className="flex-1 min-w-0">
@@ -166,13 +203,13 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                   {c.title}
                 </span>
               </div>
-              <span className="text-xs text-text-muted shrink-0">
+              <span className="text-xs text-text-muted shrink-0 tabular-nums">
                 {relativeTime(c.updatedAt || c.createdAt)}
               </span>
               {c.status === "resolved" && userEmail && (
                 <InlineReportActions caseId={c.id} />
               )}
-              <ArrowRight className="w-4 h-4 text-text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ArrowRight className="w-4 h-4 text-text-muted/40 shrink-0 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" />
             </button>
           );
         })}
