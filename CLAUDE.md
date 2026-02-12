@@ -463,6 +463,25 @@ If The_Skeptic and a Dev agent disagree:
 - Current Case progress depends on Gemini emitting guided actions (graceful fallback: "Case in progress — tap to continue")
 - Analytics/Diagnostics has no direct navigation path from new dashboard (accessible via header dropdown in App.tsx if needed later)
 
+### Premium Triage Card Redesign (Feb 12, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **src/components/Dashboard.tsx** — Replaced diagonal gradient card styling with layered "Apple-ish" design: mesh gradient backgrounds (color-tinted per card identity), dark overlay for text readability, soft vignette, frosted-glass icon containers. Locked tiles now show at full opacity with pill-shaped lock badge ("Home+"), "Upgrade to unlock" CTA with ArrowRight, and cursor-pointer (since they open upgrade modal). "Type a Question" tile gets subtle primary accent via CSS class. Added `ArrowRight` import from lucide-react.
+2. **src/index.css** — Increased dark noise opacity from 0.06 to 0.08. Added `.tile-card-locked` (saturate(0.85) with hover-to-0.95). Added `.tile-card-primary` with 3s breathing border glow animation (light/dark variants). Animation respects `prefers-reduced-motion` via existing global rule.
+
+#### Key Skeptic Conditions Applied:
+- Locked tiles visually distinct via desaturation filter + lock badge pill + "Upgrade to unlock" CTA text (not color alone)
+- `prefers-reduced-motion` neutralizes breathing glow via existing global `animation-duration: 0.01ms` rule (documented in CSS comment)
+- Light mode gradient opacities set to .12/.08 (not .08/.05) per Skeptic recommendation for tile differentiation
+- Light mode shadow reduced to `rgba(0,0,0,.08)` vs dark mode `rgba(0,0,0,.35)` — scoped via `dark:` prefix
+- All overlay divs have `aria-hidden="true"`, buttons remain semantic, aria-labels preserved
+
+#### Risks Accepted:
+- Multiple compositing layers may cause minor jank on very low-end devices
+- Inline `style={}` for mesh gradients bypasses Tailwind utility system (required for dynamic radial-gradient combos)
+
 <!-- DECISIONS END -->
 
 ---

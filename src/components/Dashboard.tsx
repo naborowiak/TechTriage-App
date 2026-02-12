@@ -15,6 +15,7 @@ import {
   HelpCircle,
   MessageSquare,
   Lock,
+  ArrowRight,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useUsage } from "../stores/usageStore";
@@ -188,7 +189,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  // Triage tiles config
+  // Triage tiles config — layered "premium card" design
   const triageTiles = [
     {
       id: "text" as const,
@@ -200,12 +201,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         if (onOpenScout) onOpenScout();
       },
       feature: "chat" as const,
-      lightBg: "bg-gradient-to-br from-sky-50 to-cyan-50",
-      darkBg: "from-[#0f1a24] via-[#132030] to-[#0d1820]",
       iconColor: "text-[#06B6D4]",
-      iconBg: "bg-[#06B6D4]/15 dark:bg-[#06B6D4]/20",
-      glowColor: "rgba(6,182,212,0.15)",
-      accentGradient: "from-[#06B6D4]/20 to-transparent",
+      primary: true,
+      meshGradient:
+        "radial-gradient(80% 60% at 10% 0%, rgba(6,182,212,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(6,182,212,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
+      meshGradientLight:
+        "radial-gradient(80% 60% at 10% 0%, rgba(6,182,212,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(6,182,212,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
     {
       id: "photo" as const,
@@ -218,12 +219,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         else if (onOpenScout) onOpenScout();
       },
       feature: "photo" as const,
-      lightBg: "bg-gradient-to-br from-indigo-50 to-violet-50",
-      darkBg: "from-[#131024] via-[#1a1530] to-[#0f0d1e]",
       iconColor: "text-electric-indigo",
-      iconBg: "bg-electric-indigo/15 dark:bg-electric-indigo/20",
-      glowColor: "rgba(99,102,241,0.15)",
-      accentGradient: "from-electric-indigo/20 to-transparent",
+      primary: false,
+      meshGradient:
+        "radial-gradient(80% 60% at 10% 0%, rgba(99,102,241,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(99,102,241,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
+      meshGradientLight:
+        "radial-gradient(80% 60% at 10% 0%, rgba(99,102,241,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(99,102,241,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
     {
       id: "voice" as const,
@@ -236,12 +237,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         else if (onOpenScout) onOpenScout();
       },
       feature: "signal" as const,
-      lightBg: "bg-gradient-to-br from-violet-50 to-purple-50",
-      darkBg: "from-[#150f28] via-[#1d1535] to-[#110d20]",
       iconColor: "text-[#8B5CF6]",
-      iconBg: "bg-[#8B5CF6]/15 dark:bg-[#8B5CF6]/20",
-      glowColor: "rgba(139,92,246,0.15)",
-      accentGradient: "from-[#8B5CF6]/20 to-transparent",
+      primary: false,
+      meshGradient:
+        "radial-gradient(80% 60% at 10% 0%, rgba(139,92,246,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(139,92,246,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
+      meshGradientLight:
+        "radial-gradient(80% 60% at 10% 0%, rgba(139,92,246,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(139,92,246,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
     {
       id: "video" as const,
@@ -254,12 +255,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
         else if (onOpenScout) onOpenScout();
       },
       feature: "videoDiagnostic" as const,
-      lightBg: "bg-gradient-to-br from-fuchsia-50 to-pink-50",
-      darkBg: "from-[#1a0f28] via-[#221535] to-[#150d22]",
       iconColor: "text-scout-purple",
-      iconBg: "bg-scout-purple/15 dark:bg-scout-purple/20",
-      glowColor: "rgba(168,85,247,0.15)",
-      accentGradient: "from-scout-purple/20 to-transparent",
+      primary: false,
+      meshGradient:
+        "radial-gradient(80% 60% at 10% 0%, rgba(168,85,247,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(236,72,153,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
+      meshGradientLight:
+        "radial-gradient(80% 60% at 10% 0%, rgba(168,85,247,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(236,72,153,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
   ];
 
@@ -428,6 +429,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {triageTiles.map((tile) => {
                 const Icon = tile.icon;
                 const isLocked = tile.lockedForTiers.includes(tier);
+                const isDark = theme === "dark";
 
                 return (
                   <button
@@ -440,57 +442,79 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         tile.action();
                       }
                     }}
-                    className={`
-                      tile-card flex flex-col items-start text-left
-                      rounded-2xl p-4 sm:p-5 min-h-[120px] sm:min-h-[140px]
-                      transition-all duration-200
-                      ${
-                        isLocked
-                          ? "bg-light-200/80 dark:bg-midnight-800/50 opacity-60 cursor-not-allowed"
-                          : `${tile.lightBg} dark:bg-gradient-to-br dark:${tile.darkBg} hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg`
-                      }
-                      border border-light-300/40 dark:border-white/[0.06]
-                    `}
-                    style={!isLocked ? { "--tile-glow": tile.glowColor } as React.CSSProperties : undefined}
+                    className={[
+                      "tile-card flex flex-col items-start text-left",
+                      "rounded-2xl p-4 sm:p-5 min-h-[120px] sm:min-h-[140px]",
+                      "transition-all duration-200",
+                      "bg-white/80 dark:bg-[#1F2430]",
+                      "border border-black/[0.06] dark:border-white/10",
+                      "shadow-[0_8px_24px_rgba(0,0,0,.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,.35)]",
+                      isLocked
+                        ? "tile-card-locked cursor-pointer"
+                        : "hover:-translate-y-[2px] hover:shadow-[0_12px_32px_rgba(0,0,0,.12)] dark:hover:shadow-[0_14px_40px_rgba(0,0,0,.45)] active:scale-[0.98]",
+                      tile.primary && !isLocked ? "tile-card-primary" : "",
+                    ].join(" ")}
                     aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
                   >
-                    {/* Decorative gradient wave at top */}
-                    {!isLocked && (
-                      <div className={`absolute top-0 left-0 right-0 h-16 bg-gradient-to-b ${tile.accentGradient} rounded-t-2xl pointer-events-none`} />
-                    )}
+                    {/* Layer 1: Mesh gradient background */}
+                    <div
+                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{ backgroundImage: isDark ? tile.meshGradient : tile.meshGradientLight }}
+                      aria-hidden="true"
+                    />
+
+                    {/* Layer 2: Dark overlay for text readability */}
+                    <div
+                      className="absolute inset-0 rounded-2xl pointer-events-none bg-gradient-to-b from-white/5 via-white/10 to-white/40 dark:from-black/20 dark:via-black/30 dark:to-black/60"
+                      aria-hidden="true"
+                    />
+
+                    {/* Layer 3: Soft vignette */}
+                    <div
+                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      style={{ background: "radial-gradient(80% 60% at 20% 10%, rgba(255,255,255,.10), transparent 60%)" }}
+                      aria-hidden="true"
+                    />
+                    <div
+                      className="absolute inset-0 rounded-2xl pointer-events-none [box-shadow:inset_0_1px_0_rgba(255,255,255,.08)]"
+                      aria-hidden="true"
+                    />
+
+                    {/* Lock badge pill (locked tiles) */}
                     {isLocked && (
                       <div
-                        className="absolute top-3 right-3 w-6 h-6 rounded-full bg-midnight-900/60 dark:bg-midnight-700/80 flex items-center justify-center backdrop-blur-sm"
+                        className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/60 dark:bg-black/40 backdrop-blur-sm px-2.5 py-1 ring-1 ring-black/[0.06] dark:ring-white/10"
                         aria-hidden="true"
                       >
-                        <Lock className="w-3 h-3 text-white/60" />
+                        <Lock className="w-3 h-3 text-text-secondary dark:text-white/80" />
+                        <span className="text-[10px] font-semibold text-text-secondary dark:text-white/80">
+                          Home+
+                        </span>
                       </div>
                     )}
-                    <div
-                      className={`icon-glow w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
-                        isLocked
-                          ? "bg-light-300 dark:bg-midnight-700"
-                          : tile.iconBg
-                      }`}
-                    >
-                      <Icon
-                        className={`w-5 h-5 ${isLocked ? "text-text-muted" : tile.iconColor}`}
-                      />
+
+                    {/* Content */}
+                    <div className="relative z-10 flex items-start gap-3 w-full">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-black/5 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10">
+                        <Icon className={`w-5 h-5 ${tile.iconColor}`} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm sm:text-base font-bold leading-tight text-text-primary dark:text-white truncate">
+                          {tile.label}
+                        </h3>
+                        <p className="text-xs text-text-secondary dark:text-white/60 mt-1 line-clamp-2">
+                          {isLocked ? "Requires Home or Pro plan" : tile.description}
+                        </p>
+                      </div>
                     </div>
-                    <span
-                      className={`text-sm sm:text-base font-bold leading-tight ${
-                        isLocked
-                          ? "text-text-muted"
-                          : "text-text-primary dark:text-white"
-                      }`}
-                    >
-                      {tile.label}
-                    </span>
-                    <span className="text-xs text-text-muted mt-1 line-clamp-2">
-                      {isLocked
-                        ? "Requires Home or Pro plan"
-                        : tile.description}
-                    </span>
+
+                    {/* Upgrade CTA (locked tiles) */}
+                    {isLocked && (
+                      <div className="relative z-10 mt-auto pt-3 flex items-center gap-1 text-xs font-semibold text-electric-indigo dark:text-white/70">
+                        Upgrade to unlock
+                        <ArrowRight className="w-3 h-3" />
+                      </div>
+                    )}
                   </button>
                 );
               })}

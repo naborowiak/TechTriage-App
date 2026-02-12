@@ -231,7 +231,32 @@ body {
 }
 
 .dark .tile-card::before {
-  opacity: 0.06;
+  opacity: 0.08;
+}
+
+/* Locked tiles: subtle desaturation instead of gray-out */
+.tile-card-locked {
+  filter: saturate(0.85);
+}
+.tile-card-locked:hover {
+  filter: saturate(0.95);
+}
+
+/* Primary tile: subtle breathing border glow (cyan accent).
+   Neutralized automatically by the prefers-reduced-motion rule (line ~437). */
+@keyframes tile-primary-glow {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(6,182,212,0.2); }
+  50% { box-shadow: 0 8px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(6,182,212,0.4); }
+}
+@keyframes tile-primary-glow-dark {
+  0%, 100% { box-shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 0 1px rgba(6,182,212,0.2); }
+  50% { box-shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 0 1px rgba(6,182,212,0.4); }
+}
+.tile-card-primary {
+  animation: tile-primary-glow 3s ease-in-out infinite;
+}
+.dark .tile-card-primary {
+  animation: tile-primary-glow-dark 3s ease-in-out infinite;
 }
 
 .tile-card::after {
