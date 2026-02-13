@@ -21,9 +21,9 @@ const BotAvatar = ({ className }: { className?: string }) => {
   if (error) return <LifeBuoy className={className} />;
   return (
     <img
-      src="/scout_logo.png"
+      src="/total_assist-new.png"
       className={`${className} object-contain`}
-      alt="Scout"
+      alt="TotalAssist"
       onError={() => setError(true)}
     />
   );

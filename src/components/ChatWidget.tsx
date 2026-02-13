@@ -126,7 +126,7 @@ const getRandomAgent = () => {
 const BotAvatar = ({ className }: { className: string }) => {
   const [error, setError] = useState(false);
   if (error) return <LifeBuoy className={className} />;
-  return <img src="/scout_logo.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
+  return <img src="/total_assist-new.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
 };
 
 const AgentAvatar = ({ className, name }: { className: string; name: string }) => {

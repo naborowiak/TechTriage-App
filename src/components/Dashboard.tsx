@@ -279,10 +279,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Header */}
       <header className="bg-white/80 dark:bg-midnight-900/80 backdrop-blur-xl border-b border-light-300/60 dark:border-white/[0.06] px-4 py-3 flex items-center justify-between shrink-0 z-30">
         <div className="flex items-center gap-2.5">
-          <div className="relative w-8 h-8 bg-gradient-to-br from-electric-indigo to-scout-purple rounded-lg flex items-center justify-center shadow-md shadow-electric-indigo/20">
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/20 to-transparent" />
-            <span className="relative text-white font-bold text-xs">TA</span>
-          </div>
+          <img src="/total_assist-new.png" alt="TotalAssist" className="w-8 h-8 object-contain" />
           <span className="text-sm font-bold text-text-primary dark:text-white tracking-tight">
             TotalAssist
           </span>

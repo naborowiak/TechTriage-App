@@ -1148,7 +1148,7 @@ const WhyTotalAssist: React.FC = () => {
               </div>
               <div className="p-4 lg:p-6 flex items-center justify-center gap-2 lg:gap-3 border-x border-light-300 dark:border-midnight-700 bg-gradient-to-b from-electric-indigo/10 to-transparent">
                 <img
-                  src="/scout_logo.png"
+                  src="/total_assist-new.png"
                   alt="TotalAssist"
                   className="w-6 h-6 lg:w-8 lg:h-8 object-contain"
                 />

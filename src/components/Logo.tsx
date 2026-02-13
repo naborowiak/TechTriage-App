@@ -98,7 +98,7 @@ export const Logo: React.FC<LogoProps> = ({
       <div className="shrink-0">
         {!imgError ? (
           <img
-            src="/total_assist_logo-new.png"
+            src="/total_assist-new.png"
             alt="TotalAssist Logo"
             className="w-9 h-9 object-contain"
             onError={() => setImgError(true)}
