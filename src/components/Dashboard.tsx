@@ -195,7 +195,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "text" as const,
       icon: MessageSquare,
       label: "Type a Question",
-      description: "Chat with our support agent",
+      description: "Get text-based support",
       lockedForTiers: [] as string[],
       action: () => {
         if (onOpenScout) onOpenScout();
@@ -212,7 +212,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "photo" as const,
       icon: Camera,
       label: "Show the Problem",
-      description: "Take or upload a photo for analysis",
+      description: "Take or upload a photo",
       lockedForTiers: [] as string[],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("photo");
@@ -220,6 +220,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "photo" as const,
       iconColor: "text-electric-indigo",
+      backgroundImage: "/tech-life-home.png",
       primary: false,
       meshGradient:
         "radial-gradient(80% 60% at 10% 0%, rgba(99,102,241,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(99,102,241,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
@@ -230,7 +231,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "voice" as const,
       icon: Mic,
       label: "Talk to Support",
-      description: "Hands-free help, like a phone call",
+      description: "Call a TotalAssist expert",
       lockedForTiers: ["guest", "free"],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("voice");
@@ -248,7 +249,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "video" as const,
       icon: Video,
       label: "Show Me on Camera",
-      description: "Point your camera at the issue",
+      description: "Contact us with video chat",
       lockedForTiers: ["guest", "free"],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("video");
@@ -424,12 +425,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {/* System Status */}
             <SystemStatusBadge />
 
+            {/* Heading */}
+            <h1 className="text-xl sm:text-2xl md:text-4xl font-bold tracking-tight text-text-primary dark:text-white">
+              How can we assist you today?
+            </h1>
+
             {/* Triage Tiles */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {triageTiles.map((tile) => {
                 const Icon = tile.icon;
                 const isLocked = tile.lockedForTiers.includes(tier);
                 const isDark = theme === "dark";
+                const hasPhoto = !!(tile as any).backgroundImage;
 
                 return (
                   <button
@@ -443,10 +450,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }
                     }}
                     className={[
-                      "tile-card flex flex-col items-start text-left",
-                      "rounded-2xl p-4 sm:p-5 min-h-[120px] sm:min-h-[140px]",
+                      "tile-card flex flex-col justify-end text-left",
+                      "rounded-2xl md:rounded-3xl p-4 md:p-6",
+                      "min-h-[72px] md:min-h-0 md:aspect-[16/10] md:max-h-[260px]",
                       "transition-all duration-200",
-                      "bg-white/80 dark:bg-[#1F2430]",
+                      hasPhoto
+                        ? "bg-[#1a1f2e]"
+                        : "bg-white/80 dark:bg-[#1F2430]",
                       "border border-black/[0.06] dark:border-white/10",
                       "shadow-[0_8px_24px_rgba(0,0,0,.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,.35)]",
                       isLocked
@@ -456,27 +466,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     ].join(" ")}
                     aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
                   >
+                    {/* Photo background — desktop only */}
+                    {hasPhoto && (
+                      <>
+                        <div
+                          className="hidden md:block absolute inset-0 rounded-3xl overflow-hidden pointer-events-none"
+                          aria-hidden="true"
+                        >
+                          <div
+                            className="absolute inset-0 bg-cover bg-top"
+                            style={{ backgroundImage: `url(${(tile as any).backgroundImage})` }}
+                          />
+                        </div>
+                        <div
+                          className="hidden md:block absolute inset-0 rounded-3xl bg-gradient-to-b from-black/10 via-black/40 to-black/75 pointer-events-none"
+                          aria-hidden="true"
+                        />
+                      </>
+                    )}
+
                     {/* Layer 1: Mesh gradient background */}
                     <div
-                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      className={`absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none ${hasPhoto ? "md:hidden" : ""}`}
                       style={{ backgroundImage: isDark ? tile.meshGradient : tile.meshGradientLight }}
                       aria-hidden="true"
                     />
 
                     {/* Layer 2: Dark overlay for text readability */}
                     <div
-                      className="absolute inset-0 rounded-2xl pointer-events-none bg-gradient-to-b from-white/5 via-white/10 to-white/40 dark:from-black/20 dark:via-black/30 dark:to-black/60"
+                      className={`absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none bg-gradient-to-b from-white/5 via-white/10 to-white/40 dark:from-black/20 dark:via-black/30 dark:to-black/60 ${hasPhoto ? "md:hidden" : ""}`}
                       aria-hidden="true"
                     />
 
                     {/* Layer 3: Soft vignette */}
                     <div
-                      className="absolute inset-0 rounded-2xl pointer-events-none"
+                      className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none"
                       style={{ background: "radial-gradient(80% 60% at 20% 10%, rgba(255,255,255,.10), transparent 60%)" }}
                       aria-hidden="true"
                     />
                     <div
-                      className="absolute inset-0 rounded-2xl pointer-events-none [box-shadow:inset_0_1px_0_rgba(255,255,255,.08)]"
+                      className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none [box-shadow:inset_0_1px_0_rgba(255,255,255,.08)]"
                       aria-hidden="true"
                     />
 
@@ -494,15 +523,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     )}
 
                     {/* Content */}
-                    <div className="relative z-10 flex items-start gap-3 w-full">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-black/5 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10">
-                        <Icon className={`w-5 h-5 ${tile.iconColor}`} />
+                    <div className="relative z-10 flex items-center gap-3 w-full">
+                      <div
+                        className={[
+                          "w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0",
+                          hasPhoto
+                            ? "bg-black/5 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10 md:bg-white/10 md:ring-white/15 md:backdrop-blur-md"
+                            : "bg-black/5 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10",
+                        ].join(" ")}
+                      >
+                        <Icon className={`w-5 h-5 md:w-6 md:h-6 ${tile.iconColor}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm sm:text-base font-bold leading-tight text-text-primary dark:text-white truncate">
+                        <h3
+                          className={`text-sm md:text-lg font-bold leading-tight truncate ${
+                            hasPhoto
+                              ? "text-text-primary dark:text-white md:text-white"
+                              : "text-text-primary dark:text-white"
+                          }`}
+                        >
                           {tile.label}
                         </h3>
-                        <p className="text-xs text-text-secondary dark:text-white/60 mt-1 line-clamp-2">
+                        <p
+                          className={`text-xs md:text-sm mt-0.5 md:mt-1 line-clamp-2 ${
+                            hasPhoto
+                              ? "text-text-secondary dark:text-white/60 md:text-white/60"
+                              : "text-text-secondary dark:text-white/60"
+                          }`}
+                        >
                           {isLocked ? "Requires Home or Pro plan" : tile.description}
                         </p>
                       </div>
@@ -510,7 +558,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     {/* Upgrade CTA (locked tiles) */}
                     {isLocked && (
-                      <div className="relative z-10 mt-auto pt-3 flex items-center gap-1 text-xs font-semibold text-electric-indigo dark:text-white/70">
+                      <div className="relative z-10 mt-2 flex items-center gap-1 text-xs font-semibold text-electric-indigo dark:text-white/70">
                         Upgrade to unlock
                         <ArrowRight className="w-3 h-3" />
                       </div>

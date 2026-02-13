@@ -482,6 +482,27 @@ If The_Skeptic and a Dev agent disagree:
 - Multiple compositing layers may cause minor jank on very low-end devices
 - Inline `style={}` for mesh gradients bypasses Tailwind utility system (required for dynamic radial-gradient combos)
 
+### Dashboard Visual Overhaul — Mockup Match (Feb 13, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **src/components/Dashboard.tsx** — Card grid changed from `grid-cols-2 lg:grid-cols-4` to `grid-cols-1 md:grid-cols-2`. Desktop cards use `aspect-[16/10]` with `max-h-[260px]`, `justify-end` for content-at-bottom layout, `rounded-3xl`. Mobile cards are compact 72px horizontal bars. "Show the Problem" card gets `tech-life-home.png` as desktop-only background with gradient overlay. Heading "How can we assist you today?" added. Card descriptions updated to match mockup. Icon containers scale to 48px on desktop.
+2. **No CSS changes required** — existing `.tile-card` classes with `border-radius: inherit` and `overflow: hidden` handle new rounded corners.
+
+#### Key Skeptic Conditions Applied:
+- `md:max-h-[260px]` prevents excessive card height on ultra-wide viewports
+- Photo gradient overlay `from-black/10 via-black/40 to-black/75` ensures WCAG AA text contrast
+- Mobile cards maintain 72px min-height (exceeds 44px touch target requirement)
+- Desktop content uses `md:p-6` (24px) keeping text clear of rounded corners
+- Heading uses `text-xl sm:text-2xl md:text-4xl` progressive sizing to prevent mobile overflow
+
+#### Risks Accepted:
+- Taller desktop cards push Common Issues / History further below the fold
+- Single-column mobile layout increases scroll depth vs previous 2×2 grid
+- `tech-life-home.png` has TechTriage branding visible through overlay (mitigated by `bg-top` positioning)
+- `(tile as any)` type cast for backgroundImage property (TypeScript union inference workaround)
+
 <!-- DECISIONS END -->
 
 ---
