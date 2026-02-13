@@ -448,7 +448,8 @@ const Header: React.FC<{
 const HERO_SLIDES = [
   { id: 1, top: "/slide-1.png", alt: "Homeowner chatting with TotalAssist about a Wi-Fi issue" },
   { id: 2, top: "/slide-2.png", alt: "Homeowner photographing a router for instant AI diagnosis" },
-  { id: 3, top: "/slide-3.png", alt: "Homeowner with completed step-by-step fix from TotalAssist" },
+  { id: 3, top: "/slide-3.png", alt: "Homeowner on a voice call with TotalAssist for hands-free support" },
+  { id: 4, top: "/slide-4.png", alt: "Homeowner showing a device issue on video for live diagnosis" },
 ];
 
 const Hero: React.FC<{
@@ -484,7 +485,7 @@ const Hero: React.FC<{
                 className="font-bold font-sora text-white mb-6 mt-10 text-balance text-center lg:text-left text-[40px] sm:text-[56px] lg:text-[70px] xl:text-[77px]"
                 style={{ letterSpacing: '-4px', lineHeight: '105%' }}
               >
-                Chat.{' '}Snap.{' '}Fixed<span className="hero-cursor" aria-hidden="true" />
+                Chat. Snap.<br />Call. Show.{' '}Fixed<span className="hero-cursor" aria-hidden="true" />
               </h1>
               <div className="mt-4 lg:mr-8 lg:max-w-[430px]">
                 <p className="font-sora text-center lg:text-left text-base md:text-[19px] font-normal leading-relaxed text-white my-0 text-balance">
@@ -542,6 +543,15 @@ const Hero: React.FC<{
               >
                 <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
                 <img src="/slide-3.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[2].alt} loading="eager" />
+              </div>
+
+              {/* Slide 4 */}
+              <div
+                className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
+                style={{ opacity: active === 3 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
+              >
+                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
+                <img src="/slide-4.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[3].alt} loading="eager" />
               </div>
 
               {/* Dots */}
