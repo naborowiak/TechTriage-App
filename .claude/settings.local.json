@@ -95,7 +95,9 @@
       "Bash(npm uninstall:*)",
       "Bash(head:*)",
       "WebFetch(domain:css-tricks.com)",
-      "Bash(convert:*)"
+      "Bash(convert:*)",
+      "WebFetch(domain:www.algolia.com)",
+      "Bash(file:*)"
     ]
   }
 }

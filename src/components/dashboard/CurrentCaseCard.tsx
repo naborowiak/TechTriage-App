@@ -78,12 +78,7 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
       <h2 className="text-lg font-bold text-text-primary dark:text-white mb-3">
         Current Case
       </h2>
-      <div className="relative glass-card rounded-2xl p-4 sm:p-5 overflow-hidden">
-        {/* Decorative gradient accent */}
-        <div
-          className="gradient-orb w-32 h-32 -top-10 -right-10"
-          style={{ background: "linear-gradient(135deg, #6366F1, #06B6D4)" }}
-        />
+      <div className="relative card-clean rounded-lg p-4 sm:p-5 overflow-hidden">
 
         {/* Case header */}
         <div className="relative flex items-center justify-between mb-4">

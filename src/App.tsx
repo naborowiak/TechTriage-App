@@ -23,11 +23,10 @@ import {
   Video,
   Sparkles,
   FileText,
-  Shield,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
-import { Logo, ScoutSignalIcon } from "./components/Logo";
+import { Logo } from "./components/Logo";
 import { PageView } from "./types";
 import { useAuth } from "./hooks/useAuth";
 import { LiveSupport } from "./components/LiveSupport";
@@ -35,7 +34,7 @@ import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
 import type { SettingsTab } from "./components/SettingsModal";
-import { AnimatedElement, useParallax } from "./hooks/useAnimations";
+import { AnimatedElement } from "./hooks/useAnimations";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { usePWAInstall } from "./hooks/usePWAInstall";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
@@ -225,7 +224,7 @@ const Header: React.FC<{
   const hoverColor = "hover:text-electric-indigo";
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 h-[72px] bg-white/95 dark:bg-midnight-900/95 backdrop-blur-md border-b border-light-300 dark:border-midnight-700 shadow-sm transition-colors">
+    <header className="fixed top-0 left-0 w-full z-50 h-[72px] bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 shadow-sm transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
         {/* LEFT: Logo */}
         <button
@@ -286,7 +285,7 @@ const Header: React.FC<{
               <CreditCounter onNavigate={onNavigate} />
               <button
                 onClick={() => onNavigate(PageView.DASHBOARD)}
-                className="btn-gradient-electric text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-all whitespace-nowrap hover:shadow-glow-electric hover:brightness-110"
+                className="bg-electric-indigo text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-colors whitespace-nowrap hover:bg-indigo-600"
               >
                 Dashboard
               </button>
@@ -307,7 +306,7 @@ const Header: React.FC<{
               </button>
               <button
                 onClick={() => onNavigate(PageView.SIGNUP)}
-                className="btn-gradient-electric text-white font-semibold px-6 py-2.5 rounded-full text-sm transition-all whitespace-nowrap hover:shadow-glow-electric hover:brightness-110"
+                className="bg-electric-indigo text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-colors whitespace-nowrap hover:bg-indigo-600"
               >
                 Get Started
               </button>
@@ -319,7 +318,7 @@ const Header: React.FC<{
         <div className="flex lg:hidden items-center gap-3">
           <button
             onClick={() => onNavigate(isAuthenticated && user ? PageView.DASHBOARD : PageView.SIGNUP)}
-            className="btn-gradient-electric text-white font-semibold px-4 py-2 rounded-full text-sm transition-all whitespace-nowrap"
+            className="bg-electric-indigo text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap hover:bg-indigo-600"
           >
             {isAuthenticated && user ? 'Dashboard' : 'Get Started'}
           </button>
@@ -412,7 +411,7 @@ const Header: React.FC<{
                         className="w-8 h-8 rounded-full object-cover ring-2 ring-electric-indigo/50"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-electric-indigo flex items-center justify-center">
                         <User className="w-4 h-4 text-white" />
                       </div>
                     )}
@@ -445,111 +444,12 @@ const Header: React.FC<{
   );
 };
 
-// Seeded random number generator for consistent hex patterns
-const mulberry32 = (seed: number) => {
-  return () => {
-    let t = (seed += 0x6D2B79F5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-};
 
-// Hero Hexagon Pattern - creates visual distinction in the gradient area
-const HeroHexagonPattern: React.FC<{ offset: number }> = ({ offset }) => {
-  // Generate hexagon positions with seeded random for consistency
-  const hexagons = React.useMemo(() => {
-    const rand = mulberry32(1337); // Consistent seed
-    const items: Array<{
-      x: number;
-      y: number;
-      size: number;
-      opacity: number;
-      color: string;
-      parallaxFactor: number;
-    }> = [];
-
-    const colors = ['#6366F1', '#A855F7', '#06B6D4', '#818CF8', '#C084FC'];
-
-    // Left side hexagons (gradient area) - more concentrated
-    for (let i = 0; i < 12; i++) {
-      items.push({
-        x: rand() * 45, // Left 45% of screen
-        y: rand() * 100,
-        size: 30 + rand() * 50,
-        opacity: 0.03 + rand() * 0.06,
-        color: colors[Math.floor(rand() * colors.length)],
-        parallaxFactor: 0.2 + rand() * 0.4,
-      });
-    }
-
-    // Bottom edge hexagons - creates the "split" visual
-    for (let i = 0; i < 8; i++) {
-      items.push({
-        x: rand() * 100,
-        y: 75 + rand() * 25, // Bottom 25%
-        size: 40 + rand() * 60,
-        opacity: 0.04 + rand() * 0.08,
-        color: colors[Math.floor(rand() * colors.length)],
-        parallaxFactor: 0.1 + rand() * 0.3,
-      });
-    }
-
-    // Scattered accent hexagons
-    for (let i = 0; i < 6; i++) {
-      items.push({
-        x: 30 + rand() * 40, // Middle area
-        y: rand() * 80,
-        size: 20 + rand() * 35,
-        opacity: 0.02 + rand() * 0.04,
-        color: colors[Math.floor(rand() * colors.length)],
-        parallaxFactor: 0.3 + rand() * 0.5,
-      });
-    }
-
-    return items;
-  }, []);
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
-      {hexagons.map((hex, i) => (
-        <div
-          key={i}
-          className="absolute transition-transform duration-100"
-          style={{
-            left: `${hex.x}%`,
-            top: `${hex.y}%`,
-            transform: `translate(-50%, -50%) translateY(${offset * hex.parallaxFactor}px)`,
-          }}
-        >
-          <Hexagon
-            size={hex.size}
-            style={{
-              color: hex.color,
-              opacity: hex.opacity,
-              filter: 'blur(1px)',
-            }}
-          />
-        </div>
-      ))}
-
-      {/* Bottom edge gradient line with hexagon accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-32">
-        {/* Gradient fade to next section */}
-        <div className="absolute inset-0 bg-gradient-to-t from-light-100 dark:from-midnight-950 via-light-100/50 dark:via-midnight-950/50 to-transparent"></div>
-
-        {/* Hexagon accent line */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 opacity-30">
-          <div className="w-24 h-px bg-gradient-to-r from-transparent to-electric-indigo/50"></div>
-          <Hexagon size={16} style={{ color: '#6366F1', opacity: 0.6 }} />
-          <div className="w-16 h-px bg-electric-indigo/40"></div>
-          <Hexagon size={12} style={{ color: '#A855F7', opacity: 0.5 }} />
-          <div className="w-24 h-px bg-gradient-to-l from-transparent to-scout-purple/50"></div>
-        </div>
-      </div>
-    </div>
-  );
-};
+const HERO_SLIDES = [
+  { id: 1, top: "/slide-1.png", alt: "Homeowner chatting with TotalAssist about a Wi-Fi issue" },
+  { id: 2, top: "/slide-2.png", alt: "Homeowner photographing a router for instant AI diagnosis" },
+  { id: 3, top: "/slide-3.png", alt: "Homeowner with completed step-by-step fix from TotalAssist" },
+];
 
 const Hero: React.FC<{
   onFreeTrial: () => void;
@@ -557,358 +457,118 @@ const Hero: React.FC<{
   onHeroAction?: (mode: 'voice' | 'photo' | 'video' | 'chat') => void;
 }> = ({
   onFreeTrial,
-  onPricing,
 }) => {
-  const [scrollY, setScrollY] = useState(0);
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    if (paused) return;
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 6500);
+    return () => clearInterval(timer);
+  }, [paused]);
 
   return (
-    <section className="relative overflow-hidden -mt-[72px] pt-[72px]">
-      {/* Full-height container */}
-      <div className="min-h-screen relative">
-      {/* Background hero image - different images for mobile vs desktop */}
-      {/* Mobile/Tablet: vertical mobile-hero.png, Desktop: horizontal homepage-hero.jpg */}
+    <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden -mt-[72px]">
+      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
+        <source src="/hero-bg.mp4" type="video/mp4" />
+      </video>
+      <div className="relative mx-auto max-w-[1512px] overflow-hidden z-10 pt-[144px]">
+        <div className="mx-auto relative z-20 flex flex-col lg:flex-row">
 
-      {/* Mobile hero image (below lg) — slower parallax so phone feels anchored */}
-      <div
-        className="absolute inset-0 bg-cover bg-no-repeat bg-[center_58%] lg:hidden will-change-transform"
-        style={{
-          backgroundImage: "url(/mobile_hero.jpg)",
-          transform: `translateY(${scrollY * 0.08}px) scale(1.08)`,
-          transformOrigin: 'center 60%',
-        }}
-      ></div>
-
-      {/* Desktop hero image (lg and up) — parallax layer */}
-      <div
-        className="absolute inset-0 bg-cover bg-no-repeat hidden lg:block bg-[position:85%_55%] xl:bg-[position:90%_50%] 2xl:bg-[position:92%_48%] will-change-transform"
-        style={{
-          backgroundImage: "url(/hero_image_new.jpg)",
-          transform: `translateY(${scrollY * 0.2}px) scale(1.15)`,
-          transformOrigin: 'center center',
-        }}
-      ></div>
-
-      {/* ===== GRADIENT OVERLAYS (separate from background images) ===== */}
-
-      {/* ===== LIGHT MODE - MOBILE (tight top overlay, phone area fully clear) ===== */}
-      {/* Layer 1: Top-down — covers text area only (~40%), then gone */}
-      <div className="absolute inset-0 lg:hidden dark:hidden" style={{
-        background: `linear-gradient(180deg,
-          rgba(255,255,255,0.97) 0%,
-          rgba(255,255,255,0.94) 12%,
-          rgba(255,255,255,0.8) 24%,
-          rgba(250,250,255,0.45) 34%,
-          rgba(245,245,255,0.12) 42%,
-          transparent 48%)`
-      }}></div>
-
-      {/* ===== LIGHT MODE - DESKTOP (split overlay: readable left, transparent right) ===== */}
-      {/* Layer 1: Primary split gradient */}
-      <div className="absolute inset-0 hidden lg:block dark:hidden z-[1]" style={{
-        background: `linear-gradient(90deg,
-          rgba(255,255,255,0.92) 0%,
-          rgba(255,255,255,0.78) 25%,
-          rgba(255,255,255,0.38) 44%,
-          rgba(255,255,255,0.1) 56%,
-          transparent 68%)`
-      }}></div>
-      {/* Layer 2: Diagonal gradient for organic edge */}
-      <div className="absolute inset-0 hidden lg:block dark:hidden" style={{
-        background: `linear-gradient(135deg,
-          rgba(255,255,255,0.6) 0%,
-          rgba(250,249,255,0.35) 22%,
-          rgba(243,244,255,0.12) 38%,
-          transparent 52%)`
-      }}></div>
-
-      {/* ===== DARK MODE - MOBILE (tight top overlay, phone area fully clear) ===== */}
-      {/* Layer 1: Top-down — covers text area only (~42%), then gone */}
-      <div className="absolute inset-0 lg:dark:hidden hidden dark:block" style={{
-        background: `linear-gradient(180deg,
-          rgba(11,14,20,0.97) 0%,
-          rgba(11,14,20,0.94) 12%,
-          rgba(11,14,25,0.78) 24%,
-          rgba(15,14,35,0.42) 34%,
-          rgba(25,20,50,0.1) 42%,
-          transparent 48%)`
-      }}></div>
-      {/* Subtle brand glow behind phone area — makes the screen pop */}
-      <div className="absolute inset-0 lg:hidden hidden dark:block pointer-events-none" style={{
-        background: `radial-gradient(ellipse 70% 50% at 50% 68%,
-          rgba(99,102,241,0.15) 0%,
-          rgba(168,85,247,0.06) 30%,
-          transparent 60%)`
-      }}></div>
-
-      {/* ===== DARK MODE - DESKTOP (split overlay) ===== */}
-      {/* Layer 1: Primary split gradient */}
-      <div className="absolute inset-0 hidden lg:dark:block z-[1]" style={{
-        background: `linear-gradient(90deg,
-          rgba(15,18,32,0.92) 0%,
-          rgba(15,18,32,0.82) 16%,
-          rgba(27,24,58,0.55) 32%,
-          rgba(45,35,85,0.3) 46%,
-          rgba(99,102,241,0.1) 58%,
-          transparent 72%)`
-      }}></div>
-      {/* Layer 2: Diagonal gradient for organic edge */}
-      <div className="absolute inset-0 hidden lg:dark:block" style={{
-        background: `linear-gradient(135deg,
-          rgba(15,18,32,0.65) 0%,
-          rgba(25,22,52,0.4) 20%,
-          rgba(40,32,72,0.18) 38%,
-          transparent 54%)`
-      }}></div>
-      {/* Dark mode phone spotlight - brand-colored glow behind phone */}
-      <div className="absolute inset-0 hidden lg:dark:block pointer-events-none z-[2]" style={{
-        background: `radial-gradient(circle at 78% 55%,
-          rgba(99,102,241,0.15) 0%,
-          rgba(168,85,247,0.08) 22%,
-          rgba(0,0,0,0.00) 50%)`
-      }}></div>
-
-      {/* Hexagon pattern for visual distinction */}
-      <HeroHexagonPattern offset={scrollY} />
-
-      {/* Gradient orbs for visual interest - with parallax */}
-      <div
-        className="absolute top-1/4 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl will-change-transform z-[2]"
-        style={{ transform: `translateY(${scrollY * 0.35}px)` }}
-      ></div>
-      <div
-        className="absolute bottom-1/4 left-1/3 w-64 h-64 bg-scout-purple/8 rounded-full blur-3xl will-change-transform z-[2]"
-        style={{ transform: `translateY(${scrollY * 0.18}px)` }}
-      ></div>
-
-      <div className="container mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-8 items-start lg:items-center min-h-[calc(100vh-72px)]">
-          {/* Left side - Content — parallax fade as user scrolls */}
-          <div
-            className="pt-24 sm:pt-20 lg:pt-0 pb-8 sm:pb-0 max-w-lg sm:max-w-xl lg:max-w-none"
-            style={{
-              opacity: Math.max(0, 1 - scrollY / 700),
-              willChange: 'opacity',
-            }}
-          >
-            {/* Badge — fastest parallax rise */}
-            <div style={{ transform: `translateY(${scrollY * -0.06}px)`, willChange: 'transform' }}>
-              <AnimatedElement animation="fadeIn" delay={0.1}>
-                <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-electric-indigo/20 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full mb-4 sm:mb-6 border border-electric-indigo/40 shadow-sm">
-                  <ScoutSignalIcon size={18} animate={true} />
-                  <span className="text-electric-indigo font-semibold text-xs sm:text-sm">
-                    Support available 24/7
-                  </span>
-                </div>
-              </AnimatedElement>
-            </div>
-            {/* Title — medium parallax rise */}
-            <div style={{ transform: `translateY(${scrollY * -0.04}px)`, willChange: 'transform' }}>
-              <AnimatedElement animation="fadeInUp" delay={0.2}>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.1] mb-4 sm:mb-6">
-                  <span className="text-text-primary dark:text-white dark:[text-shadow:0_2px_12px_rgba(0,0,0,0.8),0_1px_2px_rgba(0,0,0,0.5)]">
-                    Fix your tech in minutes
-                  </span>
-                  <br />
-                  <span
-                    className="text-gradient-electric"
-                    style={{
-                      filter: 'drop-shadow(0 2px 4px rgba(99,102,241,0.4))',
-                    }}
-                  >
-                    — with TotalAssist.
-                  </span>
-                </h1>
-              </AnimatedElement>
-            </div>
-            {/* Subtitle — gentle parallax rise */}
-            <div style={{ transform: `translateY(${scrollY * -0.025}px)`, willChange: 'transform' }}>
-              <AnimatedElement animation="fadeInUp" delay={0.4}>
-                <p className="text-base sm:text-lg md:text-xl lg:text-xl font-medium leading-relaxed mb-6 sm:mb-8 md:mb-10 max-w-md sm:max-w-lg lg:max-w-xl text-gray-700 dark:text-gray-200 dark:[text-shadow:0_1px_8px_rgba(0,0,0,0.6),0_1px_2px_rgba(0,0,0,0.4)]">
-                  TotalAssist is your 24/7 lifeline for home tech problems. No hold music, no complex menus—just a friendly support team that walks you through every fix.
+          {/* Left column */}
+          <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-[85px]">
+            <div className="max-w-[520px] lg:max-w-none mx-auto">
+              <h1
+                className="font-bold font-sora text-white mb-6 mt-10 text-balance text-center lg:text-left text-[40px] sm:text-[56px] lg:text-[70px] xl:text-[77px]"
+                style={{ letterSpacing: '-4px', lineHeight: '105%' }}
+              >
+                Chat.{' '}Snap.{' '}Fixed<span className="hero-cursor" aria-hidden="true" />
+              </h1>
+              <div className="mt-4 lg:mr-8 lg:max-w-[430px]">
+                <p className="font-sora text-center lg:text-left text-base md:text-[19px] font-normal leading-relaxed text-white my-0 text-balance">
+                  Your 24/7 AI-powered home tech support
                 </p>
-              </AnimatedElement>
+              </div>
             </div>
-            {/* CTA buttons — slowest parallax (anchored feel) */}
-            <div style={{ transform: `translateY(${scrollY * -0.01}px)`, willChange: 'transform' }}>
-              <AnimatedElement animation="fadeInUp" delay={0.6}>
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <button
-                    onClick={onFreeTrial}
-                    className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-electric-indigo text-white font-bold text-sm sm:text-base shadow-lg hover:shadow-electric-indigo/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                  >
-                    Get Started
-                  </button>
-                  <button
-                    onClick={onPricing}
-                    className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-white dark:bg-midnight-800 text-text-primary dark:text-white font-bold text-sm sm:text-base border border-light-300 dark:border-midnight-600 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-                  >
-                    Explore Pricing
-                  </button>
-                </div>
-                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-6 sm:mb-8">
-                  <span className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-electric-indigo/20 backdrop-blur-sm"
-                    style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
-                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    No credit card needed
+
+            <div className="flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 lg:justify-start lg:mb-[117px]">
+              <div className="flex font-sora justify-center lg:justify-start">
+                <button
+                  onClick={onFreeTrial}
+                  className="overflow-hidden flex flex-wrap items-center cursor-pointer font-sora w-full justify-center lg:justify-start text-white px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
+                >
+                  <span className="font-semibold mx-auto font-sora leading-[1.5] text-sm lg:text-base tracking-[0.28px] lg:tracking-[0.32px]">
+                    Get Started Free
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full pl-2 pr-3.5 py-1.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-scout-purple/20 backdrop-blur-sm"
-                    style={{ background: 'linear-gradient(135deg, #A855F7 0%, #6366F1 100%)' }}>
-                    <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    24/7 instant answers
-                  </span>
-                
-                </div>
-              </AnimatedElement>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Right side - empty to let the background image show */}
-          <div className="hidden lg:block"></div>
+          {/* Right column — carousel */}
+          <div className="w-full lg:w-[53.3%] flex justify-center lg:justify-end mt-8 lg:mt-0">
+            <div
+              className={`relative w-full max-w-[820px] lg:h-[680px]${paused ? ' agentic-hero-paused' : ''}`}
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+            >
+              {/* Invisible spacer — reserves height on mobile */}
+              <img src="/slide-1.png" className="invisible w-full h-auto lg:hidden" alt="" aria-hidden="true" loading="eager" />
+
+              {/* Slide 1 */}
+              <div
+                className="agentic-hero-slide absolute inset-0 transition-opacity"
+                style={{ opacity: active === 0 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
+              >
+                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
+                <img src="/slide-1.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[0].alt} loading="eager" />
+              </div>
+
+              {/* Slide 2 */}
+              <div
+                className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
+                style={{ opacity: active === 1 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
+              >
+                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
+                <img src="/slide-2.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[1].alt} loading="eager" />
+              </div>
+
+              {/* Slide 3 */}
+              <div
+                className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
+                style={{ opacity: active === 2 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
+              >
+                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
+                <img src="/slide-3.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[2].alt} loading="eager" />
+              </div>
+
+              {/* Dots */}
+              <div className="agentic-hero-dots absolute flex gap-2">
+                {HERO_SLIDES.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`agentic-hero-dot${active === i ? ' agentic-hero-dot--active' : ''}`}
+                    aria-label={`Go to slide ${i + 1}`}
+                    aria-current={active === i}
+                    onClick={() => setActive(i)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
-
-      {/* Bottom fade into next section — thin blend, doesn't cover phone */}
-      <div className="absolute inset-x-0 bottom-0 h-20 lg:h-32 z-[3] pointer-events-none
-        bg-gradient-to-t from-light-100 to-transparent
-        dark:from-midnight-950" />
-      </div>{/* Close height constraint container */}
-    </section>
-  );
-};
-
-// Hexagon SVG component
-const Hexagon: React.FC<{
-  className?: string;
-  size?: number;
-  style?: React.CSSProperties;
-}> = ({ className = "", size = 40, style }) => (
-  <svg
-    width={size}
-    height={size * 1.1547}
-    viewBox="0 0 100 115.47"
-    className={className}
-    style={style}
-  >
-    <polygon
-      points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87"
-      fill="currentColor"
-    />
-  </svg>
-);
-
-// Hexagon Pattern Divider with staggered opacity
-const HexagonDivider: React.FC<{
-  variant?: 'sparse' | 'medium' | 'dense';
-  colorScheme?: 'indigo' | 'purple' | 'cyan' | 'mixed';
-}> = ({ variant = 'medium', colorScheme = 'mixed' }) => {
-  const getHexagons = () => {
-    const hexagons: Array<{
-      x: number;
-      y: number;
-      size: number;
-      opacity: number;
-      color: string;
-      delay: number;
-    }> = [];
-
-    const colors = {
-      indigo: ['#6366F1', '#818CF8', '#4F46E5'],
-      purple: ['#A855F7', '#C084FC', '#9333EA'],
-      cyan: ['#06B6D4', '#22D3EE', '#0891B2'],
-      mixed: ['#6366F1', '#A855F7', '#06B6D4', '#818CF8', '#C084FC'],
-    };
-
-    const selectedColors = colors[colorScheme];
-    const count = variant === 'sparse' ? 8 : variant === 'medium' ? 14 : 20;
-
-    for (let i = 0; i < count; i++) {
-      hexagons.push({
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: 20 + Math.random() * 40,
-        opacity: 0.03 + Math.random() * 0.08,
-        color: selectedColors[Math.floor(Math.random() * selectedColors.length)],
-        delay: Math.random() * 2,
-      });
-    }
-
-    return hexagons;
-  };
-
-  const hexagons = React.useMemo(() => getHexagons(), [variant, colorScheme]);
-
-  return (
-    <div className="relative h-24 overflow-hidden bg-light-100 dark:bg-midnight-950">
-      {/* Hexagon pattern */}
-      <div className="absolute inset-0">
-        {hexagons.map((hex, i) => (
-          <div
-            key={i}
-            className="absolute transition-opacity duration-1000"
-            style={{
-              left: `${hex.x}%`,
-              top: `${hex.y}%`,
-              transform: 'translate(-50%, -50%)',
-            }}
-          >
-            <Hexagon
-              size={hex.size}
-              style={{
-                color: hex.color,
-                opacity: hex.opacity * 1.5,
-                filter: 'blur(1px)',
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Center accent line */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-px bg-gradient-to-r from-transparent via-electric-indigo/40 to-transparent z-20"></div>
     </div>
   );
 };
 
 // Section Divider Component for visual separation
-const SectionDivider: React.FC<{ variant?: 'gradient' | 'line' | 'wave' | 'hexagon' }> = ({ variant = 'gradient' }) => {
-  if (variant === 'hexagon') {
-    return <HexagonDivider variant="medium" colorScheme="mixed" />;
-  }
-
-  if (variant === 'wave') {
-    return (
-      <div className="relative h-24 overflow-hidden bg-transparent dark:bg-transparent">
-        <svg className="absolute bottom-0 w-full h-24" viewBox="0 0 1440 96" preserveAspectRatio="none">
-          <path
-            fill="currentColor"
-            className="text-light-200"
-            d="M0,64 C480,96 960,32 1440,64 L1440,96 L0,96 Z"
-          />
-        </svg>
-      </div>
-    );
-  }
-
-  if (variant === 'line') {
-    return (
-      <div className="relative py-6 bg-light-100 dark:bg-midnight-950">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="h-px bg-gradient-to-r from-transparent via-electric-indigo/30 to-transparent"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Default gradient divider
-  return (
-    <div className="h-12 bg-gradient-to-b from-transparent to-light-100 dark:to-midnight-950"></div>
-  );
+const SectionDivider: React.FC<{ variant?: 'gradient' | 'line' | 'wave' | 'hexagon' }> = () => {
+  return <div className="h-px bg-surface-border dark:bg-midnight-700" />;
 };
 
 const HowItWorksSimple: React.FC = () => {
@@ -940,7 +600,7 @@ const HowItWorksSimple: React.FC = () => {
           <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
             How It Works
           </span>
-          <h2 className="text-4xl lg:text-5xl font-black mb-6 text-text-primary dark:text-white">
+          <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-text-primary dark:text-white">
             Help that actually helps
           </h2>
           <p className="text-xl max-w-2xl mx-auto text-text-secondary">
@@ -954,18 +614,18 @@ const HowItWorksSimple: React.FC = () => {
               <div className="relative">
                 {/* Connector line */}
                 {i < 2 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-electric-indigo to-transparent"></div>
+                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-surface-border dark:bg-midnight-700"></div>
                 )}
-                <div className="relative rounded-2xl p-8 bg-white dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 transition-all duration-300 hover:-translate-y-1 shadow-sm">
+                <div className="relative card-clean rounded-lg p-8 hover:-translate-y-1 transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-2xl flex items-center justify-center text-white shadow-lg shadow-scout-purple/30">
+                    <div className="w-14 h-14 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo">
                       {s.icon}
                     </div>
-                    <span className="text-5xl font-black text-gradient-electric">
+                    <span className="text-5xl font-bold text-electric-indigo">
                       {s.step}
                     </span>
                   </div>
-                  <h3 className="text-xl font-black mb-3 text-text-primary dark:text-white">
+                  <h3 className="text-xl font-bold mb-3 text-text-primary dark:text-white">
                     {s.title}
                   </h3>
                   <p className="leading-relaxed text-text-secondary">
@@ -1022,7 +682,7 @@ const WhatWeHelpWith: React.FC = () => {
           <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
             What We Help With
           </span>
-          <h2 className="text-4xl lg:text-5xl font-black mb-6 text-text-primary dark:text-white">
+          <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-text-primary dark:text-white">
             Technology support for your home
           </h2>
           <p className="text-xl max-w-2xl mx-auto text-text-secondary">
@@ -1033,8 +693,8 @@ const WhatWeHelpWith: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
           {problems.map((item, i) => (
             <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.08}>
-              <div className="group p-5 rounded-2xl transition-all duration-300 cursor-pointer hover:-translate-y-1 bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 hover:shadow-lg h-full">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all bg-white dark:bg-midnight-800 text-electric-indigo group-hover:bg-gradient-to-br group-hover:from-electric-indigo group-hover:to-electric-cyan group-hover:text-white border border-light-300 dark:border-midnight-600">
+              <div className="group p-5 card-clean rounded-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 h-full">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-all bg-electric-indigo/8 text-electric-indigo group-hover:bg-electric-indigo/12">
                   {item.icon}
                 </div>
                 <h3 className="font-bold text-base mb-1 text-text-primary dark:text-white">
@@ -1084,29 +744,15 @@ const WhyTotalAssist: React.FC = () => {
     },
   ];
 
-  const { ref: parallaxRef, offset } = useParallax(0.2);
-
   return (
-    <section ref={parallaxRef} className="py-24 bg-light-100 dark:bg-midnight-950 overflow-hidden relative border-t border-light-300 dark:border-midnight-700 transition-colors">
-      {/* Decorative background elements with parallax */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl transition-transform duration-100"
-          style={{ transform: `translateY(${offset * 0.5}px)` }}
-        ></div>
-        <div
-          className="absolute bottom-0 right-1/4 w-96 h-96 bg-scout-purple/10 rounded-full blur-3xl transition-transform duration-100"
-          style={{ transform: `translateY(${-offset * 0.3}px)` }}
-        ></div>
-      </div>
-
+    <section className="py-24 bg-light-100 dark:bg-midnight-950 overflow-hidden relative border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Header */}
         <AnimatedElement animation="fadeInUp" className="text-center mb-12">
           <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
             Why TotalAssist Is Different
           </span>
-          <h2 className="text-4xl lg:text-5xl font-black mb-6 leading-tight text-text-primary dark:text-white">
+          <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight text-text-primary dark:text-white">
             Not just another chatbot.
           </h2>
           <p className="text-text-secondary text-xl max-w-2xl mx-auto">
@@ -1118,13 +764,13 @@ const WhyTotalAssist: React.FC = () => {
         <div className="grid md:grid-cols-3 gap-8 mb-20">
           {differentiators.map((item, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
-              <div className="group p-8 rounded-2xl bg-white dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 transition-all duration-300 hover:-translate-y-1 h-full shadow-sm">
+              <div className="group p-8 card-clean rounded-lg transition-all duration-300 hover:-translate-y-1 h-full">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`w-14 h-14 bg-gradient-to-br ${item.gradient} rounded-2xl flex items-center justify-center text-white shadow-lg shadow-scout-purple/20 group-hover:scale-110 transition-transform`}>
+                  <div className="w-14 h-14 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo">
                     {item.icon}
                   </div>
                   {item.secondIcon && (
-                    <div className="w-10 h-10 bg-gradient-to-br from-electric-indigo/20 to-scout-purple/20 rounded-xl flex items-center justify-center text-electric-indigo dark:text-electric-cyan border border-electric-indigo/20">
+                    <div className="w-10 h-10 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo">
                       {item.secondIcon}
                     </div>
                   )}
@@ -1140,13 +786,13 @@ const WhyTotalAssist: React.FC = () => {
 
         {/* Comparison Table Section */}
         <AnimatedElement animation="fadeInUp" delay={0.5}>
-          <div className="relative overflow-hidden rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-lg">
+          <div className="relative overflow-hidden rounded-lg border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-lg">
             {/* Table Header Row */}
             <div className="grid grid-cols-3 bg-light-100 dark:bg-midnight-800 border-b border-light-300 dark:border-midnight-700">
               <div className="p-4 lg:p-6 font-bold text-text-secondary text-sm lg:text-base">
                 Benefit
               </div>
-              <div className="p-4 lg:p-6 flex items-center justify-center gap-2 lg:gap-3 border-x border-light-300 dark:border-midnight-700 bg-gradient-to-b from-electric-indigo/10 to-transparent">
+              <div className="p-4 lg:p-6 flex items-center justify-center gap-2 lg:gap-3 border-x border-light-300 dark:border-midnight-700">
                 <img
                   src="/total_assist-new.png"
                   alt="TotalAssist"
@@ -1168,7 +814,7 @@ const WhyTotalAssist: React.FC = () => {
                 <div className="p-4 lg:p-5 flex items-center text-text-primary dark:text-white font-medium text-sm lg:text-base">
                   {item.benefit}
                 </div>
-                <div className="p-4 lg:p-5 flex items-center justify-center border-x border-light-300 dark:border-midnight-700 bg-gradient-to-b from-electric-indigo/5 to-transparent">
+                <div className="p-4 lg:p-5 flex items-center justify-center border-x border-light-300 dark:border-midnight-700">
                   <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-electric-cyan/20 flex items-center justify-center">
                     <CheckCircle2 className="w-4 h-4 lg:w-5 lg:h-5 text-electric-cyan" />
                   </div>
@@ -1214,7 +860,7 @@ const UseCasesSection: React.FC = () => {
           <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
             Real Problems, Real Solutions
           </span>
-          <h2 className="text-4xl font-black mb-4 text-text-primary dark:text-white">
+          <h2 className="text-4xl font-bold mb-4 text-text-primary dark:text-white">
             When tech breaks, we help
           </h2>
           <p className="text-lg text-text-secondary max-w-2xl mx-auto">
@@ -1224,8 +870,8 @@ const UseCasesSection: React.FC = () => {
         <div className="grid md:grid-cols-3 gap-8">
           {useCases.map((useCase, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.15 + i * 0.15}>
-              <div className="group p-8 rounded-2xl bg-light-100 dark:bg-midnight-900 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 transition-all duration-300 hover:-translate-y-1 h-full shadow-sm">
-                <div className="w-14 h-14 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-scout-purple/20 group-hover:scale-110 transition-transform">
+              <div className="group p-8 card-clean rounded-lg transition-all duration-300 hover:-translate-y-1 h-full">
+                <div className="w-14 h-14 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo mb-6">
                   {useCase.icon}
                 </div>
                 <h3 className="text-xl font-bold text-text-primary dark:text-white mb-3">
@@ -1274,11 +920,11 @@ const FAQSection: React.FC = () => {
         {/* Header */}
         <AnimatedElement animation="fadeInUp" className="text-center mb-12">
           {/* FAQ Badge */}
-          <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-scout-purple/30 shadow-sm">
-            <HelpCircle className="w-4 h-4 text-scout-purple" />
-            <span className="text-scout-purple font-semibold text-sm">FAQ</span>
+          <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-surface-border dark:border-midnight-700 shadow-sm">
+            <HelpCircle className="w-4 h-4 text-electric-indigo" />
+            <span className="text-electric-indigo font-semibold text-sm">FAQ</span>
           </div>
-          <h2 className="text-4xl lg:text-5xl font-black mb-4 text-text-primary dark:text-white italic">
+          <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-text-primary dark:text-white">
             Frequently Asked Questions
           </h2>
           <p className="text-text-secondary text-lg max-w-xl mx-auto">
@@ -1292,9 +938,9 @@ const FAQSection: React.FC = () => {
             {faqs.map((faq, i) => (
               <div
                 key={i}
-                className={`rounded-xl border transition-all duration-300 overflow-hidden ${
+                className={`rounded-lg border transition-all duration-300 overflow-hidden ${
                   openFaq === i
-                    ? 'border-scout-purple/50 bg-gradient-to-br from-scout-purple/10 to-electric-indigo/5'
+                    ? 'border-electric-indigo/30 bg-electric-indigo/[0.03]'
                     : 'border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 hover:border-light-400 dark:hover:border-midnight-600'
                 }`}
               >
@@ -1307,7 +953,7 @@ const FAQSection: React.FC = () => {
                   </span>
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                     openFaq === i
-                      ? 'bg-scout-purple/20 text-scout-purple'
+                      ? 'bg-electric-indigo/10 text-electric-indigo'
                       : 'bg-light-200 dark:bg-midnight-700 text-text-secondary'
                   }`}>
                     {openFaq === i ? (
@@ -1339,7 +985,6 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
   onSignup,
 }) => {
   const [email, setEmail] = React.useState("");
-  const { ref: parallaxRef, offset } = useParallax(0.2);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1349,21 +994,10 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
   };
 
   return (
-    <section ref={parallaxRef} className="py-24 bg-gradient-to-br from-scout-purple to-electric-indigo relative overflow-hidden noise-texture">
-      {/* Background decoration with parallax */}
-      <div className="absolute inset-0 opacity-20 z-0">
-        <div
-          className="absolute top-0 left-0 w-96 h-96 bg-electric-cyan rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-100"
-          style={{ transform: `translate(-50%, -50%) translateY(${offset * 0.5}px)` }}
-        ></div>
-        <div
-          className="absolute bottom-0 right-0 w-96 h-96 bg-scout-glow rounded-full blur-3xl translate-x-1/2 translate-y-1/2 transition-transform duration-100"
-          style={{ transform: `translate(50%, 50%) translateY(${-offset * 0.3}px)` }}
-        ></div>
-      </div>
+    <section className="py-24 bg-electric-indigo relative overflow-hidden">
       <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
         <AnimatedElement animation="fadeInUp">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             Life's too short for tech headaches.
           </h2>
         </AnimatedElement>
@@ -1383,12 +1017,12 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-6 py-4 rounded-full text-midnight-950 text-lg font-medium focus:outline-none focus:ring-4 focus:ring-white/30 shadow-xl bg-white"
+              className="flex-1 px-6 py-4 rounded-lg text-midnight-950 text-lg font-medium focus:outline-none focus:ring-4 focus:ring-white/30 shadow-xl bg-white"
               required
             />
             <button
               type="submit"
-              className="bg-midnight-950 hover:bg-midnight-900 text-white font-bold px-10 py-4 rounded-full text-lg transition-all whitespace-nowrap shadow-xl hover:shadow-2xl hover:scale-105"
+              className="bg-white text-electric-indigo font-bold px-10 py-4 rounded-lg text-lg transition-all whitespace-nowrap shadow-clean hover:shadow-clean-md"
             >
               Get Started Free
             </button>

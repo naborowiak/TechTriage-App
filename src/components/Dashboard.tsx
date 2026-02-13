@@ -189,7 +189,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  // Triage tiles config — layered "premium card" design
+  // Triage tiles config — clean Algolia-style cards
   const triageTiles = [
     {
       id: "text" as const,
@@ -202,11 +202,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "chat" as const,
       iconColor: "text-[#06B6D4]",
-      primary: true,
-      meshGradient:
-        "radial-gradient(80% 60% at 10% 0%, rgba(6,182,212,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(6,182,212,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
-      meshGradientLight:
-        "radial-gradient(80% 60% at 10% 0%, rgba(6,182,212,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(6,182,212,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
     {
       id: "photo" as const,
@@ -221,11 +216,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       feature: "photo" as const,
       iconColor: "text-electric-indigo",
       backgroundImage: "/tech-life-home.png",
-      primary: false,
-      meshGradient:
-        "radial-gradient(80% 60% at 10% 0%, rgba(99,102,241,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(99,102,241,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
-      meshGradientLight:
-        "radial-gradient(80% 60% at 10% 0%, rgba(99,102,241,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(99,102,241,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
     {
       id: "voice" as const,
@@ -239,11 +229,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "signal" as const,
       iconColor: "text-[#8B5CF6]",
-      primary: false,
-      meshGradient:
-        "radial-gradient(80% 60% at 10% 0%, rgba(139,92,246,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(139,92,246,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
-      meshGradientLight:
-        "radial-gradient(80% 60% at 10% 0%, rgba(139,92,246,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(139,92,246,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
     {
       id: "video" as const,
@@ -257,11 +242,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "videoDiagnostic" as const,
       iconColor: "text-scout-purple",
-      primary: false,
-      meshGradient:
-        "radial-gradient(80% 60% at 10% 0%, rgba(168,85,247,.22), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(236,72,153,.12), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.06), transparent)",
-      meshGradientLight:
-        "radial-gradient(80% 60% at 10% 0%, rgba(168,85,247,.12), transparent 60%), radial-gradient(70% 50% at 90% 20%, rgba(236,72,153,.08), transparent 60%), linear-gradient(to bottom, rgba(255,255,255,.04), transparent)",
     },
   ];
 
@@ -277,7 +257,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="h-screen-safe overflow-hidden bg-light-50 dark:bg-midnight-950 transition-colors flex flex-col">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-midnight-900/80 backdrop-blur-xl border-b border-light-300/60 dark:border-white/[0.06] px-4 py-3 flex items-center justify-between shrink-0 z-30">
+      <header className="bg-white dark:bg-midnight-900 border-b border-surface-border dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
         <div className="flex items-center gap-2.5">
           <img src="/total_assist-new.png" alt="TotalAssist" className="w-8 h-8 object-contain" />
           <span className="text-sm font-bold text-text-primary dark:text-white tracking-tight">
@@ -289,7 +269,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {tier !== "pro" && (
             <button
               onClick={() => setUpgradeModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-scout-purple to-electric-indigo text-white hover:opacity-90 transition-opacity"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-electric-indigo hover:bg-indigo-600 text-white transition-colors"
             >
               <Zap className="w-3 h-3" />
               Upgrade
@@ -311,14 +291,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div ref={userMenuRef} className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-8 h-8 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs hover:ring-2 hover:ring-electric-indigo/30 transition-all"
+              className="w-8 h-8 bg-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs hover:ring-2 hover:ring-electric-indigo/30 transition-all"
               aria-label="User menu"
             >
               {user.firstName.charAt(0)}
             </button>
 
             {showUserMenu && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="absolute top-full right-0 mt-2 w-56 card-clean rounded-lg shadow-clean-lg z-50 overflow-hidden">
                 <div className="px-4 py-3 border-b border-light-200 dark:border-midnight-700">
                   <div className="text-sm font-semibold text-text-primary dark:text-white truncate">
                     {user.firstName} {user.lastName || ""}
@@ -412,13 +392,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {children}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto dashboard-mesh-bg pb-20 lg:pb-8 relative">
-          {/* Ambient decorative orbs */}
-          <div className="gradient-orb w-64 h-64 -top-20 -left-20" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.3), transparent 70%)" }} />
-          <div className="gradient-orb w-48 h-48 top-40 -right-16" style={{ background: "radial-gradient(circle, rgba(6,182,212,0.2), transparent 70%)" }} />
-          <div className="gradient-orb w-56 h-56 bottom-20 left-1/3" style={{ background: "radial-gradient(circle, rgba(168,85,247,0.15), transparent 70%)" }} />
-
-          <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-20 lg:pb-8">
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
             {/* System Status */}
             <SystemStatusBadge />
 
@@ -432,7 +407,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {triageTiles.map((tile) => {
                 const Icon = tile.icon;
                 const isLocked = tile.lockedForTiers.includes(tier);
-                const isDark = theme === "dark";
                 const hasPhoto = !!(tile as any).backgroundImage;
 
                 return (
@@ -447,19 +421,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }
                     }}
                     className={[
-                      "tile-card flex flex-col justify-end text-left",
-                      "rounded-2xl md:rounded-3xl p-4 md:p-6",
+                      "card-clean flex flex-col justify-end text-left",
+                      "rounded-lg overflow-hidden cursor-pointer",
+                      "p-4 md:p-6",
                       "min-h-[72px] md:min-h-0 md:aspect-[16/10] md:max-h-[260px]",
                       "transition-all duration-200",
-                      hasPhoto
-                        ? "bg-[#1a1f2e]"
-                        : "bg-white/80 dark:bg-[#1F2430]",
-                      "border border-black/[0.06] dark:border-white/10",
-                      "shadow-[0_8px_24px_rgba(0,0,0,.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,.35)]",
                       isLocked
-                        ? "tile-card-locked cursor-pointer"
-                        : "hover:-translate-y-[2px] hover:shadow-[0_12px_32px_rgba(0,0,0,.12)] dark:hover:shadow-[0_14px_40px_rgba(0,0,0,.45)] active:scale-[0.98]",
-                      tile.primary && !isLocked ? "tile-card-primary" : "",
+                        ? "opacity-75 cursor-pointer"
+                        : "hover:-translate-y-[1px] active:scale-[0.98]",
                     ].join(" ")}
                     aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
                   >
@@ -467,7 +436,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {hasPhoto && (
                       <>
                         <div
-                          className="hidden md:block absolute inset-0 rounded-3xl overflow-hidden pointer-events-none"
+                          className="hidden md:block absolute inset-0 rounded-lg overflow-hidden pointer-events-none"
                           aria-hidden="true"
                         >
                           <div
@@ -476,40 +445,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           />
                         </div>
                         <div
-                          className="hidden md:block absolute inset-0 rounded-3xl bg-gradient-to-b from-black/10 via-black/40 to-black/75 pointer-events-none"
+                          className="hidden md:block absolute inset-0 rounded-lg bg-gradient-to-b from-black/10 via-black/40 to-black/70 pointer-events-none"
                           aria-hidden="true"
                         />
                       </>
                     )}
 
-                    {/* Layer 1: Mesh gradient background */}
-                    <div
-                      className={`absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none ${hasPhoto ? "md:hidden" : ""}`}
-                      style={{ backgroundImage: isDark ? tile.meshGradient : tile.meshGradientLight }}
-                      aria-hidden="true"
-                    />
-
-                    {/* Layer 2: Dark overlay for text readability */}
-                    <div
-                      className={`absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none bg-gradient-to-b from-white/5 via-white/10 to-white/40 dark:from-black/20 dark:via-black/30 dark:to-black/60 ${hasPhoto ? "md:hidden" : ""}`}
-                      aria-hidden="true"
-                    />
-
-                    {/* Layer 3: Soft vignette */}
-                    <div
-                      className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none"
-                      style={{ background: "radial-gradient(80% 60% at 20% 10%, rgba(255,255,255,.10), transparent 60%)" }}
-                      aria-hidden="true"
-                    />
-                    <div
-                      className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none [box-shadow:inset_0_1px_0_rgba(255,255,255,.08)]"
-                      aria-hidden="true"
-                    />
-
                     {/* Lock badge pill (locked tiles) */}
                     {isLocked && (
                       <div
-                        className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-white/60 dark:bg-black/40 backdrop-blur-sm px-2.5 py-1 ring-1 ring-black/[0.06] dark:ring-white/10"
+                        className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-100 dark:bg-midnight-700 border border-surface-border dark:border-midnight-700 px-2.5 py-1"
                         aria-hidden="true"
                       >
                         <Lock className="w-3 h-3 text-text-secondary dark:text-white/80" />
@@ -521,14 +466,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     {/* Content */}
                     <div className="relative z-10 flex items-center gap-3 w-full">
-                      <div
-                        className={[
-                          "w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0",
-                          hasPhoto
-                            ? "bg-black/5 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10 md:bg-white/10 md:ring-white/15 md:backdrop-blur-md"
-                            : "bg-black/5 dark:bg-white/10 ring-1 ring-black/5 dark:ring-white/10",
-                        ].join(" ")}
-                      >
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-electric-indigo/[0.08] rounded-lg flex items-center justify-center shrink-0">
                         <Icon className={`w-5 h-5 md:w-6 md:h-6 ${tile.iconColor}`} />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -576,7 +514,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     key={chip}
                     onClick={() => onNewChat?.(chip)}
-                    className="px-4 py-2 rounded-full bg-white/70 dark:bg-midnight-800/70 border border-light-300/60 dark:border-white/[0.06] text-text-primary dark:text-white text-sm font-medium hover:bg-white dark:hover:bg-midnight-700 hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[36px] backdrop-blur-sm"
+                    className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[36px]"
                   >
                     {chip}
                   </button>
@@ -590,7 +528,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <button
                         key={chip}
                         onClick={() => onNewChat?.(chip)}
-                        className="px-4 py-2 rounded-full bg-white/70 dark:bg-midnight-800/70 border border-light-300/60 dark:border-white/[0.06] text-text-primary dark:text-white text-sm font-medium hover:bg-white dark:hover:bg-midnight-700 active:scale-[0.97] transition-all min-h-[36px] backdrop-blur-sm"
+                        className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium active:scale-[0.97] transition-all min-h-[36px]"
                       >
                         {chip}
                       </button>
@@ -609,7 +547,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             {/* Text Input */}
-            <div className="relative w-full glass-card rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo/40 focus-within:ring-2 focus-within:ring-electric-indigo/15 transition-all">
+            <div className="relative w-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 rounded-lg px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo focus-within:ring-2 focus-within:ring-electric-indigo/10 transition-all">
               <input
                 ref={inputRef}
                 type="text"
@@ -624,7 +562,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={handleSendFromEmpty}
                 disabled={!chatInput.trim()}
-                className="p-3 rounded-full bg-gradient-to-br from-electric-indigo to-scout-purple text-white disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-electric-indigo/25 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-3 rounded-lg bg-electric-indigo hover:bg-indigo-600 text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Send message"
               >
                 <ChevronUp className="w-5 h-5" />
@@ -670,8 +608,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-light-100/90 dark:bg-midnight-950/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-light-300 dark:border-midnight-700">
+        <div className="fixed inset-0 bg-light-100/90 dark:bg-midnight-950/90 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-midnight-800 rounded-lg p-6 max-w-md w-full shadow-2xl border border-surface-border dark:border-midnight-700">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-yellow-400" />

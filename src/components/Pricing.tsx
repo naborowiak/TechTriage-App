@@ -4,7 +4,7 @@ import { PageView } from '../types';
 import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
 import { useAuth } from '../hooks/useAuth';
 import { ScoutSignalIcon } from './Logo';
-import { AnimatedElement, useParallax } from '../hooks/useAnimations';
+import { AnimatedElement } from '../hooks/useAnimations';
 
 interface PricingProps {
   onStart: () => void;
@@ -12,8 +12,6 @@ interface PricingProps {
 }
 
 export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
-  const { ref: heroParallaxRef, offset: heroOffset } = useParallax(0.3);
-  const { ref: ctaParallaxRef, offset: ctaOffset } = useParallax(0.2);
   const [isAnnual, setIsAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
@@ -180,36 +178,24 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       icon: MessageSquare,
       description: 'Text with a real support specialist who walks you through any tech issue, step by step.',
       availability: 'All Plans',
-      gradient: 'from-[#06B6D4] via-[#14D8A8] to-[#34D399]',
-      glow: 'shadow-[0_8px_30px_rgba(6,182,212,0.35)]',
-      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(6,182,212,0.5)]',
     },
     {
       name: 'Photo Analysis',
       icon: Camera,
       description: 'Send a photo of an error message, blinking light, or broken device — get a diagnosis in seconds.',
       availability: 'All Plans',
-      gradient: 'from-[#38BDF8] via-[#60A5FA] to-[#818CF8]',
-      glow: 'shadow-[0_8px_30px_rgba(56,189,248,0.35)]',
-      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(56,189,248,0.5)]',
     },
     {
       name: 'Voice Support',
       icon: Mic,
       description: 'Talk through your issue hands-free, just like a phone call. Your agent guides you step by step in real time.',
       availability: 'Home & Pro',
-      gradient: 'from-[#3B82F6] via-[#4F46E5] to-[#6366F1]',
-      glow: 'shadow-[0_8px_30px_rgba(59,130,246,0.35)]',
-      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(59,130,246,0.5)]',
     },
     {
       name: 'Video Diagnostic',
       icon: Video,
       description: 'Point your camera at the problem and get a live, real-time diagnosis from your support agent.',
       availability: 'Home & Pro (Credits)',
-      gradient: 'from-[#8B5CF6] via-[#A855F7] to-[#C084FC]',
-      glow: 'shadow-[0_8px_30px_rgba(139,92,246,0.35)]',
-      hoverGlow: 'group-hover:shadow-[0_8px_40px_rgba(139,92,246,0.5)]',
     },
   ];
 
@@ -255,18 +241,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   return (
     <section className="min-h-screen pt-[72px] bg-light-50 dark:bg-midnight-950 transition-colors">
       {/* Hero Section */}
-      <div ref={heroParallaxRef} className="bg-light-100 dark:bg-midnight-900 py-20 text-center relative overflow-hidden border-b border-light-300 dark:border-midnight-700">
-        {/* Background orbs with parallax */}
-        <div
-          className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl transition-transform duration-100"
-          style={{ transform: `translateY(${heroOffset * 0.5}px)` }}
-        ></div>
-        <div
-          className="absolute bottom-0 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl transition-transform duration-100"
-          style={{ transform: `translateY(${-heroOffset * 0.3}px)` }}
-        ></div>
-
-        <div className="container mx-auto px-6 max-w-4xl relative z-10">
+      <div className="section-light py-20 text-center border-b border-light-300 dark:border-midnight-700">
+        <div className="container mx-auto px-6 max-w-4xl">
           {/* Back to Dashboard link for logged-in users */}
           {user && (
             <button
@@ -278,15 +254,15 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             </button>
           )}
           <AnimatedElement animation="fadeInDown">
-            <div className="inline-flex items-center gap-2 bg-electric-indigo/10 backdrop-blur px-4 py-2 rounded-full text-electric-indigo text-sm mb-6 border border-electric-indigo/30">
+            <div className="inline-flex items-center gap-2 bg-electric-indigo/8 px-4 py-2 rounded-full text-electric-indigo text-sm mb-6 border border-electric-indigo/20">
               <ScoutSignalIcon size={18} animate={true} />
               <span className="font-semibold">Support available 24/7</span>
             </div>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1}>
-            <h1 className="text-4xl lg:text-5xl font-black text-text-primary dark:text-white mb-6 leading-tight">
+            <h1 className="text-4xl lg:text-5xl font-bold text-text-primary dark:text-white mb-6 leading-tight">
               Fix Your Tech Issues<br />
-              <span className="text-gradient-electric">In Minutes, Not Hours</span>
+              <span className="text-electric-indigo">In Minutes, Not Hours</span>
             </h1>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2}>
@@ -314,7 +290,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* Products Overview */}
-      <div className="bg-white dark:bg-midnight-950 py-16 border-b border-light-300 dark:border-midnight-700">
+      <div className="section-white py-16 border-b border-light-300 dark:border-midnight-700">
         <div className="container mx-auto px-6 max-w-6xl">
           <AnimatedElement animation="fadeInUp">
             <h2 className="text-2xl font-bold text-text-primary dark:text-white text-center mb-4">
@@ -327,24 +303,15 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {products.map((product, i) => (
               <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.1}>
-                <div className={`group relative rounded-2xl bg-gradient-to-br ${product.gradient} ${product.glow} ${product.hoverGlow} p-6 text-center overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 cursor-default`}>
-                  {/* Glossy shine overlay */}
-                  <div
-                    className="absolute inset-0 rounded-2xl pointer-events-none"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.1) 40%, transparent 60%)',
-                    }}
-                  />
-                  <div className="relative z-10">
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-white/20 backdrop-blur-sm border border-white/20">
-                      <product.icon className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="text-base font-bold text-white mb-1">{product.name}</h3>
-                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full mb-2 inline-block bg-white/20 text-white/90 backdrop-blur-sm">
-                      {product.availability}
-                    </span>
-                    <p className="text-white/80 text-xs leading-relaxed">{product.description}</p>
+                <div className="card-clean rounded-lg p-6 text-center cursor-default">
+                  <div className="w-12 h-12 rounded-lg bg-electric-indigo/8 flex items-center justify-center mx-auto mb-4">
+                    <product.icon className="w-6 h-6 text-electric-indigo" />
                   </div>
+                  <h3 className="text-base font-bold text-text-primary dark:text-white mb-1">{product.name}</h3>
+                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full mb-2 inline-block bg-electric-indigo/8 text-electric-indigo">
+                    {product.availability}
+                  </span>
+                  <p className="text-text-secondary text-xs leading-relaxed">{product.description}</p>
                 </div>
               </AnimatedElement>
             ))}
@@ -353,10 +320,10 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* Pricing Cards */}
-      <div className="bg-light-100 dark:bg-midnight-900 py-20">
+      <div className="section-light py-20">
         <div className="container mx-auto px-6 max-w-6xl">
           <AnimatedElement animation="fadeInUp">
-            <h2 className="text-3xl font-black text-text-primary dark:text-white text-center mb-4">
+            <h2 className="text-3xl font-bold text-text-primary dark:text-white text-center mb-4">
               Simple, Honest Pricing
             </h2>
             <p className="text-text-secondary text-center mb-8 max-w-xl mx-auto">
@@ -375,7 +342,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
               </span>
               <button
                 onClick={() => setIsAnnual(!isAnnual)}
-                className={`w-14 h-8 rounded-full p-1 transition-colors ${isAnnual ? 'bg-gradient-to-r from-electric-indigo to-electric-cyan' : 'bg-light-400'}`}
+                className={`w-14 h-8 rounded-full p-1 transition-colors ${isAnnual ? 'bg-electric-indigo' : 'bg-light-400'}`}
                 aria-label="Toggle annual billing"
               >
                 <div className={`w-6 h-6 bg-white rounded-full shadow transition-transform ${isAnnual ? 'translate-x-6' : ''}`} />
@@ -387,7 +354,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                 Annual
                 <span className={`ml-2 text-xs font-bold px-2 py-1 rounded-full transition-all ${
                   isAnnual
-                    ? 'text-white bg-gradient-to-r from-electric-indigo to-electric-cyan'
+                    ? 'text-white bg-electric-indigo'
                     : 'text-text-muted bg-light-300'
                 }`}>
                   Save up to 25%
@@ -401,40 +368,36 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             {plans.map((plan, i) => (
               <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
                 <div
-                  className={`bg-white dark:bg-midnight-800 rounded-3xl p-8 relative overflow-hidden transition-all border h-full flex flex-col hover:-translate-y-1 shadow-sm ${
+                  className={`card-clean rounded-lg p-8 relative overflow-hidden transition-all h-full flex flex-col hover:-translate-y-1 ${
                     user && currentTier === planToTier[plan.name]
-                      ? 'border-electric-cyan shadow-glow-cyan scale-[1.02] md:scale-105'
+                      ? 'border-2 border-electric-cyan shadow-clean-md'
                       : plan.highlight
-                      ? 'border-electric-indigo shadow-glow-electric scale-[1.02] md:scale-105'
-                      : 'border-light-300 dark:border-midnight-700 hover:border-light-400 dark:hover:border-midnight-600'
+                      ? 'border-2 border-electric-indigo shadow-clean-md'
+                      : ''
                   }`}
                 >
-                <div
-                  className="absolute inset-0 opacity-[0.07] dark:opacity-[0.05] pointer-events-none z-0"
-                  style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")" }}
-                />
-                <div className={`relative z-[1] flex flex-col flex-1 [text-shadow:0_1px_2px_rgba(0,0,0,0.06)] dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.4)] ${
+                <div className={`flex flex-col flex-1 ${
                   (user && currentTier === planToTier[plan.name]) || plan.highlight ? 'pt-4' : ''
                 }`}>
                 {user && currentTier === planToTier[plan.name] && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-electric-cyan text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg whitespace-nowrap">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-electric-cyan text-white text-xs font-bold px-4 py-2 rounded-full shadow-clean whitespace-nowrap">
                     YOUR PLAN
                   </div>
                 )}
                 {plan.highlight && !(user && currentTier === planToTier[plan.name]) && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-electric-indigo to-electric-cyan text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg whitespace-nowrap">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-electric-indigo text-white text-xs font-bold px-4 py-2 rounded-full shadow-clean whitespace-nowrap">
                     MOST POPULAR
                   </div>
                 )}
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    plan.highlight ? 'bg-gradient-to-br from-scout-purple to-electric-indigo' : 'bg-light-200 dark:bg-midnight-700'
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    plan.highlight ? 'bg-electric-indigo/8' : 'bg-light-200 dark:bg-midnight-700'
                   }`}>
-                    <plan.icon className={`w-6 h-6 ${plan.highlight ? 'text-white' : 'text-electric-indigo'}`} />
+                    <plan.icon className="w-6 h-6 text-electric-indigo" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-text-primary dark:text-white">{plan.name}</h3>
+                    <h3 className="text-xl font-bold text-text-primary dark:text-white">{plan.name}</h3>
                     <div className="text-sm text-text-secondary">{plan.tagline}</div>
                   </div>
                 </div>
@@ -442,7 +405,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                 <div className="mb-4">
                   {plan.isFree ? (
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-text-primary dark:text-white">Free</span>
+                      <span className="text-4xl font-bold text-text-primary dark:text-white">Free</span>
                     </div>
                   ) : (
                     <>
@@ -455,7 +418,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                         </span>
                         {/* Animated counting price via CSS @property */}
                         <span
-                          className="price-animated text-4xl font-black text-text-primary dark:text-white"
+                          className="price-animated text-4xl font-bold text-text-primary dark:text-white"
                           style={{
                             '--price-dollars': isAnnual ? Math.floor(plan.annualPrice) : Math.floor(plan.monthlyPrice),
                             '--price-cents': Math.round(((isAnnual ? plan.annualPrice : plan.monthlyPrice) % 1) * 100),
@@ -485,16 +448,16 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                 <button
                   onClick={() => handlePlanSelect(plan.name)}
                   disabled={isButtonDisabled(plan.name)}
-                  className={`w-full py-4 rounded-full font-bold text-base transition-all mb-6 flex items-center justify-center gap-2 ${
+                  className={`w-full py-3 rounded-lg font-semibold text-base transition-all mb-6 flex items-center justify-center gap-2 ${
                     isButtonDisabled(plan.name) && user && currentTier === planToTier[plan.name]
                       ? 'bg-light-200 dark:bg-midnight-700 text-text-muted cursor-not-allowed'
                       : isButtonDisabled(plan.name)
                       ? 'opacity-50 cursor-wait'
                       : plan.ctaStyle === 'primary'
-                      ? 'btn-gradient-electric text-white shadow-lg shadow-electric-indigo/25 hover:shadow-xl hover:shadow-electric-indigo/30'
+                      ? 'bg-electric-indigo hover:bg-indigo-600 text-white font-semibold px-6'
                       : plan.ctaStyle === 'outlined'
                       ? 'border-2 border-electric-indigo bg-electric-indigo/10 text-electric-indigo hover:bg-electric-indigo hover:text-white'
-                      : 'bg-light-200 hover:bg-light-300 text-text-primary border border-light-300'
+                      : 'bg-surface-100 dark:bg-midnight-700 hover:bg-surface-200 dark:hover:bg-midnight-600 text-text-primary'
                   }`}
                 >
                   {isCheckingOut === plan.name && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -512,12 +475,12 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   ))}
                   {'lockedFeatures' in plan && plan.lockedFeatures && (plan.lockedFeatures as string[]).map((feature, j) => (
                     <li key={`locked-${j}`} className="flex items-start gap-3 text-sm">
-                      <Lock className="w-5 h-5 shrink-0 mt-0.5 text-scout-purple/60" />
-                      <span className="text-gradient-locked">{feature}</span>
+                      <Lock className="w-5 h-5 shrink-0 mt-0.5 text-electric-indigo/60" />
+                      <span className="text-text-muted">{feature}</span>
                     </li>
                   ))}
                 </ul>
-                </div>{/* close relative text-shadow wrapper */}
+                </div>
               </div>
               </AnimatedElement>
             ))}
@@ -545,7 +508,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           <AnimatedElement animation="fadeInUp" delay={0.65}>
             <div className="mt-16 pt-12 border-t border-light-300 dark:border-midnight-700">
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-black text-text-primary dark:text-white mb-2">
+                <h3 className="text-2xl font-bold text-text-primary dark:text-white mb-2">
                   Feature Comparison
                 </h3>
                 <p className="text-text-secondary">
@@ -562,7 +525,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                         <div className="text-text-primary dark:text-white font-bold">Free</div>
                         <div className="text-xs text-text-muted">$0/mo</div>
                       </th>
-                      <th className="py-4 px-4 text-center bg-electric-indigo/5 rounded-t-xl">
+                      <th className="py-4 px-4 text-center">
                         <div className="text-electric-indigo font-bold">Home</div>
                         <div className="text-xs text-text-muted">${isAnnual ? '7.99' : '9.99'}/mo</div>
                       </th>
@@ -577,7 +540,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/10 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
                             <MessageSquare className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
@@ -589,7 +552,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <span className="text-sm text-text-secondary">5/month</span>
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                      <td className="py-4 px-4 text-center">
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -600,7 +563,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/10 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
                             <Camera className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
@@ -612,7 +575,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <span className="text-sm text-text-secondary">1/month</span>
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                      <td className="py-4 px-4 text-center">
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -623,8 +586,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-cyan/10 flex items-center justify-center">
-                            <Mic className="w-4 h-4 text-electric-cyan" />
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                            <Mic className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
                             <div className="font-medium text-text-primary dark:text-white">Voice Support</div>
@@ -635,7 +598,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <Lock className="w-4 h-4 text-text-muted mx-auto" />
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                      <td className="py-4 px-4 text-center">
                         <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -646,8 +609,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-scout-purple/10 flex items-center justify-center">
-                            <Video className="w-4 h-4 text-scout-purple" />
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                            <Video className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
                             <div className="font-medium text-text-primary dark:text-white">Video Diagnostic</div>
@@ -658,19 +621,19 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <Lock className="w-4 h-4 text-text-muted mx-auto" />
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
-                        <span className="text-sm font-semibold text-scout-purple">1/week</span>
+                      <td className="py-4 px-4 text-center">
+                        <span className="text-sm font-semibold text-electric-indigo">1/week</span>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-scout-purple">15/month</span>
+                        <span className="text-sm font-semibold text-electric-indigo">15/month</span>
                       </td>
                     </tr>
                     {/* Case History */}
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-cyan/10 flex items-center justify-center">
-                            <Clock className="w-4 h-4 text-electric-cyan" />
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
                             <div className="font-medium text-text-primary dark:text-white">Case History</div>
@@ -681,7 +644,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <span className="text-sm text-text-secondary">Last 5</span>
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                      <td className="py-4 px-4 text-center">
                         <span className="text-sm font-semibold text-electric-cyan">Full history</span>
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -692,8 +655,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-scout-purple/10 flex items-center justify-center">
-                            <Sparkles className="w-4 h-4 text-scout-purple" />
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                            <Sparkles className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
                             <div className="font-medium text-text-primary dark:text-white">Assist Pills</div>
@@ -704,7 +667,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <Check className="w-5 h-5 text-electric-cyan mx-auto" />
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                      <td className="py-4 px-4 text-center">
                         <Check className="w-5 h-5 text-electric-cyan mx-auto" />
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -715,7 +678,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <tr className="border-b border-light-200 dark:border-midnight-800">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/10 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
                             <FileText className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
@@ -727,7 +690,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <Check className="w-5 h-5 text-electric-cyan mx-auto" />
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5">
+                      <td className="py-4 px-4 text-center">
                         <Check className="w-5 h-5 text-electric-cyan mx-auto" />
                       </td>
                       <td className="py-4 px-4 text-center">
@@ -738,8 +701,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <tr>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-cyan/10 flex items-center justify-center">
-                            <Home className="w-4 h-4 text-electric-cyan" />
+                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                            <Home className="w-4 h-4 text-electric-indigo" />
                           </div>
                           <div>
                             <div className="font-medium text-text-primary dark:text-white">Multi-Home</div>
@@ -750,11 +713,11 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       <td className="py-4 px-4 text-center">
                         <span className="text-sm text-text-secondary">1</span>
                       </td>
-                      <td className="py-4 px-4 text-center bg-electric-indigo/5 rounded-b-xl">
+                      <td className="py-4 px-4 text-center">
                         <span className="text-sm text-text-secondary">1</span>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-scout-purple">Up to 5</span>
+                        <span className="text-sm font-semibold text-electric-indigo">Up to 5</span>
                       </td>
                     </tr>
                   </tbody>
@@ -767,26 +730,22 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* Value Proposition */}
-      <div className="bg-white dark:bg-midnight-950 py-16 border-y border-light-300 dark:border-midnight-700">
+      <div className="section-white py-16 border-y border-light-300 dark:border-midnight-700">
         <div className="container mx-auto px-6 max-w-3xl">
           <AnimatedElement animation="scaleIn">
-            <div className="bg-gradient-to-br from-light-100 to-white dark:from-midnight-800 dark:to-midnight-900 rounded-3xl p-10 text-center relative overflow-hidden border border-light-300 dark:border-midnight-700 shadow-lg">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-scout-purple/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-electric-indigo/10 rounded-full blur-3xl" />
-              <div className="relative">
-                <h3 className="text-2xl font-black text-text-primary dark:text-white mb-4">
-                  Why wait on hold when you don't have to?
-                </h3>
-                <p className="text-lg text-text-secondary mb-6 leading-relaxed max-w-xl mx-auto">
-                  Our support team is available <span className="text-gradient-electric font-bold">24/7</span> —
-                  weekends, holidays, 3am. Describe your issue or snap a photo
-                  and get expert guidance instantly.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 text-sm">
-                  <span className="px-4 py-2 bg-electric-indigo/10 text-electric-indigo rounded-full font-medium">No appointments</span>
-                  <span className="px-4 py-2 bg-electric-indigo/10 text-electric-indigo rounded-full font-medium">No waiting</span>
-                  <span className="px-4 py-2 bg-electric-indigo/10 text-electric-indigo rounded-full font-medium">No runaround</span>
-                </div>
+            <div className="card-clean rounded-lg p-10 text-center">
+              <h3 className="text-2xl font-bold text-text-primary dark:text-white mb-4">
+                Why wait on hold when you don't have to?
+              </h3>
+              <p className="text-lg text-text-secondary mb-6 leading-relaxed max-w-xl mx-auto">
+                Our support team is available <span className="text-electric-indigo font-bold">24/7</span> —
+                weekends, holidays, 3am. Describe your issue or snap a photo
+                and get expert guidance instantly.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 text-sm">
+                <span className="px-4 py-2 bg-electric-indigo/8 text-electric-indigo rounded-full font-medium">No appointments</span>
+                <span className="px-4 py-2 bg-electric-indigo/8 text-electric-indigo rounded-full font-medium">No waiting</span>
+                <span className="px-4 py-2 bg-electric-indigo/8 text-electric-indigo rounded-full font-medium">No runaround</span>
               </div>
             </div>
           </AnimatedElement>
@@ -794,16 +753,16 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* FAQ */}
-      <div className="bg-light-100 dark:bg-midnight-900 py-16 border-t border-light-300 dark:border-midnight-700">
+      <div className="section-light py-16 border-t border-light-300 dark:border-midnight-700">
         <div className="container mx-auto px-6 max-w-3xl">
           <AnimatedElement animation="fadeInUp">
             {/* FAQ Badge */}
             <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-scout-purple/30 shadow-sm">
-                <HelpCircle className="w-4 h-4 text-scout-purple" />
-                <span className="text-scout-purple font-semibold text-sm">FAQ</span>
+              <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-electric-indigo/20 shadow-clean-sm">
+                <HelpCircle className="w-4 h-4 text-electric-indigo" />
+                <span className="text-electric-indigo font-semibold text-sm">FAQ</span>
               </div>
-              <h2 className="text-3xl font-black text-text-primary dark:text-white mb-4 italic">
+              <h2 className="text-3xl font-bold text-text-primary dark:text-white mb-4">
                 Questions? We've Got Answers
               </h2>
               <p className="text-text-secondary">
@@ -816,9 +775,9 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
               {faqs.map((faq, i) => (
                 <div
                   key={i}
-                  className={`rounded-xl border transition-all duration-300 overflow-hidden ${
+                  className={`rounded-lg border transition-all duration-300 overflow-hidden ${
                     openFaq === i
-                      ? 'border-scout-purple/50 bg-gradient-to-br from-scout-purple/10 to-electric-indigo/5'
+                      ? 'border-electric-indigo/30 bg-electric-indigo/[0.03]'
                       : 'border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-800 hover:border-light-400 dark:hover:border-midnight-600'
                   }`}
                 >
@@ -828,12 +787,12 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     aria-expanded={openFaq === i}
                     aria-controls={`faq-answer-${i}`}
                   >
-                    <span className={`font-semibold text-lg text-text-primary dark:text-white`}>
+                    <span className="font-semibold text-lg text-text-primary dark:text-white">
                       {faq.q}
                     </span>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                       openFaq === i
-                        ? 'bg-scout-purple/20 text-scout-purple'
+                        ? 'bg-electric-indigo/10 text-electric-indigo'
                         : 'bg-light-200 dark:bg-midnight-700 text-text-secondary'
                     }`}>
                       {openFaq === i ? (
@@ -863,21 +822,10 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* Final CTA */}
-      <div ref={ctaParallaxRef} className="bg-gradient-to-br from-scout-purple to-electric-indigo py-20 relative overflow-hidden">
-        {/* Background decoration with parallax */}
-        <div className="absolute inset-0 opacity-20 z-0">
-          <div
-            className="absolute top-0 left-0 w-96 h-96 bg-electric-cyan rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-100"
-            style={{ transform: `translate(-50%, -50%) translateY(${ctaOffset * 0.5}px)` }}
-          ></div>
-          <div
-            className="absolute bottom-0 right-0 w-96 h-96 bg-scout-glow rounded-full blur-3xl translate-x-1/2 translate-y-1/2 transition-transform duration-100"
-            style={{ transform: `translate(50%, 50%) translateY(${-ctaOffset * 0.3}px)` }}
-          ></div>
-        </div>
-        <div className="container mx-auto px-6 max-w-3xl text-center relative z-10">
+      <div className="bg-electric-indigo py-20">
+        <div className="container mx-auto px-6 max-w-3xl text-center">
           <AnimatedElement animation="fadeInUp">
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Ready for Stress-Free Tech Support?
             </h2>
           </AnimatedElement>
@@ -890,13 +838,13 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => onNavigate(PageView.SIGNUP)}
-                className="bg-midnight-950 hover:bg-midnight-900 text-white font-bold px-10 py-4 rounded-full transition-all shadow-xl hover:shadow-2xl hover:scale-105 flex items-center justify-center gap-2"
+                className="bg-white text-electric-indigo font-semibold px-8 py-3.5 rounded-lg transition-all shadow-clean hover:shadow-clean-md flex items-center justify-center gap-2"
               >
                 Get Started <ArrowRight className="w-5 h-5" />
               </button>
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="border-2 border-white/80 text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-colors"
+                className="border-2 border-white/40 text-white font-semibold px-8 py-3.5 rounded-lg hover:bg-white/10 transition-colors"
               >
                 Compare Plans
               </button>

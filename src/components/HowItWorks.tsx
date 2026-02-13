@@ -1,20 +1,14 @@
 import React from 'react';
 import { MessageSquare, Camera, Mic, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText } from 'lucide-react';
 import { ScoutSignalIcon } from './Logo';
-import { AnimatedElement, useParallax } from '../hooks/useAnimations';
+import { AnimatedElement } from '../hooks/useAnimations';
 
 export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
-  const { ref: heroParallaxRef, offset: heroOffset } = useParallax(0.3);
-  const { ref: ctaParallaxRef, offset: ctaOffset } = useParallax(0.2);
   const features = [
     {
       name: 'Chat Support',
       tagline: 'Ask Anything',
       icon: MessageSquare,
-      color: 'from-electric-indigo to-electric-cyan',
-      bgColor: 'bg-electric-indigo/10',
-      borderColor: 'border-electric-indigo/30',
-      textColor: 'text-electric-indigo',
       description: 'Describe your problem in plain English and get step-by-step solutions from a real support agent. No tech jargon required — just tell us what\'s going on.',
       benefits: [
         'Instant responses 24/7',
@@ -28,10 +22,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       name: 'Photo Analysis',
       tagline: 'Show, Don\'t Tell',
       icon: Camera,
-      color: 'from-scout-purple to-electric-indigo',
-      bgColor: 'bg-scout-purple/10',
-      borderColor: 'border-scout-purple/30',
-      textColor: 'text-scout-purple',
       description: 'Upload a photo of error messages, blinking lights, or device screens. Your agent reads what\'s on screen and tells you exactly what\'s wrong and how to fix it.',
       benefits: [
         'Reads error codes & screens',
@@ -45,10 +35,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       name: 'Voice Support',
       tagline: 'Talk It Through',
       icon: Mic,
-      color: 'from-scout-purple to-electric-cyan',
-      bgColor: 'bg-electric-cyan/10',
-      borderColor: 'border-electric-cyan/30',
-      textColor: 'text-electric-cyan',
       description: 'Talk through your issue hands-free, just like a phone call. Your agent listens, asks follow-up questions, and walks you through the fix in real time.',
       benefits: [
         'Hands-free troubleshooting',
@@ -62,10 +48,6 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       name: 'Video Diagnostic',
       tagline: 'Show Us Live',
       icon: Video,
-      color: 'from-electric-indigo to-scout-purple',
-      bgColor: 'bg-electric-indigo/10',
-      borderColor: 'border-electric-indigo/30',
-      textColor: 'text-electric-indigo',
       description: 'Point your camera at the problem and get real-time diagnosis. Your agent sees exactly what you see and guides you step by step.',
       benefits: [
         'Real-time visual diagnosis',
@@ -85,20 +67,10 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
   ];
 
   return (
-    <div className="pt-32 pb-20 bg-light-50 dark:bg-midnight-950 min-h-screen transition-colors">
+    <div className="pt-32 pb-20 bg-white dark:bg-midnight-950 min-h-screen transition-colors">
       <div className="container mx-auto px-6">
         {/* Hero Section */}
-        <div ref={heroParallaxRef} className="text-center max-w-3xl mx-auto mb-20 relative">
-          {/* Parallax background orbs */}
-          <div
-            className="absolute -top-20 -left-20 w-64 h-64 bg-electric-indigo/10 rounded-full blur-3xl"
-            style={{ transform: `translateY(${heroOffset * 0.5}px)` }}
-          />
-          <div
-            className="absolute -bottom-20 -right-20 w-48 h-48 bg-scout-purple/10 rounded-full blur-3xl"
-            style={{ transform: `translateY(${-heroOffset * 0.3}px)` }}
-          />
-
+        <div className="text-center max-w-3xl mx-auto mb-20 relative">
           <AnimatedElement animation="fadeInDown" className="relative z-10">
             <div className="inline-flex items-center gap-2 mb-6">
               <ScoutSignalIcon size={24} animate={true} />
@@ -106,8 +78,8 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
             </div>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1} className="relative z-10">
-            <h1 className="text-5xl font-black text-text-primary dark:text-white mb-6 tracking-tight">
-              Four ways to fix your <span className="text-gradient-electric">tech</span>
+            <h1 className="text-5xl font-bold text-text-primary dark:text-white mb-6 tracking-tight">
+              Four ways to fix your <span className="text-electric-indigo">tech</span>
             </h1>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2} className="relative z-10">
@@ -126,27 +98,24 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               delay={0.1 + i * 0.15}
             >
               <div
-                className={`${feature.bgColor} ${feature.borderColor} border rounded-3xl p-8 relative overflow-hidden group hover:border-opacity-60 transition-all duration-300 hover:-translate-y-1 h-full`}
+                className="card-clean rounded-lg p-8 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 h-full"
               >
-                {/* Background gradient orb */}
-                <div className={`absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br ${feature.color} opacity-10 rounded-full blur-3xl group-hover:opacity-20 transition-opacity`}></div>
-
                 <div className="relative z-10">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                        <feature.icon className="w-7 h-7 text-white" />
+                      <div className="w-14 h-14 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                        <feature.icon className="w-7 h-7 text-electric-indigo" />
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-text-primary dark:text-white">{feature.name}</h3>
-                        <p className={`text-sm font-medium ${feature.textColor}`}>{feature.tagline}</p>
+                        <p className="text-sm font-medium text-electric-indigo">{feature.tagline}</p>
                       </div>
                     </div>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                       feature.availability === 'All Plans'
-                        ? 'bg-electric-cyan/20 text-electric-cyan'
-                        : 'bg-scout-purple/20 text-scout-glow'
+                        ? 'bg-electric-indigo/10 text-electric-indigo'
+                        : 'bg-surface-100 dark:bg-midnight-700 text-text-secondary dark:text-light-400'
                     }`}>
                       {feature.availability}
                     </span>
@@ -161,14 +130,14 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                   <ul className="space-y-2 mb-6">
                     {feature.benefits.map((benefit, j) => (
                       <li key={j} className="flex items-center gap-3 text-sm">
-                        <CheckCircle2 className={`w-4 h-4 ${feature.textColor} shrink-0`} />
+                        <CheckCircle2 className="w-4 h-4 text-electric-indigo shrink-0" />
                         <span className="text-text-secondary">{benefit}</span>
                       </li>
                     ))}
                   </ul>
 
                   {/* How it works */}
-                  <div className="bg-white dark:bg-midnight-800 rounded-xl px-4 py-3 border border-light-300 dark:border-midnight-600">
+                  <div className="bg-surface-50 dark:bg-midnight-800 rounded-lg px-4 py-3 border border-surface-border dark:border-midnight-700">
                     <p className="text-xs text-text-muted uppercase tracking-wider mb-1">How it works</p>
                     <p className="text-sm text-text-primary dark:text-white font-medium">{feature.howItWorks}</p>
                   </div>
@@ -180,15 +149,12 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
         {/* Case Report Section */}
         <AnimatedElement animation="fadeInUp">
-          <div className="bg-white dark:bg-midnight-900 rounded-[2rem] p-8 md:p-12 mb-24 border border-light-300 dark:border-midnight-700 relative overflow-hidden shadow-lg">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-scout-purple/10 blur-[100px] rounded-full"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-electric-indigo/10 blur-[100px] rounded-full"></div>
-
+          <div className="card-clean rounded-lg p-8 md:p-12 mb-24 relative overflow-hidden">
             <div className="relative z-10">
               <AnimatedElement animation="fadeInLeft" delay={0.1}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-electric-indigo" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-text-primary dark:text-white">Every Session Gets a Case Report</h2>
@@ -200,8 +166,8 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               <div className="grid md:grid-cols-4 gap-4 mb-8">
                 {reportSections.map((section, i) => (
                   <AnimatedElement key={i} animation="scaleIn" delay={0.2 + i * 0.1}>
-                    <div className="bg-light-100 dark:bg-midnight-800 rounded-xl p-5 border border-light-300 dark:border-midnight-600 hover:border-scout-purple/50 transition-colors h-full">
-                      <section.icon className="w-6 h-6 text-scout-purple mb-3" />
+                    <div className="bg-surface-50 dark:bg-midnight-800 rounded-lg p-5 border border-surface-border dark:border-midnight-700 hover:border-electric-indigo/30 transition-colors h-full">
+                      <section.icon className="w-6 h-6 text-electric-indigo mb-3" />
                       <h4 className="text-text-primary dark:text-white font-bold mb-1">{section.title}</h4>
                       <p className="text-text-muted text-xs">{section.desc}</p>
                     </div>
@@ -210,13 +176,13 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               </div>
 
               <AnimatedElement animation="fadeInUp" delay={0.5}>
-                <div className="bg-midnight-950 rounded-xl overflow-hidden border border-midnight-700 shadow-xl">
+                <div className="bg-midnight-950 rounded-lg overflow-hidden border border-midnight-700 shadow-clean-lg">
                   {/* PDF Header */}
-                  <div className="bg-midnight-900 px-6 py-4 border-b-2 border-scout-purple">
+                  <div className="bg-midnight-900 px-6 py-4 border-b-2 border-electric-indigo">
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-white font-bold text-lg tracking-wide">TOTALASSIST</h4>
-                        <p className="text-electric-cyan text-xs font-medium tracking-wider">CASE REPORT</p>
+                        <p className="text-electric-indigo text-xs font-medium tracking-wider">CASE REPORT</p>
                       </div>
                       <div className="text-right">
                         <p className="text-white text-xs font-bold">DIAGNOSTIC REPORT</p>
@@ -237,7 +203,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                   <div className="px-6 pb-6 space-y-5 text-sm">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
                         <span className="text-text-muted text-xs font-bold tracking-wider">SESSION OVERVIEW</span>
                       </div>
                       <div className="grid grid-cols-3 gap-4 text-xs">
@@ -249,7 +215,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
                         <span className="text-text-muted text-xs font-bold tracking-wider">ISSUE SUMMARY</span>
                       </div>
                       <p className="text-white/90">Router showing red power LED with blinking amber internet indicator, unable to connect to network.</p>
@@ -257,7 +223,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
                         <span className="text-text-muted text-xs font-bold tracking-wider">ANALYSIS & DIAGNOSIS</span>
                       </div>
                       <p className="text-white/90">ISP connection failure due to firmware corruption. Router required factory reset to clear corrupted authentication cache.</p>
@@ -265,7 +231,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
                         <span className="text-text-muted text-xs font-bold tracking-wider">ACTIONS TAKEN</span>
                       </div>
                       <div className="space-y-2">
@@ -280,13 +246,13 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-scout-purple rounded-full"></div>
+                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
                         <span className="text-text-muted text-xs font-bold tracking-wider">RECOMMENDATIONS</span>
                       </div>
                       <ul className="space-y-1">
                         {['Update router firmware to latest version', 'Consider enabling automatic updates'].map((rec, i) => (
                           <li key={i} className="flex items-center gap-2 text-white/90">
-                            <div className="w-1.5 h-1.5 bg-scout-purple rounded-full"></div>
+                            <div className="w-1.5 h-1.5 bg-electric-indigo rounded-full"></div>
                             {rec}
                           </li>
                         ))}
@@ -298,7 +264,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                   <div className="bg-midnight-900 px-6 py-3 border-t border-midnight-700">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-text-muted">Full conversation transcript included in report</span>
-                      <span className="text-scout-purple font-bold">TOTALASSIST</span>
+                      <span className="text-electric-indigo font-bold">TOTALASSIST</span>
                     </div>
                   </div>
                 </div>
@@ -310,14 +276,14 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
         {/* Why Scout Section */}
         <div className="grid md:grid-cols-3 gap-8 mb-24">
           {[
-            { icon: Clock, color: 'text-electric-indigo', title: 'Available 24/7', desc: 'No waiting on hold or scheduling appointments. TotalAssist is ready whenever tech trouble strikes.' },
-            { icon: Shield, color: 'text-electric-cyan', title: 'Remembers Everything', desc: 'TotalAssist saves your device info and past issues. Never explain your setup twice or remember what worked last time.' },
-            { icon: Zap, color: 'text-scout-purple', title: 'Actually Affordable', desc: 'Most issues solved in minutes for a fraction of a service call. Unlimited help with our memberships.' },
+            { icon: Clock, title: 'Available 24/7', desc: 'No waiting on hold or scheduling appointments. TotalAssist is ready whenever tech trouble strikes.' },
+            { icon: Shield, title: 'Remembers Everything', desc: 'TotalAssist saves your device info and past issues. Never explain your setup twice or remember what worked last time.' },
+            { icon: Zap, title: 'Actually Affordable', desc: 'Most issues solved in minutes for a fraction of a service call. Unlimited help with our memberships.' },
           ].map((item, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.1 + i * 0.15}>
               <div className="text-center group">
-                <div className="w-16 h-16 bg-white dark:bg-midnight-800 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-light-300 dark:border-midnight-600 group-hover:border-electric-indigo/50 group-hover:scale-110 transition-all shadow-sm">
-                  <item.icon className={`w-8 h-8 ${item.color}`} />
+                <div className="w-16 h-16 card-clean rounded-lg flex items-center justify-center mx-auto mb-5">
+                  <item.icon className="w-8 h-8 text-electric-indigo" />
                 </div>
                 <h4 className="text-xl font-bold text-text-primary dark:text-white mb-3">{item.title}</h4>
                 <p className="text-text-secondary text-sm font-medium">{item.desc}</p>
@@ -328,28 +294,18 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       </div>
 
       {/* Full-width CTA Section */}
-      <div ref={ctaParallaxRef} className="bg-gradient-to-br from-scout-purple to-electric-indigo py-20 text-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div
-            className="absolute top-0 left-0 w-96 h-96 bg-electric-cyan rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"
-            style={{ transform: `translate(-50%, -50%) translateY(${ctaOffset * 0.5}px)` }}
-          ></div>
-          <div
-            className="absolute bottom-0 right-0 w-96 h-96 bg-scout-glow rounded-full blur-3xl translate-x-1/2 translate-y-1/2"
-            style={{ transform: `translate(50%, 50%) translateY(${-ctaOffset * 0.3}px)` }}
-          ></div>
-        </div>
+      <div className="bg-electric-indigo py-20 text-center relative overflow-hidden">
         <div className="container mx-auto px-6 relative z-10">
           <AnimatedElement animation="fadeInUp">
-            <h3 className="text-3xl md:text-4xl font-black text-white mb-4">Ready to fix your tech?</h3>
+            <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to fix your tech?</h3>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.15}>
-            <p className="text-white/90 font-medium mb-8 max-w-xl mx-auto">Start with a free account. No credit card required.</p>
+            <p className="text-white/80 font-medium mb-8 max-w-xl mx-auto">Start with a free account. No credit card required.</p>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.3}>
             <button
               onClick={onStart}
-              className="bg-midnight-950 hover:bg-midnight-900 text-white font-bold py-4 px-12 rounded-full shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 mx-auto"
+              className="bg-white text-electric-indigo hover:bg-surface-50 font-bold py-4 px-12 rounded-lg shadow-clean-md transition-all flex items-center gap-3 mx-auto"
             >
               Get Started Free <ArrowRight className="w-5 h-5" />
             </button>

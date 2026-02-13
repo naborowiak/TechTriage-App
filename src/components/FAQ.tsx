@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, MessageSquare, Camera, Video, CreditCard, Shield, HelpCircle, ArrowRight, Mic, Plus, Minus } from 'lucide-react';
 import { PageView } from '../types';
-import { AnimatedElement, useParallax } from '../hooks/useAnimations';
+import { AnimatedElement } from '../hooks/useAnimations';
 
 interface FAQProps {
   onNavigate: (view: PageView) => void;
@@ -23,8 +23,6 @@ interface FAQCategory {
 export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<string | null>(null);
-  const { ref: heroParallaxRef, offset: heroOffset } = useParallax(0.3);
-  const { ref: ctaParallaxRef, offset: ctaOffset } = useParallax(0.2);
 
   const categories: FAQCategory[] = [
     {
@@ -207,28 +205,20 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
   };
 
   return (
-    <section className="min-h-screen pt-[72px] bg-light-50 dark:bg-midnight-950 transition-colors">
+    <section className="min-h-screen pt-[72px] bg-white dark:bg-midnight-950 transition-colors">
       {/* Hero Section */}
-      <div ref={heroParallaxRef} className="bg-light-100 dark:bg-midnight-900 py-20 relative overflow-hidden border-b border-light-300 dark:border-midnight-700">
-        <div
-          className="absolute top-0 right-0 w-96 h-96 bg-scout-purple/10 rounded-full blur-3xl transition-transform duration-100"
-          style={{ transform: `translateY(${heroOffset * 0.5}px)` }}
-        />
-        <div
-          className="absolute bottom-0 left-0 w-64 h-64 bg-electric-indigo/10 rounded-full blur-3xl transition-transform duration-100"
-          style={{ transform: `translateY(${-heroOffset * 0.3}px)` }}
-        />
+      <div className="section-light py-20 relative overflow-hidden border-b border-surface-border dark:border-midnight-700">
         <div className="container mx-auto px-6 max-w-4xl relative">
           <div className="text-center mb-12">
             {/* FAQ Badge */}
             <AnimatedElement animation="fadeInDown">
-              <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-scout-purple/30 shadow-sm">
-                <HelpCircle className="w-4 h-4 text-scout-purple" />
-                <span className="text-scout-purple font-semibold text-sm">FAQ</span>
+              <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-surface-border dark:border-midnight-700">
+                <HelpCircle className="w-4 h-4 text-electric-indigo" />
+                <span className="text-electric-indigo font-semibold text-sm">FAQ</span>
               </div>
             </AnimatedElement>
             <AnimatedElement animation="fadeInUp" delay={0.1}>
-              <h1 className="text-4xl lg:text-6xl font-black text-text-primary dark:text-white mb-4 italic">
+              <h1 className="text-4xl lg:text-6xl font-bold text-text-primary dark:text-white mb-4">
                 Frequently Asked Questions
               </h1>
             </AnimatedElement>
@@ -242,10 +232,10 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
           {/* Browse by Category Banner */}
           <AnimatedElement animation="fadeInUp" delay={0.3}>
             <div className="relative max-w-2xl mx-auto">
-              <div className="bg-white dark:bg-midnight-800 backdrop-blur-sm border border-scout-purple/30 rounded-2xl p-6 text-center shadow-sm">
+              <div className="card-clean rounded-lg p-6 text-center">
                 <div className="flex items-center justify-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center">
-                    <Search className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                    <Search className="w-5 h-5 text-electric-indigo" />
                   </div>
                   <h3 className="text-xl font-bold text-text-primary dark:text-white">Browse by Category</h3>
                 </div>
@@ -259,7 +249,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       </div>
 
       {/* Category Pills */}
-      <div className="bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 sticky top-[72px] z-40 shadow-sm">
+      <div className="bg-white dark:bg-midnight-900 border-b border-surface-border dark:border-midnight-700 sticky top-[72px] z-40">
         <div className="container mx-auto px-6 py-4">
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             <button
@@ -267,7 +257,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
               className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
                 activeCategory === null
                   ? 'bg-electric-indigo text-white'
-                  : 'bg-light-200 dark:bg-midnight-800 text-text-secondary hover:bg-light-300 dark:hover:bg-midnight-700 hover:text-text-primary dark:hover:text-white'
+                  : 'bg-surface-100 dark:bg-midnight-800 text-text-secondary hover:bg-surface-200 dark:hover:bg-midnight-700 hover:text-text-primary dark:hover:text-white'
               }`}
             >
               All Topics
@@ -279,7 +269,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
                 className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
                   activeCategory === category.id
                     ? 'bg-electric-indigo text-white'
-                    : 'bg-light-200 dark:bg-midnight-800 text-text-secondary hover:bg-light-300 dark:hover:bg-midnight-700 hover:text-text-primary dark:hover:text-white'
+                    : 'bg-surface-100 dark:bg-midnight-800 text-text-secondary hover:bg-surface-200 dark:hover:bg-midnight-700 hover:text-text-primary dark:hover:text-white'
                 }`}
               >
                 <category.icon className="w-4 h-4" />
@@ -297,14 +287,13 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             .filter(category => activeCategory === null || category.id === activeCategory)
             .map((category, categoryIndex) => (
                 <AnimatedElement key={category.id} animation="fadeInUp" delay={0.1 * categoryIndex}>
-                  <div className="bg-white dark:bg-midnight-900 rounded-3xl shadow-sm border border-light-300 dark:border-midnight-700 overflow-hidden">
+                  <div className="card-clean rounded-lg overflow-hidden">
                     {/* Category Header */}
-                    <div className="px-8 py-6 border-b border-light-300 dark:border-midnight-700 flex items-center gap-4">
+                    <div className="px-8 py-6 border-b border-surface-border dark:border-midnight-700 flex items-center gap-4">
                       <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: `${category.color}15` }}
+                        className="w-12 h-12 rounded-lg flex items-center justify-center bg-electric-indigo/8"
                       >
-                        <category.icon className="w-6 h-6" style={{ color: category.color }} />
+                        <category.icon className="w-6 h-6 text-electric-indigo" />
                       </div>
                       <div>
                         <h2 className="text-xl font-bold text-text-primary dark:text-white">{category.name}</h2>
@@ -319,23 +308,23 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
                       return (
                         <div
                           key={index}
-                          className={`rounded-xl border transition-all duration-300 overflow-hidden ${
+                          className={`rounded-lg border transition-all duration-300 overflow-hidden ${
                             isOpen
-                              ? 'border-scout-purple/50 bg-gradient-to-br from-scout-purple/10 to-electric-indigo/5'
-                              : 'border-light-300 dark:border-midnight-700 bg-light-100 dark:bg-midnight-800 hover:border-light-400 dark:hover:border-midnight-600'
+                              ? 'border-electric-indigo/30 bg-electric-indigo/[0.03]'
+                              : 'border-surface-border dark:border-midnight-700 bg-surface-50 dark:bg-midnight-800 hover:border-surface-200 dark:hover:border-midnight-600'
                           }`}
                         >
                           <button
                             onClick={() => toggleFaq(category.id, index)}
                             className="w-full p-5 flex items-center justify-between text-left"
                           >
-                            <span className={`font-semibold pr-4 text-text-primary dark:text-white`}>
+                            <span className="font-semibold pr-4 text-text-primary dark:text-white">
                               {faq.question}
                             </span>
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                               isOpen
-                                ? 'bg-scout-purple/20 text-scout-purple'
-                                : 'bg-light-200 dark:bg-midnight-700 text-text-secondary'
+                                ? 'bg-electric-indigo/10 text-electric-indigo'
+                                : 'bg-surface-100 dark:bg-midnight-700 text-text-secondary'
                             }`}>
                               {isOpen ? (
                                 <Minus className="w-5 h-5" />
@@ -364,20 +353,10 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       </div>
 
       {/* Still Need Help CTA */}
-      <div ref={ctaParallaxRef} className="bg-gradient-to-br from-scout-purple to-electric-indigo py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div
-            className="absolute top-0 left-0 w-96 h-96 bg-electric-cyan rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 transition-transform duration-100"
-            style={{ transform: `translate(-50%, -50%) translateY(${ctaOffset * 0.5}px)` }}
-          ></div>
-          <div
-            className="absolute bottom-0 right-0 w-96 h-96 bg-scout-glow rounded-full blur-3xl translate-x-1/2 translate-y-1/2 transition-transform duration-100"
-            style={{ transform: `translate(50%, 50%) translateY(${-ctaOffset * 0.3}px)` }}
-          ></div>
-        </div>
+      <div className="bg-electric-indigo py-16 relative overflow-hidden">
         <div className="container mx-auto px-6 max-w-3xl text-center relative z-10">
           <AnimatedElement animation="fadeInUp">
-            <h2 className="text-3xl font-black text-white mb-4">
+            <h2 className="text-3xl font-bold text-white mb-4">
               Still have questions?
             </h2>
           </AnimatedElement>
@@ -390,13 +369,13 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => onNavigate(PageView.SIGNUP)}
-                className="bg-midnight-950 hover:bg-midnight-900 text-white font-bold px-10 py-4 rounded-full transition-all shadow-xl hover:shadow-2xl hover:scale-105 flex items-center justify-center gap-2"
+                className="bg-white text-electric-indigo hover:bg-surface-50 font-bold px-10 py-4 rounded-lg transition-all shadow-clean-md flex items-center justify-center gap-2"
               >
                 Get Started Free <ArrowRight className="w-5 h-5" />
               </button>
               <button
                 onClick={() => onNavigate(PageView.PRICING)}
-                className="border-2 border-white/80 text-white font-bold px-10 py-4 rounded-full hover:bg-white/10 transition-colors"
+                className="border-2 border-white/40 text-white font-bold px-10 py-4 rounded-lg hover:bg-white/10 transition-colors"
               >
                 View Plans
               </button>

@@ -16,7 +16,7 @@ export const SystemStatusBadge: React.FC = () => {
 
   return (
     <div
-      className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/60 dark:bg-midnight-800/50 border border-light-300/60 dark:border-white/[0.06] backdrop-blur-sm"
+      className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700"
       role="status"
       aria-live="polite"
     >

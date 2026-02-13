@@ -182,7 +182,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
           </button>
         )}
       </div>
-      <div className="glass-card rounded-2xl divide-y divide-light-200/80 dark:divide-white/[0.04] overflow-hidden">
+      <div className="card-clean rounded-lg divide-y divide-light-200/80 dark:divide-white/[0.04] overflow-hidden">
         {displayCases.map((c) => {
           const status = statusConfig[c.status] || statusConfig.open;
           return (

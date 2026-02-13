@@ -25,7 +25,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
 }) => {
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 dock-glass border-t border-light-300/60 dark:border-white/[0.06] pb-safe"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 dock-clean pb-safe"
       role="tablist"
       aria-label="Main navigation"
     >
@@ -45,12 +45,8 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
                 onClick={() => onTabChange(tab.id)}
                 className="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] -mt-4"
               >
-                <div className="relative w-13 h-13 rounded-full bg-gradient-to-br from-electric-indigo via-scout-purple to-electric-cyan flex items-center justify-center shadow-[0_4px_20px_rgba(99,102,241,0.4)]">
-                  {/* Inner glow ring */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-electric-indigo to-scout-purple flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
+                <div className="w-12 h-12 rounded-full bg-electric-indigo shadow-clean-md flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-[10px] font-semibold text-electric-indigo mt-1">
                   {tab.label}
