@@ -434,12 +434,31 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
 
     const contents = buildContents(history);
 
-    const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
-    if (image) {
-      const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
-      currentParts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+    // Detect unpaired functionCall at end of contents — Gemini requires a
+    // functionResponse after every functionCall. The most recent guided action
+    // is always unpaired because the current user message is appended separately.
+    const lastContent = contents[contents.length - 1];
+    const unpairedFc = lastContent?.role === 'model'
+      ? lastContent.parts?.find((p: any) => p.functionCall)?.functionCall
+      : null;
+
+    if (unpairedFc) {
+      contents.push({
+        role: 'user',
+        parts: [{ functionResponse: { name: unpairedFc.name, response: { result: message } } }]
+      });
+      if (image) {
+        const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
+        contents.push({ role: 'user', parts: [{ text: message }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] });
+      }
+    } else {
+      const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
+      if (image) {
+        const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
+        currentParts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+      }
+      contents.push({ role: 'user', parts: currentParts });
     }
-    contents.push({ role: 'user', parts: currentParts });
 
     const systemPrompt = SYSTEM_INSTRUCTION(agentName, userContext);
     const response: GenerateContentResponse = await ai.models.generateContent({
@@ -488,12 +507,29 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
 
     const contents = buildContents(history);
 
-    const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
-    if (image) {
-      const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
-      currentParts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+    // Detect unpaired functionCall (same fix as /chat endpoint)
+    const lastContent = contents[contents.length - 1];
+    const unpairedFc = lastContent?.role === 'model'
+      ? lastContent.parts?.find((p: any) => p.functionCall)?.functionCall
+      : null;
+
+    if (unpairedFc) {
+      contents.push({
+        role: 'user',
+        parts: [{ functionResponse: { name: unpairedFc.name, response: { result: message } } }]
+      });
+      if (image) {
+        const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
+        contents.push({ role: 'user', parts: [{ text: message }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] });
+      }
+    } else {
+      const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
+      if (image) {
+        const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
+        currentParts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+      }
+      contents.push({ role: 'user', parts: currentParts });
     }
-    contents.push({ role: 'user', parts: currentParts });
 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,

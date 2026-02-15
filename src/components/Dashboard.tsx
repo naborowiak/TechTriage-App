@@ -202,12 +202,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "chat" as const,
       iconColor: "text-[#06B6D4]",
+      backgroundImage: "/type_question.jpeg",
     },
     {
       id: "photo" as const,
       icon: Camera,
-      label: "Show the Problem",
-      description: "Take or upload a photo",
+      label: "Snap a Photo",
+      description: "Send a picture of the issue",
       lockedForTiers: [] as string[],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("photo");
@@ -215,7 +216,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "photo" as const,
       iconColor: "text-electric-indigo",
-      backgroundImage: "/tech-life-home.png",
+      backgroundImage: "/show_problem.jpg",
     },
     {
       id: "voice" as const,
@@ -229,12 +230,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "signal" as const,
       iconColor: "text-[#8B5CF6]",
+      backgroundImage: "/talk_support.jpeg",
     },
     {
       id: "video" as const,
       icon: Video,
-      label: "Show Me on Camera",
-      description: "Contact us with video chat",
+      label: "Live Video Support",
+      description: "Real-time video session with an expert",
       lockedForTiers: ["guest", "free"],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("video");
@@ -242,6 +244,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "videoDiagnostic" as const,
       iconColor: "text-scout-purple",
+      backgroundImage: "/video_support.png",
     },
   ];
 
@@ -407,7 +410,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {triageTiles.map((tile) => {
                 const Icon = tile.icon;
                 const isLocked = tile.lockedForTiers.includes(tier);
-                const hasPhoto = !!(tile as any).backgroundImage;
 
                 return (
                   <button
@@ -433,23 +435,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
                   >
                     {/* Photo background — desktop only */}
-                    {hasPhoto && (
-                      <>
-                        <div
-                          className="hidden md:block absolute inset-0 rounded-lg overflow-hidden pointer-events-none"
-                          aria-hidden="true"
-                        >
-                          <div
-                            className="absolute inset-0 bg-cover bg-top"
-                            style={{ backgroundImage: `url(${(tile as any).backgroundImage})` }}
-                          />
-                        </div>
-                        <div
-                          className="hidden md:block absolute inset-0 rounded-lg bg-gradient-to-b from-black/10 via-black/40 to-black/70 pointer-events-none"
-                          aria-hidden="true"
-                        />
-                      </>
-                    )}
+                    <div
+                      className="hidden md:block absolute inset-0 rounded-lg overflow-hidden pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: `url(${tile.backgroundImage})` }}
+                      />
+                    </div>
+                    <div
+                      className="hidden md:block absolute inset-0 rounded-lg bg-gradient-to-b from-black/10 via-black/40 to-black/70 pointer-events-none"
+                      aria-hidden="true"
+                    />
 
                     {/* Lock badge pill (locked tiles) */}
                     {isLocked && (
@@ -470,22 +468,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <Icon className={`w-5 h-5 md:w-6 md:h-6 ${tile.iconColor}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3
-                          className={`text-sm md:text-lg font-bold leading-tight truncate ${
-                            hasPhoto
-                              ? "text-text-primary dark:text-white md:text-white"
-                              : "text-text-primary dark:text-white"
-                          }`}
-                        >
+                        <h3 className="text-sm md:text-lg font-bold leading-tight truncate text-text-primary dark:text-white md:text-white">
                           {tile.label}
                         </h3>
-                        <p
-                          className={`text-xs md:text-sm mt-0.5 md:mt-1 line-clamp-2 ${
-                            hasPhoto
-                              ? "text-text-secondary dark:text-white/60 md:text-white/60"
-                              : "text-text-secondary dark:text-white/60"
-                          }`}
-                        >
+                        <p className="text-xs md:text-sm mt-0.5 md:mt-1 line-clamp-2 text-text-secondary dark:text-white/60 md:text-white/60">
                           {isLocked ? "Requires Home or Pro plan" : tile.description}
                         </p>
                       </div>

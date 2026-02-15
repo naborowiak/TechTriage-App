@@ -454,6 +454,17 @@ const HERO_SLIDES = [
   { id: 4, top: "/slide-4.png", alt: "Homeowner showing a device issue on video for live diagnosis" },
 ];
 
+const TYPEWRITER_WORDS = [
+  'Wi-Fi',
+  'Smart TVs',
+  'Printers',
+  'Thermostats',
+  'Streaming',
+  'Routers',
+  'Smart Home',
+  'Appliances',
+];
+
 const Hero: React.FC<{
   onFreeTrial: () => void;
   onPricing: () => void;
@@ -463,6 +474,40 @@ const Hero: React.FC<{
 }) => {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  // Typewriter effect
+  const [displayText, setDisplayText] = useState('');
+  const [wordIndex, setWordIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentWord = TYPEWRITER_WORDS[wordIndex];
+    const typeSpeed = isDeleting ? 40 : 80;
+    const pauseDelay = isDeleting ? 0 : 2000;
+
+    if (!isDeleting && displayText === currentWord) {
+      // Finished typing — pause then start deleting
+      const timer = setTimeout(() => setIsDeleting(true), pauseDelay);
+      return () => clearTimeout(timer);
+    }
+
+    if (isDeleting && displayText === '') {
+      // Finished deleting — move to next word
+      setIsDeleting(false);
+      setWordIndex((prev) => (prev + 1) % TYPEWRITER_WORDS.length);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setDisplayText(
+        isDeleting
+          ? currentWord.substring(0, displayText.length - 1)
+          : currentWord.substring(0, displayText.length + 1)
+      );
+    }, typeSpeed);
+
+    return () => clearTimeout(timer);
+  }, [displayText, isDeleting, wordIndex]);
 
   useEffect(() => {
     if (paused) return;
@@ -484,14 +529,18 @@ const Hero: React.FC<{
           <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-[85px]">
             <div className="max-w-[520px] lg:max-w-none mx-auto">
               <h1
-                className="font-bold font-sora text-white mb-6 mt-10 text-balance text-center lg:text-left text-[40px] sm:text-[56px] lg:text-[70px] xl:text-[77px]"
-                style={{ letterSpacing: '-4px', lineHeight: '105%' }}
+                className="font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[40px] sm:text-[56px] lg:text-[64px] xl:text-[72px]"
+                style={{ letterSpacing: '-3px', lineHeight: '110%' }}
               >
-                Chat. Snap.<br />Call. Show.{' '}Fixed<span className="hero-cursor" aria-hidden="true" />
+                Get help with<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
+                  {displayText}
+                </span>
+                <span className="hero-cursor" aria-hidden="true" />
               </h1>
               <div className="mt-4 lg:mr-8 lg:max-w-[430px]">
-                <p className="font-sora text-center lg:text-left text-base md:text-[19px] font-normal leading-relaxed text-white my-0 text-balance">
-                  Your 24/7 AI-powered home tech support
+                <p className="font-sora text-center lg:text-left text-base md:text-[19px] font-normal leading-relaxed text-white/80 my-0 text-balance">
+                  24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
               </div>
             </div>

@@ -13,7 +13,7 @@ export const sendMessageToGemini = async (
 ): Promise<{ text: string, functionCall?: { name: string; args: Record<string, unknown> } }> => {
   try {
     const historyPayload = history
-      .filter(msg => msg.id !== 'welcome')
+      .filter(msg => msg.id !== 'welcome' && !msg.text.includes('has connected to your session'))
       .map(msg => ({
         role: msg.role === UserRole.USER ? 'user' : 'model',
         text: msg.text,
@@ -54,7 +54,7 @@ export const sendMessageAsLiveAgent = async (
 ): Promise<{ text: string, functionCall?: { name: string; args: Record<string, unknown> } }> => {
   try {
     const historyPayload = history
-      .filter(msg => msg.id !== 'welcome')
+      .filter(msg => msg.id !== 'welcome' && !msg.text.includes('has connected to your session'))
       .map(msg => ({
         role: msg.role === UserRole.USER ? 'user' : 'model',
         text: msg.text,
