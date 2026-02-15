@@ -78,7 +78,7 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
       <h2 className="text-lg font-bold text-text-primary dark:text-white mb-3">
         Current Case
       </h2>
-      <div className="relative card-clean rounded-lg p-4 sm:p-5 overflow-hidden">
+      <div className="relative card-clean rounded-2xl p-4 sm:p-5 overflow-hidden">
 
         {/* Case header */}
         <div className="relative flex items-center justify-between mb-4">

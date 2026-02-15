@@ -132,7 +132,10 @@ body {
 }
 
 .text-gradient-electric {
-  color: #6366F1;
+  background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-locked {

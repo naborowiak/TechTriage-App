@@ -214,7 +214,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             <AnimatedElement animation="fadeInDown">
               <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-surface-border dark:border-midnight-700">
                 <HelpCircle className="w-4 h-4 text-electric-indigo" />
-                <span className="text-electric-indigo font-semibold text-sm">FAQ</span>
+                <span className="text-gradient-electric font-semibold text-sm">FAQ</span>
               </div>
             </AnimatedElement>
             <AnimatedElement animation="fadeInUp" delay={0.1}>
@@ -232,9 +232,9 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
           {/* Browse by Category Banner */}
           <AnimatedElement animation="fadeInUp" delay={0.3}>
             <div className="relative max-w-2xl mx-auto">
-              <div className="card-clean rounded-lg p-6 text-center">
+              <div className="card-clean rounded-2xl p-6 text-center">
                 <div className="flex items-center justify-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                     <Search className="w-5 h-5 text-electric-indigo" />
                   </div>
                   <h3 className="text-xl font-bold text-text-primary dark:text-white">Browse by Category</h3>
@@ -256,9 +256,10 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
               onClick={() => setActiveCategory(null)}
               className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
                 activeCategory === null
-                  ? 'bg-electric-indigo text-white'
+                  ? 'text-white shadow-lg shadow-electric-indigo/25'
                   : 'bg-surface-100 dark:bg-midnight-800 text-text-secondary hover:bg-surface-200 dark:hover:bg-midnight-700 hover:text-text-primary dark:hover:text-white'
               }`}
+              style={activeCategory === null ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
             >
               All Topics
             </button>
@@ -268,9 +269,10 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
                 onClick={() => setActiveCategory(category.id)}
                 className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
                   activeCategory === category.id
-                    ? 'bg-electric-indigo text-white'
+                    ? 'text-white shadow-lg shadow-electric-indigo/25'
                     : 'bg-surface-100 dark:bg-midnight-800 text-text-secondary hover:bg-surface-200 dark:hover:bg-midnight-700 hover:text-text-primary dark:hover:text-white'
                 }`}
+                style={activeCategory === category.id ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
               >
                 <category.icon className="w-4 h-4" />
                 {category.name}
@@ -287,11 +289,12 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             .filter(category => activeCategory === null || category.id === activeCategory)
             .map((category, categoryIndex) => (
                 <AnimatedElement key={category.id} animation="fadeInUp" delay={0.1 * categoryIndex}>
-                  <div className="card-clean rounded-lg overflow-hidden">
+                  <div className="card-clean rounded-2xl overflow-hidden">
                     {/* Category Header */}
                     <div className="px-8 py-6 border-b border-surface-border dark:border-midnight-700 flex items-center gap-4">
                       <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center bg-electric-indigo/8"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}
                       >
                         <category.icon className="w-6 h-6 text-electric-indigo" />
                       </div>
@@ -308,7 +311,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
                       return (
                         <div
                           key={index}
-                          className={`rounded-lg border transition-all duration-300 overflow-hidden ${
+                          className={`rounded-xl border transition-all duration-300 overflow-hidden ${
                             isOpen
                               ? 'border-electric-indigo/30 bg-electric-indigo/[0.03]'
                               : 'border-surface-border dark:border-midnight-700 bg-surface-50 dark:bg-midnight-800 hover:border-surface-200 dark:hover:border-midnight-600'
@@ -323,9 +326,11 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
                             </span>
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                               isOpen
-                                ? 'bg-electric-indigo/10 text-electric-indigo'
+                                ? 'text-white'
                                 : 'bg-surface-100 dark:bg-midnight-700 text-text-secondary'
-                            }`}>
+                            }`}
+                              style={isOpen ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
+                            >
                               {isOpen ? (
                                 <Minus className="w-5 h-5" />
                               ) : (
@@ -353,7 +358,27 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       </div>
 
       {/* Still Need Help CTA */}
-      <div className="bg-electric-indigo py-16 relative overflow-hidden">
+      <div
+        className="relative py-16 overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 40%, #06B6D4 100%)' }}
+      >
+        {/* Radial glow texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background: 'radial-gradient(ellipse 60% 50% at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 30%, rgba(6,182,212,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 50% 80%, rgba(99,102,241,0.15) 0%, transparent 60%)',
+          }}
+        />
+        {/* Subtle dot grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          aria-hidden="true"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
         <div className="container mx-auto px-6 max-w-3xl text-center relative z-10">
           <AnimatedElement animation="fadeInUp">
             <h2 className="text-3xl font-bold text-white mb-4">
@@ -361,7 +386,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             </h2>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.15}>
-            <p className="text-white/80 mb-8 max-w-xl mx-auto">
+            <p className="text-white/90 mb-8 max-w-xl mx-auto">
               Our team is here to help. Start a chat session and get answers in real-time.
             </p>
           </AnimatedElement>
@@ -369,13 +394,13 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => onNavigate(PageView.SIGNUP)}
-                className="bg-white text-electric-indigo hover:bg-surface-50 font-bold px-10 py-4 rounded-lg transition-all shadow-clean-md flex items-center justify-center gap-2"
+                className="bg-white text-electric-indigo hover:bg-surface-50 font-bold px-10 py-4 rounded-xl transition-all shadow-clean-md hover:shadow-clean-lg hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 Get Started Free <ArrowRight className="w-5 h-5" />
               </button>
               <button
                 onClick={() => onNavigate(PageView.PRICING)}
-                className="border-2 border-white/40 text-white font-bold px-10 py-4 rounded-lg hover:bg-white/10 transition-colors"
+                className="border-2 border-white/40 text-white font-bold px-10 py-4 rounded-xl hover:bg-white/10 transition-colors"
               >
                 View Plans
               </button>

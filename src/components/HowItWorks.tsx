@@ -74,12 +74,12 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           <AnimatedElement animation="fadeInDown" className="relative z-10">
             <div className="inline-flex items-center gap-2 mb-6">
               <ScoutSignalIcon size={24} animate={true} />
-              <span className="text-electric-indigo font-bold text-sm uppercase tracking-wider">How TotalAssist Works</span>
+              <span className="text-gradient-electric font-bold text-sm uppercase tracking-wider">How TotalAssist Works</span>
             </div>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1} className="relative z-10">
             <h1 className="text-5xl font-bold text-text-primary dark:text-white mb-6 tracking-tight">
-              Four ways to fix your <span className="text-electric-indigo">tech</span>
+              Four ways to fix your <span className="text-gradient-electric">tech</span>
             </h1>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2} className="relative z-10">
@@ -98,25 +98,26 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               delay={0.1 + i * 0.15}
             >
               <div
-                className="card-clean rounded-lg p-8 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 h-full"
+                className="card-clean rounded-2xl p-8 relative overflow-hidden group hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300 h-full"
               >
                 <div className="relative z-10">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                         <feature.icon className="w-7 h-7 text-electric-indigo" />
                       </div>
                       <div>
                         <h3 className="text-xl font-bold text-text-primary dark:text-white">{feature.name}</h3>
-                        <p className="text-sm font-medium text-electric-indigo">{feature.tagline}</p>
+                        <p className="text-sm font-medium text-gradient-electric">{feature.tagline}</p>
                       </div>
                     </div>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                       feature.availability === 'All Plans'
-                        ? 'bg-electric-indigo/10 text-electric-indigo'
-                        : 'bg-surface-100 dark:bg-midnight-700 text-text-secondary dark:text-light-400'
-                    }`}>
+                        ? 'text-white' : 'bg-surface-100 dark:bg-midnight-700 text-text-secondary dark:text-light-400'
+                    }`}
+                      style={feature.availability === 'All Plans' ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
+                    >
                       {feature.availability}
                     </span>
                   </div>
@@ -130,7 +131,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                   <ul className="space-y-2 mb-6">
                     {feature.benefits.map((benefit, j) => (
                       <li key={j} className="flex items-center gap-3 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-electric-indigo shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-electric-cyan shrink-0" />
                         <span className="text-text-secondary">{benefit}</span>
                       </li>
                     ))}
@@ -149,11 +150,11 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
 
         {/* Case Report Section */}
         <AnimatedElement animation="fadeInUp">
-          <div className="card-clean rounded-lg p-8 md:p-12 mb-24 relative overflow-hidden">
+          <div className="card-clean rounded-2xl p-8 md:p-12 mb-24 relative overflow-hidden">
             <div className="relative z-10">
               <AnimatedElement animation="fadeInLeft" delay={0.1}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                     <FileText className="w-6 h-6 text-electric-indigo" />
                   </div>
                   <div>
@@ -166,8 +167,8 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               <div className="grid md:grid-cols-4 gap-4 mb-8">
                 {reportSections.map((section, i) => (
                   <AnimatedElement key={i} animation="scaleIn" delay={0.2 + i * 0.1}>
-                    <div className="bg-surface-50 dark:bg-midnight-800 rounded-lg p-5 border border-surface-border dark:border-midnight-700 hover:border-electric-indigo/30 transition-colors h-full">
-                      <section.icon className="w-6 h-6 text-electric-indigo mb-3" />
+                    <div className="bg-surface-50 dark:bg-midnight-800 rounded-xl p-5 border border-surface-border dark:border-midnight-700 hover:border-electric-indigo/30 transition-colors h-full">
+                      <section.icon className="w-6 h-6 text-electric-cyan mb-3" />
                       <h4 className="text-text-primary dark:text-white font-bold mb-1">{section.title}</h4>
                       <p className="text-text-muted text-xs">{section.desc}</p>
                     </div>
@@ -176,13 +177,13 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
               </div>
 
               <AnimatedElement animation="fadeInUp" delay={0.5}>
-                <div className="bg-midnight-950 rounded-lg overflow-hidden border border-midnight-700 shadow-clean-lg">
+                <div className="bg-midnight-950 rounded-xl overflow-hidden border border-midnight-700 shadow-clean-lg">
                   {/* PDF Header */}
-                  <div className="bg-midnight-900 px-6 py-4 border-b-2 border-electric-indigo">
+                  <div className="bg-midnight-900 px-6 py-4" style={{ borderBottom: '2px solid transparent', borderImage: 'linear-gradient(135deg, #6366F1, #06B6D4) 1' }}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-white font-bold text-lg tracking-wide">TOTALASSIST</h4>
-                        <p className="text-electric-indigo text-xs font-medium tracking-wider">CASE REPORT</p>
+                        <h4 className="text-gradient-electric font-bold text-lg tracking-wide">TOTALASSIST</h4>
+                        <p className="text-electric-cyan text-xs font-medium tracking-wider">CASE REPORT</p>
                       </div>
                       <div className="text-right">
                         <p className="text-white text-xs font-bold">DIAGNOSTIC REPORT</p>
@@ -264,7 +265,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
                   <div className="bg-midnight-900 px-6 py-3 border-t border-midnight-700">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-text-muted">Full conversation transcript included in report</span>
-                      <span className="text-electric-indigo font-bold">TOTALASSIST</span>
+                      <span className="text-gradient-electric font-bold">TOTALASSIST</span>
                     </div>
                   </div>
                 </div>
@@ -282,7 +283,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           ].map((item, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.1 + i * 0.15}>
               <div className="text-center group">
-                <div className="w-16 h-16 card-clean rounded-lg flex items-center justify-center mx-auto mb-5">
+                <div className="w-16 h-16 card-clean rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(6,182,212,0.06) 100%)' }}>
                   <item.icon className="w-8 h-8 text-electric-indigo" />
                 </div>
                 <h4 className="text-xl font-bold text-text-primary dark:text-white mb-3">{item.title}</h4>
@@ -294,18 +295,38 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
       </div>
 
       {/* Full-width CTA Section */}
-      <div className="bg-electric-indigo py-20 text-center relative overflow-hidden">
+      <div
+        className="relative py-20 text-center overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 40%, #06B6D4 100%)' }}
+      >
+        {/* Radial glow texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background: 'radial-gradient(ellipse 60% 50% at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 30%, rgba(6,182,212,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 50% 80%, rgba(99,102,241,0.15) 0%, transparent 60%)',
+          }}
+        />
+        {/* Subtle dot grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          aria-hidden="true"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
         <div className="container mx-auto px-6 relative z-10">
           <AnimatedElement animation="fadeInUp">
             <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to fix your tech?</h3>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.15}>
-            <p className="text-white/80 font-medium mb-8 max-w-xl mx-auto">Start with a free account. No credit card required.</p>
+            <p className="text-white/90 font-medium mb-8 max-w-xl mx-auto">Start with a free account. No credit card required.</p>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.3}>
             <button
               onClick={onStart}
-              className="bg-white text-electric-indigo hover:bg-surface-50 font-bold py-4 px-12 rounded-lg shadow-clean-md transition-all flex items-center gap-3 mx-auto"
+              className="bg-white text-electric-indigo hover:bg-surface-50 font-bold py-4 px-12 rounded-xl shadow-clean-md hover:shadow-clean-lg transition-all flex items-center gap-3 mx-auto hover:-translate-y-0.5"
             >
               Get Started Free <ArrowRight className="w-5 h-5" />
             </button>

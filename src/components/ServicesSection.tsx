@@ -58,7 +58,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
     >
       <div className="container mx-auto px-6 max-w-6xl">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
+          <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
             Our Services
           </span>
           <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-text-primary dark:text-white">

@@ -254,7 +254,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             </button>
           )}
           <AnimatedElement animation="fadeInDown">
-            <div className="inline-flex items-center gap-2 bg-electric-indigo/8 px-4 py-2 rounded-full text-electric-indigo text-sm mb-6 border border-electric-indigo/20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm mb-6 shadow-lg shadow-electric-indigo/20" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
               <ScoutSignalIcon size={18} animate={true} />
               <span className="font-semibold">Support available 24/7</span>
             </div>
@@ -262,7 +262,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           <AnimatedElement animation="fadeInUp" delay={0.1}>
             <h1 className="text-4xl lg:text-5xl font-bold text-text-primary dark:text-white mb-6 leading-tight">
               Fix Your Tech Issues<br />
-              <span className="text-electric-indigo">In Minutes, Not Hours</span>
+              <span className="text-gradient-electric">In Minutes, Not Hours</span>
             </h1>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2}>
@@ -303,12 +303,19 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {products.map((product, i) => (
               <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.1}>
-                <div className="card-clean rounded-lg p-6 text-center cursor-default">
-                  <div className="w-12 h-12 rounded-lg bg-electric-indigo/8 flex items-center justify-center mx-auto mb-4">
+                <div className="card-clean rounded-2xl p-6 text-center cursor-default">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                     <product.icon className="w-6 h-6 text-electric-indigo" />
                   </div>
                   <h3 className="text-base font-bold text-text-primary dark:text-white mb-1">{product.name}</h3>
-                  <span className="text-xs font-medium px-2.5 py-0.5 rounded-full mb-2 inline-block bg-electric-indigo/8 text-electric-indigo">
+                  <span
+                    className={`text-xs font-bold px-2.5 py-0.5 rounded-full mb-2 inline-block ${
+                      product.availability === 'All Plans'
+                        ? 'text-white'
+                        : 'bg-surface-100 dark:bg-midnight-700 text-text-secondary dark:text-light-400'
+                    }`}
+                    style={product.availability === 'All Plans' ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
+                  >
                     {product.availability}
                   </span>
                   <p className="text-text-secondary text-xs leading-relaxed">{product.description}</p>
@@ -368,7 +375,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             {plans.map((plan, i) => (
               <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
                 <div
-                  className={`card-clean rounded-lg p-8 relative overflow-hidden transition-all h-full flex flex-col hover:-translate-y-1 ${
+                  className={`card-clean rounded-2xl p-8 relative transition-all h-full flex flex-col hover:-translate-y-1.5 hover:shadow-lg ${
                     user && currentTier === planToTier[plan.name]
                       ? 'border-2 border-electric-cyan shadow-clean-md'
                       : plan.highlight
@@ -385,15 +392,13 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   </div>
                 )}
                 {plan.highlight && !(user && currentTier === planToTier[plan.name]) && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-electric-indigo text-white text-xs font-bold px-4 py-2 rounded-full shadow-clean whitespace-nowrap">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg whitespace-nowrap" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
                     MOST POPULAR
                   </div>
                 )}
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                    plan.highlight ? 'bg-electric-indigo/8' : 'bg-light-200 dark:bg-midnight-700'
-                  }`}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                     <plan.icon className="w-6 h-6 text-electric-indigo" />
                   </div>
                   <div>
@@ -647,7 +652,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-electric-indigo/20 shadow-clean-sm">
                 <HelpCircle className="w-4 h-4 text-electric-indigo" />
-                <span className="text-electric-indigo font-semibold text-sm">FAQ</span>
+                <span className="text-gradient-electric font-semibold text-sm">FAQ</span>
               </div>
               <h2 className="text-3xl font-bold text-text-primary dark:text-white mb-4">
                 Questions? We've Got Answers
@@ -662,7 +667,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
               {faqs.map((faq, i) => (
                 <div
                   key={i}
-                  className={`rounded-lg border transition-all duration-300 overflow-hidden ${
+                  className={`rounded-xl border transition-all duration-300 overflow-hidden ${
                     openFaq === i
                       ? 'border-electric-indigo/30 bg-electric-indigo/[0.03]'
                       : 'border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-800 hover:border-light-400 dark:hover:border-midnight-600'
@@ -679,9 +684,11 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     </span>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                       openFaq === i
-                        ? 'bg-electric-indigo/10 text-electric-indigo'
+                        ? 'text-white'
                         : 'bg-light-200 dark:bg-midnight-700 text-text-secondary'
-                    }`}>
+                    }`}
+                      style={openFaq === i ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
+                    >
                       {openFaq === i ? (
                         <Minus className="w-5 h-5" />
                       ) : (
@@ -709,8 +716,28 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* Final CTA */}
-      <div className="bg-electric-indigo py-20">
-        <div className="container mx-auto px-6 max-w-3xl text-center">
+      <div
+        className="relative py-20 overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 40%, #06B6D4 100%)' }}
+      >
+        {/* Radial glow texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background: 'radial-gradient(ellipse 60% 50% at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 30%, rgba(6,182,212,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 50% 80%, rgba(99,102,241,0.15) 0%, transparent 60%)',
+          }}
+        />
+        {/* Subtle dot grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          aria-hidden="true"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+        <div className="relative container mx-auto px-6 max-w-3xl text-center">
           <AnimatedElement animation="fadeInUp">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Ready for Stress-Free Tech Support?

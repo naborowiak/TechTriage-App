@@ -534,7 +534,8 @@ const Hero: React.FC<{
                 className="font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
                 style={{ letterSpacing: '-2.5px', lineHeight: '110%' }}
               >
-                Get help with<br />
+                Get help<br />
+                with{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
                   {displayText}
                 </span>
@@ -652,12 +653,12 @@ const HowItWorksSimple: React.FC = () => {
                 {i < 2 && (
                   <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-surface-border dark:bg-midnight-700"></div>
                 )}
-                <div className="relative card-clean rounded-lg p-8 hover:-translate-y-1 transition-all duration-300">
+                <div className="relative card-clean rounded-2xl p-8 hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center text-electric-indigo" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                       {s.icon}
                     </div>
-                    <span className="text-5xl font-bold text-electric-indigo">
+                    <span className="text-5xl font-bold text-gradient-electric">
                       {s.step}
                     </span>
                   </div>
@@ -721,8 +722,8 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
 
       <div className="relative container mx-auto px-6 max-w-6xl z-10">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <div className="inline-block bg-midnight-950/70 backdrop-blur-md rounded-2xl px-8 py-8 lg:px-12 lg:py-10">
-            <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
+          <div className="inline-block bg-midnight-900 rounded-2xl px-8 py-8 lg:px-12 lg:py-10">
+            <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
               What We Help With
             </span>
             <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
@@ -738,7 +739,7 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
           {problems.map((item, i) => (
             <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.08}>
               <div
-                className="group relative bg-white dark:bg-midnight-800/90 dark:backdrop-blur-md border border-[#cecdcd] dark:border-white/15 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-xl dark:hover:border-white/25 h-full flex flex-col"
+                className="group relative bg-white dark:bg-midnight-800/90 dark:backdrop-blur-md border border-[#cecdcd] dark:border-white/15 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-xl dark:hover:border-white/25 h-full flex flex-col"
                 onClick={() => onNavigate(PageView.HOW_IT_WORKS)}
                 role="button"
                 tabIndex={0}
@@ -747,7 +748,7 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
               >
                 {/* Card content */}
                 <div className="p-5 lg:p-6 flex-1">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-electric-indigo/8 dark:bg-electric-indigo/20 text-electric-indigo dark:text-[#818CF8] transition-colors group-hover:bg-electric-indigo/12 dark:group-hover:bg-electric-indigo/25">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-electric-indigo dark:text-[#818CF8] transition-colors" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(6,182,212,0.08) 100%)' }}>
                     {item.icon}
                   </div>
                   <h3 className="font-bold text-base mb-2 text-text-primary dark:text-white">
@@ -868,7 +869,7 @@ const WhyTotalAssist: React.FC = () => {
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Header */}
         <AnimatedElement animation="fadeInUp" className="text-center mb-12">
-          <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
+          <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
             Why TotalAssist Is Different
           </span>
           <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight text-text-primary dark:text-white">
@@ -883,13 +884,13 @@ const WhyTotalAssist: React.FC = () => {
         <div className="grid md:grid-cols-3 gap-8 mb-20">
           {differentiators.map((item, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
-              <div className="group p-8 card-clean rounded-lg transition-all duration-300 hover:-translate-y-1 h-full">
+              <div className="group p-8 card-clean rounded-2xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg h-full">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-14 h-14 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-electric-indigo" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                     {item.icon}
                   </div>
                   {item.secondIcon && (
-                    <div className="w-10 h-10 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-electric-indigo" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                       {item.secondIcon}
                     </div>
                   )}
@@ -1017,7 +1018,7 @@ const UseCasesSection: React.FC = () => {
     <section className="py-24 bg-white dark:bg-midnight-950 border-t border-light-300 dark:border-midnight-700 relative transition-colors">
       <div className="container mx-auto px-6 max-w-6xl">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
+          <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
             Real Problems, Real Solutions
           </span>
           <h2 className="text-4xl font-bold mb-4 text-text-primary dark:text-white">
@@ -1030,8 +1031,8 @@ const UseCasesSection: React.FC = () => {
         <div className="grid md:grid-cols-3 gap-8">
           {useCases.map((useCase, i) => (
             <AnimatedElement key={i} animation="fadeInUp" delay={0.15 + i * 0.15}>
-              <div className="group p-8 card-clean rounded-lg transition-all duration-300 hover:-translate-y-1 h-full">
-                <div className="w-14 h-14 bg-electric-indigo/8 rounded-lg flex items-center justify-center text-electric-indigo mb-6">
+              <div className="group p-8 card-clean rounded-2xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg h-full">
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center text-electric-indigo mb-6" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
                   {useCase.icon}
                 </div>
                 <h3 className="text-xl font-bold text-text-primary dark:text-white mb-3">
@@ -1082,7 +1083,7 @@ const FAQSection: React.FC = () => {
           {/* FAQ Badge */}
           <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-surface-border dark:border-midnight-700 shadow-sm">
             <HelpCircle className="w-4 h-4 text-electric-indigo" />
-            <span className="text-electric-indigo font-semibold text-sm">FAQ</span>
+            <span className="text-gradient-electric font-semibold text-sm">FAQ</span>
           </div>
           <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-text-primary dark:text-white">
             Frequently Asked Questions
@@ -1098,7 +1099,7 @@ const FAQSection: React.FC = () => {
             {faqs.map((faq, i) => (
               <div
                 key={i}
-                className={`rounded-lg border transition-all duration-300 overflow-hidden ${
+                className={`rounded-xl border transition-all duration-300 overflow-hidden ${
                   openFaq === i
                     ? 'border-electric-indigo/30 bg-electric-indigo/[0.03]'
                     : 'border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 hover:border-light-400 dark:hover:border-midnight-600'
@@ -1108,14 +1109,16 @@ const FAQSection: React.FC = () => {
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full p-5 flex items-center justify-between text-left"
                 >
-                  <span className={`font-semibold text-lg ${openFaq === i ? 'text-text-primary dark:text-white' : 'text-text-primary dark:text-white'}`}>
+                  <span className="font-semibold text-lg text-text-primary dark:text-white">
                     {faq.q}
                   </span>
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                     openFaq === i
-                      ? 'bg-electric-indigo/10 text-electric-indigo'
+                      ? 'text-white'
                       : 'bg-light-200 dark:bg-midnight-700 text-text-secondary'
-                  }`}>
+                  }`}
+                    style={openFaq === i ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
+                  >
                     {openFaq === i ? (
                       <Minus className="w-5 h-5" />
                     ) : (
@@ -1154,7 +1157,27 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
   };
 
   return (
-    <section className="py-24 bg-electric-indigo relative overflow-hidden">
+    <section
+      className="py-24 relative overflow-hidden"
+      style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 40%, #06B6D4 100%)' }}
+    >
+      {/* Radial glow texture */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background: 'radial-gradient(ellipse 60% 50% at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 30%, rgba(6,182,212,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 50% 80%, rgba(99,102,241,0.15) 0%, transparent 60%)',
+        }}
+      />
+      {/* Subtle dot grid overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        aria-hidden="true"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
       <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
         <AnimatedElement animation="fadeInUp">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
@@ -1177,12 +1200,12 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-6 py-4 rounded-lg text-midnight-950 text-lg font-medium focus:outline-none focus:ring-4 focus:ring-white/30 shadow-xl bg-white"
+              className="flex-1 px-6 py-4 rounded-xl text-midnight-950 text-lg font-medium focus:outline-none focus:ring-4 focus:ring-white/30 shadow-xl bg-white"
               required
             />
             <button
               type="submit"
-              className="bg-white text-electric-indigo font-bold px-10 py-4 rounded-lg text-lg transition-all whitespace-nowrap shadow-clean hover:shadow-clean-md"
+              className="bg-white text-electric-indigo font-bold px-10 py-4 rounded-xl text-lg transition-all whitespace-nowrap shadow-clean hover:shadow-clean-md hover:-translate-y-0.5"
             >
               Get Started Free
             </button>

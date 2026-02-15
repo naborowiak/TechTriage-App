@@ -79,7 +79,7 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
           <AnimatedElement animation="fadeInUp" delay={0.4}>
             <button
               onClick={handleCTA}
-              className={`mt-8 inline-flex items-center gap-2 px-8 py-4 rounded-lg text-white font-bold text-lg transition-colors shadow-lg ${colors.ctaBg}`}
+              className="mt-8 inline-flex items-center gap-2 px-8 py-4 rounded-xl text-white font-bold text-lg transition-all shadow-lg hover:-translate-y-0.5 btn-gradient-electric"
             >
               {service.ctaText} <ArrowRight className="w-5 h-5" />
             </button>
@@ -98,8 +98,8 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
           <div className="grid md:grid-cols-3 gap-8">
             {service.howItWorks.map((step, i) => (
               <AnimatedElement key={i} animation="fadeInUp" delay={0.15 + i * 0.1}>
-                <div className="card-clean rounded-lg p-8 h-full">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg mb-5 ${colors.ctaBg.split(' ')[0]}`}>
+                <div className="card-clean rounded-2xl p-8 h-full">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg mb-5" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
                     {i + 1}
                   </div>
                   <h3 className="text-xl font-bold text-text-primary dark:text-white mb-3">
@@ -128,9 +128,9 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
               const FeatureIcon = feature.icon;
               return (
                 <AnimatedElement key={i} animation="fadeInUp" delay={0.1 + i * 0.1}>
-                  <div className="card-clean rounded-lg p-6 h-full flex gap-5">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${colors.bg} ${colors.text}`}>
-                      <FeatureIcon className="w-6 h-6" />
+                  <div className="card-clean rounded-2xl p-6 h-full flex gap-5">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
+                      <FeatureIcon className="w-6 h-6 text-electric-indigo" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-text-primary dark:text-white mb-2">
@@ -161,7 +161,7 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
               {service.faqs.map((faq, i) => (
                 <div
                   key={i}
-                  className={`rounded-lg border transition-all duration-300 overflow-hidden ${
+                  className={`rounded-xl border transition-all duration-300 overflow-hidden ${
                     openFaq === i
                       ? 'border-electric-indigo/30 bg-electric-indigo/[0.03]'
                       : 'border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-950 hover:border-light-400 dark:hover:border-midnight-600'
@@ -177,9 +177,11 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
                     </span>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                       openFaq === i
-                        ? 'bg-electric-indigo/10 text-electric-indigo'
+                        ? 'text-white'
                         : 'bg-light-200 dark:bg-midnight-700 text-text-secondary'
-                    }`}>
+                    }`}
+                      style={openFaq === i ? { background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' } : undefined}
+                    >
                       {openFaq === i ? <Minus className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                     </div>
                   </button>
@@ -200,7 +202,27 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-electric-indigo relative overflow-hidden">
+      <section
+        className="py-20 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 40%, #06B6D4 100%)' }}
+      >
+        {/* Radial glow texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background: 'radial-gradient(ellipse 60% 50% at 20% 50%, rgba(255,255,255,0.12) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 30%, rgba(6,182,212,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 40% at 50% 80%, rgba(99,102,241,0.15) 0%, transparent 60%)',
+          }}
+        />
+        {/* Subtle dot grid overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          aria-hidden="true"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
         <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
           <AnimatedElement animation="fadeInUp">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -208,7 +230,7 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
             </h2>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.15}>
-            <p className="text-white/80 font-medium mb-8 max-w-xl mx-auto text-lg">
+            <p className="text-white/90 font-medium mb-8 max-w-xl mx-auto text-lg">
               Start with a free account. No credit card required.
             </p>
           </AnimatedElement>
@@ -216,7 +238,7 @@ const ServicePageContent: React.FC<{ service: ServiceData; onNavigate: (view: Pa
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={handleCTA}
-                className="bg-white text-electric-indigo hover:bg-surface-50 font-bold py-4 px-10 rounded-lg text-lg transition-all shadow-clean flex items-center gap-3"
+                className="bg-white text-electric-indigo hover:bg-surface-50 font-bold py-4 px-10 rounded-xl text-lg transition-all shadow-clean hover:shadow-clean-md hover:-translate-y-0.5 flex items-center gap-3"
               >
                 Get Started Free <ArrowRight className="w-5 h-5" />
               </button>

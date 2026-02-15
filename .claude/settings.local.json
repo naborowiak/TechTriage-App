@@ -99,7 +99,11 @@
       "WebFetch(domain:www.algolia.com)",
       "Bash(file:*)",
       "Bash(git log:*)",
-      "WebFetch(domain:www.loom.com)"
+      "WebFetch(domain:www.loom.com)",
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:www.linear.app)",
+      "WebFetch(domain:www.kalungi.com)",
+      "WebFetch(domain:www.webstacks.com)"
     ]
   }
 }
