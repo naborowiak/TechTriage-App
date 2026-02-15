@@ -919,8 +919,8 @@ const WhyTotalAssist: React.FC = () => {
           ))}
         </div>
 
-        {/* Algolia-Style Feature Comparison Table */}
-        <AnimatedElement animation="fadeInUp" delay={0.5}>
+        {/* Algolia-Style Feature Comparison Table — hidden on mobile */}
+        <AnimatedElement animation="fadeInUp" delay={0.5} className="hidden md:block">
           <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm">
 
             {/* Sticky Column Headers — sticks below fixed nav (72px) */}

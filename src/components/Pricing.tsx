@@ -547,8 +547,8 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
             </div>
           </AnimatedElement>
 
-          {/* Feature Comparison Matrix */}
-          <AnimatedElement animation="fadeInUp" delay={0.65}>
+          {/* Feature Comparison Matrix — hidden on mobile */}
+          <AnimatedElement animation="fadeInUp" delay={0.65} className="hidden md:block">
             <div className="mt-16 pt-12 border-t border-light-300 dark:border-midnight-700">
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-text-primary dark:text-white mb-2">
