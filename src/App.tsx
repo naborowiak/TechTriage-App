@@ -290,7 +290,7 @@ const Header: React.FC<{
               <CreditCounter onNavigate={onNavigate} />
               <button
                 onClick={() => onNavigate(PageView.DASHBOARD)}
-                className="bg-electric-indigo text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-colors whitespace-nowrap hover:bg-indigo-600"
+                className="btn-gradient-electric text-white font-semibold px-6 py-2.5 rounded-lg text-sm whitespace-nowrap"
               >
                 Dashboard
               </button>
@@ -311,7 +311,7 @@ const Header: React.FC<{
               </button>
               <button
                 onClick={() => onNavigate(PageView.SIGNUP)}
-                className="bg-electric-indigo text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-colors whitespace-nowrap hover:bg-indigo-600"
+                className="btn-gradient-electric text-white font-semibold px-6 py-2.5 rounded-lg text-sm whitespace-nowrap"
               >
                 Get Started
               </button>
@@ -323,7 +323,7 @@ const Header: React.FC<{
         <div className="flex lg:hidden items-center gap-3">
           <button
             onClick={() => onNavigate(isAuthenticated && user ? PageView.DASHBOARD : PageView.SIGNUP)}
-            className="bg-electric-indigo text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap hover:bg-indigo-600"
+            className="btn-gradient-electric text-white font-semibold px-4 py-2 rounded-lg text-sm whitespace-nowrap"
           >
             {isAuthenticated && user ? 'Dashboard' : 'Get Started'}
           </button>

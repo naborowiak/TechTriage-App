@@ -454,7 +454,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       : isButtonDisabled(plan.name)
                       ? 'opacity-50 cursor-wait'
                       : plan.ctaStyle === 'primary'
-                      ? 'bg-electric-indigo hover:bg-indigo-600 text-white font-semibold px-6'
+                      ? 'btn-gradient-electric text-white font-semibold px-6'
                       : plan.ctaStyle === 'outlined'
                       ? 'border-2 border-electric-indigo bg-electric-indigo/10 text-electric-indigo hover:bg-electric-indigo hover:text-white'
                       : 'bg-surface-100 dark:bg-midnight-700 hover:bg-surface-200 dark:hover:bg-midnight-600 text-text-primary'
@@ -594,26 +594,48 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Value Proposition */}
-      <div className="section-white py-16 border-y border-light-300 dark:border-midnight-700">
-        <div className="container mx-auto px-6 max-w-3xl">
-          <AnimatedElement animation="scaleIn">
-            <div className="card-clean rounded-lg p-10 text-center">
-              <h3 className="text-2xl font-bold text-text-primary dark:text-white mb-4">
-                Why wait on hold when you don't have to?
-              </h3>
-              <p className="text-lg text-text-secondary mb-6 leading-relaxed max-w-xl mx-auto">
-                Our support team is available <span className="text-electric-indigo font-bold">24/7</span> —
-                weekends, holidays, 3am. Describe your issue or snap a photo
-                and get expert guidance instantly.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 text-sm">
-                <span className="px-4 py-2 bg-electric-indigo/8 text-electric-indigo rounded-full font-medium">No appointments</span>
-                <span className="px-4 py-2 bg-electric-indigo/8 text-electric-indigo rounded-full font-medium">No waiting</span>
-                <span className="px-4 py-2 bg-electric-indigo/8 text-electric-indigo rounded-full font-medium">No runaround</span>
+      {/* Value Proposition — Video Background */}
+      <div className="relative overflow-hidden">
+        {/* Video background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          aria-hidden="true"
+        >
+          <source src="/hero-bg.mp4" type="video/mp4" />
+        </video>
+        {/* Brand gradient overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.55) 0%, rgba(139,92,246,0.45) 40%, rgba(6,182,212,0.50) 100%)' }}
+          aria-hidden="true"
+        />
+        {/* Subtle darken for text contrast */}
+        <div className="absolute inset-0 bg-midnight-950/30" aria-hidden="true" />
+
+        <div className="relative z-10 py-20 lg:py-24">
+          <div className="container mx-auto px-6 max-w-3xl">
+            <AnimatedElement animation="scaleIn">
+              <div className="text-center">
+                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-5">
+                  Why wait on hold when you don't have to?
+                </h3>
+                <p className="text-lg text-white/80 mb-8 leading-relaxed max-w-xl mx-auto">
+                  Our support team is available <span className="text-[#06B6D4] font-bold">24/7</span> —
+                  weekends, holidays, 3am. Describe your issue or snap a photo
+                  and get expert guidance instantly.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3 text-sm">
+                  <span className="px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white border border-white/15 rounded-full font-medium">No appointments</span>
+                  <span className="px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white border border-white/15 rounded-full font-medium">No waiting</span>
+                  <span className="px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white border border-white/15 rounded-full font-medium">No runaround</span>
+                </div>
               </div>
-            </div>
-          </AnimatedElement>
+            </AnimatedElement>
+          </div>
         </div>
       </div>
 

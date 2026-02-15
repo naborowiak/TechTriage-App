@@ -272,7 +272,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {tier !== "pro" && (
             <button
               onClick={() => setUpgradeModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-electric-indigo hover:bg-indigo-600 text-white transition-colors"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold btn-gradient-electric text-white"
             >
               <Zap className="w-3 h-3" />
               Upgrade
@@ -395,9 +395,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {children}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-4 lg:pb-8 relative">
-          <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed pointer-events-none" style={{ backgroundImage: 'url(/developer-hub-bg.png)' }} aria-hidden="true" />
-          <div className="relative z-[1] w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
+        <div
+          className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-4 lg:pb-8 bg-top bg-no-repeat"
+          style={theme === 'dark' ? { backgroundImage: 'url(/developer-hub-bg.png)', backgroundSize: 'cover' } : undefined}
+        >
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
             {/* System Status */}
             <SystemStatusBadge />
 
@@ -549,7 +551,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={handleSendFromEmpty}
                 disabled={!chatInput.trim()}
-                className="p-3 rounded-lg bg-electric-indigo hover:bg-indigo-600 text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="p-3 rounded-lg btn-gradient-electric text-white disabled:opacity-30 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Send message"
               >
                 <ChevronUp className="w-5 h-5" />

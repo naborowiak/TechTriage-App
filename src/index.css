@@ -49,16 +49,18 @@ body {
 
 /* ── Primary Button ── */
 .btn-primary {
-  background-color: #6366F1;
+  background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
   color: white;
   border-radius: 8px;
   padding: 12px 24px;
   font-weight: 600;
-  transition: background-color 0.15s ease;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
 }
 
 .btn-primary:hover {
-  background-color: #4F46E5;
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
 }
 
 /* ── Secondary Button ── */
@@ -138,13 +140,16 @@ body {
 }
 
 .btn-gradient-electric {
-  background: #6366F1;
+  background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
   color: white;
   border-radius: 8px;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
 }
 
 .btn-gradient-electric:hover {
-  background: #4F46E5;
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
 }
 
 .bg-midnight-gradient {
@@ -492,13 +497,14 @@ body {
 
 /* CTA button gradient */
 .blue-gradient {
-  background: linear-gradient(180deg, #4f8dff 0%, #2b5cff 100%);
-  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.25);
-  transition: filter 0.15s ease;
+  background: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
 
 .blue-gradient:hover {
   filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
 }
 
 .blue-gradient:active {
