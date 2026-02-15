@@ -559,9 +559,11 @@ const Hero: React.FC<{
                   <span className="hero-cursor" aria-hidden="true" />
                 </span>
               </h1>
-              <div className="hero-animate-2 mt-4 xl:max-w-[420px]">
-                <p className="font-sora text-center xl:text-left text-base md:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
-                  24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
+              <div className="hero-animate-2 mt-3 sm:mt-4 lg:mt-5 xl:max-w-[480px]">
+                <p className="font-sora text-center xl:text-left text-sm sm:text-base lg:text-[17px] xl:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
+                  24/7 AI-powered tech support for your<br />
+                  home — chat, snap a photo, or hop on<br />
+                  a video call.
                 </p>
               </div>
             </div>
