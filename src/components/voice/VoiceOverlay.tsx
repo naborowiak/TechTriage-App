@@ -22,6 +22,8 @@ const BotAvatar = ({ className }: { className?: string }) => {
   return (
     <img
       src="/total_assist-new-white.png"
+      width={738}
+      height={738}
       className={`${className} object-contain`}
       alt="TotalAssist"
       onError={() => setError(true)}

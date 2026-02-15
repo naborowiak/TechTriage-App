@@ -596,8 +596,8 @@ const Hero: React.FC<{
                   className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
                   style={{ opacity: active === i ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
                 >
-                  <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
-                  <img src={slide.top} className="absolute bottom-0 left-0 xl:left-auto xl:right-0 w-full h-auto xl:w-auto xl:h-full xl:max-w-none" alt={slide.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+                  <img alt="" src="/color-blur.png" width={1351} height={690} className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
+                  <img src={slide.top} width={800} height={597} className="absolute bottom-0 left-0 xl:left-auto xl:right-0 w-full h-auto xl:w-auto xl:h-full xl:max-w-none" alt={slide.alt} loading={i === 0 ? 'eager' : 'lazy'} />
                 </div>
               ))}
 

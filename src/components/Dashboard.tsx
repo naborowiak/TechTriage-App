@@ -202,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       },
       feature: "chat" as const,
       iconColor: "text-[#06B6D4]",
-      backgroundImage: "/type_question.jpeg",
+      backgroundImage: "/type_question.jpg",
     },
     {
       id: "photo" as const,

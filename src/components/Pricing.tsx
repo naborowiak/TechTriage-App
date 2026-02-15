@@ -496,7 +496,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                       : isHighlighted
                       ? 'bg-white text-electric-indigo font-bold hover:bg-white/90 shadow-lg'
                       : plan.ctaStyle === 'outlined'
-                      ? 'border-2 border-electric-indigo bg-electric-indigo/10 text-electric-indigo hover:bg-electric-indigo hover:text-white'
+                      ? 'border-2 border-electric-indigo bg-electric-indigo/10 text-electric-indigo dark:text-white hover:bg-electric-indigo hover:text-white'
                       : plan.ctaStyle === 'secondary'
                       ? 'bg-surface-100 dark:bg-midnight-700 hover:bg-surface-200 dark:hover:bg-midnight-600 text-text-primary dark:text-white'
                       : 'btn-gradient-electric text-white font-semibold px-6'

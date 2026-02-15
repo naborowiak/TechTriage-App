@@ -5,6 +5,17 @@ export default defineConfig({
   plugins: [react()],
   build: {
     sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        passes: 2,
+      },
+      mangle: {
+        safari10: true,
+      },
+    },
     chunkSizeWarningLimit: 400,
     rollupOptions: {
       output: {

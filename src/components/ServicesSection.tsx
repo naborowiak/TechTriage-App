@@ -9,7 +9,7 @@ interface ServicesSectionProps {
 }
 
 const serviceImages: Record<string, string> = {
-  chat: '/type_question.jpeg',
+  chat: '/type_question.jpg',
   photo: '/show_problem.jpg',
   voice: '/talk_support.jpeg',
   video: '/video_support.png',
@@ -146,6 +146,8 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
                         <img
                           src={serviceImages[service.id]}
                           alt={service.name}
+                          width={1200}
+                          height={800}
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
@@ -180,6 +182,8 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
                   key={service.id}
                   src={serviceImages[service.id]}
                   alt={service.name}
+                  width={1200}
+                  height={800}
                   className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
                   style={{ opacity: i === activeIndex ? 1 : 0 }}
                   loading={i === 0 ? 'eager' : 'lazy'}

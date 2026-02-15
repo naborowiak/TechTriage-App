@@ -63,30 +63,7 @@
     }
     </script>
 
-    <script>
-      // Prevent flash of wrong theme by checking localStorage before render
-      (function() {
-        const theme = localStorage.getItem('totalassist_theme');
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      })();
-
-      // Register Service Worker for PWA
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js')
-            .then(function(registration) {
-              console.log('[PWA] Service Worker registered with scope:', registration.scope);
-            })
-            .catch(function(error) {
-              console.log('[PWA] Service Worker registration failed:', error);
-            });
-        });
-      }
-    </script>
+    <script>!function(){var t=localStorage.getItem("totalassist_theme");"dark"===t?document.documentElement.classList.add("dark"):document.documentElement.classList.remove("dark")}();"serviceWorker"in navigator&&window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})});</script>
 </head>
   <body class="bg-light-50 dark:bg-midnight-950 text-text-primary dark:text-white antialiased font-sans selection:bg-electric-indigo selection:text-white transition-colors">
     <div id="root"></div>
