@@ -503,6 +503,30 @@ If The_Skeptic and a Dev agent disagree:
 - `tech-life-home.png` has TechTriage branding visible through overlay (mitigated by `bg-top` positioning)
 - `(tile as any)` type cast for backgroundImage property (TypeScript union inference workaround)
 
+### Algolia-Style Service Cards + Dedicated Service Pages (Feb 13, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **src/data/servicePageData.ts** (NEW) — Centralized content config for 4 services (chat, photo, voice, video). Static data only: names, taglines, descriptions, icons, colors, how-it-works steps, features, FAQs, CTA text.
+2. **src/components/ServicesSection.tsx** (NEW) — Algolia-inspired card grid for HOME view with service-colored hover glow effects. Semantic `<button>` elements with `aria-label`.
+3. **src/components/ServicePage.tsx** (NEW) — Data-driven shared service page: hero, how-it-works (3 steps), features (4 items), FAQ accordion (3 items), CTA section. Lazy-loaded via `React.lazy()`.
+4. **src/types.ts** — Added `SERVICE_CHAT`, `SERVICE_PHOTO`, `SERVICE_VOICE`, `SERVICE_VIDEO` to PageView enum.
+5. **src/App.tsx** — Added lazy import, 4 pathToView/viewToPath entries, `startsWith('/services/')` in `getInitialView()`, 4 renderContent switch cases, ServicesSection between HowItWorksSimple and WhatWeHelpWith on HOME, footer "Services" sub-section with 4 links.
+
+#### Key Skeptic Conditions Applied:
+- `ServicePage.tsx` lazy-loaded (7.41 KB chunk, 1.94 KB gzipped)
+- `getInitialView()` uses `startsWith('/services/')` pattern matching `/specialist/` precedent
+- CTA routes authenticated users to dashboard, unauthenticated to signup (uses `useAuth()`)
+- `servicePageData.ts` contains only static data (icon component references from lucide-react, no React imports, no side effects)
+- Per-service FAQs are strictly service-specific (session limits, photo tips, mic requirements, video credits) — no overlap with existing FAQ.tsx content
+- Cards use semantic `<button>` elements with `aria-label` for accessibility
+
+#### Risks Accepted:
+- Content overlap between HowItWorks.tsx and service pages (acceptable: HowItWorks is high-level overview, service pages go deeper with FAQs and features)
+- New `src/data/` directory convention (first usage; future data files should follow same pattern)
+- Four new routes increase client-side routing surface (negligible: static marketing pages with no API calls)
+
 <!-- DECISIONS END -->
 
 ---

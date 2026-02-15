@@ -97,7 +97,8 @@
       "WebFetch(domain:css-tricks.com)",
       "Bash(convert:*)",
       "WebFetch(domain:www.algolia.com)",
-      "Bash(file:*)"
+      "Bash(file:*)",
+      "Bash(git log:*)"
     ]
   }
 }

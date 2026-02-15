@@ -421,7 +421,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       }
                     }}
                     className={[
-                      "card-clean flex flex-col justify-end text-left",
+                      "card-clean relative flex flex-col justify-end text-left",
                       "rounded-lg overflow-hidden cursor-pointer",
                       "p-4 md:p-6",
                       "min-h-[72px] md:min-h-0 md:aspect-[16/10] md:max-h-[260px]",

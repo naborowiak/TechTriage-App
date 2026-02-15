@@ -36,6 +36,7 @@ import { useTheme } from "./context/ThemeContext";
 import type { SettingsTab } from "./components/SettingsModal";
 import { AnimatedElement } from "./hooks/useAnimations";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { ServicesSection } from "./components/ServicesSection";
 import { usePWAInstall } from "./hooks/usePWAInstall";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
 
@@ -58,6 +59,7 @@ const ScoutInfoPanel = lazy(() => import("./components/scout/ScoutInfoPanel").th
 const SettingsModal = lazy(() => import("./components/SettingsModal").then(m => ({ default: m.SettingsModal })));
 const CaseAnalytics = lazy(() => import("./components/CaseAnalytics").then(m => ({ default: m.CaseAnalytics })));
 const SpecialistResponse = lazy(() => import("./components/SpecialistResponse").then(m => ({ default: m.SpecialistResponse })));
+const ServicePage = lazy(() => import("./components/ServicePage").then(m => ({ default: m.ServicePage })));
 
 // Page loading fallback for lazy-loaded routes
 const PageLoadingFallback = () => (
@@ -1113,6 +1115,41 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
             </ul>
+            <h4 className="font-bold mb-4 mt-8 text-white">Services</h4>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.SERVICE_CHAT)}
+                  className="hover:text-electric-indigo transition-colors"
+                >
+                  Chat Support
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.SERVICE_PHOTO)}
+                  className="hover:text-electric-indigo transition-colors"
+                >
+                  Photo Analysis
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.SERVICE_VOICE)}
+                  className="hover:text-electric-indigo transition-colors"
+                >
+                  Voice Support
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav(PageView.SERVICE_VIDEO)}
+                  className="hover:text-electric-indigo transition-colors"
+                >
+                  Video Diagnostic
+                </button>
+              </li>
+            </ul>
           </div>
 
           {/* Support Column */}
@@ -1218,6 +1255,10 @@ const pathToView: Record<string, PageView> = {
   '/reset-password': PageView.RESET_PASSWORD,
   '/scout': PageView.SCOUT,
   '/specialist': PageView.SPECIALIST,
+  '/services/chat': PageView.SERVICE_CHAT,
+  '/services/photo': PageView.SERVICE_PHOTO,
+  '/services/voice': PageView.SERVICE_VOICE,
+  '/services/video': PageView.SERVICE_VIDEO,
 };
 
 const viewToPath: Record<PageView, string> = {
@@ -1239,12 +1280,17 @@ const viewToPath: Record<PageView, string> = {
   [PageView.SCOUT]: '/scout',
   [PageView.SPECIALIST]: '/specialist',
   [PageView.NOT_FOUND]: '/404',
+  [PageView.SERVICE_CHAT]: '/services/chat',
+  [PageView.SERVICE_PHOTO]: '/services/photo',
+  [PageView.SERVICE_VOICE]: '/services/voice',
+  [PageView.SERVICE_VIDEO]: '/services/video',
 };
 
 // Get initial view from URL
 const getInitialView = (): PageView => {
   const path = window.location.pathname;
   if (path.startsWith('/specialist/')) return PageView.SPECIALIST;
+  if (path.startsWith('/services/')) return pathToView[path] || PageView.NOT_FOUND;
   return pathToView[path] || PageView.NOT_FOUND;
 };
 
@@ -1824,6 +1870,14 @@ const App: React.FC = () => {
         // Auth finished but no user - redirect will be handled by useEffect below
         return null;
         
+        case PageView.SERVICE_CHAT:
+          return <ServicePage serviceId="chat" onNavigate={navigate} />;
+        case PageView.SERVICE_PHOTO:
+          return <ServicePage serviceId="photo" onNavigate={navigate} />;
+        case PageView.SERVICE_VOICE:
+          return <ServicePage serviceId="voice" onNavigate={navigate} />;
+        case PageView.SERVICE_VIDEO:
+          return <ServicePage serviceId="video" onNavigate={navigate} />;
         case PageView.NOT_FOUND:
           return (
             <div className="min-h-screen-safe bg-light-50 dark:bg-midnight-950 flex flex-col items-center justify-center px-6 text-center">
@@ -1901,6 +1955,8 @@ const App: React.FC = () => {
               )}
               <HowItWorksSimple />
               <SectionDivider variant="hexagon" />
+              <ServicesSection onNavigate={navigate} />
+              <SectionDivider variant="line" />
               <WhatWeHelpWith />
               <SectionDivider variant="line" />
               <WhyTotalAssist />

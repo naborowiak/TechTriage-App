@@ -69,6 +69,10 @@ export enum PageView {
   SCOUT = "scout",
   SPECIALIST = "specialist",
   NOT_FOUND = "not_found",
+  SERVICE_CHAT = "service_chat",
+  SERVICE_PHOTO = "service_photo",
+  SERVICE_VOICE = "service_voice",
+  SERVICE_VIDEO = "service_video",
 }
 
 export interface PricingTier {
