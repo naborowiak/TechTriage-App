@@ -539,7 +539,7 @@ const Hero: React.FC<{
         }}
         aria-hidden="true"
       />
-      <div className="relative mx-auto max-w-[1440px] overflow-hidden z-10 pt-[120px] lg:pt-[160px] px-6 lg:px-16">
+      <div className="relative mx-auto max-w-[1440px] overflow-x-clip overflow-y-visible z-10 pt-[120px] lg:pt-[160px] px-6 lg:px-16">
         <div className="mx-auto relative z-20 flex flex-col lg:flex-row lg:items-center">
 
           {/* Left column */}

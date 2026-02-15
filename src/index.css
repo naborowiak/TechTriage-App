@@ -498,10 +498,16 @@ body {
 }
 
 /* Color-blur mask — eliminates hard edge */
-/* Desktop: soft fade on left/right edges */
+/* Desktop: soft fade on left/right edges, extend blur upward to reach header */
 .agentic-hero-blur {
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 30%, black 75%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 30%, black 75%, transparent 100%);
+}
+@media (min-width: 1024px) {
+  .agentic-hero-blur {
+    top: -200px;
+    height: calc(100% + 200px);
+  }
 }
 /* Mobile/tablet: fade top edge + sides */
 @media (max-width: 1199px) {
