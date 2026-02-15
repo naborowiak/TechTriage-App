@@ -725,7 +725,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                         ? 'bg-gradient-to-r from-electric-indigo to-electric-cyan text-white rounded-tr-sm'
                         : 'bg-light-100 dark:bg-midnight-800 text-text-primary dark:text-white rounded-tl-sm border border-light-300 dark:border-midnight-700'
                     }`}>
-                      {msg.image && <img src={msg.image} className="w-full h-auto rounded-lg mb-3 border border-light-300 dark:border-midnight-700" />}
+                      {msg.image && <img src={msg.image} alt="Attached image" className="w-full h-auto rounded-lg mb-3 border border-light-300 dark:border-midnight-700" />}
                       <div className="leading-relaxed">{renderMarkdown(msg.text)}</div>
                       <div className={`text-[10px] mt-1 ${msg.role === UserRole.USER ? 'text-white/50' : 'text-text-muted'}`}>
                         {msg.role === UserRole.MODEL ? `${msg.agentName || botAgentNameRef.current.first} • ` : ''}
@@ -847,7 +847,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
               {selectedImage && (
                 <div className="absolute bottom-full left-4 mb-2 flex gap-3 animate-fade-in-up">
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-light-300 dark:border-midnight-700 group shadow-lg">
-                    <img src={selectedImage} className="w-full h-full object-cover" />
+                    <img src={selectedImage} alt="Selected image preview" className="w-full h-full object-cover" />
                     <button
                       onClick={() => setSelectedImage(undefined)}
                       className="absolute top-1 right-1 bg-black/50 dark:bg-midnight-950/80 text-white p-0.5 rounded-full"

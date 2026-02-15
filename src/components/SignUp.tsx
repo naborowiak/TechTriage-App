@@ -168,42 +168,41 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
   const { theme, toggleTheme } = useTheme();
 
   return (
-  <div className="min-h-screen bg-light-100 dark:bg-midnight-950 relative flex flex-col items-center transition-colors">
-    {/* Background orbs */}
-    <div className="absolute top-0 right-1/4 w-96 h-96 bg-electric-indigo/10 rounded-full blur-3xl"></div>
-    <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-scout-purple/10 rounded-full blur-3xl"></div>
+  <div className="min-h-screen relative flex flex-col items-center justify-center transition-colors py-8">
+    {/* Background image */}
+    <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/bg-login.png)' }} aria-hidden="true" />
 
-    {/* Header / Logo */}
-    <div className="w-full pt-8 pb-6 flex justify-center z-10 relative">
-      <button
-        onClick={onLogoClick}
-        className="focus:outline-none hover:opacity-80 transition-opacity"
-      >
-        <Logo variant="dark" className="dark:hidden" />
-        <Logo variant="light" className="hidden dark:flex" />
-      </button>
+    {/* Theme Toggle — floating top-right */}
+    <button
+      onClick={toggleTheme}
+      className="fixed right-4 top-4 z-20 p-2.5 rounded-xl bg-white/80 dark:bg-midnight-800/80 backdrop-blur-sm shadow-sm border border-light-200 dark:border-midnight-700 hover:bg-white dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+    >
+      {theme === 'light' ? (
+        <Moon className="w-5 h-5" />
+      ) : (
+        <Sun className="w-5 h-5" />
+      )}
+    </button>
 
-      {/* Theme Toggle */}
-      <button
-        onClick={toggleTheme}
-        className="absolute right-6 top-8 p-2 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
-        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-      >
-        {theme === 'light' ? (
-          <Moon className="w-5 h-5" />
-        ) : (
-          <Sun className="w-5 h-5" />
-        )}
-      </button>
-    </div>
+    {/* Main Card — logo inside */}
+    <div className="w-full max-w-[520px] px-4 z-10">
+      <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 border border-light-200 dark:border-midnight-700 overflow-hidden">
+        {/* Logo area */}
+        <div className="pt-8 pb-6 flex justify-center border-b border-light-200 dark:border-midnight-700">
+          <button
+            onClick={onLogoClick}
+            className="focus:outline-none hover:opacity-80 transition-opacity"
+          >
+            <Logo variant="dark" className="dark:hidden" />
+            <Logo variant="light" className="hidden dark:flex" />
+          </button>
+        </div>
 
-    {/* Main Card */}
-    <div className="w-full max-w-[520px] px-4 pb-12 z-10">
-      <div className="bg-white dark:bg-midnight-800 rounded-2xl shadow-xl border border-light-300 dark:border-midnight-700 overflow-hidden">
         {/* Progress Bar */}
         {step !== undefined && step > 0 && showProgressBar && (
-          <div className="px-8 pt-8">
+          <div className="px-8 pt-6">
             <ProgressBar step={step} totalSteps={totalSteps} />
           </div>
         )}
@@ -225,17 +224,19 @@ const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
       </div>
 
       {/* Footer Links */}
-      <div className="mt-8 text-center space-y-4">
-        <p className="text-sm text-text-muted">
-          &copy; {new Date().getFullYear()} Smart Tek Labs. All rights reserved.
-        </p>
-        <div className="flex justify-center gap-6 text-sm text-text-secondary font-medium">
-          <a href="/terms" className="hover:text-electric-indigo transition-colors">
-            Terms of Service
-          </a>
-          <a href="/privacy" className="hover:text-electric-indigo transition-colors">
-            Privacy Policy
-          </a>
+      <div className="mt-6 text-center space-y-3">
+        <div className="inline-block bg-white/80 dark:bg-midnight-900/80 backdrop-blur-sm rounded-xl px-6 py-3">
+          <p className="text-sm text-text-muted dark:text-white/50 mb-2">
+            &copy; {new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+          </p>
+          <div className="flex justify-center gap-6 text-sm font-medium">
+            <a href="/terms" className="text-text-secondary dark:text-white/60 hover:text-electric-indigo dark:hover:text-electric-cyan transition-colors">
+              Terms of Service
+            </a>
+            <a href="/privacy" className="text-text-secondary dark:text-white/60 hover:text-electric-indigo dark:hover:text-electric-cyan transition-colors">
+              Privacy Policy
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -302,7 +303,8 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-light-100 dark:bg-midnight-950 transition-colors">
+      <div className="min-h-screen flex items-center justify-center relative transition-colors">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/bg-login.png)' }} aria-hidden="true" />
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-text-secondary font-medium">Loading...</p>
@@ -744,6 +746,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary dark:hover:text-white"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />

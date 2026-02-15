@@ -1,4 +1,5 @@
 import express from "express";
+import compression from "compression";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -75,6 +76,9 @@ app.use(
     credentials: true,
   }),
 );
+
+// Gzip/Brotli compression for all responses
+app.use(compression());
 
 // Security headers
 app.use(helmet({
@@ -1922,7 +1926,20 @@ async function main() {
   // In production, serve the built frontend files
   if (isProduction) {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+
+    // Hashed assets (JS/CSS) get long cache; HTML/manifest get short cache
+    app.use("/assets", express.static(path.join(distPath, "assets"), {
+      maxAge: "1y",
+      immutable: true,
+    }));
+    app.use(express.static(distPath, {
+      maxAge: "1h",
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith(".html")) {
+          res.setHeader("Cache-Control", "no-cache");
+        }
+      },
+    }));
 
     // SPA catch-all: serve index.html for any non-API routes
     app.get("/{*splat}", (req, res, next) => {

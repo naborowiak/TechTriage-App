@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "TotalAssist | Powered by Smart Tek Labs",
+  "name": "TotalAssist | AI-Powered Home Tech Support",
   "short_name": "TotalAssist",
-  "description": "AI-powered home tech support by Smart Tek Labs. Get instant help with Wi-Fi, smart devices, and appliances via Scout AI chat, photo analysis, or live video.",
+  "description": "AI-powered home tech support. Get instant help with Wi-Fi, smart devices, and appliances via chat, photo analysis, or live video support.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

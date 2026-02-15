@@ -72,7 +72,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
 
           {/* Left — Accordion */}
-          <div className="w-full lg:w-[45%] space-y-3">
+          <AnimatedElement animation="fadeInLeft" className="w-full lg:w-[45%] space-y-3">
             {services.map((service, i) => {
               const Icon = service.icon;
               const isActive = i === activeIndex;
@@ -170,10 +170,10 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
                 </div>
               );
             })}
-          </div>
+          </AnimatedElement>
 
           {/* Right — Image preview (desktop only) */}
-          <div className="hidden lg:block w-full lg:w-[55%] sticky top-24">
+          <AnimatedElement animation="fadeInRight" delay={0.2} className="hidden lg:block w-full lg:w-[55%] sticky top-24">
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-light-100 dark:bg-midnight-800">
               {services.map((service, i) => (
                 <img
@@ -206,7 +206,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
                 </p>
               </div>
             </div>
-          </div>
+          </AnimatedElement>
 
         </div>
       </div>

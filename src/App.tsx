@@ -546,7 +546,7 @@ const Hero: React.FC<{
           <div className="relative w-full lg:w-1/2 flex flex-col justify-center">
             <div className="max-w-[520px] lg:max-w-[640px] mx-auto lg:mx-0">
               <h1
-                className="font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
+                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
                 style={{ letterSpacing: '-2.5px', lineHeight: '110%' }}
               >
                 Get help<br />
@@ -556,14 +556,14 @@ const Hero: React.FC<{
                 </span>
                 <span className="hero-cursor" aria-hidden="true" />
               </h1>
-              <div className="mt-4 lg:max-w-[420px]">
+              <div className="hero-animate-2 mt-4 lg:max-w-[420px]">
                 <p className="font-sora text-center lg:text-left text-base md:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
                   24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
               </div>
             </div>
 
-            <div className="flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 lg:justify-start lg:mb-20">
+            <div className="hero-animate-3 flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 lg:justify-start lg:mb-20">
               <div className="flex font-sora justify-center lg:justify-start">
                 <button
                   onClick={onFreeTrial}
@@ -578,7 +578,7 @@ const Hero: React.FC<{
           </div>
 
           {/* Right column — carousel */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-6 lg:mt-0">
+          <div className="hero-animate-4 w-full lg:w-1/2 flex justify-center lg:justify-end mt-6 lg:mt-0">
             <div
               className={`relative w-full max-w-[700px] aspect-[4/3] lg:aspect-auto lg:h-[560px]${paused ? ' agentic-hero-paused' : ''}`}
               onMouseEnter={() => setPaused(true)}
@@ -737,14 +737,14 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
 
       <div className="relative container mx-auto px-6 max-w-6xl z-10">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <div className="inline-block bg-midnight-900 rounded-2xl px-8 py-8 lg:px-12 lg:py-10">
+          <div className="inline-block bg-white/80 dark:bg-midnight-950/70 backdrop-blur-md rounded-2xl px-8 py-8 lg:px-12 lg:py-10 border border-light-200/50 dark:border-white/10">
             <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
               What We Help With
             </span>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-text-primary dark:text-white">
               Technology support for your home
             </h2>
-            <p className="text-xl max-w-2xl mx-auto text-white/80">
+            <p className="text-xl max-w-2xl mx-auto text-text-secondary dark:text-white/80">
               From Wi-Fi troubles to smart home setup — TotalAssist helps with the tech that
               keeps your home running.
             </p>
@@ -754,7 +754,7 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
           {problems.map((item, i) => (
             <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.08}>
               <div
-                className="group relative bg-white dark:bg-midnight-800/90 dark:backdrop-blur-md border border-[#cecdcd] dark:border-white/15 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-xl dark:hover:border-white/25 h-full flex flex-col"
+                className="group relative bg-white dark:bg-midnight-800 border border-light-200 dark:border-midnight-600 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-xl dark:hover:shadow-midnight-950/50 dark:hover:border-midnight-500 h-full flex flex-col"
                 onClick={() => onNavigate(PageView.HOW_IT_WORKS)}
                 role="button"
                 tabIndex={0}
@@ -1260,7 +1260,7 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
           {/* Brand Column */}
-          <div className="col-span-2 md:col-span-1">
+          <AnimatedElement animation="fadeInUp" className="col-span-2 md:col-span-1">
             <button
               onClick={() => handleNav(PageView.HOME)}
               className="mb-6 block"
@@ -1270,10 +1270,10 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
               Your 24/7 technical safety net. TotalAssist diagnoses and fixes your home's Wi-Fi, gadgets, and appliances instantly. Expert support is now just a heartbeat away.
             </p>
-          </div>
+          </AnimatedElement>
 
           {/* Product Column */}
-          <div>
+          <AnimatedElement animation="fadeInUp" delay={0.1}>
             <h4 className="font-bold mb-6 text-white">Product</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>
@@ -1336,10 +1336,10 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
             </ul>
-          </div>
+          </AnimatedElement>
 
           {/* Support Column */}
-          <div>
+          <AnimatedElement animation="fadeInUp" delay={0.2}>
             <h4 className="font-bold mb-6 text-white">Support</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>
@@ -1367,10 +1367,10 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
             </ul>
-          </div>
+          </AnimatedElement>
 
           {/* Legal Column */}
-          <div>
+          <AnimatedElement animation="fadeInUp" delay={0.3}>
             <h4 className="font-bold mb-6 text-white">Legal</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>
@@ -1398,7 +1398,7 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
             </ul>
-          </div>
+          </AnimatedElement>
         </div>
 
         {/* Bottom Bar */}
@@ -1625,6 +1625,35 @@ const App: React.FC = () => {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // Dynamic page title + canonical URL per route
+  useEffect(() => {
+    const PAGE_TITLES: Partial<Record<PageView, string>> = {
+      [PageView.HOME]: 'TotalAssist | AI-Powered Home Tech Support',
+      [PageView.HOW_IT_WORKS]: 'How It Works | TotalAssist',
+      [PageView.PRICING]: 'Pricing Plans | TotalAssist',
+      [PageView.FAQ]: 'FAQ | TotalAssist',
+      [PageView.SIGNUP]: 'Sign Up | TotalAssist',
+      [PageView.LOGIN]: 'Log In | TotalAssist',
+      [PageView.DASHBOARD]: 'Dashboard | TotalAssist',
+      [PageView.SCOUT]: 'Support Chat | TotalAssist',
+      [PageView.PRIVACY]: 'Privacy Policy | TotalAssist',
+      [PageView.TERMS]: 'Terms of Service | TotalAssist',
+      [PageView.CANCELLATION]: 'Cancellation Policy | TotalAssist',
+      [PageView.SERVICE_CHAT]: 'AI Chat Support | TotalAssist',
+      [PageView.SERVICE_PHOTO]: 'Photo Diagnosis | TotalAssist',
+      [PageView.SERVICE_VOICE]: 'Voice Support | TotalAssist',
+      [PageView.SERVICE_VIDEO]: 'Live Video Support | TotalAssist',
+      [PageView.NOT_FOUND]: 'Page Not Found | TotalAssist',
+    };
+    document.title = PAGE_TITLES[currentView] || 'TotalAssist | AI-Powered Home Tech Support';
+
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      const path = viewToPath[currentView] || '/';
+      canonical.setAttribute('href', `https://totalassist.tech${path === '/' ? '' : path}`);
+    }
+  }, [currentView]);
 
   // Custom navigate function that updates URL (memoized to prevent child re-renders)
   const navigate = useCallback((view: PageView) => {

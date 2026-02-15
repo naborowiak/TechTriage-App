@@ -104,7 +104,10 @@
       "WebFetch(domain:www.linear.app)",
       "WebFetch(domain:www.kalungi.com)",
       "WebFetch(domain:www.webstacks.com)",
-      "WebFetch(domain:railway.com)"
+      "WebFetch(domain:railway.com)",
+      "Bash(du:*)",
+      "Bash(/tmp/used_images.txt << 'EOF'\nandroid-chrome-192x192.png\nandroid-chrome-512x512.png\napple-touch-icon.png\ncolor-blur.png\ndeveloper-hub-bg.png\nfavicon-16x16.png\nfavicon-32x32.png\nfavicon.ico\nhero-bg.mp4\nhero_mobile1.jpg\nhomepage-hero.jpg\nshow_problem.jpg\nslide-1-new.png\nslide-2-new.png\nslide-3-new.png\ntalk_support.jpeg\ntech-image-man.png\ntotal_assist-new.png\ntotal_assist-new-white.png\ntype_question.jpeg\nvideo_support.png\nwidescreen-shot-dark.jpg\nwidescreen-shot.jpg\nEOF)",
+      "WebFetch(domain:dashboard.algolia.com)"
     ]
   }
 }
