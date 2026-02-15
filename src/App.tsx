@@ -924,7 +924,7 @@ const WhyTotalAssist: React.FC = () => {
           <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm">
 
             {/* Sticky Column Headers — sticks below fixed nav (72px) */}
-            <div className="sticky top-[72px] z-10 grid grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
+            <div className="sticky top-[72px] z-10 grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
               {/* Empty top-left */}
               <div className="p-4 lg:p-5" />
               {/* TotalAssist — Highlighted column header */}
@@ -954,7 +954,7 @@ const WhyTotalAssist: React.FC = () => {
                   {/* Category Header — Collapsible */}
                   <button
                     onClick={() => toggleCategory(category.key)}
-                    className="w-full grid grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] bg-light-50 dark:bg-midnight-800/60 border-b border-light-300 dark:border-midnight-700 hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors cursor-pointer"
+                    className="w-full grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] bg-light-50 dark:bg-midnight-800/60 border-b border-light-300 dark:border-midnight-700 hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors cursor-pointer"
                     aria-expanded={isExpanded}
                     aria-controls={`comparison-${category.key}`}
                   >
@@ -983,7 +983,7 @@ const WhyTotalAssist: React.FC = () => {
                     {category.features.map((feature, fi) => (
                       <div
                         key={fi}
-                        className={`grid grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] ${
+                        className={`grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] ${
                           fi !== category.features.length - 1 ? 'border-b border-light-200 dark:border-midnight-700/60' : 'border-b border-light-300 dark:border-midnight-700'
                         } hover:bg-light-50 dark:hover:bg-midnight-800/40 transition-colors`}
                       >
