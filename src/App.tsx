@@ -540,13 +540,13 @@ const Hero: React.FC<{
         aria-hidden="true"
       />
       <div className="relative mx-auto max-w-[1440px] overflow-x-clip overflow-y-visible z-10 pt-[120px] lg:pt-[160px] px-6 lg:px-16">
-        <div className="mx-auto relative z-20 flex flex-col lg:flex-row lg:items-center">
+        <div className="mx-auto relative z-20 flex flex-col xl:flex-row xl:items-center">
 
           {/* Left column */}
-          <div className="relative w-full lg:w-1/2 flex flex-col justify-center">
-            <div className="max-w-[520px] lg:max-w-[640px] mx-auto lg:mx-0">
+          <div className="relative w-full xl:w-1/2 flex flex-col justify-center">
+            <div className="max-w-[520px] xl:max-w-[640px] mx-auto xl:mx-0">
               <h1
-                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
+                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-10 text-center xl:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
                 style={{ letterSpacing: '-2.5px', lineHeight: '110%' }}
               >
                 Get help<br />
@@ -556,18 +556,18 @@ const Hero: React.FC<{
                 </span>
                 <span className="hero-cursor" aria-hidden="true" />
               </h1>
-              <div className="hero-animate-2 mt-4 lg:max-w-[420px]">
-                <p className="font-sora text-center lg:text-left text-base md:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
+              <div className="hero-animate-2 mt-4 xl:max-w-[420px]">
+                <p className="font-sora text-center xl:text-left text-base md:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
                   24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
               </div>
             </div>
 
-            <div className="hero-animate-3 flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 lg:justify-start lg:mb-20">
-              <div className="flex font-sora justify-center lg:justify-start">
+            <div className="hero-animate-3 flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 xl:justify-start xl:mb-20">
+              <div className="flex font-sora justify-center xl:justify-start">
                 <button
                   onClick={onFreeTrial}
-                  className="overflow-hidden flex flex-wrap items-center cursor-pointer font-sora w-full justify-center lg:justify-start text-white px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
+                  className="overflow-hidden flex flex-wrap items-center cursor-pointer font-sora w-full justify-center xl:justify-start text-white px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
                 >
                   <span className="font-semibold mx-auto font-sora leading-[1.5] text-sm lg:text-base tracking-[0.28px] lg:tracking-[0.32px]">
                     Get Started Free
@@ -578,9 +578,9 @@ const Hero: React.FC<{
           </div>
 
           {/* Right column — carousel */}
-          <div className="hero-animate-4 w-full lg:w-1/2 flex justify-center lg:justify-end mt-6 lg:mt-0">
+          <div className="hero-animate-4 w-full xl:w-1/2 flex justify-center xl:justify-end mt-6 xl:mt-0">
             <div
-              className={`relative w-full max-w-[700px] aspect-[4/3] lg:aspect-auto lg:h-[680px]${paused ? ' agentic-hero-paused' : ''}`}
+              className={`relative w-full max-w-[700px] aspect-[4/3] xl:aspect-auto xl:h-[680px]${paused ? ' agentic-hero-paused' : ''}`}
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
             >
@@ -592,7 +592,7 @@ const Hero: React.FC<{
                   style={{ opacity: active === i ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
                 >
                   <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
-                  <img src={slide.top} className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={slide.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+                  <img src={slide.top} className="absolute bottom-0 left-0 xl:left-auto xl:right-0 w-full h-auto xl:w-auto xl:h-full xl:max-w-none" alt={slide.alt} loading={i === 0 ? 'eager' : 'lazy'} />
                 </div>
               ))}
 

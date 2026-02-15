@@ -442,7 +442,7 @@ body {
   transform: translateX(-50%);
   z-index: 30;
 }
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .agentic-hero-dots {
     bottom: 2.75rem;
     left: 35%;
@@ -503,14 +503,14 @@ body {
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 30%, black 75%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 30%, black 75%, transparent 100%);
 }
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .agentic-hero-blur {
     top: -200px;
     height: calc(100% + 200px);
   }
 }
 /* Mobile/tablet: fade top edge + sides */
-@media (max-width: 1199px) {
+@media (max-width: 1279px) {
   .agentic-hero-blur {
     -webkit-mask-image:
       linear-gradient(to bottom, transparent 0%, black 15%, black 100%),
