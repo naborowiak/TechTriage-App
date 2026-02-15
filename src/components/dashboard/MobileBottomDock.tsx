@@ -25,7 +25,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
 }) => {
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-40 dock-clean pb-safe"
+      className="lg:hidden shrink-0 z-40 dock-clean pb-safe"
       role="tablist"
       aria-label="Main navigation"
     >

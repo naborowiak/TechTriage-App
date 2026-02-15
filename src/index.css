@@ -347,41 +347,42 @@ body {
 }
 
 /* Scroll-driven animation classes (progressive enhancement) */
+/* animation-range ends at entry 30% so elements reach full opacity quickly */
 @supports (animation-timeline: view()) {
   .scroll-fade-in {
     animation: scroll-fadeIn 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 100%;
+    animation-range: entry var(--stagger, 0%) entry 30%;
   }
 
   .scroll-fade-in-up {
     animation: scroll-fadeInUp 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 100%;
+    animation-range: entry var(--stagger, 0%) entry 30%;
   }
 
   .scroll-fade-in-down {
     animation: scroll-fadeInDown 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 100%;
+    animation-range: entry var(--stagger, 0%) entry 30%;
   }
 
   .scroll-fade-in-left {
     animation: scroll-fadeInLeft 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 100%;
+    animation-range: entry var(--stagger, 0%) entry 30%;
   }
 
   .scroll-fade-in-right {
     animation: scroll-fadeInRight 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 100%;
+    animation-range: entry var(--stagger, 0%) entry 30%;
   }
 
   .scroll-scale-in {
     animation: scroll-scaleIn 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 100%;
+    animation-range: entry var(--stagger, 0%) entry 30%;
   }
 }
 

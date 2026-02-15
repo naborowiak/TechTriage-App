@@ -516,212 +516,77 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                 </p>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px]" role="table" aria-label="Feature comparison by plan">
-                  <thead>
-                    <tr className="border-b border-light-300 dark:border-midnight-700">
-                      <th scope="col" className="text-left py-4 px-4 text-text-secondary font-medium">Feature</th>
-                      <th scope="col" className="py-4 px-4 text-center">
-                        <div className="text-text-primary dark:text-white font-bold">Free</div>
-                        <div className="text-xs text-text-muted">$0/mo</div>
-                      </th>
-                      <th className="py-4 px-4 text-center">
-                        <div className="text-electric-indigo font-bold">Home</div>
-                        <div className="text-xs text-text-muted">${isAnnual ? '7.99' : '9.99'}/mo</div>
-                      </th>
-                      <th className="py-4 px-4 text-center">
-                        <div className="text-text-primary dark:text-white font-bold">Pro</div>
-                        <div className="text-xs text-text-muted">${isAnnual ? '15.99' : '19.99'}/mo</div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Chat Support */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <MessageSquare className="w-4 h-4 text-electric-indigo" />
+              <div role="table" aria-label="Feature comparison by plan">
+                {/* Sticky Column Headers — sticks below fixed nav (72px) */}
+                <div
+                  role="row"
+                  className="sticky top-[72px] z-10 grid grid-cols-[1fr_72px_72px_72px] sm:grid-cols-[1fr_100px_100px_100px] lg:grid-cols-[1fr_140px_140px_140px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]"
+                >
+                  <div role="columnheader" className="py-4 px-3 sm:px-4 text-text-secondary font-medium text-sm">Feature</div>
+                  <div role="columnheader" className="py-4 px-2 sm:px-4 text-center">
+                    <div className="text-text-primary dark:text-white font-bold text-sm">Free</div>
+                    <div className="text-[10px] sm:text-xs text-text-muted">$0/mo</div>
+                  </div>
+                  <div role="columnheader" className="py-4 px-2 sm:px-4 text-center border-x border-light-200 dark:border-midnight-700 bg-electric-indigo/[0.04] dark:bg-electric-indigo/[0.08] relative">
+                    <div className="absolute top-0 left-0 right-0 h-[3px] bg-electric-indigo rounded-b-sm" />
+                    <div className="text-electric-indigo font-bold text-sm">Home</div>
+                    <div className="text-[10px] sm:text-xs text-text-muted">${isAnnual ? '7.99' : '9.99'}/mo</div>
+                  </div>
+                  <div role="columnheader" className="py-4 px-2 sm:px-4 text-center">
+                    <div className="text-text-primary dark:text-white font-bold text-sm">Pro</div>
+                    <div className="text-[10px] sm:text-xs text-text-muted">${isAnnual ? '15.99' : '19.99'}/mo</div>
+                  </div>
+                </div>
+
+                {/* Feature rows */}
+                {[
+                  { icon: <MessageSquare className="w-4 h-4 text-electric-indigo" />, name: 'Chat Support', sub: 'Text-based troubleshooting', free: '5/month', home: 'Unlimited', pro: 'Unlimited' },
+                  { icon: <Camera className="w-4 h-4 text-electric-indigo" />, name: 'Photo Analysis', sub: 'Send photos for diagnosis', free: '1/month', home: 'Unlimited', pro: 'Unlimited' },
+                  { icon: <Mic className="w-4 h-4 text-electric-indigo" />, name: 'Voice Support', sub: 'Talk through issues hands-free', free: 'locked', home: 'Unlimited', pro: 'Unlimited' },
+                  { icon: <Video className="w-4 h-4 text-electric-indigo" />, name: 'Video Diagnostic', sub: 'Live camera diagnosis', free: 'locked', home: '1/week', pro: '15/month' },
+                  { icon: <Clock className="w-4 h-4 text-electric-indigo" />, name: 'Case History', sub: 'Saved conversations', free: 'Last 5', home: 'Full history', pro: 'Full history' },
+                  { icon: <Sparkles className="w-4 h-4 text-electric-indigo" />, name: 'Assist Pills', sub: 'Guided step-by-step fixes', free: 'check', home: 'check', pro: 'check' },
+                  { icon: <FileText className="w-4 h-4 text-electric-indigo" />, name: 'PDF Reports', sub: 'Diagnostic case reports', free: 'check', home: 'check', pro: 'check' },
+                  { icon: <Home className="w-4 h-4 text-electric-indigo" />, name: 'Multi-Home', sub: 'Properties supported', free: '1', home: '1', pro: 'Up to 5', isLast: true },
+                ].map((row, i) => {
+                  const renderCell = (value: string) => {
+                    if (value === 'check') return <Check className="w-5 h-5 text-electric-cyan mx-auto" />;
+                    if (value === 'locked') return <Lock className="w-4 h-4 text-text-muted mx-auto" />;
+                    if (value === 'Unlimited' || value === 'Full history') return <span className="text-xs sm:text-sm font-semibold text-electric-cyan">{value}</span>;
+                    if (value.includes('/week') || value.includes('/month') || value === 'Up to 5') return <span className="text-xs sm:text-sm font-semibold text-electric-indigo">{value}</span>;
+                    return <span className="text-xs sm:text-sm text-text-secondary">{value}</span>;
+                  };
+                  return (
+                    <div
+                      key={i}
+                      role="row"
+                      className={`grid grid-cols-[1fr_72px_72px_72px] sm:grid-cols-[1fr_100px_100px_100px] lg:grid-cols-[1fr_140px_140px_140px] ${
+                        !(row as any).isLast ? 'border-b border-light-200 dark:border-midnight-800' : ''
+                      } hover:bg-light-50 dark:hover:bg-midnight-800/40 transition-colors`}
+                    >
+                      <div role="cell" className="py-3.5 sm:py-4 px-3 sm:px-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center shrink-0">
+                            {row.icon}
                           </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Chat Support</div>
-                            <div className="text-xs text-text-muted">Text-based troubleshooting</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">5/month</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                    </tr>
-                    {/* Photo Analysis */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <Camera className="w-4 h-4 text-electric-indigo" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Photo Analysis</div>
-                            <div className="text-xs text-text-muted">Send photos for diagnosis</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">1/month</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                    </tr>
-                    {/* Voice Support */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <Mic className="w-4 h-4 text-electric-indigo" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Voice Support</div>
-                            <div className="text-xs text-text-muted">Talk through issues hands-free</div>
+                          <div className="min-w-0">
+                            <div className="font-medium text-text-primary dark:text-white text-sm truncate">{row.name}</div>
+                            <div className="text-[10px] sm:text-xs text-text-muted truncate">{row.sub}</div>
                           </div>
                         </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Lock className="w-4 h-4 text-text-muted mx-auto" />
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Unlimited</span>
-                      </td>
-                    </tr>
-                    {/* Video Diagnostic */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <Video className="w-4 h-4 text-electric-indigo" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Video Diagnostic</div>
-                            <div className="text-xs text-text-muted">Live camera diagnosis</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Lock className="w-4 h-4 text-text-muted mx-auto" />
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-indigo">1/week</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-indigo">15/month</span>
-                      </td>
-                    </tr>
-                    {/* Case History */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <Clock className="w-4 h-4 text-electric-indigo" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Case History</div>
-                            <div className="text-xs text-text-muted">Saved conversations</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">Last 5</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Full history</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-cyan">Full history</span>
-                      </td>
-                    </tr>
-                    {/* Assist Pills */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <Sparkles className="w-4 h-4 text-electric-indigo" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Assist Pills</div>
-                            <div className="text-xs text-text-muted">Guided step-by-step fixes</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
-                      </td>
-                    </tr>
-                    {/* PDF Reports */}
-                    <tr className="border-b border-light-200 dark:border-midnight-800">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <FileText className="w-4 h-4 text-electric-indigo" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">PDF Reports</div>
-                            <div className="text-xs text-text-muted">Diagnostic case reports</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Check className="w-5 h-5 text-electric-cyan mx-auto" />
-                      </td>
-                    </tr>
-                    {/* Multi-home */}
-                    <tr>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-electric-indigo/8 flex items-center justify-center">
-                            <Home className="w-4 h-4 text-electric-indigo" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-text-primary dark:text-white">Multi-Home</div>
-                            <div className="text-xs text-text-muted">Properties supported</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">1</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm text-text-secondary">1</span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className="text-sm font-semibold text-electric-indigo">Up to 5</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                      </div>
+                      <div role="cell" className="py-3.5 sm:py-4 px-2 sm:px-4 flex items-center justify-center">
+                        {renderCell(row.free)}
+                      </div>
+                      <div role="cell" className="py-3.5 sm:py-4 px-2 sm:px-4 flex items-center justify-center border-x border-light-200 dark:border-midnight-700/60 bg-electric-indigo/[0.02] dark:bg-electric-indigo/[0.04]">
+                        {renderCell(row.home)}
+                      </div>
+                      <div role="cell" className="py-3.5 sm:py-4 px-2 sm:px-4 flex items-center justify-center">
+                        {renderCell(row.pro)}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </AnimatedElement>

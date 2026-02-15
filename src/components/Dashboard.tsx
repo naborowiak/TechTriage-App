@@ -395,7 +395,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {children}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-20 lg:pb-8">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-4 lg:pb-8">
           <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
             {/* System Status */}
             <SystemStatusBadge />
