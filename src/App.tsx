@@ -448,10 +448,9 @@ const Header: React.FC<{
 
 
 const HERO_SLIDES = [
-  { id: 1, top: "/slide-1.png", alt: "Homeowner chatting with TotalAssist about a Wi-Fi issue" },
-  { id: 2, top: "/slide-2.png", alt: "Homeowner photographing a router for instant AI diagnosis" },
-  { id: 3, top: "/slide-3.png", alt: "Homeowner on a voice call with TotalAssist for hands-free support" },
-  { id: 4, top: "/slide-4.png", alt: "Homeowner showing a device issue on video for live diagnosis" },
+  { id: 1, top: "/slide-1-new.png", alt: "Homeowner chatting with TotalAssist about a Wi-Fi issue" },
+  { id: 2, top: "/slide-2-new.png", alt: "TotalAssist guiding a homeowner through a step-by-step modem fix" },
+  { id: 3, top: "/slide-3-new.png", alt: "Homeowner celebrating a restored connection with a PDF report" },
 ];
 
 const TYPEWRITER_WORDS = [
@@ -567,41 +566,16 @@ const Hero: React.FC<{
               onMouseLeave={() => setPaused(false)}
             >
 
-              {/* Slide 1 */}
-              <div
-                className="agentic-hero-slide absolute inset-0 transition-opacity"
-                style={{ opacity: active === 0 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
-              >
-                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
-                <img src="/slide-1.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[0].alt} loading="eager" />
-              </div>
-
-              {/* Slide 2 */}
-              <div
-                className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
-                style={{ opacity: active === 1 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
-              >
-                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
-                <img src="/slide-2.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[1].alt} loading="eager" />
-              </div>
-
-              {/* Slide 3 */}
-              <div
-                className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
-                style={{ opacity: active === 2 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
-              >
-                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
-                <img src="/slide-3.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[2].alt} loading="eager" />
-              </div>
-
-              {/* Slide 4 */}
-              <div
-                className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
-                style={{ opacity: active === 3 ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
-              >
-                <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
-                <img src="/slide-4.png" className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={HERO_SLIDES[3].alt} loading="eager" />
-              </div>
+              {HERO_SLIDES.map((slide, i) => (
+                <div
+                  key={slide.id}
+                  className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
+                  style={{ opacity: active === i ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
+                >
+                  <img alt="" src="/color-blur.png" className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
+                  <img src={slide.top} className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none" alt={slide.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+                </div>
+              ))}
 
               {/* Dots */}
               <div className="agentic-hero-dots absolute flex gap-2">
