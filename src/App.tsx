@@ -522,15 +522,15 @@ const Hero: React.FC<{
       <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
-      <div className="relative mx-auto max-w-[1512px] overflow-hidden z-10 pt-[144px]">
-        <div className="mx-auto relative z-20 flex flex-col lg:flex-row">
+      <div className="relative mx-auto max-w-[1440px] overflow-hidden z-10 pt-[120px] lg:pt-[144px] pb-16 lg:pb-0 px-6 lg:px-16">
+        <div className="mx-auto relative z-20 flex flex-col lg:flex-row lg:items-center">
 
           {/* Left column */}
-          <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-[85px]">
-            <div className="max-w-[520px] lg:max-w-none mx-auto">
+          <div className="relative w-full lg:w-1/2 flex flex-col justify-center">
+            <div className="max-w-[520px] lg:max-w-[540px] mx-auto lg:mx-0">
               <h1
-                className="font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[40px] sm:text-[56px] lg:text-[64px] xl:text-[72px]"
-                style={{ letterSpacing: '-3px', lineHeight: '110%' }}
+                className="font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
+                style={{ letterSpacing: '-2.5px', lineHeight: '110%' }}
               >
                 Get help with<br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
@@ -538,14 +538,14 @@ const Hero: React.FC<{
                 </span>
                 <span className="hero-cursor" aria-hidden="true" />
               </h1>
-              <div className="mt-4 lg:mr-8 lg:max-w-[430px]">
-                <p className="font-sora text-center lg:text-left text-base md:text-[19px] font-normal leading-relaxed text-white/80 my-0 text-balance">
+              <div className="mt-4 lg:max-w-[420px]">
+                <p className="font-sora text-center lg:text-left text-base md:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
                   24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
               </div>
             </div>
 
-            <div className="flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 lg:justify-start lg:mb-[117px]">
+            <div className="flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 lg:justify-start lg:mb-20">
               <div className="flex font-sora justify-center lg:justify-start">
                 <button
                   onClick={onFreeTrial}
@@ -560,14 +560,12 @@ const Hero: React.FC<{
           </div>
 
           {/* Right column — carousel */}
-          <div className="w-full lg:w-[53.3%] flex justify-center lg:justify-end mt-8 lg:mt-0">
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-6 lg:mt-0">
             <div
-              className={`relative w-full max-w-[820px] lg:h-[680px]${paused ? ' agentic-hero-paused' : ''}`}
+              className={`relative w-full max-w-[700px] aspect-[4/3] lg:aspect-auto lg:h-[560px]${paused ? ' agentic-hero-paused' : ''}`}
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
             >
-              {/* Invisible spacer — reserves height on mobile */}
-              <img src="/slide-1.png" className="invisible w-full h-auto lg:hidden" alt="" aria-hidden="true" loading="eager" />
 
               {/* Slide 1 */}
               <div
