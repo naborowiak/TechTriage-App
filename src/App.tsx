@@ -529,7 +529,7 @@ const Hero: React.FC<{
 
           {/* Left column */}
           <div className="relative w-full lg:w-1/2 flex flex-col justify-center">
-            <div className="max-w-[520px] lg:max-w-[540px] mx-auto lg:mx-0">
+            <div className="max-w-[520px] lg:max-w-[640px] mx-auto lg:mx-0">
               <h1
                 className="font-bold font-sora text-white mb-6 mt-10 text-center lg:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
                 style={{ letterSpacing: '-2.5px', lineHeight: '110%' }}

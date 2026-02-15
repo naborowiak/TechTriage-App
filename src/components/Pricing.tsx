@@ -371,39 +371,74 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           </AnimatedElement>
 
           {/* Pricing Grid */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {plans.map((plan, i) => (
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start">
+            {plans.map((plan, i) => {
+              const isCurrentPlan = !!(user && currentTier === planToTier[plan.name]);
+              const isHighlighted = plan.highlight && !isCurrentPlan;
+
+              return (
               <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
                 <div
-                  className={`card-clean rounded-2xl p-8 relative transition-all h-full flex flex-col hover:-translate-y-1.5 hover:shadow-lg ${
-                    user && currentTier === planToTier[plan.name]
-                      ? 'border-2 border-electric-cyan shadow-clean-md'
-                      : plan.highlight
-                      ? 'border-2 border-electric-indigo shadow-clean-md'
-                      : ''
+                  className={`rounded-2xl p-8 relative transition-all h-full flex flex-col hover:-translate-y-1.5 ${
+                    isCurrentPlan
+                      ? 'card-clean border-2 border-electric-cyan shadow-clean-md hover:shadow-lg'
+                      : isHighlighted
+                      ? 'md:scale-[1.03] md:-my-2'
+                      : 'card-clean hover:shadow-lg'
                   }`}
+                  style={isHighlighted ? {
+                    background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 30%, #06B6D4 100%)',
+                    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.30), 0 4px 16px rgba(6, 182, 212, 0.20)',
+                  } : undefined}
                 >
-                <div className={`flex flex-col flex-1 ${
-                  (user && currentTier === planToTier[plan.name]) || plan.highlight ? 'pt-4' : ''
+                  {/* Texture overlays for highlighted card — clipped to card radius */}
+                  {isHighlighted && (
+                    <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none" aria-hidden="true">
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background: 'radial-gradient(ellipse 80% 50% at 20% 80%, rgba(255,255,255,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 60% at 80% 20%, rgba(6,182,212,0.15) 0%, transparent 60%)',
+                        }}
+                      />
+                      <div
+                        className="absolute inset-0 opacity-[0.03]"
+                        style={{
+                          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+                          backgroundSize: '20px 20px',
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Badges — positioned outside overflow clip so they aren't cut off */}
+                  {isCurrentPlan && (
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-4 z-10 bg-electric-cyan text-white text-xs font-bold px-5 py-2 rounded-full shadow-lg shadow-electric-cyan/30 whitespace-nowrap">
+                      YOUR PLAN
+                    </div>
+                  )}
+                  {isHighlighted && (
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-4 z-10 bg-white text-electric-indigo text-xs font-bold px-5 py-2 rounded-full shadow-lg shadow-electric-indigo/30 whitespace-nowrap">
+                      MOST POPULAR
+                    </div>
+                  )}
+
+                <div className={`relative flex flex-col flex-1 ${
+                  isCurrentPlan || plan.highlight ? 'pt-4' : ''
                 }`}>
-                {user && currentTier === planToTier[plan.name] && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-electric-cyan text-white text-xs font-bold px-4 py-2 rounded-full shadow-clean whitespace-nowrap">
-                    YOUR PLAN
-                  </div>
-                )}
-                {plan.highlight && !(user && currentTier === planToTier[plan.name]) && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg whitespace-nowrap" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
-                    MOST POPULAR
-                  </div>
-                )}
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
-                    <plan.icon className="w-6 h-6 text-electric-indigo" />
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ background: isHighlighted
+                      ? 'rgba(255,255,255,0.15)'
+                      : 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)'
+                    }}
+                  >
+                    <plan.icon className={`w-6 h-6 ${isHighlighted ? 'text-white' : 'text-electric-indigo'}`} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-text-primary dark:text-white">{plan.name}</h3>
-                    <div className="text-sm text-text-secondary">{plan.tagline}</div>
+                    <h3 className={`text-xl font-bold ${isHighlighted ? 'text-white' : 'text-text-primary dark:text-white'}`}>{plan.name}</h3>
+                    <div className={`text-sm ${isHighlighted ? 'text-white/70 font-medium' : 'text-text-secondary'}`}>{plan.tagline}</div>
                   </div>
                 </div>
 
@@ -416,28 +451,28 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                     <>
                       <div className="flex items-baseline gap-2">
                         {/* Strikethrough original price — slides in when annual */}
-                        <span className={`text-xl text-text-muted line-through transition-all duration-500 ease-out inline-block overflow-hidden whitespace-nowrap ${
+                        <span className={`text-xl line-through transition-all duration-500 ease-out inline-block overflow-hidden whitespace-nowrap ${
                           isAnnual ? 'max-w-20 opacity-100' : 'max-w-0 opacity-0'
-                        }`}>
+                        } ${isHighlighted ? 'text-white/40' : 'text-text-muted'}`}>
                           ${plan.monthlyPrice}
                         </span>
                         {/* Animated counting price via CSS @property */}
                         <span
-                          className="price-animated text-4xl font-bold text-text-primary dark:text-white"
+                          className={`price-animated text-4xl font-bold ${isHighlighted ? 'text-white' : 'text-text-primary dark:text-white'}`}
                           style={{
                             '--price-dollars': isAnnual ? Math.floor(plan.annualPrice) : Math.floor(plan.monthlyPrice),
                             '--price-cents': Math.round(((isAnnual ? plan.annualPrice : plan.monthlyPrice) % 1) * 100),
                           } as React.CSSProperties}
                         />
-                        <span className="text-text-secondary">/mo</span>
+                        <span className={isHighlighted ? 'text-white/70' : 'text-text-secondary'}>/mo</span>
                       </div>
                       {/* Animated billing text */}
                       <div className="relative overflow-hidden h-5">
                         <div className={`transition-transform duration-500 ease-out delay-75 ${isAnnual ? '-translate-y-1/2' : 'translate-y-0'}`}>
-                          <div className="h-5 text-sm text-text-secondary">
+                          <div className={`h-5 text-sm ${isHighlighted ? 'text-white/60' : 'text-text-secondary'}`}>
                             Billed monthly
                           </div>
-                          <div className="h-5 text-sm text-text-secondary">
+                          <div className={`h-5 text-sm ${isHighlighted ? 'text-white/60' : 'text-text-secondary'}`}>
                             Billed annually (${(plan.annualPrice * 12).toFixed(2)}/yr)
                           </div>
                         </div>
@@ -446,7 +481,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   )}
                 </div>
 
-                <p className="text-text-secondary mb-6 text-[15px] leading-relaxed">
+                <p className={`mb-6 text-[15px] leading-relaxed ${isHighlighted ? 'text-white/80' : 'text-text-secondary'}`}>
                   {plan.description}
                 </p>
 
@@ -454,15 +489,17 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   onClick={() => handlePlanSelect(plan.name)}
                   disabled={isButtonDisabled(plan.name)}
                   className={`w-full py-3 rounded-lg font-semibold text-base transition-all mb-6 flex items-center justify-center gap-2 ${
-                    isButtonDisabled(plan.name) && user && currentTier === planToTier[plan.name]
+                    isButtonDisabled(plan.name) && isCurrentPlan
                       ? 'bg-light-200 dark:bg-midnight-700 text-text-muted cursor-not-allowed'
                       : isButtonDisabled(plan.name)
                       ? 'opacity-50 cursor-wait'
-                      : plan.ctaStyle === 'primary'
-                      ? 'btn-gradient-electric text-white font-semibold px-6'
+                      : isHighlighted
+                      ? 'bg-white text-electric-indigo font-bold hover:bg-white/90 shadow-lg'
                       : plan.ctaStyle === 'outlined'
                       ? 'border-2 border-electric-indigo bg-electric-indigo/10 text-electric-indigo hover:bg-electric-indigo hover:text-white'
-                      : 'bg-surface-100 dark:bg-midnight-700 hover:bg-surface-200 dark:hover:bg-midnight-600 text-text-primary'
+                      : plan.ctaStyle === 'secondary'
+                      ? 'bg-surface-100 dark:bg-midnight-700 hover:bg-surface-200 dark:hover:bg-midnight-600 text-text-primary dark:text-white'
+                      : 'btn-gradient-electric text-white font-semibold px-6'
                   }`}
                 >
                   {isCheckingOut === plan.name && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -473,22 +510,23 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   {plan.features.map((feature, j) => (
                     <li key={j} className="flex items-start gap-3 text-[15px]">
                       <Check className={`w-5 h-5 shrink-0 mt-0.5 ${
-                        plan.highlight ? 'text-electric-cyan' : 'text-electric-indigo'
+                        isHighlighted ? 'text-white' : plan.highlight ? 'text-electric-cyan' : 'text-electric-indigo'
                       }`} />
-                      <span className="text-text-secondary">{feature}</span>
+                      <span className={isHighlighted ? 'text-white/85' : 'text-text-secondary'}>{feature}</span>
                     </li>
                   ))}
                   {'lockedFeatures' in plan && plan.lockedFeatures && (plan.lockedFeatures as string[]).map((feature, j) => (
                     <li key={`locked-${j}`} className="flex items-start gap-3 text-sm">
-                      <Lock className="w-5 h-5 shrink-0 mt-0.5 text-electric-indigo/60" />
-                      <span className="text-text-muted">{feature}</span>
+                      <Lock className={`w-5 h-5 shrink-0 mt-0.5 ${isHighlighted ? 'text-white/40' : 'text-electric-indigo/60'}`} />
+                      <span className={isHighlighted ? 'text-white/50' : 'text-text-muted'}>{feature}</span>
                     </li>
                   ))}
                 </ul>
                 </div>
               </div>
               </AnimatedElement>
-            ))}
+              );
+            })}
           </div>
 
           {/* Trust Badges */}

@@ -103,7 +103,8 @@
       "WebFetch(domain:vercel.com)",
       "WebFetch(domain:www.linear.app)",
       "WebFetch(domain:www.kalungi.com)",
-      "WebFetch(domain:www.webstacks.com)"
+      "WebFetch(domain:www.webstacks.com)",
+      "WebFetch(domain:railway.com)"
     ]
   }
 }
