@@ -547,15 +547,17 @@ const Hero: React.FC<{
             <div className="max-w-[520px] xl:max-w-[640px] mx-auto xl:mx-0">
               <h1
                 className="hero-animate-1 font-bold font-sora text-white mb-6 mt-10 text-center xl:text-left"
-                style={{ letterSpacing: '-2.5px', lineHeight: '120%' }}
+                style={{ letterSpacing: '-2.5px' }}
               >
-                <span className="block text-[24px] sm:text-[30px] lg:text-[36px] xl:text-[44px] text-white/80 mb-1">
+                <span className="block text-[24px] sm:text-[30px] lg:text-[36px] xl:text-[44px] leading-tight text-white/80 mb-2 sm:mb-3">
                   Get help with
                 </span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]">
-                  {displayText}
+                <span className="block text-[32px] sm:text-[42px] lg:text-[48px] xl:text-[58px] leading-none">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
+                    {displayText}
+                  </span>
+                  <span className="hero-cursor" aria-hidden="true" />
                 </span>
-                <span className="hero-cursor" aria-hidden="true" />
               </h1>
               <div className="hero-animate-2 mt-4 xl:max-w-[420px]">
                 <p className="font-sora text-center xl:text-left text-base md:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
