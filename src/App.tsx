@@ -546,12 +546,13 @@ const Hero: React.FC<{
           <div className="relative w-full xl:w-1/2 flex flex-col justify-center">
             <div className="max-w-[520px] xl:max-w-[640px] mx-auto xl:mx-0">
               <h1
-                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-10 text-center xl:text-left text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]"
-                style={{ letterSpacing: '-2.5px', lineHeight: '110%' }}
+                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-10 text-center xl:text-left"
+                style={{ letterSpacing: '-2.5px', lineHeight: '120%' }}
               >
-                Get help<br />
-                with{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
+                <span className="block text-[24px] sm:text-[30px] lg:text-[36px] xl:text-[44px] text-white/80 mb-1">
+                  Get help with
+                </span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-[36px] sm:text-[48px] lg:text-[56px] xl:text-[68px]">
                   {displayText}
                 </span>
                 <span className="hero-cursor" aria-hidden="true" />
