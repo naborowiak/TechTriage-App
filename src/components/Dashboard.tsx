@@ -258,9 +258,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
   ];
 
   return (
-    <div className="h-screen-safe overflow-hidden bg-light-50 dark:bg-midnight-950 transition-colors flex flex-col">
+    <div className="h-screen-safe overflow-hidden bg-light-50 dark:bg-midnight-950 transition-colors flex flex-col relative">
+      <div
+        className="absolute inset-0 bg-top bg-no-repeat bg-cover pointer-events-none"
+        style={{ backgroundImage: 'url(/developer-hub-bg.jpg)' }}
+        aria-hidden="true"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/85 to-white dark:from-transparent dark:via-transparent dark:to-transparent" />
+      </div>
       {/* Header */}
-      <header className="bg-white dark:bg-midnight-900 border-b border-surface-border dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
+      <header className="relative bg-white/80 dark:bg-midnight-900/80 backdrop-blur-md border-b border-surface-border dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
         <div className="flex items-center gap-2.5">
           <img src="/total_assist-new.png" alt="TotalAssist" className="w-8 h-8 object-contain" />
           <span className="text-sm font-bold text-text-primary dark:text-white tracking-tight">
@@ -396,16 +403,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       ) : (
         <div
-          className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-4 lg:pb-8 relative"
+          className="flex-1 overflow-y-auto pb-4 lg:pb-8 relative"
         >
-          <div
-            className="absolute inset-0 bg-top bg-no-repeat bg-cover pointer-events-none"
-            style={{ backgroundImage: 'url(/developer-hub-bg.jpg)' }}
-            aria-hidden="true"
-          >
-            <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/90 to-white dark:from-transparent dark:via-transparent dark:to-transparent" />
-          </div>
-          <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
+          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
             {/* System Status */}
             <SystemStatusBadge />
 
@@ -500,7 +500,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Common Issues */}
             <div>
-              <h3 className="text-sm font-semibold text-text-secondary dark:text-text-muted mb-2.5">
+              <h3 className="text-sm font-semibold text-text-secondary dark:text-white/80 mb-2.5">
                 Common Issues
               </h3>
               {/* Desktop: show all chips */}
@@ -532,7 +532,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {!showChips && (
                     <button
                       onClick={() => setShowChips(true)}
-                      className="px-4 py-2 rounded-full border border-electric-indigo/25 text-electric-indigo text-sm font-medium hover:bg-electric-indigo/10 hover:border-electric-indigo/40 transition-all min-h-[36px]"
+                      className="px-4 py-2 rounded-full border border-electric-indigo/25 text-electric-indigo dark:text-electric-cyan text-sm font-medium hover:bg-electric-indigo/10 hover:border-electric-indigo/40 transition-all min-h-[36px]"
                     >
                       Show more
                     </button>
