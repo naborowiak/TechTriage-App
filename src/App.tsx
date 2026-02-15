@@ -520,7 +520,7 @@ const Hero: React.FC<{
   }, [paused]);
 
   return (
-    <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden -mt-[72px] min-h-screen">
+    <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden -mt-[72px]">
       <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
@@ -539,7 +539,7 @@ const Hero: React.FC<{
         }}
         aria-hidden="true"
       />
-      <div className="relative mx-auto max-w-[1440px] overflow-hidden z-10 min-h-screen flex flex-col justify-center pt-[100px] lg:pt-[96px] pb-10 lg:pb-12 px-6 lg:px-16">
+      <div className="relative mx-auto max-w-[1440px] overflow-hidden z-10 pt-[120px] lg:pt-[160px] px-6 lg:px-16">
         <div className="mx-auto relative z-20 flex flex-col lg:flex-row lg:items-center">
 
           {/* Left column */}
