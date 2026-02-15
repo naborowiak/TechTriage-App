@@ -21,7 +21,7 @@ const BotAvatar = ({ className }: { className?: string }) => {
   if (error) return <LifeBuoy className={className} />;
   return (
     <img
-      src="/total_assist-new.png"
+      src="/total_assist-new-white.png"
       className={`${className} object-contain`}
       alt="TotalAssist"
       onError={() => setError(true)}
@@ -147,7 +147,7 @@ export const VoiceOverlay: React.FC<VoiceOverlayProps> = ({
 
       {/* Header with avatar */}
       <div className="flex flex-col items-center mb-8">
-        <div className="w-20 h-20 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-scout-purple/30">
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-electric-indigo/30" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
           <BotAvatar className="w-12 h-12" />
         </div>
         <h2 className="text-white font-bold text-lg">Voice Support</h2>

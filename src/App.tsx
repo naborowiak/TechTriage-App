@@ -524,6 +524,21 @@ const Hero: React.FC<{
       <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
+      {/* Brand gradient overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(135deg, rgba(99,102,241,0.35) 0%, rgba(6,182,212,0.20) 50%, rgba(99,102,241,0.15) 100%)',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(99,102,241,0.25) 0%, transparent 70%), radial-gradient(ellipse 60% 50% at 80% 40%, rgba(6,182,212,0.18) 0%, transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
       <div className="relative mx-auto max-w-[1440px] overflow-hidden z-10 pt-[120px] lg:pt-[144px] pb-16 lg:pb-0 px-6 lg:px-16">
         <div className="mx-auto relative z-20 flex flex-col lg:flex-row lg:items-center">
 

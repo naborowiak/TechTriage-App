@@ -109,30 +109,28 @@ const getUserIdentifier = (): string => {
   return userId;
 };
 
-// Agent names for "live agent" mode
-const AGENT_NAMES = [
-  { first: 'Sarah', last: 'Mitchell' },
-  { first: 'Marcus', last: 'Chen' },
-  { first: 'Emily', last: 'Rodriguez' },
-  { first: 'James', last: 'Thompson' },
-  { first: 'Olivia', last: 'Patel' },
-  { first: 'Daniel', last: 'Kim' },
-];
+// Agent identity — consistent name across all sessions
+const AGENT_IDENTITY = { first: 'Agent', last: '' };
 
 const getRandomAgent = () => {
-  return AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)];
+  return AGENT_IDENTITY;
 };
 
 const BotAvatar = ({ className }: { className: string }) => {
   const [error, setError] = useState(false);
   if (error) return <LifeBuoy className={className} />;
-  return <img src="/total_assist-new.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
+  return <img src="/total_assist-new-white.png" className={`${className} object-contain`} alt="Bot" onError={() => setError(true)} />;
 };
 
-const AgentAvatar = ({ className, name }: { className: string; name: string }) => {
+const AgentAvatar = ({ className }: { className: string; name?: string }) => {
+  const [error, setError] = useState(false);
   return (
-    <div className={`${className} bg-gradient-to-br from-scout-purple to-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs`}>
-      {name.charAt(0)}
+    <div className={`${className} rounded-full flex items-center justify-center overflow-hidden`} style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
+      {error ? (
+        <LifeBuoy className="w-3/5 h-3/5 text-white" />
+      ) : (
+        <img src="/total_assist-new-white.png" className="w-3/5 h-3/5 object-contain" alt="Agent" onError={() => setError(true)} />
+      )}
     </div>
   );
 };
@@ -163,8 +161,7 @@ interface ChatWidgetProps {
 }
 
 export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNavigate }, ref) => {
-  // Pick a random agent name for this widget session
-  const botAgentNameRef = useRef(AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)]);
+  const botAgentNameRef = useRef(AGENT_IDENTITY);
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isLiveVideoActive, setIsLiveVideoActive] = useState(false);
@@ -218,7 +215,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     role: UserRole.MODEL,
     text: authenticated
       ? "Hi there! How can I help you today?"
-      : `Hey! I'm ${botAgentNameRef.current.first}, your TotalAssist tech support assistant. What's going on with your tech?`,
+      : "Hey! I'm your TotalAssist tech support assistant. What's going on with your tech?",
     timestamp: Date.now()
   });
 
@@ -648,9 +645,9 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
             <div className="bg-gradient-to-r from-midnight-900 via-midnight-800 to-midnight-900 p-4 border-b border-scout-purple/20 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
                 {isLiveAgentMode && currentAgent ? (
-                  <AgentAvatar className="w-10 h-10" name={currentAgent.first} />
+                  <AgentAvatar className="w-10 h-10" />
                 ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-scout-purple to-electric-indigo rounded-xl flex items-center justify-center overflow-hidden">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
                     <BotAvatar className="w-6 h-6" />
                   </div>
                 )}
@@ -716,9 +713,9 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                   <div className={`flex w-full ${msg.role === UserRole.USER ? 'justify-end' : 'justify-start items-end gap-2'}`}>
                     {msg.role === UserRole.MODEL && (
                       msg.agentName ? (
-                        <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={msg.agentName.charAt(0)} />
+                        <AgentAvatar className="w-6 h-6 shrink-0 mb-1" />
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center shrink-0 mb-1 overflow-hidden">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mb-1 overflow-hidden" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
                           <BotAvatar className="w-4 h-4" />
                         </div>
                       )
@@ -774,7 +771,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
 
               {isAgentTyping && !isLoading && (
                 <div className="flex justify-start items-end gap-2">
-                  {currentAgent && <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={currentAgent.first} />}
+                  {currentAgent && <AgentAvatar className="w-6 h-6 shrink-0 mb-1" />}
                   <div className="bg-light-100 dark:bg-midnight-800 rounded-2xl rounded-tl-sm px-4 py-3 border border-light-300 dark:border-midnight-700 shadow-sm">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
@@ -782,7 +779,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                         <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                         <div className="w-1.5 h-1.5 bg-text-secondary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                       </div>
-                      <span className="text-xs text-text-muted">{currentAgent?.first} is typing...</span>
+                      <span className="text-xs text-text-muted">Agent is typing...</span>
                     </div>
                   </div>
                 </div>
@@ -791,9 +788,9 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
               {isLoading && !isConnectingToAgent && (
                 <div className="flex justify-start items-end gap-2">
                   {isLiveAgentMode && currentAgent ? (
-                    <AgentAvatar className="w-6 h-6 shrink-0 mb-1" name={currentAgent.first} />
+                    <AgentAvatar className="w-6 h-6 shrink-0 mb-1" />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-scout-purple to-electric-indigo flex items-center justify-center shrink-0 mb-1 overflow-hidden">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mb-1 overflow-hidden" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
                       <BotAvatar className="w-4 h-4" />
                     </div>
                   )}
@@ -893,7 +890,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                      placeholder={isLiveAgentMode ? `Message ${currentAgent?.first}...` : "Type a message..."}
+                      placeholder={isLiveAgentMode ? "Message Agent..." : "Type a message..."}
                       className="w-full bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 rounded-full px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-electric-indigo/50 pr-10 text-text-primary dark:text-white placeholder:text-text-muted"
                     />
                     <button

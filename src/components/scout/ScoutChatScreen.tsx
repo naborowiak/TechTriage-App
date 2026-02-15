@@ -17,10 +17,8 @@ import { ChatMessage, UserRole, DeviceRecord, EscalationReportData, GuidedAction
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 import { useAuth } from '../../hooks/useAuth';
 
-// Agent name pool — each session gets a random agent for a realistic team feel
-const AGENT_NAMES = ['Sarah', 'Marcus', 'Emily', 'James', 'Olivia', 'Daniel', 'Priya', 'Chris'];
 function pickAgentName(): string {
-  return AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)];
+  return 'Agent';
 }
 
 interface ScoutChatScreenProps {
@@ -817,8 +815,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         <div>
           <header className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#151922] border-b border-light-300 dark:border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#6366F1] to-[#06B6D4] flex items-center justify-center text-white font-semibold text-sm">
-                A
+              <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(135deg, #6366F1 0%, #06B6D4 100%)' }}>
+                <img src="/total_assist-new-white.png" className="w-6 h-6 object-contain" alt="TotalAssist" />
               </div>
               <div>
                 <h1 className="text-text-primary dark:text-white font-semibold text-lg">{agentName}</h1>
