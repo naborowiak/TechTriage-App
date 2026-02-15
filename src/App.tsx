@@ -678,6 +678,9 @@ const HowItWorksSimple: React.FC = () => {
 };
 
 const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
+  const { theme } = useTheme();
+  const bgImage = theme === 'dark' ? '/widescreen-shot-dark.jpg' : '/widescreen-shot.jpg';
+
   const problems = [
     {
       icon: <Wifi className="w-7 h-7" />,
@@ -713,8 +716,8 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
 
   return (
     <section className="relative py-24 overflow-hidden">
-      {/* Background image — no overlay */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/widescreen-shot.jpg)' }} aria-hidden="true" />
+      {/* Background image — swaps for dark theme */}
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${bgImage})` }} aria-hidden="true" />
 
       <div className="relative container mx-auto px-6 max-w-6xl z-10">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
@@ -735,7 +738,7 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
           {problems.map((item, i) => (
             <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.08}>
               <div
-                className="group relative bg-white dark:bg-midnight-900 border border-[#cecdcd] dark:border-midnight-700 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-xl h-full flex flex-col"
+                className="group relative bg-white dark:bg-midnight-800/90 dark:backdrop-blur-md border border-[#cecdcd] dark:border-white/15 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-xl dark:hover:border-white/25 h-full flex flex-col"
                 onClick={() => onNavigate(PageView.HOW_IT_WORKS)}
                 role="button"
                 tabIndex={0}
@@ -744,16 +747,16 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
               >
                 {/* Card content */}
                 <div className="p-5 lg:p-6 flex-1">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-electric-indigo/8 text-electric-indigo transition-colors group-hover:bg-electric-indigo/12">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-electric-indigo/8 dark:bg-electric-indigo/20 text-electric-indigo dark:text-[#818CF8] transition-colors group-hover:bg-electric-indigo/12 dark:group-hover:bg-electric-indigo/25">
                     {item.icon}
                   </div>
                   <h3 className="font-bold text-base mb-2 text-text-primary dark:text-white">
                     {item.label}
                   </h3>
-                  <p className="text-sm text-text-secondary dark:text-white/60 leading-relaxed mb-4">
+                  <p className="text-sm text-text-secondary dark:text-white/70 leading-relaxed mb-4">
                     {item.desc}
                   </p>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-electric-indigo group-hover:gap-2 transition-all">
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-electric-indigo dark:text-[#818CF8] group-hover:gap-2 transition-all">
                     Learn more <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </div>
