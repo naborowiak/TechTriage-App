@@ -396,10 +396,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       ) : (
         <div
-          className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-4 lg:pb-8 bg-top bg-no-repeat"
-          style={theme === 'dark' ? { backgroundImage: 'url(/developer-hub-bg.png)', backgroundSize: 'cover' } : undefined}
+          className="flex-1 overflow-y-auto bg-white dark:bg-midnight-950 pb-4 lg:pb-8 relative"
         >
-          <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
+          <div
+            className="absolute inset-0 bg-top bg-no-repeat bg-cover pointer-events-none"
+            style={{ backgroundImage: 'url(/developer-hub-bg.jpg)' }}
+            aria-hidden="true"
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/90 to-white dark:from-transparent dark:via-transparent dark:to-transparent" />
+          </div>
+          <div className="relative w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
             {/* System Status */}
             <SystemStatusBadge />
 
