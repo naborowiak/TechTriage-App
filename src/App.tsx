@@ -580,7 +580,7 @@ const Hero: React.FC<{
           {/* Right column — carousel */}
           <div className="hero-animate-4 w-full lg:w-1/2 flex justify-center lg:justify-end mt-6 lg:mt-0">
             <div
-              className={`relative w-full max-w-[700px] aspect-[4/3] lg:aspect-auto lg:h-[560px]${paused ? ' agentic-hero-paused' : ''}`}
+              className={`relative w-full max-w-[700px] aspect-[4/3] lg:aspect-auto lg:h-[680px]${paused ? ' agentic-hero-paused' : ''}`}
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
             >
