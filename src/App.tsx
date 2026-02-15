@@ -714,7 +714,7 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
   return (
     <section className="relative py-24 overflow-hidden">
       {/* Background image — no overlay */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/wide-shot.jpg)' }} aria-hidden="true" />
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/widescreen-shot.jpg)' }} aria-hidden="true" />
 
       <div className="relative container mx-auto px-6 max-w-6xl z-10">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
@@ -861,7 +861,7 @@ const WhyTotalAssist: React.FC = () => {
   };
 
   return (
-    <section className="py-24 bg-light-100 dark:bg-midnight-950 overflow-hidden relative border-t border-light-300 dark:border-midnight-700 transition-colors">
+    <section className="py-24 bg-light-100 dark:bg-midnight-950 overflow-x-clip relative border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Header */}
         <AnimatedElement animation="fadeInUp" className="text-center mb-12">
@@ -902,7 +902,7 @@ const WhyTotalAssist: React.FC = () => {
 
         {/* Algolia-Style Feature Comparison Table */}
         <AnimatedElement animation="fadeInUp" delay={0.5}>
-          <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm overflow-clip">
+          <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm">
 
             {/* Sticky Column Headers — sticks below fixed nav (72px) */}
             <div className="sticky top-[72px] z-10 grid grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
