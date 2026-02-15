@@ -98,7 +98,8 @@
       "Bash(convert:*)",
       "WebFetch(domain:www.algolia.com)",
       "Bash(file:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "WebFetch(domain:www.loom.com)"
     ]
   }
 }

@@ -718,16 +718,18 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
 
       <div className="relative container mx-auto px-6 max-w-6xl z-10">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4 drop-shadow-sm">
-            What We Help With
-          </span>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white drop-shadow-md">
-            Technology support for your home
-          </h2>
-          <p className="text-xl max-w-2xl mx-auto text-white/90 drop-shadow-sm">
-            From Wi-Fi troubles to smart home setup — TotalAssist helps with the tech that
-            keeps your home running.
-          </p>
+          <div className="inline-block bg-midnight-950/70 backdrop-blur-md rounded-2xl px-8 py-8 lg:px-12 lg:py-10">
+            <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
+              What We Help With
+            </span>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-white">
+              Technology support for your home
+            </h2>
+            <p className="text-xl max-w-2xl mx-auto text-white/80">
+              From Wi-Fi troubles to smart home setup — TotalAssist helps with the tech that
+              keeps your home running.
+            </p>
+          </div>
         </AnimatedElement>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
           {problems.map((item, i) => (
@@ -900,10 +902,10 @@ const WhyTotalAssist: React.FC = () => {
 
         {/* Algolia-Style Feature Comparison Table */}
         <AnimatedElement animation="fadeInUp" delay={0.5}>
-          <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm overflow-clip">
 
-            {/* Sticky Column Headers */}
-            <div className="grid grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700">
+            {/* Sticky Column Headers — sticks below fixed nav (72px) */}
+            <div className="sticky top-[72px] z-10 grid grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
               {/* Empty top-left */}
               <div className="p-4 lg:p-5" />
               {/* TotalAssist — Highlighted column header */}
@@ -2118,7 +2120,7 @@ const App: React.FC = () => {
                   </button>
                 </div>
               </section>
-              <WhatWeHelpWith onNavigate={handleNav} />
+              <WhatWeHelpWith onNavigate={navigate} />
               <SectionDivider variant="line" />
               <WhyTotalAssist />
               <SectionDivider variant="hexagon" />
