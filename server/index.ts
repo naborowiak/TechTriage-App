@@ -96,6 +96,7 @@ app.use(helmet({
     },
   } : false, // Disabled in dev for Vite proxy compatibility
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false,
 }));
 
 // Rate limiting - general API

@@ -96,7 +96,7 @@ function getHeaderHtml(title: string, subtitle: string): string {
       <td align="center" bgcolor="${BRAND.electricIndigo}" style="padding: 50px 30px;">
       <![endif]-->
       <!--[if !mso]><!-->
-      <td align="center" bgcolor="${BRAND.electricIndigo}" style="background-color: ${BRAND.electricIndigo}; background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 50%, ${BRAND.midnight} 100%); padding: 50px 30px;">
+      <td align="center" bgcolor="${BRAND.electricIndigo}" style="background-color: ${BRAND.electricIndigo}; background: linear-gradient(135deg, ${BRAND.electricIndigo} 0%, ${BRAND.electricCyan} 50%, ${BRAND.midnight} 100%); padding: 50px 30px;">
       <!--<![endif]-->
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
           <tr>
@@ -150,7 +150,7 @@ function getPrimaryButtonHtml(text: string, url: string): string {
         </td>
         <![endif]-->
         <!--[if !mso]><!-->
-        <td align="center" bgcolor="${BRAND.electricIndigo}" style="border-radius: 12px; background-color: ${BRAND.electricIndigo}; background: linear-gradient(135deg, ${BRAND.scoutPurple} 0%, ${BRAND.electricIndigo} 100%); box-shadow: 0 10px 30px rgba(168, 85, 247, 0.35);">
+        <td align="center" bgcolor="${BRAND.electricIndigo}" style="border-radius: 12px; background-color: ${BRAND.electricIndigo}; background: linear-gradient(135deg, ${BRAND.electricIndigo} 0%, ${BRAND.electricCyan} 100%); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.35);">
           <a href="${url}" target="_blank" class="button-full" style="display: inline-block; padding: 18px 40px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; letter-spacing: 0.3px;">${text} &rarr;</a>
         </td>
         <!--<![endif]-->
@@ -373,7 +373,7 @@ function getWelcomeEmailHtml(firstName: string): string {
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
                                     <tr>
                                         <td style="padding: 20px;">
-                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">💬</div>
+                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">💬</div>
                                             <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Support Chat</p>
                                             <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Get instant answers to tech questions</p>
                                         </td>
@@ -397,7 +397,7 @@ function getWelcomeEmailHtml(firstName: string): string {
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
                                     <tr>
                                         <td style="padding: 20px;">
-                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">📚</div>
+                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">📚</div>
                                             <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Session History</p>
                                             <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">All solutions saved for you</p>
                                         </td>
@@ -414,7 +414,7 @@ function getWelcomeEmailHtml(firstName: string): string {
             <!-- CTA Section -->
             <tr>
                 <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
-                    <div style="display: inline-block; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
                         Get Started
                     </div>
 
@@ -435,10 +435,10 @@ function getWelcomeEmailHtml(firstName: string): string {
             <!-- Value Proposition -->
             <tr>
                 <td class="light-section content-padding" style="background-color: #ffffff; padding: 40px;">
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: linear-gradient(135deg, ${BRAND.scoutPurple}08, ${BRAND.electricIndigo}08); border-radius: 16px; border: 1px solid ${BRAND.scoutPurple}20;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: linear-gradient(135deg, ${BRAND.electricIndigo}08, ${BRAND.electricCyan}08); border-radius: 16px; border: 1px solid ${BRAND.electricIndigo}20;">
                         <tr>
                             <td align="center" style="padding: 35px 30px;">
-                                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; text-align: center; line-height: 56px; margin: 0 auto 20px; font-size: 26px;">🏠</div>
+                                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 50%; text-align: center; line-height: 56px; margin: 0 auto 20px; font-size: 26px;">🏠</div>
                                 <p class="light-text" style="margin: 0 0 12px; color: ${BRAND.midnight}; font-size: 22px; font-weight: 700; letter-spacing: -0.3px;">Your Home Tech, Handled.</p>
                                 <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.7; max-width: 400px;">
                                     From Wi-Fi trouble to smart home setup, TotalAssist gives you expert-level answers in minutes &mdash; no technician visit required.
@@ -608,7 +608,7 @@ function getPasswordResetEmailHtml(displayName: string, resetUrl: string): strin
 
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 25px;">
                       <tr>
-                        <td align="center" valign="middle" width="70" height="70" style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; font-size: 32px; box-shadow: 0 15px 35px rgba(168, 85, 247, 0.4);">
+                        <td align="center" valign="middle" width="70" height="70" style="width: 70px; height: 70px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 50%; font-size: 32px; box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4);">
                           🔑
                         </td>
                       </tr>
@@ -795,7 +795,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
             <!-- CTA Section -->
             <tr>
                 <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
-                    <div style="display: inline-block; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
                         Limited Time Offer
                     </div>
 
@@ -894,7 +894,7 @@ export async function sendTestEmailWithResendDomain(
 </head>
 <body style="margin: 0; padding: 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: ${BRAND.light};">
   <div style="max-width: 500px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-    <div style="background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); padding: 30px; text-align: center;">
+    <div style="background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); padding: 30px; text-align: center;">
       <h1 style="margin: 0; color: white; font-size: 24px;">API Key Verified!</h1>
     </div>
     <div style="padding: 30px;">
@@ -1080,7 +1080,7 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
               <td align="left" bgcolor="${BRAND.electricIndigo}" style="padding: 35px 30px;">
               <![endif]-->
               <!--[if !mso]><!-->
-              <td align="left" bgcolor="${BRAND.electricIndigo}" style="background-color: ${BRAND.electricIndigo}; background: linear-gradient(180deg, ${BRAND.electricIndigo} 0%, #4338CA 100%); padding: 35px 30px;">
+              <td align="left" bgcolor="${BRAND.electricIndigo}" style="background-color: ${BRAND.electricIndigo}; background: linear-gradient(180deg, ${BRAND.electricIndigo} 0%, ${BRAND.electricCyan} 100%); padding: 35px 30px;">
               <!--<![endif]-->
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                   <tr>
@@ -1226,7 +1226,7 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
                 <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 45px 30px;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 18px;">
                       <tr>
-                        <td align="center" valign="middle" width="56" height="56" style="width: 56px; height: 56px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, #4338CA); border-radius: 50%; font-size: 24px; box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);">
+                        <td align="center" valign="middle" width="56" height="56" style="width: 56px; height: 56px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 50%; font-size: 24px; box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);">
                           📎
                         </td>
                       </tr>
