@@ -258,7 +258,8 @@ export const UsageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const setTier = useCallback((tier: UserTier, userId?: string) => {
     setState(prev => {
       const currentMonth = getCurrentMonth();
-      const needsReset = prev.lastMonthlyResetDate !== currentMonth;
+      const isGuestToAuth = prev.tier === 'guest' && tier !== 'guest';
+      const needsReset = prev.lastMonthlyResetDate !== currentMonth || isGuestToAuth;
       const config = VIDEO_CREDIT_CONFIG[tier];
 
       return {
@@ -491,8 +492,14 @@ export const useSyncUsageWithAuth = (
   const { setTier, syncVideoCreditsFromServer, tier: currentTier, userId: currentUserId } = useUsage();
 
   useEffect(() => {
-    // Don't sync while subscription data is still loading — trust cached tier from localStorage
-    if (isLoading) return;
+    // While subscription is loading, ensure authenticated users are at least 'free'
+    // This prevents stale guest usage from blocking new accounts before subscription sync completes
+    if (isLoading) {
+      if (isAuthenticated && currentTier === 'guest') {
+        setTier('free', userId);
+      }
+      return;
+    }
 
     if (!isAuthenticated) {
       if (currentTier !== 'guest') {

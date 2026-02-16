@@ -6,7 +6,10 @@ import {
   Settings,
   LogOut,
   Zap,
+  Camera,
+  Check,
 } from "lucide-react";
+import { useUsage, UNLIMITED } from "../../stores/usageStore";
 import type { DashboardTab } from "../../types";
 
 interface DashboardSidebarProps {
@@ -88,6 +91,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         })}
       </nav>
 
+      {/* Credits summary */}
+      <CreditsSummary />
+
       {/* Bottom section */}
       <div className="px-3 pb-4 space-y-3 shrink-0">
         {/* Upgrade CTA */}
@@ -145,5 +151,45 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         </div>
       </div>
     </aside>
+  );
+};
+
+const CreditsSummary: React.FC = () => {
+  const { usage } = useUsage();
+  const isUnlimited = usage.chat.limit >= UNLIMITED;
+
+  return (
+    <div className="px-3 py-3 mx-3 rounded-lg bg-light-50 dark:bg-midnight-800/50 border border-light-200 dark:border-midnight-700 shrink-0">
+      <div className="text-xs font-semibold text-text-secondary dark:text-white/60 uppercase tracking-wider mb-2">
+        Credits
+      </div>
+      {isUnlimited ? (
+        <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 font-semibold">
+          <Check className="w-3.5 h-3.5" />
+          Unlimited
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-text-secondary dark:text-white/60">
+              <MessageSquare className="w-3.5 h-3.5" />
+              Chats
+            </span>
+            <span className="font-semibold text-text-primary dark:text-white">
+              {Math.max(0, usage.chat.limit - usage.chat.used)}/{usage.chat.limit}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-text-secondary dark:text-white/60">
+              <Camera className="w-3.5 h-3.5" />
+              Photos
+            </span>
+            <span className="font-semibold text-text-primary dark:text-white">
+              {Math.max(0, usage.photo.limit - usage.photo.used)}/{usage.photo.limit}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };

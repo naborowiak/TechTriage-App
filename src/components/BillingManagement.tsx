@@ -601,10 +601,14 @@ const UpgradePlansSection: React.FC<{
       annualPriceId: prices?.home?.annual,
       description: 'Perfect for homeowners',
       features: [
-        'Unlimited AI chat sessions',
+        'Unlimited support messages',
         'Unlimited photo analysis',
-        '1 video session/week',
-        'Session history',
+        'Voice support — talk through issues',
+        'Video diagnostic — 1 credit/week',
+        'Guided fix steps (Assist Pills)',
+        'PDF diagnostic reports',
+        'Full case history and search',
+        'Email case summaries',
       ],
       color: 'purple', // scout-purple theme
     },
@@ -618,10 +622,12 @@ const UpgradePlansSection: React.FC<{
       annualPriceId: prices?.pro?.annual,
       description: 'Best for families & landlords',
       features: [
-        'Everything in Home',
-        '15 video sessions/month',
+        'Everything in Home, plus:',
         'Multi-home support (up to 5)',
-        'Priority support',
+        'Family member accounts',
+        'Video diagnostics — 15 credits/month',
+        'Professional escalation reports (PDF)',
+        'Priority response times',
       ],
       color: 'cyan', // electric-cyan premium theme
     },
@@ -664,7 +670,7 @@ const UpgradePlansSection: React.FC<{
         </div>
         {billingCycle === 'annual' && (
           <span className="px-3 py-1 bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 text-xs font-bold rounded-full">
-            Save 24% with annual billing
+            Save up to 25% with annual billing
           </span>
         )}
       </div>
@@ -672,7 +678,7 @@ const UpgradePlansSection: React.FC<{
       {/* Plans Grid */}
       <div className="grid md:grid-cols-2 gap-4">
         {plans.map((plan) => {
-          const price = billingCycle === 'monthly' ? plan.monthlyPrice : Math.round(plan.annualPrice / 12);
+          const price = billingCycle === 'monthly' ? plan.monthlyPrice : (plan.annualPrice / 12).toFixed(2);
           const priceId = billingCycle === 'monthly' ? plan.monthlyPriceId : plan.annualPriceId;
           const isLoading = isCheckingOut === priceId;
           const isPurple = plan.color === 'purple';

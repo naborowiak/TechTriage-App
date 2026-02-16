@@ -8,16 +8,21 @@ interface UpgradeModalProps {
   onClose: () => void;
   feature?: 'chat' | 'photo' | 'videoDiagnostic' | 'signal' | 'voice';
   currentTier?: 'guest' | 'free' | 'home' | 'pro';
+  onNavigateToPricing?: () => void;
 }
 
-export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, feature, currentTier = 'free' }) => {
+export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, feature, currentTier = 'free', onNavigateToPricing }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   useFocusTrap(modalRef, { onClose, active: isOpen });
   if (!isOpen) return null;
 
   const handleUpgrade = () => {
-    // Navigate to pricing page
-    window.location.href = '/pricing';
+    onClose();
+    if (onNavigateToPricing) {
+      onNavigateToPricing();
+    } else {
+      window.location.href = '/pricing';
+    }
   };
 
   const getFeatureMessage = () => {

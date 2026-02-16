@@ -327,7 +327,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       </div>
 
       {/* Pricing Cards */}
-      <div className="section-light py-20">
+      <div id="pricing-plans" className="section-light py-20">
         <div className="container mx-auto px-6 max-w-6xl">
           <AnimatedElement animation="fadeInUp">
             <h2 className="text-3xl font-bold text-text-primary dark:text-white text-center mb-4">

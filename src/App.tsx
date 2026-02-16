@@ -102,49 +102,56 @@ const PageTransition: React.FC<{ children: React.ReactNode; pageKey: string }> =
 // End Animation Hooks & Components (now imported from useAnimations.tsx)
 // ============================================
 
-// Credit Counter Component - shows usage for logged-in users
-const CreditCounter: React.FC<{
+// Usage Banner - slim bar above header for free-tier users
+const UsageBanner: React.FC<{
   onNavigate: (view: PageView) => void;
 }> = ({ onNavigate }) => {
   const { tier, usage, getVideoCreditsRemaining } = useUsage();
+  const { isAuthenticated } = useAuth();
 
-  // Don't show for pro users (they have unlimited everything)
-  if (tier === 'pro') return null;
+  // Only show for authenticated free/home users (not pro, not guests)
+  if (!isAuthenticated || tier === 'pro' || tier === 'guest') return null;
 
-  // Determine what to show based on tier
   const isUnlimited = tier === 'home';
   const chatRemaining = isUnlimited ? null : Math.max(0, usage.chat.limit - usage.chat.used);
   const photoRemaining = isUnlimited ? null : Math.max(0, usage.photo.limit - usage.photo.used);
   const videoCredits = tier === 'home' ? getVideoCreditsRemaining() : null;
 
   return (
-    <button
-      onClick={() => onNavigate(PageView.PRICING)}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-light-100 dark:bg-midnight-800 border border-light-300 dark:border-midnight-700 hover:border-electric-indigo/50 transition-colors group"
-      title="View usage & upgrade"
-    >
-      <Zap className="w-3.5 h-3.5 text-electric-cyan" />
-      <div className="flex items-center gap-3 text-xs font-medium">
-        {chatRemaining !== null && (
-          <span className="text-text-secondary group-hover:text-text-primary dark:group-hover:text-white transition-colors">
-            <span className="text-text-primary dark:text-white">{chatRemaining}</span> chats
-          </span>
-        )}
-        {photoRemaining !== null && (
-          <span className="text-text-secondary group-hover:text-text-primary dark:group-hover:text-white transition-colors">
-            <span className="text-text-primary dark:text-white">{photoRemaining}</span> photos
-          </span>
-        )}
-        {videoCredits !== null && (
-          <span className="text-text-secondary group-hover:text-text-primary dark:group-hover:text-white transition-colors">
-            <span className="text-text-primary dark:text-white">{videoCredits}</span> video
-          </span>
-        )}
+    <div className="w-full bg-light-50 dark:bg-midnight-900 border-b border-light-200 dark:border-midnight-800">
+      <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between h-8">
+        <div className="flex items-center gap-4 text-[11px] font-medium text-text-secondary">
+          <Zap className="w-3 h-3 text-electric-cyan flex-shrink-0" />
+          {chatRemaining !== null && (
+            <span>
+              <span className="text-text-primary dark:text-white font-semibold">{chatRemaining}</span> chats
+            </span>
+          )}
+          {photoRemaining !== null && (
+            <span>
+              <span className="text-text-primary dark:text-white font-semibold">{photoRemaining}</span> photos
+            </span>
+          )}
+          {videoCredits !== null && (
+            <span>
+              <span className="text-text-primary dark:text-white font-semibold">{videoCredits}</span> video credits
+            </span>
+          )}
+          {isUnlimited && (
+            <span className="text-electric-cyan">Unlimited chat & photos</span>
+          )}
+        </div>
         {!isUnlimited && (
-          <span className="text-electric-indigo text-[10px] font-bold uppercase">Upgrade</span>
+          <button
+            onClick={() => onNavigate(PageView.PRICING)}
+            className="text-[11px] font-bold text-electric-indigo hover:text-electric-indigo/80 transition-colors flex items-center gap-1"
+          >
+            Upgrade
+            <ArrowRight className="w-3 h-3" />
+          </button>
         )}
       </div>
-    </button>
+    </div>
   );
 };
 
@@ -285,8 +292,6 @@ const Header: React.FC<{
             <div className={`${textColorMuted} text-sm`}>...</div>
           ) : isAuthenticated && user ? (
             <>
-              {/* Credit Counter for logged-in users */}
-              <CreditCounter onNavigate={onNavigate} />
               <button
                 onClick={() => onNavigate(PageView.DASHBOARD)}
                 className="btn-gradient-electric text-white font-semibold px-6 py-2.5 rounded-lg text-sm whitespace-nowrap"
@@ -1740,6 +1745,14 @@ const App: React.FC = () => {
 
   const handleNavigateToPricing = useCallback(() => {
     navigate(PageView.PRICING);
+    // Scroll to pricing plans section after navigation renders
+    // Use setTimeout to wait for lazy-loaded Pricing component to mount
+    setTimeout(() => {
+      const el = document.getElementById('pricing-plans');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   }, [navigate]);
 
   // Handle signup completion - store user and go to dashboard (memoized for Login/SignUp)
@@ -1954,6 +1967,7 @@ const App: React.FC = () => {
                 onOpenBilling={handleOpenBilling}
                 onOpenInventory={handleOpenInventory}
                 onBackToDashboard={handleBackToDashboard}
+                onNavigateToPricing={handleNavigateToPricing}
                 activeView="scout"
                 onUpdateUser={handleUpdateUser}
               >
@@ -2022,6 +2036,7 @@ const App: React.FC = () => {
                   onOpenBilling={handleOpenBilling}
                   onOpenInventory={handleOpenInventory}
                   onBackToDashboard={handleBackToDashboard}
+                  onNavigateToPricing={handleNavigateToPricing}
                   activeView="scout"
                   onUpdateUser={handleUpdateUser}
                 >
@@ -2051,6 +2066,7 @@ const App: React.FC = () => {
                 onOpenBilling={handleOpenBilling}
                 onOpenInventory={handleOpenInventory}
                 onBackToDashboard={handleBackToDashboard}
+                onNavigateToPricing={handleNavigateToPricing}
                 activeView={dashboardView}
                 onUpdateUser={handleUpdateUser}
               >
@@ -2244,6 +2260,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
+      <UsageBanner onNavigate={navigate} />
       <Header
         onNavigate={navigate}
         currentView={currentView}

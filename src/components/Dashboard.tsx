@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { useUsage } from "../stores/usageStore";
+import { useUsage, UNLIMITED } from "../stores/usageStore";
 import { UpgradeModal } from "./UpgradeModal";
 import { SystemStatusBadge } from "./dashboard/SystemStatusBadge";
 import { MobileBottomDock } from "./dashboard/MobileBottomDock";
@@ -52,6 +52,7 @@ interface DashboardProps {
   onOpenCase?: (caseId: string) => void;
   onOpenScoutWithMode?: (mode: "photo" | "voice" | "video") => void;
   onOpenAnalytics?: () => void;
+  onNavigateToPricing?: () => void;
   activeView?: "main" | "history" | "scout" | "analytics" | "devices";
   children?: React.ReactNode;
   onUpdateUser?: (user: {
@@ -84,6 +85,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNewChat,
   onOpenCase,
   onOpenScoutWithMode,
+  onNavigateToPricing,
   activeView = "main",
   children,
 }) => {
@@ -99,7 +101,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
-  const { tier } = useUsage();
+  const { tier, usage } = useUsage();
 
   // Sidebar tab state — maps from activeView or standalone
   const [sidebarTab, setSidebarTab] = useState<DashboardTab>("chat");
@@ -322,6 +324,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 Upgrade to Home
               </button>
             )}
+            {/* Credit pill */}
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-light-100 dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-xs font-medium text-text-secondary dark:text-white/70" aria-label="Credits remaining">
+              <MessageSquare className="w-3 h-3" />
+              {usage.chat.limit >= UNLIMITED ? (
+                <span className="text-green-600 dark:text-green-400 font-semibold">Unlimited</span>
+              ) : (
+                <span>{Math.max(0, usage.chat.limit - usage.chat.used)}/{usage.chat.limit} chats</span>
+              )}
+            </div>
             <button
               onClick={toggleTheme}
               className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
@@ -647,6 +658,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onClose={() => setUpgradeModalOpen(false)}
         feature={upgradeFeature}
         currentTier={tier as "guest" | "free" | "home" | "pro"}
+        onNavigateToPricing={onNavigateToPricing}
       />
 
       {/* Logout Confirmation Modal */}
