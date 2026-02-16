@@ -369,7 +369,7 @@ function getWelcomeEmailHtml(firstName: string): string {
 
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
-                            <td width="50%" valign="top" style="padding-right: 10px; padding-bottom: 20px;">
+                            <td style="padding-bottom: 20px;">
                                 <a href="${APP_BASE_URL}/services/chat" style="text-decoration: none; display: block;">
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted}; overflow: hidden;">
                                     <tr>
@@ -386,7 +386,9 @@ function getWelcomeEmailHtml(firstName: string): string {
                                 </table>
                                 </a>
                             </td>
-                            <td width="50%" valign="top" style="padding-left: 10px; padding-bottom: 20px;">
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 20px;">
                                 <a href="${APP_BASE_URL}/services/photo" style="text-decoration: none; display: block;">
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted}; overflow: hidden;">
                                     <tr>
@@ -405,7 +407,7 @@ function getWelcomeEmailHtml(firstName: string): string {
                             </td>
                         </tr>
                         <tr>
-                            <td width="50%" valign="top" style="padding-right: 10px;">
+                            <td>
                                 <a href="${APP_BASE_URL}/dashboard" style="text-decoration: none; display: block;">
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted}; overflow: hidden;">
                                     <tr>
@@ -421,8 +423,6 @@ function getWelcomeEmailHtml(firstName: string): string {
                                     </tr>
                                 </table>
                                 </a>
-                            </td>
-                            <td width="50%" valign="top" style="padding-left: 10px;">
                             </td>
                         </tr>
                     </table>

@@ -259,7 +259,8 @@ export const UsageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setState(prev => {
       const currentMonth = getCurrentMonth();
       const isGuestToAuth = prev.tier === 'guest' && tier !== 'guest';
-      const needsReset = prev.lastMonthlyResetDate !== currentMonth || isGuestToAuth;
+      const isUserChange = !!userId && !!prev.userId && prev.userId !== userId;
+      const needsReset = prev.lastMonthlyResetDate !== currentMonth || isGuestToAuth || isUserChange;
       const config = VIDEO_CREDIT_CONFIG[tier];
 
       return {
@@ -276,7 +277,7 @@ export const UsageProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             },
         videoCredits: {
           subscriptionCredits: config.limit,
-          purchasedCredits: prev.videoCredits.purchasedCredits, // Preserve purchased credits
+          purchasedCredits: isUserChange ? 0 : prev.videoCredits.purchasedCredits, // Reset purchased credits on user change
           subscriptionLimit: config.limit,
           resetType: config.resetType,
           lastResetDate: config.resetType === 'weekly' ? getCurrentWeekStart() : currentMonth,
