@@ -100,6 +100,8 @@ export interface CaseRecord {
   sessionMode?: string | null; // "chat" | "voice" | "photo" | "video"
   escalatedAt?: string | null;
   escalationReport?: EscalationReportData | null;
+  specialistNotes?: string | null;
+  specialistRespondedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

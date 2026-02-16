@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, Clock, Download, Trash2, MessageSquare, Video, Camera, Search, FileText, Mic, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, Trash2, MessageSquare, Video, Camera, Search, FileText, Mic, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { CaseRecord } from '../types';
 
@@ -489,6 +489,22 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                       <p className="text-text-primary dark:text-white text-sm">{selectedCase.escalationReport.scoutAnalysis}</p>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Specialist Response */}
+              {selectedCase.specialistNotes && (
+                <div className="p-6 border-b border-gray-100 dark:border-midnight-700 bg-emerald-50 dark:bg-emerald-500/5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-3">
+                    <CheckCircle className="w-4 h-4" />
+                    Specialist Response
+                  </div>
+                  <p className="text-text-primary dark:text-white text-sm leading-relaxed whitespace-pre-wrap">{selectedCase.specialistNotes}</p>
+                  {selectedCase.specialistRespondedAt && (
+                    <p className="text-xs text-text-muted mt-3">
+                      Responded {formatDate(selectedCase.specialistRespondedAt)} at {formatTime(selectedCase.specialistRespondedAt)}
+                    </p>
+                  )}
                 </div>
               )}
 
