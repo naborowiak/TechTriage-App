@@ -48,7 +48,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
                 <div className="w-12 h-12 rounded-full bg-electric-indigo shadow-clean-md flex items-center justify-center">
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-[10px] font-semibold text-electric-indigo mt-1">
+                <span className="text-xs font-semibold text-electric-indigo mt-1">
                   {tab.label}
                 </span>
               </button>
@@ -76,7 +76,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
                 <Icon className="relative w-5 h-5" />
               </div>
               <span
-                className={`text-[10px] font-medium mt-1 ${isActive ? "font-semibold" : ""}`}
+                className={`text-xs font-medium mt-1 ${isActive ? "font-semibold" : ""}`}
               >
                 {tab.label}
               </span>

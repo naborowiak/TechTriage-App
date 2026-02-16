@@ -86,7 +86,7 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-electric-indigo/10 dark:bg-electric-indigo/15 text-sm font-bold text-electric-indigo">
               {caseRecord.caseNumber ? `#${caseRecord.caseNumber}` : "Case"}
             </span>
-            <span className="text-sm text-text-muted">{dateStr}</span>
+            <span className="text-sm text-text-secondary dark:text-white/70">{dateStr}</span>
           </div>
           <button
             onClick={() => onOpenCase(caseRecord.id)}
@@ -100,7 +100,7 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
 
         {/* Progress steps */}
         {isLoading ? (
-          <div className="flex items-center gap-2 py-6 justify-center text-text-muted">
+          <div className="flex items-center gap-2 py-6 justify-center text-text-secondary dark:text-white/70">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="text-sm">Loading progress...</span>
           </div>
@@ -127,7 +127,7 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
                   {step.label}
                 </span>
                 <span
-                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusBadgeStyles[step.status]}`}
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${statusBadgeStyles[step.status]}`}
                 >
                   {statusLabels[step.status]}
                 </span>
@@ -137,7 +137,7 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
         ) : (
           <button
             onClick={() => onOpenCase(caseRecord.id)}
-            className="relative w-full text-center py-4 text-sm text-text-muted hover:text-electric-indigo transition-colors rounded-xl hover:bg-electric-indigo/5"
+            className="relative w-full text-center py-4 text-sm text-text-secondary dark:text-white/70 hover:text-electric-indigo transition-colors rounded-xl hover:bg-electric-indigo/5"
           >
             Case in progress — tap to continue
           </button>

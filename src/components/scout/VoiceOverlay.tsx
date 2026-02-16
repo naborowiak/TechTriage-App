@@ -158,9 +158,10 @@ export function VoiceOverlay({
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
           <button
             onClick={onEndSession}
-            className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            aria-label="End voice session"
           >
-            <X className="w-4 h-4 text-white" />
+            <X className="w-5 h-5 text-white" />
           </button>
 
           <div className="flex items-center gap-2.5">
@@ -178,9 +179,10 @@ export function VoiceOverlay({
             </div>
             <button
               onClick={onCapturePhoto}
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              aria-label="Capture photo"
             >
-              <Camera className="w-4 h-4 text-white" />
+              <Camera className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>

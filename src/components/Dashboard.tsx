@@ -287,13 +287,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           )}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
-            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
           >
             {theme === "light" ? (
-              <Moon className="w-4 h-4" />
+              <Moon className="w-5 h-5" />
             ) : (
-              <Sun className="w-4 h-4" />
+              <Sun className="w-5 h-5" />
             )}
           </button>
 
@@ -313,7 +313,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <div className="text-sm font-semibold text-text-primary dark:text-white truncate">
                     {user.firstName} {user.lastName || ""}
                   </div>
-                  <div className="text-xs text-text-muted truncate">
+                  <div className="text-xs text-text-secondary dark:text-white/60 truncate">
                     {user.email}
                   </div>
                 </div>
@@ -465,7 +465,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         aria-hidden="true"
                       >
                         <Lock className="w-3 h-3 text-text-secondary dark:text-white/80" />
-                        <span className="text-[10px] font-semibold text-text-secondary dark:text-white/80">
+                        <span className="text-xs font-semibold text-text-secondary dark:text-white/80">
                           Home+
                         </span>
                       </div>
@@ -480,7 +480,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <h3 className="text-sm md:text-lg font-bold leading-tight truncate text-text-primary dark:text-white md:text-white">
                           {tile.label}
                         </h3>
-                        <p className="text-xs md:text-sm mt-0.5 md:mt-1 line-clamp-2 text-text-secondary dark:text-white/60 md:text-white/60">
+                        <p className="text-sm md:text-sm mt-0.5 md:mt-1 line-clamp-2 text-text-secondary dark:text-white/70 md:text-white/70">
                           {isLocked ? "Requires Home or Pro plan" : tile.description}
                         </p>
                       </div>
@@ -488,7 +488,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     {/* Upgrade CTA (locked tiles) */}
                     {isLocked && (
-                      <div className="relative z-10 mt-2 flex items-center gap-1 text-xs font-semibold text-electric-indigo dark:text-white/70">
+                      <div className="relative z-10 mt-2 flex items-center gap-1 text-sm font-semibold text-electric-indigo dark:text-white/80">
                         Upgrade to unlock
                         <ArrowRight className="w-3 h-3" />
                       </div>
@@ -509,7 +509,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <button
                     key={chip}
                     onClick={() => onNewChat?.(chip)}
-                    className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[36px]"
+                    className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[44px]"
                   >
                     {chip}
                   </button>
@@ -523,7 +523,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <button
                         key={chip}
                         onClick={() => onNewChat?.(chip)}
-                        className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium active:scale-[0.97] transition-all min-h-[36px]"
+                        className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium active:scale-[0.97] transition-all min-h-[44px]"
                       >
                         {chip}
                       </button>
@@ -532,7 +532,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {!showChips && (
                     <button
                       onClick={() => setShowChips(true)}
-                      className="px-4 py-2 rounded-full border border-electric-indigo/25 text-electric-indigo dark:text-electric-cyan text-sm font-medium hover:bg-electric-indigo/10 hover:border-electric-indigo/40 transition-all min-h-[36px]"
+                      className="px-4 py-2 rounded-full border border-electric-indigo/25 text-electric-indigo dark:text-electric-cyan text-sm font-medium hover:bg-electric-indigo/10 hover:border-electric-indigo/40 transition-all min-h-[44px]"
                     >
                       Show more
                     </button>

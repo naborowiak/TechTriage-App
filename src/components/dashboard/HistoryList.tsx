@@ -125,13 +125,13 @@ function InlineReportActions({ caseId }: { caseId: string }) {
           handleDownload();
         }}
         disabled={downloading}
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-200/80 dark:hover:bg-midnight-600/50 transition-all disabled:opacity-50"
+        className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary dark:text-white/70 hover:text-text-primary dark:hover:text-white hover:bg-light-200/80 dark:hover:bg-midnight-600/50 transition-all disabled:opacity-50"
         aria-label="Download PDF report"
       >
         {downloading ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-4 h-4" />
         )}
       </button>
       <button
@@ -140,15 +140,15 @@ function InlineReportActions({ caseId }: { caseId: string }) {
           handleEmail();
         }}
         disabled={emailing || emailSent}
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary dark:hover:text-white hover:bg-light-200/80 dark:hover:bg-midnight-600/50 transition-all disabled:opacity-50"
+        className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary dark:text-white/70 hover:text-text-primary dark:hover:text-white hover:bg-light-200/80 dark:hover:bg-midnight-600/50 transition-all disabled:opacity-50"
         aria-label={emailSent ? "Email sent" : "Email PDF report"}
       >
         {emailSent ? (
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+          <CheckCircle className="w-4 h-4 text-emerald-500" />
         ) : emailing ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
-          <Mail className="w-3.5 h-3.5" />
+          <Mail className="w-4 h-4" />
         )}
       </button>
     </div>
@@ -162,7 +162,20 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   userEmail,
 }) => {
   const resolvedCases = cases.filter((c) => c.status !== "open");
-  if (resolvedCases.length === 0) return null;
+  if (resolvedCases.length === 0) {
+    return (
+      <div>
+        <h2 className="text-lg font-bold text-text-primary dark:text-white mb-3">
+          History
+        </h2>
+        <div className="card-clean rounded-2xl p-6 text-center">
+          <p className="text-sm text-text-secondary dark:text-white/70">
+            No completed support requests yet. Your resolved cases will appear here.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const displayCases = resolvedCases.slice(0, 5);
 
@@ -203,13 +216,13 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                   {c.title}
                 </span>
               </div>
-              <span className="text-xs text-text-muted shrink-0 tabular-nums">
+              <span className="text-xs text-text-secondary dark:text-white/60 shrink-0 tabular-nums">
                 {relativeTime(c.updatedAt || c.createdAt)}
               </span>
               {c.status === "resolved" && userEmail && (
                 <InlineReportActions caseId={c.id} />
               )}
-              <ArrowRight className="w-4 h-4 text-text-muted/40 shrink-0 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" />
+              <ArrowRight className="w-4 h-4 text-text-secondary/60 shrink-0 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5" />
             </button>
           );
         })}

@@ -568,16 +568,16 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   <div role="columnheader" className="py-4 px-3 sm:px-4 text-text-secondary font-medium text-sm">Feature</div>
                   <div role="columnheader" className="py-4 px-2 sm:px-4 text-center">
                     <div className="text-text-primary dark:text-white font-bold text-sm">Free</div>
-                    <div className="text-[10px] sm:text-xs text-text-muted">$0/mo</div>
+                    <div className="text-xs text-text-muted">$0/mo</div>
                   </div>
                   <div role="columnheader" className="py-4 px-2 sm:px-4 text-center border-x border-light-200 dark:border-midnight-700 bg-electric-indigo/[0.04] dark:bg-electric-indigo/[0.08] relative">
                     <div className="absolute top-0 left-0 right-0 h-[3px] bg-electric-indigo rounded-b-sm" />
                     <div className="text-electric-indigo font-bold text-sm">Home</div>
-                    <div className="text-[10px] sm:text-xs text-text-muted">${isAnnual ? '7.99' : '9.99'}/mo</div>
+                    <div className="text-xs text-text-muted">${isAnnual ? '7.99' : '9.99'}/mo</div>
                   </div>
                   <div role="columnheader" className="py-4 px-2 sm:px-4 text-center">
                     <div className="text-text-primary dark:text-white font-bold text-sm">Pro</div>
-                    <div className="text-[10px] sm:text-xs text-text-muted">${isAnnual ? '15.99' : '19.99'}/mo</div>
+                    <div className="text-xs text-text-muted">${isAnnual ? '15.99' : '19.99'}/mo</div>
                   </div>
                 </div>
 
@@ -614,7 +614,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                           </div>
                           <div className="min-w-0">
                             <div className="font-medium text-text-primary dark:text-white text-sm truncate">{row.name}</div>
-                            <div className="text-[10px] sm:text-xs text-text-muted truncate">{row.sub}</div>
+                            <div className="text-xs text-text-muted truncate">{row.sub}</div>
                           </div>
                         </div>
                       </div>

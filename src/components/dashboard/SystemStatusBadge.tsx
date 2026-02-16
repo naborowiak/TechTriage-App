@@ -33,7 +33,7 @@ export const SystemStatusBadge: React.FC = () => {
           aria-hidden="true"
         />
       </span>
-      <span className="text-sm text-text-muted font-medium tracking-tight">
+      <span className="text-sm text-text-secondary dark:text-white/70 font-medium tracking-tight">
         {isOnline ? "Support Available" : "Reconnecting..."}
       </span>
     </div>

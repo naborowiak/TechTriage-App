@@ -110,7 +110,7 @@ export function ModeDock({ activeMode, onModeSelect, userTier, onLockedModeClick
               className={`w-5 h-5 relative z-10 ${isActive ? 'text-white' : locked ? 'text-white/40' : 'text-white/70'}`}
             />
             <span
-              className={`text-[11px] font-semibold relative z-10 ${isActive ? 'text-white' : locked ? 'text-white/40' : 'text-white/60'}`}
+              className={`text-xs font-semibold relative z-10 ${isActive ? 'text-white' : locked ? 'text-white/50' : 'text-white/70'}`}
             >
               {mode.label}
             </span>

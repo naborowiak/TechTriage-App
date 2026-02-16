@@ -406,14 +406,20 @@ app.post("/api/auth/register", authLimiter, validate(registerSchema), async (req
 
     // Send verification email (not welcome email - that comes after verification)
     if (result.verificationToken) {
-      // FIX: Correct argument order (email, token, firstName) and ensure firstName is string | undefined
-      sendVerificationEmail(
+      const emailResult = await sendVerificationEmail(
         email,
         result.verificationToken,
         firstName || undefined
-      ).catch((err) => {
-        console.error("[EMAIL] Failed to send verification email:", err);
-      });
+      );
+
+      if (!emailResult.success) {
+        console.error("[EMAIL] Verification email failed:", emailResult.error);
+        return res.status(500).json({
+          error: "Account created but we couldn't send the verification email. Please try resending the code.",
+          needsVerification: true,
+          user: { id: result.user.id, email: result.user.email, firstName: result.user.firstName },
+        });
+      }
     }
 
     // Don't log the user in - they need to verify their email first
@@ -546,14 +552,16 @@ app.post("/api/auth/resend-verification", authLimiter, async (req, res) => {
 
     // Send the verification email
     if (result.verificationToken) {
-      // FIX: Correct argument order (email, token, firstName) and handle nulls
-      sendVerificationEmail(
+      const emailResult = await sendVerificationEmail(
         email,
         result.verificationToken,
         result.user?.firstName || undefined
-      ).catch((err) => {
-        console.error("[EMAIL] Failed to send verification email:", err);
-      });
+      );
+
+      if (!emailResult.success) {
+        console.error("[EMAIL] Resend verification email failed:", emailResult.error);
+        return res.status(500).json({ error: "Failed to send verification email. Please try again." });
+      }
     }
 
     res.json({ success: true, message: result.message });
