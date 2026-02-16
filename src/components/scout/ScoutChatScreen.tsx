@@ -35,7 +35,7 @@ interface ScoutChatScreenProps {
 }
 
 export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation, onCaseCreated, onBackToDashboard }: ScoutChatScreenProps) {
-  const { canUse, incrementUsage, canUseVideoCredit, useVideoCredit } = useUsage();
+  const { canUse, incrementUsage, canUseVideoCredit, useVideoCredit, tier } = useUsage();
   const { user, isAuthenticated } = useAuth();
 
   // Pick a consistent agent name for this session (stable across re-renders)
@@ -87,7 +87,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
-  const [lockedFeature, setLockedFeature] = useState<ScoutMode | null>(null);
+  const [lockedFeature, setLockedFeature] = useState<ScoutMode | 'escalation' | null>(null);
   const [voiceReport, setVoiceReport] = useState<VoiceDiagnosticReport | null>(null);
   const [showVoiceReport, setShowVoiceReport] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
@@ -118,25 +118,53 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     }
   }, [isAuthenticated, user?.id, initialCaseId]);
 
-  // Load existing case messages if reopening
+  // Load existing case messages and metadata if reopening
   useEffect(() => {
     if (initialCaseId && isAuthenticated) {
-      fetch(`/api/cases/${initialCaseId}/messages`, { credentials: 'include' })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data?.messages?.length > 0) {
-            const loaded = data.messages.map((m: { role: string; text: string; image?: string; timestamp: number; guidedAction?: GuidedAction }, i: number) => ({
-              id: `loaded_${i}`,
-              role: m.role === 'user' ? UserRole.USER : UserRole.MODEL,
-              text: m.text,
-              image: m.image,
-              timestamp: m.timestamp,
-              guidedAction: m.guidedAction,
-            }));
-            setMessages(loaded);
-          }
-        })
-        .catch(() => {});
+      Promise.all([
+        fetch(`/api/cases/${initialCaseId}/messages`, { credentials: 'include' })
+          .then(res => res.ok ? res.json() : null),
+        fetch(`/api/cases/${initialCaseId}`, { credentials: 'include' })
+          .then(res => res.ok ? res.json() : null),
+      ]).then(([msgData, caseData]) => {
+        // Populate case metadata (modeSequence, title, sessionMode)
+        if (caseData?.case) {
+          setModeSequence(caseData.case.modeSequence || null);
+          setCaseTitle(caseData.case.title || null);
+          if (caseData.case.sessionMode) setActiveMode(caseData.case.sessionMode);
+        }
+
+        // Load messages
+        let loaded: ChatMessage[] = [];
+        if (msgData?.messages?.length > 0) {
+          loaded = msgData.messages.map((m: { role: string; text: string; image?: string; timestamp: number; guidedAction?: GuidedAction }, i: number) => ({
+            id: `loaded_${i}`,
+            role: m.role === 'user' ? UserRole.USER : UserRole.MODEL,
+            text: m.text,
+            image: m.image,
+            timestamp: m.timestamp,
+            guidedAction: m.guidedAction,
+          }));
+        }
+
+        // Append specialist response as a synthetic message if present
+        if (caseData?.case?.specialistNotes) {
+          const specialistMsg: ChatMessage = {
+            id: 'specialist_response',
+            role: UserRole.MODEL,
+            text: `**Specialist Response**\n\n${caseData.case.specialistNotes}`,
+            timestamp: caseData.case.specialistRespondedAt
+              ? new Date(caseData.case.specialistRespondedAt).getTime()
+              : Date.now(),
+            agentName: 'Specialist',
+          };
+          loaded = [...loaded, specialistMsg];
+        }
+
+        if (loaded.length > 0) {
+          setMessages(loaded);
+        }
+      }).catch(() => {});
     }
   }, [initialCaseId, isAuthenticated]);
 
@@ -849,7 +877,14 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             <div className="flex items-center gap-2">
               {hasActiveSession && isAuthenticated && (
                 <button
-                  onClick={() => setShowEscalateConfirm(true)}
+                  onClick={() => {
+                    if (tier === 'guest' || tier === 'free') {
+                      setLockedFeature('escalation');
+                      setShowUpgradeModal(true);
+                    } else {
+                      setShowEscalateConfirm(true);
+                    }
+                  }}
                   disabled={isEscalating}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-sm font-medium"
                 >
@@ -910,7 +945,14 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             </div>
             {hasActiveSession && isAuthenticated && (
               <button
-                onClick={() => setShowEscalateConfirm(true)}
+                onClick={() => {
+                  if (tier === 'guest' || tier === 'free') {
+                    setLockedFeature('escalation');
+                    setShowUpgradeModal(true);
+                  } else {
+                    setShowEscalateConfirm(true);
+                  }
+                }}
                 disabled={isEscalating}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-sm font-medium"
               >
@@ -1170,7 +1212,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               {lockedFeature === 'photo' && "Photo support is available on our paid plans."}
               {lockedFeature === 'voice' && "Voice support requires TotalAssist Home or Pro. Upgrade for hands-free troubleshooting."}
               {lockedFeature === 'video' && "Video diagnostics require TotalAssist Home or Pro. Home includes 1 video credit per week."}
-              {lockedFeature !== 'chat' && lockedFeature !== 'photo' && lockedFeature !== 'voice' && lockedFeature !== 'video' && "This feature is available on our paid plans."}
+              {lockedFeature === 'escalation' && "Specialist escalation is available on TotalAssist Home and Pro plans. Upgrade to connect with certified technicians for hands-on help."}
+              {lockedFeature !== 'chat' && lockedFeature !== 'photo' && lockedFeature !== 'voice' && lockedFeature !== 'video' && lockedFeature !== 'escalation' && "This feature is available on our paid plans."}
             </p>
             <div className="flex gap-3">
               <button

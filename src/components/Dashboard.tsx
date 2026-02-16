@@ -79,7 +79,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onStartChat: _onStartChat,
   onOpenScout,
   onLogout,
-  onOpenHistory: _onOpenHistory,
+  onOpenHistory,
   onOpenSettings,
   onOpenBilling,
   onOpenInventory,
@@ -111,7 +111,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Sync sidebarTab from activeView when it changes
   useEffect(() => {
     if (activeView === "history") setSidebarTab("history");
-    else if (activeView === "scout") setSidebarTab("chat");
+    else if (activeView === "scout") { /* don't reset — let sidebar keep its state */ }
     else if (activeView === "main") setSidebarTab("chat");
   }, [activeView]);
 
@@ -192,7 +192,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     if (tab === "chat") {
       if (onBackToDashboard) onBackToDashboard();
     } else if (tab === "history") {
-      // Don't navigate away — show inline
+      onOpenHistory();
     } else if (tab === "devices") {
       // Show inline
     } else if (tab === "settings") {
@@ -206,7 +206,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     if (tab === "chat") {
       if (onBackToDashboard) onBackToDashboard();
     } else if (tab === "history") {
-      // Show inline
+      onOpenHistory();
     } else if (tab === "devices") {
       // Show inline
     } else if (tab === "settings") {
@@ -634,7 +634,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <HistoryList
                 cases={cases}
                 onOpenCase={(id) => onOpenCase?.(id)}
-                onViewAll={() => setSidebarTab("history")}
+                onViewAll={() => onOpenHistory()}
                 userEmail={user?.email}
               />
             </div>
