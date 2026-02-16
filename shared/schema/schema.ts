@@ -92,6 +92,7 @@ export const casesTable = pgTable("cases", {
   diagnosticSteps: jsonb("diagnostic_steps").$type<Array<{ step: string; result: string; timestamp: number }>>(),
   photosCount: integer("photos_count").default(0),
   sessionMode: varchar("session_mode", { length: 20 }), // 'chat' | 'voice' | 'photo' | 'video'
+  modeSequence: integer("mode_sequence"), // Sequential per user+sessionMode (e.g., 1st chat, 2nd chat)
   escalatedAt: timestamp("escalated_at"),
   escalationReport: jsonb("escalation_report").$type<{
     problemDescription: string;

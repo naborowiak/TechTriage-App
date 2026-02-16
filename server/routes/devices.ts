@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { db } from "../db";
-import { devicesTable } from "../../shared/schema/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { devicesTable, casesTable } from "../../shared/schema/schema";
+import { eq, and, desc, count } from "drizzle-orm";
 
 const router = Router();
 
-// GET: List user's devices
+// GET: List user's devices with case count per device
 router.get("/", async (req, res) => {
   if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -13,9 +13,23 @@ router.get("/", async (req, res) => {
 
   try {
     const devices = await db
-      .select()
+      .select({
+        id: devicesTable.id,
+        userId: devicesTable.userId,
+        name: devicesTable.name,
+        type: devicesTable.type,
+        brand: devicesTable.brand,
+        model: devicesTable.model,
+        location: devicesTable.location,
+        notes: devicesTable.notes,
+        createdAt: devicesTable.createdAt,
+        updatedAt: devicesTable.updatedAt,
+        caseCount: count(casesTable.id),
+      })
       .from(devicesTable)
+      .leftJoin(casesTable, eq(devicesTable.id, casesTable.deviceId))
       .where(eq(devicesTable.userId, req.user.id))
+      .groupBy(devicesTable.id)
       .orderBy(desc(devicesTable.createdAt));
 
     res.json(devices);

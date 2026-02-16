@@ -1505,7 +1505,7 @@ const getStoredUser = (): DashboardUser | null => {
   return null;
 };
 
-type DashboardView = "main" | "history" | "scout" | "analytics";
+type DashboardView = "main" | "history" | "scout" | "analytics" | "devices";
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<PageView>(getInitialView);

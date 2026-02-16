@@ -73,17 +73,23 @@ async function buildCasePDFData(
   };
 }
 
-// GET: Fetch all cases for the logged-in user
+// GET: Fetch all cases for the logged-in user (optional ?deviceId= filter)
 router.get("/", async (req, res) => {
   if (!req.isAuthenticated() || !req.user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
+    const deviceId = req.query.deviceId as string | undefined;
+    const conditions = [eq(casesTable.userId, req.user.id)];
+    if (deviceId) {
+      conditions.push(eq(casesTable.deviceId, deviceId));
+    }
+
     const cases = await db
       .select()
       .from(casesTable)
-      .where(eq(casesTable.userId, req.user.id))
+      .where(and(...conditions))
       .orderBy(desc(casesTable.updatedAt));
 
     res.json(cases);
@@ -109,6 +115,14 @@ router.post("/", async (req, res) => {
       .where(eq(casesTable.userId, req.user.id));
     const nextCaseNumber = (maxNum || 0) + 1;
 
+    // Get next mode sequence for this user+sessionMode combo
+    const effectiveMode = sessionMode || "chat";
+    const [{ maxSeq }] = await db
+      .select({ maxSeq: max(casesTable.modeSequence) })
+      .from(casesTable)
+      .where(and(eq(casesTable.userId, req.user.id), eq(casesTable.sessionMode, effectiveMode)));
+    const nextModeSequence = (maxSeq || 0) + 1;
+
     const [newCase] = await db
       .insert(casesTable)
       .values({
@@ -116,8 +130,9 @@ router.post("/", async (req, res) => {
         caseNumber: nextCaseNumber,
         title: title || "New Support Session",
         status: "open",
-        sessionMode: sessionMode || "chat",
+        sessionMode: effectiveMode,
         deviceId: deviceId || null,
+        modeSequence: nextModeSequence,
       })
       .returning();
 

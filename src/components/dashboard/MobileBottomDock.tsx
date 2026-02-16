@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, Plus, Clock, Settings } from "lucide-react";
+import { MessageSquare, Clock, Smartphone, Settings } from "lucide-react";
 import type { DashboardTab } from "../../types";
 
 interface MobileBottomDockProps {
@@ -11,11 +11,10 @@ const tabs: {
   id: DashboardTab;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  isCenter?: boolean;
 }[] = [
-  { id: "home", label: "Home", icon: Home },
-  { id: "new", label: "New Case", icon: Plus, isCenter: true },
+  { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "history", label: "History", icon: Clock },
+  { id: "devices", label: "Devices", icon: Smartphone },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -33,27 +32,6 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-
-          if (tab.isCenter) {
-            return (
-              <button
-                key={tab.id}
-                role="tab"
-                aria-selected={isActive}
-                aria-label={tab.label}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => onTabChange(tab.id)}
-                className="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] -mt-4"
-              >
-                <div className="w-12 h-12 rounded-full bg-electric-indigo shadow-clean-md flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xs font-semibold text-electric-indigo mt-1">
-                  {tab.label}
-                </span>
-              </button>
-            );
-          }
 
           return (
             <button

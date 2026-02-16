@@ -90,6 +90,7 @@ export interface CaseRecord {
   id: string;
   userId: string;
   caseNumber?: number | null;
+  modeSequence?: number | null;
   title: string;
   status: string; // "open" | "resolved" | "escalated" | "pending"
   aiSummary?: string | null;
@@ -112,6 +113,7 @@ export interface DeviceRecord {
   model?: string | null;
   location?: string | null;
   notes?: string | null;
+  caseCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -140,4 +142,17 @@ export interface CaseProgressStep {
   stepNumber?: number;
 }
 
-export type DashboardTab = 'home' | 'new' | 'history' | 'settings';
+export type DashboardTab = 'chat' | 'history' | 'devices' | 'settings';
+
+// Format case display ID from sessionMode + modeSequence
+export function formatCaseDisplayId(sessionMode: string | null | undefined, modeSequence: number | null | undefined): string {
+  const prefixMap: Record<string, string> = {
+    chat: 'ME',    // Message
+    video: 'VI',   // Video
+    voice: 'TA',   // Talk
+    photo: 'PH',   // Photo
+  };
+  const prefix = prefixMap[sessionMode || 'chat'] || 'ME';
+  const seq = modeSequence || 0;
+  return `${prefix}${String(seq).padStart(7, '0')}`;
+}
