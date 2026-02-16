@@ -684,6 +684,21 @@ app.put("/api/auth/user/:id", requireAuth, requireSelf, async (req, res) => {
       primaryIssues,
       howHeard,
     });
+
+    // Keep session in sync so GET /api/auth/user returns fresh data
+    if (req.user) {
+      const refreshedSession = {
+        ...(req.user as any),
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+      };
+      req.login(refreshedSession, (err) => {
+        if (err) console.error("Session refresh error:", err);
+        res.json({ success: true, user: updatedUser });
+      });
+      return;
+    }
+
     res.json({ success: true, user: updatedUser });
   } catch (error) {
     console.error("Update user error:", error);

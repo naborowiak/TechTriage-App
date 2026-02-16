@@ -1568,7 +1568,7 @@ const App: React.FC = () => {
       // Create dashboard user object from session
       const syncedUser: DashboardUser = {
         id: sessionUser.id,
-        firstName: sessionUser.firstName || sessionUser.username || "User",
+        firstName: sessionUser.firstName || "User",
         lastName: sessionUser.lastName || undefined,
         email: sessionUser.email || "",
       };
@@ -1680,7 +1680,7 @@ const App: React.FC = () => {
       // Sync dashboardUser from session if not already set
       const syncedUser: DashboardUser = {
         id: sessionUser.id,
-        firstName: sessionUser.firstName || sessionUser.username || "User",
+        firstName: sessionUser.firstName || "User",
         lastName: sessionUser.lastName || undefined,
         email: sessionUser.email || "",
       };
