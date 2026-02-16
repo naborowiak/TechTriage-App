@@ -538,7 +538,7 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
     if (caseHistory.length > 0) {
       systemPrompt += buildCaseHistoryBlock(caseHistory);
     }
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const chatConfig = {
       model: model,
       contents: contents,
       config: {
@@ -548,12 +548,23 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
         temperature: 0.4,
         tools: [{ functionDeclarations: [endSessionTool, presentChoicesTool, showStepTool, confirmResultTool] }]
       }
-    });
+    };
 
-    const functionCall = response.functionCalls?.[0];
+    let response: GenerateContentResponse = await ai.models.generateContent(chatConfig);
+    let responseText = response.text;
+    let functionCall = response.functionCalls?.[0];
+
+    // Retry once if Gemini returns empty text AND no function call
+    if (!responseText && !functionCall) {
+      response = await ai.models.generateContent(chatConfig);
+      responseText = response.text;
+      functionCall = response.functionCalls?.[0];
+    }
 
     res.json({
-      text: response.text || "I'm processing that for you...",
+      text: responseText || (functionCall
+        ? "I'm processing that for you..."
+        : "I'd like to help with that — could you describe what's happening in a bit more detail?"),
       functionCall: functionCall ? { name: functionCall.name || '', args: functionCall.args as Record<string, unknown> || {} } : undefined
     });
 
@@ -616,7 +627,7 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
     if (caseHistory.length > 0) {
       liveAgentPrompt += buildCaseHistoryBlock(caseHistory);
     }
-    const response: GenerateContentResponse = await ai.models.generateContent({
+    const liveAgentConfig = {
       model: model,
       contents: contents,
       config: {
@@ -624,12 +635,23 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
         temperature: 0.7,
         tools: [{ functionDeclarations: [endSessionTool, presentChoicesTool, showStepTool, confirmResultTool] }]
       }
-    });
+    };
 
-    const functionCall = response.functionCalls?.[0];
+    let response: GenerateContentResponse = await ai.models.generateContent(liveAgentConfig);
+    let responseText = response.text;
+    let functionCall = response.functionCalls?.[0];
+
+    // Retry once if Gemini returns empty text AND no function call
+    if (!responseText && !functionCall) {
+      response = await ai.models.generateContent(liveAgentConfig);
+      responseText = response.text;
+      functionCall = response.functionCalls?.[0];
+    }
 
     res.json({
-      text: response.text || "Let me look into that for you...",
+      text: responseText || (functionCall
+        ? "Let me look into that for you..."
+        : "I'd like to help with that — could you tell me a bit more about what's going on?"),
       functionCall: functionCall ? { name: functionCall.name || '', args: functionCall.args as Record<string, unknown> || {} } : undefined
     });
 

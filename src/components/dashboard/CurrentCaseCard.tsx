@@ -6,11 +6,13 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
-import type { CaseProgressStep } from "../../types";
+import { formatCaseDisplayId, type CaseProgressStep } from "../../types";
 
 interface Case {
   id: string;
   caseNumber?: number | null;
+  sessionMode?: string | null;
+  modeSequence?: number | null;
   title: string;
   status: string;
   createdAt: string;
@@ -84,7 +86,7 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
         <div className="relative flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-electric-indigo/10 dark:bg-electric-indigo/15 text-sm font-bold text-electric-indigo">
-              {caseRecord.caseNumber ? `#${caseRecord.caseNumber}` : "Case"}
+              {caseRecord.modeSequence ? formatCaseDisplayId(caseRecord.sessionMode, caseRecord.modeSequence) : "Case"}
             </span>
             <span className="text-sm text-text-secondary dark:text-white/70">{dateStr}</span>
           </div>

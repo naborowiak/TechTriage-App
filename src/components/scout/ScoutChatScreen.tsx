@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, UserPlus, Hash, Camera, ArrowLeft } from 'lucide-react';
+import { Send, UserPlus, Camera, ArrowLeft } from 'lucide-react';
 import { EscalationBreadcrumb } from './EscalationBreadcrumb';
 import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
@@ -13,7 +13,7 @@ import { CaseCompletionModal } from './CaseCompletionModal';
 import { saveVoiceReportToHistory } from '../../services/voiceReportService';
 import { useWebSpeech } from '../../hooks/useWebSpeech';
 import { useGeminiVoice } from '../../hooks/useGeminiVoice';
-import { ChatMessage, UserRole, DeviceRecord, EscalationReportData, GuidedAction } from '../../types';
+import { ChatMessage, UserRole, DeviceRecord, EscalationReportData, GuidedAction, formatCaseDisplayId } from '../../types';
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -70,7 +70,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   // Case tracking
   const [caseId, setCaseId] = useState<string | null>(initialCaseId || null);
   const [caseTitle, setCaseTitle] = useState<string | null>(null);
-  const [caseNumber, setCaseNumber] = useState<number | null>(null);
+  const [modeSequence, setModeSequence] = useState<number | null>(null);
   const [hasCreatedCase, setHasCreatedCase] = useState(!!initialCaseId);
   const ensureCasePromiseRef = useRef<Promise<string | null> | null>(null);
 
@@ -237,7 +237,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           const newCase = await res.json();
           setCaseId(newCase.id);
           setCaseTitle(title);
-          setCaseNumber(newCase.caseNumber || null);
+          setModeSequence(newCase.modeSequence || null);
           setHasCreatedCase(true);
           onCaseCreated?.(newCase);
           // Dispatch event so sidebar can update in real-time
@@ -375,6 +375,15 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         const remaining = targetDelay - elapsed;
         if (remaining > 0) {
           await new Promise(resolve => setTimeout(resolve, remaining));
+        }
+      }
+
+      // Client-side safety net: if server returned a known fallback string with no function call, retry once
+      const FALLBACK_STRINGS = ["I'm processing that for you...", "Let me look into that for you..."];
+      if (FALLBACK_STRINGS.includes(response.text) && !response.functionCall) {
+        const retryResponse = await sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName);
+        if (retryResponse.text && !FALLBACK_STRINGS.includes(retryResponse.text)) {
+          response = retryResponse;
         }
       }
 
@@ -830,9 +839,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   <div className="w-2 h-2 rounded-full bg-emerald-400" aria-label="Online" />
                   <span className="text-text-secondary dark:text-white/70 text-sm">TotalAssist Support</span>
                   {caseId && (
-                    <span className="text-gray-400 dark:text-white/40 text-xs ml-2 flex items-center gap-1">
-                      <Hash className="w-3 h-3" />
-                      {caseNumber ? `#${caseNumber}` : caseTitle || caseId.substring(0, 8)}
+                    <span className="text-gray-400 dark:text-white/40 text-xs ml-2">
+                      {modeSequence ? formatCaseDisplayId(activeMode, modeSequence) : caseTitle || caseId.substring(0, 8)}
                     </span>
                   )}
                 </div>
@@ -890,9 +898,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2">
               {caseId && (
-                <span className="text-gray-400 dark:text-white/40 text-xs flex items-center gap-1 bg-light-200 dark:bg-white/5 px-2 py-1 rounded">
-                  <Hash className="w-3 h-3" />
-                  {caseNumber ? `#${caseNumber}` : caseTitle || `Case ${caseId.substring(0, 8)}`}
+                <span className="text-gray-400 dark:text-white/40 text-xs bg-light-200 dark:bg-white/5 px-2 py-1 rounded">
+                  {modeSequence ? formatCaseDisplayId(activeMode, modeSequence) : caseTitle || `Case ${caseId.substring(0, 8)}`}
                 </span>
               )}
               {selectedDevice && (

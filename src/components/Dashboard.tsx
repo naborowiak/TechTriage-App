@@ -65,6 +65,8 @@ interface DashboardProps {
 interface Case {
   id: string;
   caseNumber?: number | null;
+  sessionMode?: string | null;
+  modeSequence?: number | null;
   title: string;
   status: string;
   createdAt: string;

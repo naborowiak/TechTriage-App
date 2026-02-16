@@ -101,7 +101,7 @@ function getHeaderHtml(title: string, subtitle: string): string {
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center" style="padding-bottom: 25px;">
-              <img src="${IMAGE_BASE_URL}/total_assist-new.png" alt="TotalAssist" width="160" style="display: block; max-width: 160px; height: auto;">
+              <img src="${IMAGE_BASE_URL}/total_assist-new-white.png" alt="TotalAssist" width="160" style="display: block; max-width: 160px; height: auto;">
             </td>
           </tr>
           <tr>
@@ -1107,7 +1107,7 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
                         <tr>
                           <td valign="middle" style="padding-right: 10px;">
                             <div style="width: 36px; height: 36px; background-color: rgba(255,255,255,0.2); border-radius: 50%; text-align: center; line-height: 36px;">
-                              <img src="${IMAGE_BASE_URL}/total_assist-new.png" alt="TA" width="28" style="display: inline-block; vertical-align: middle; max-width: 28px; height: auto;">
+                              <img src="${IMAGE_BASE_URL}/total_assist-new-white.png" alt="TA" width="28" style="display: inline-block; vertical-align: middle; max-width: 28px; height: auto;">
                             </div>
                           </td>
                           <td valign="middle">
