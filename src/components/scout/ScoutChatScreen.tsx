@@ -47,7 +47,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     {
       id: 'welcome',
       role: UserRole.MODEL,
-      text: `Hi! What can I help you with today?`,
+      text: initialMode === 'photo'
+        ? `Snap a photo of the issue and I'll help diagnose it. What area is this about?`
+        : `Hi! What can I help you with today?`,
       timestamp: Date.now(),
       guidedAction: {
         type: 'presentChoices' as const,
@@ -170,7 +172,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
   // Auto-trigger initial mode (voice, photo, video) on mount
   useEffect(() => {
-    if (!initialMode || initialMode === 'chat') return;
+    if (!initialMode || initialMode === 'chat' || initialMode === 'photo') return;
     // Small delay to let the component fully mount
     const timer = setTimeout(() => {
       handleModeSelect(initialMode);
