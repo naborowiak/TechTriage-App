@@ -101,7 +101,7 @@ function getHeaderHtml(title: string, subtitle: string): string {
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center" style="padding-bottom: 25px;">
-              <img src="${IMAGE_BASE_URL}/total_assist-new.png" alt="TotalAssist" width="160" style="display: block; max-width: 160px; height: auto;">
+              <img src="${IMAGE_BASE_URL}/total_assist-new-white.png" alt="TotalAssist" width="160" style="display: block; max-width: 160px; height: auto;">
             </td>
           </tr>
           <tr>
@@ -120,7 +120,7 @@ function getFooterHtml(): string {
   return `
     <tr>
       <td align="center" style="background-color: ${BRAND.midnight}; padding: 40px 30px; border-top: 1px solid #334155;">
-        <img src="${IMAGE_BASE_URL}/total_assist-new.png" alt="TotalAssist" width="100" style="display: block; max-width: 100px; height: auto; margin-bottom: 20px; opacity: 0.9;">
+        <img src="${IMAGE_BASE_URL}/total_assist-new-white.png" alt="TotalAssist" width="100" style="display: block; max-width: 100px; height: auto; margin-bottom: 20px; opacity: 0.9;">
 
         <p style="margin: 0 0 8px; color: #64748b; font-size: 13px;">
           Powered by TotalAssist
@@ -432,26 +432,17 @@ function getWelcomeEmailHtml(firstName: string): string {
                 </td>
             </tr>
 
-            <!-- Testimonial -->
+            <!-- Value Proposition -->
             <tr>
                 <td class="light-section content-padding" style="background-color: #ffffff; padding: 40px;">
                     <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: linear-gradient(135deg, ${BRAND.scoutPurple}08, ${BRAND.electricIndigo}08); border-radius: 16px; border: 1px solid ${BRAND.scoutPurple}20;">
                         <tr>
-                            <td style="padding: 30px;">
-                                <p class="light-text" style="margin: 0 0 20px; font-family: Georgia, serif; font-style: italic; color: ${BRAND.slate}; font-size: 17px; line-height: 1.7;">
-                                    "I was skeptical at first, but <strong style="color: ${BRAND.scoutPurple};">TotalAssist</strong> actually understood my router problem and fixed it in under 5 minutes. Incredible."
+                            <td align="center" style="padding: 35px 30px;">
+                                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; text-align: center; line-height: 56px; margin: 0 auto 20px; font-size: 26px;">🏠</div>
+                                <p class="light-text" style="margin: 0 0 12px; color: ${BRAND.midnight}; font-size: 22px; font-weight: 700; letter-spacing: -0.3px;">Your Home Tech, Handled.</p>
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.7; max-width: 400px;">
+                                    From Wi-Fi trouble to smart home setup, TotalAssist gives you expert-level answers in minutes &mdash; no technician visit required.
                                 </p>
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                                    <tr>
-                                        <td valign="middle" width="56" style="padding-right: 12px;">
-                                            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, ${BRAND.scoutPurple}, ${BRAND.electricIndigo}); border-radius: 50%; text-align: center; line-height: 44px; color: white; font-weight: 600;">JM</div>
-                                        </td>
-                                        <td valign="middle">
-                                            <span class="light-text" style="color: ${BRAND.midnight}; font-weight: 600; font-size: 14px; display: block;">James Morrison</span>
-                                            <span class="light-text-secondary" style="color: ${BRAND.slateLight}; font-size: 13px;">Denver, CO</span>
-                                        </td>
-                                    </tr>
-                                </table>
                             </td>
                         </tr>
                     </table>
@@ -743,6 +734,13 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
                   </tr>
                 </table>
               </td>
+            </tr>
+
+            <!-- Hero Image -->
+            <tr>
+                <td style="padding: 0; line-height: 0;">
+                    <img src="${IMAGE_BASE_URL}/family-time.png" alt="Family enjoying their home" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border-bottom: 3px solid ${BRAND.electricIndigo};">
+                </td>
             </tr>
 
             <!-- Content Section -->
@@ -1091,7 +1089,7 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
                         <tr>
                           <td valign="middle" style="padding-right: 10px;">
                             <div style="width: 36px; height: 36px; background-color: rgba(255,255,255,0.2); border-radius: 50%; text-align: center; line-height: 36px;">
-                              <img src="${IMAGE_BASE_URL}/total_assist-new.png" alt="TA" width="28" style="display: inline-block; vertical-align: middle; max-width: 28px; height: auto;">
+                              <img src="${IMAGE_BASE_URL}/total_assist-new-white.png" alt="TA" width="28" style="display: inline-block; vertical-align: middle; max-width: 28px; height: auto;">
                             </div>
                           </td>
                           <td valign="middle">
