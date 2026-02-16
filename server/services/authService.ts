@@ -318,6 +318,7 @@ export async function updateUserProfile(
     householdSize?: string;
     primaryIssues?: string[];
     howHeard?: string;
+    profileImageUrl?: string | null;
   }
 ) {
   const [updatedUser] = await db

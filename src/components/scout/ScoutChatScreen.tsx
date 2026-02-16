@@ -1137,7 +1137,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           geminiStatus={geminiVoice.status}
           connectionError={geminiVoice.connectionError}
           transcriptHistory={geminiVoice.transcriptHistory}
-          userName={user?.firstName || user?.username || undefined}
+          userName={user?.firstName || undefined}
           guidedAction={geminiVoice.guidedAction}
           onGuidedAction={(_action, text) => {
             geminiVoice.sendText(text);
@@ -1247,7 +1247,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             setVoiceReport(null);
           }}
           userEmail={user?.email || undefined}
-          userName={user?.firstName || user?.username || undefined}
+          userName={user?.firstName || undefined}
         />
       )}
 

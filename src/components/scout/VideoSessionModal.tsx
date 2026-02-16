@@ -568,7 +568,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
                     <User className="w-3 h-3 text-white" />
                   )}
                   <span className="text-xs text-white/70">
-                    {entry.role === 'model' ? 'Support' : (user?.firstName || user?.username || 'You')}
+                    {entry.role === 'model' ? 'Support' : (user?.firstName || 'You')}
                   </span>
                 </div>
                 <div

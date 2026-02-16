@@ -17,8 +17,9 @@ interface SettingsModalProps {
     firstName: string;
     lastName?: string;
     email: string;
+    profileImageUrl?: string | null;
   };
-  onUpdateUser: (user: { firstName: string; lastName?: string; email: string }) => void;
+  onUpdateUser: (user: { firstName: string; lastName?: string; email: string; profileImageUrl?: string | null }) => void;
   onLogout: () => void;
 }
 

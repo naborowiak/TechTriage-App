@@ -12,7 +12,6 @@ import {
 
 interface User {
   id: string;
-  username: string;
   email: string | null;
   firstName: string | null;
   lastName: string | null;
@@ -98,7 +97,7 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     },
   ];
 
-  const displayName = user.firstName || user.username || 'User';
+  const displayName = user.firstName || 'User';
   const displayEmail = user.email || '';
 
   return (

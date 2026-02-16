@@ -1495,6 +1495,7 @@ interface DashboardUser {
   firstName: string;
   lastName?: string;
   email: string;
+  profileImageUrl?: string | null;
 }
 
 // Get stored dashboard user
@@ -1571,6 +1572,7 @@ const App: React.FC = () => {
         firstName: sessionUser.firstName || "User",
         lastName: sessionUser.lastName || undefined,
         email: sessionUser.email || "",
+        profileImageUrl: sessionUser.profileImageUrl || null,
       };
 
       // If on dashboard, sync the user (ensures id is present)
@@ -1683,6 +1685,7 @@ const App: React.FC = () => {
         firstName: sessionUser.firstName || "User",
         lastName: sessionUser.lastName || undefined,
         email: sessionUser.email || "",
+        profileImageUrl: sessionUser.profileImageUrl || null,
       };
       setDashboardUser(syncedUser);
       localStorage.setItem("totalassist_user", JSON.stringify(syncedUser));

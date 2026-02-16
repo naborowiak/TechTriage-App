@@ -36,6 +36,7 @@ interface DashboardProps {
     firstName: string;
     lastName?: string;
     email: string;
+    profileImageUrl?: string | null;
   };
   onStartChat: () => void;
   onUploadImage: () => void;
@@ -351,10 +352,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div ref={userMenuRef} className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="w-8 h-8 bg-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs hover:ring-2 hover:ring-electric-indigo/30 transition-all"
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:ring-2 hover:ring-electric-indigo/30 transition-all overflow-hidden"
                 aria-label="User menu"
               >
-                {user.firstName.charAt(0)}
+                {user.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt={user.firstName} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 bg-electric-indigo rounded-full flex items-center justify-center text-white font-bold text-xs">
+                    {user.firstName.charAt(0)}
+                  </div>
+                )}
               </button>
 
               {showUserMenu && (

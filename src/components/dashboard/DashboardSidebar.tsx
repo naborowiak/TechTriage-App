@@ -22,6 +22,7 @@ interface DashboardSidebarProps {
     firstName: string;
     lastName?: string;
     email: string;
+    profileImageUrl?: string | null;
   };
 }
 
@@ -132,9 +133,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         {/* User profile */}
         <div className="flex items-center gap-3 px-2 py-2">
-          <div className="w-8 h-8 rounded-full bg-electric-indigo flex items-center justify-center text-white font-bold text-xs shrink-0">
-            {user.firstName.charAt(0).toUpperCase()}
-          </div>
+          {user.profileImageUrl ? (
+            <img src={user.profileImageUrl} alt={user.firstName} className="w-8 h-8 rounded-full object-cover shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-electric-indigo flex items-center justify-center text-white font-bold text-xs shrink-0">
+              {user.firstName.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-text-primary dark:text-white truncate">
               {user.firstName} {user.lastName || ""}

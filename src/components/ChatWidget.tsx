@@ -614,7 +614,7 @@ export const ChatWidget = forwardRef<ChatWidgetHandle, ChatWidgetProps>(({ onNav
     startLiveAgentMode();
   };
 
-  if (isLiveVideoActive) return <LiveSupport onClose={() => setIsLiveVideoActive(false)} userId={user?.id} userEmail={user?.email || undefined} userName={user?.firstName || user?.username || undefined} />;
+  if (isLiveVideoActive) return <LiveSupport onClose={() => setIsLiveVideoActive(false)} userId={user?.id} userEmail={user?.email || undefined} userName={user?.firstName || undefined} />;
 
   const displayName = isLiveAgentMode && currentAgent
     ? `${currentAgent.first} ${currentAgent.last}`

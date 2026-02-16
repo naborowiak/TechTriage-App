@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Bell, Shield, Trash2, Mail, Phone, Save, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, User, Bell, Shield, Trash2, Mail, Phone, Save, CheckCircle, Camera, X as XIcon, Loader2 } from 'lucide-react';
 
 // ==========================================
 // Exported Section Sub-components
 // ==========================================
 
 interface ProfileSectionProps {
-  user: { firstName: string; lastName?: string; email: string };
-  onUpdateUser: (user: { firstName: string; lastName?: string; email: string }) => void;
+  user: { firstName: string; lastName?: string; email: string; profileImageUrl?: string | null; id?: string };
+  onUpdateUser: (user: { firstName: string; lastName?: string; email: string; profileImageUrl?: string | null }) => void;
 }
 
 export const SettingsProfileSection: React.FC<ProfileSectionProps> = ({ user, onUpdateUser }) => {
@@ -16,6 +16,10 @@ export const SettingsProfileSection: React.FC<ProfileSectionProps> = ({ user, on
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState('');
   const [saved, setSaved] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(user.profileImageUrl || null);
+  const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
@@ -28,6 +32,81 @@ export const SettingsProfileSection: React.FC<ProfileSectionProps> = ({ user, on
       console.error('Failed to load settings:', e);
     }
   }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset file input so the same file can be re-selected
+    e.target.value = '';
+
+    // Validate type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      setImageError('Please use JPEG, PNG, WebP, or GIF.');
+      return;
+    }
+
+    // Validate size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setImageError('Image must be under 2MB.');
+      return;
+    }
+
+    setImageError(null);
+    setUploading(true);
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch(`/api/auth/user/${user.id}/profile-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ image: dataUrl }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setPreviewUrl(data.profileImageUrl);
+      onUpdateUser({ ...user, profileImageUrl: data.profileImageUrl });
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!user.id) return;
+    setUploading(true);
+    setImageError(null);
+
+    try {
+      const res = await fetch(`/api/auth/user/${user.id}/profile-image`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!res.ok) throw new Error('Failed to remove image');
+
+      setPreviewUrl(null);
+      onUpdateUser({ ...user, profileImageUrl: null });
+    } catch {
+      setImageError('Could not remove photo. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = () => {
     const updatedUser = { firstName, lastName, email };
@@ -56,6 +135,54 @@ export const SettingsProfileSection: React.FC<ProfileSectionProps> = ({ user, on
           </div>
         </div>
         <div className="p-6 space-y-4">
+          {/* Profile Picture */}
+          <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-midnight-700">
+            <div className="relative">
+              {uploading ? (
+                <div className="w-16 h-16 rounded-full bg-light-100 dark:bg-midnight-700 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-electric-indigo animate-spin" />
+                </div>
+              ) : previewUrl ? (
+                <img src={previewUrl} alt="Profile" className="w-16 h-16 rounded-full object-cover ring-2 ring-electric-indigo/30" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-electric-indigo to-scout-purple flex items-center justify-center text-white text-xl font-bold">
+                  {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-electric-indigo hover:bg-electric-indigo/10 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Camera className="w-4 h-4" />
+                Change Photo
+              </button>
+              {previewUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  disabled={uploading}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <XIcon className="w-4 h-4" />
+                  Remove Photo
+                </button>
+              )}
+            </div>
+          </div>
+          {imageError && (
+            <p className="text-sm text-red-500" role="alert">{imageError}</p>
+          )}
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-text-primary dark:text-white mb-2">First Name</label>

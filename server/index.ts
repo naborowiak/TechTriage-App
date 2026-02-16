@@ -23,6 +23,7 @@ import { usersTable } from "../shared/schema/schema";
 import { eq } from "drizzle-orm";
 import cookie from "cookie";
 import cookieSignature from "cookie-signature";
+import sharp from "sharp";
 import type { IncomingMessage } from "http";
 
 import * as stripeService from "./services/stripeService";
@@ -506,10 +507,8 @@ app.post("/api/auth/verify-email", authLimiter, validate(verifyEmailSchema), asy
       return res.status(400).json({ error: result.error });
     }
 
-    // Send welcome email now that they are verified
-    sendWelcomeEmail(result.user.email, result.user.firstName || undefined).catch(err =>
-      console.error("[EMAIL] Failed to send welcome email:", err)
-    );
+    // Welcome email is deferred to profile update (onboarding completion)
+    // so it includes the user's actual first name instead of "there"
 
     // Create session so user is logged in after verification
     const sessionUser = {
@@ -685,12 +684,24 @@ app.put("/api/auth/user/:id", requireAuth, requireSelf, async (req, res) => {
       howHeard,
     });
 
+    // Send welcome email on onboarding completion (first time homeType is set)
+    // Deferred from verify-email so the user's actual name is included
+    const sessionUser = req.user as any;
+    const isOnboardingComplete = homeType && !sessionUser?.homeType;
+    if (isOnboardingComplete && updatedUser.email) {
+      sendWelcomeEmail(updatedUser.email, updatedUser.firstName || undefined).catch(err =>
+        console.error("[EMAIL] Failed to send welcome email:", err)
+      );
+    }
+
     // Keep session in sync so GET /api/auth/user returns fresh data
     if (req.user) {
       const refreshedSession = {
         ...(req.user as any),
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
+        homeType: updatedUser.homeType,
+        profileImageUrl: updatedUser.profileImageUrl,
       };
       req.login(refreshedSession, (err) => {
         if (err) console.error("Session refresh error:", err);
@@ -718,6 +729,98 @@ app.delete("/api/auth/user/:id", requireAuth, requireSelf, async (req, res) => {
   } catch (error) {
     console.error("Delete user error:", error);
     res.status(500).json({ error: "Failed to delete account" });
+  }
+});
+
+// Upload/update profile image (base64 data URI)
+app.post("/api/auth/user/:id/profile-image", requireAuth, requireSelf, async (req, res) => {
+  try {
+    const { image } = req.body;
+
+    if (!image || typeof image !== 'string' || !image.startsWith('data:image/')) {
+      return res.status(400).json({ error: "Invalid image format. Please provide a data URI." });
+    }
+
+    // Extract base64 data (after the comma in data:image/...;base64,DATA)
+    const base64Match = image.match(/^data:image\/\w+;base64,(.+)$/);
+    if (!base64Match) {
+      return res.status(400).json({ error: "Invalid data URI format." });
+    }
+
+    const rawBase64 = base64Match[1];
+
+    // Validate size (4MB raw base64 limit)
+    if (rawBase64.length > 4 * 1024 * 1024) {
+      return res.status(400).json({ error: "Image too large. Maximum size is 3MB." });
+    }
+
+    const inputBuffer = Buffer.from(rawBase64, 'base64');
+
+    // Validate it's a real image
+    let metadata;
+    try {
+      metadata = await sharp(inputBuffer).metadata();
+    } catch {
+      return res.status(400).json({ error: "Could not read image. Please try a different file." });
+    }
+
+    const allowedFormats = ['jpeg', 'png', 'webp', 'gif'];
+    if (!metadata.format || !allowedFormats.includes(metadata.format)) {
+      return res.status(400).json({ error: "Unsupported image format. Use JPEG, PNG, WebP, or GIF." });
+    }
+
+    // Process: resize to 200x200, convert to JPEG
+    const processedBuffer = await sharp(inputBuffer)
+      .resize(200, 200, { fit: 'cover' })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+
+    const profileImageUrl = `data:image/jpeg;base64,${processedBuffer.toString('base64')}`;
+
+    const updatedUser = await authService.updateUserProfile(req.params.id, { profileImageUrl });
+
+    // Update session
+    if (req.user) {
+      const refreshedSession = {
+        ...(req.user as any),
+        profileImageUrl: updatedUser.profileImageUrl,
+      };
+      req.login(refreshedSession, (err) => {
+        if (err) console.error("Session refresh error:", err);
+        res.json({ success: true, profileImageUrl: updatedUser.profileImageUrl });
+      });
+      return;
+    }
+
+    res.json({ success: true, profileImageUrl: updatedUser.profileImageUrl });
+  } catch (error) {
+    console.error("Profile image upload error:", error);
+    res.status(500).json({ error: "Failed to update profile image" });
+  }
+});
+
+// Remove profile image
+app.delete("/api/auth/user/:id/profile-image", requireAuth, requireSelf, async (req, res) => {
+  try {
+    const updatedUser = await authService.updateUserProfile(req.params.id, { profileImageUrl: null });
+
+    // Update session
+    if (req.user) {
+      const refreshedSession = {
+        ...(req.user as any),
+        profileImageUrl: null,
+      };
+      req.login(refreshedSession, (err) => {
+        if (err) console.error("Session refresh error:", err);
+        res.json({ success: true });
+      });
+      return;
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Profile image removal error:", error);
+    res.status(500).json({ error: "Failed to remove profile image" });
   }
 });
 
