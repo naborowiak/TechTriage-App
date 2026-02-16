@@ -87,21 +87,50 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
     }
   }, [capturedImage, onPhotoCaptured]);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = useCallback((dataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const MAX_DIM = 1920;
+          let { width, height } = img;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            const scale = MAX_DIM / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { resolve(dataUrl); return; }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        } catch {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }, []);
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const result = event.target?.result as string;
-      setCapturedImage(result);
+      const compressed = await compressImage(result);
+      setCapturedImage(compressed);
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [compressImage]);
 
   return (
     <div ref={modalRef} className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden pt-safe">
-      <div className="flex flex-col w-full h-full max-w-2xl relative">
+      <div className="flex flex-col w-full h-full mx-auto relative">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 pt-safe bg-gradient-to-b from-black/80 to-transparent">
         <button
@@ -161,7 +190,6 @@ export function PhotoCaptureModal({ onClose, onPhotoCaptured }: PhotoCaptureModa
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleFileSelect}
           className="hidden"
         />

@@ -1,4 +1,4 @@
-import { MessageSquare, Camera, Mic, Video, UserPlus, Check, ChevronRight } from 'lucide-react';
+import { MessageSquare, Camera, Mic, Video, UserPlus, Check } from 'lucide-react';
 import { ScoutMode } from './ModeDock';
 
 interface EscalationBreadcrumbProps {
@@ -9,12 +9,12 @@ interface EscalationBreadcrumbProps {
   onSuggestEscalation?: () => void;
 }
 
-const STAGES = [
+const MODE_CONFIG = [
   { id: 'chat' as const, icon: MessageSquare, label: 'Chat' },
   { id: 'photo' as const, icon: Camera, label: 'Photo' },
   { id: 'voice' as const, icon: Mic, label: 'Voice' },
   { id: 'video' as const, icon: Video, label: 'Video' },
-  { id: 'human' as const, icon: UserPlus, label: 'Human' },
+  { id: 'human' as const, icon: UserPlus, label: 'Escalated' },
 ];
 
 export function EscalationBreadcrumb({
@@ -24,64 +24,45 @@ export function EscalationBreadcrumb({
   messageCount,
   onSuggestEscalation,
 }: EscalationBreadcrumbProps) {
+  // Only show modes that have been visited or are currently active
+  const visibleModes = MODE_CONFIG.filter(mode => {
+    if (mode.id === 'human') return isEscalated;
+    return visitedModes.has(mode.id);
+  });
+
   return (
     <div className="py-2">
-      <div className="flex items-center justify-center gap-1">
-        {STAGES.map((stage, index) => {
-          const isActive = stage.id === 'human' ? isEscalated : stage.id === activeMode;
-          const isVisited = stage.id === 'human' ? isEscalated : visitedModes.has(stage.id);
-          const isPast = isVisited && !isActive;
-          const Icon = stage.icon;
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {visibleModes.map((mode) => {
+          const isActive = mode.id === 'human' ? isEscalated : mode.id === activeMode;
+          const isPast = !isActive;
+          const Icon = mode.icon;
 
           return (
-            <div key={stage.id} className="flex items-center gap-1">
-              {index > 0 && (
-                <ChevronRight className={`w-3 h-3 shrink-0 ${
-                  isVisited || isActive ? 'text-white/40' : 'text-white/15'
-                }`} />
+            <div
+              key={mode.id}
+              className={`
+                inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200
+                ${isActive
+                  ? mode.id === 'human'
+                    ? 'bg-orange-500/20 text-orange-400 ring-1 ring-orange-400/40'
+                    : 'bg-[#6366F1]/20 text-[#818CF8] ring-1 ring-[#6366F1]/40'
+                  : 'bg-white/5 text-white/50'
+                }
+              `}
+            >
+              <Icon className="w-3 h-3" />
+              <span>{mode.label}</span>
+              {isPast && (
+                <Check className="w-2.5 h-2.5 text-[#06B6D4]" />
               )}
-              <div className="flex items-center gap-1">
-                <div
-                  className={`relative w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    isActive
-                      ? stage.id === 'human'
-                        ? 'bg-orange-500/30 ring-1 ring-orange-400/50'
-                        : 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] ring-1 ring-white/20'
-                      : isPast
-                        ? 'bg-[#06B6D4]/20'
-                        : 'bg-white/5'
-                  }`}
-                >
-                  <Icon className={`w-3 h-3 ${
-                    isActive
-                      ? 'text-white'
-                      : isPast
-                        ? 'text-[#06B6D4]'
-                        : 'text-white/25'
-                  }`} />
-                  {isPast && (
-                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#06B6D4] rounded-full flex items-center justify-center">
-                      <Check className="w-1.5 h-1.5 text-white" />
-                    </div>
-                  )}
-                </div>
-                <span className={`text-[10px] font-medium hidden sm:inline ${
-                  isActive
-                    ? stage.id === 'human' ? 'text-orange-400' : 'text-white'
-                    : isPast
-                      ? 'text-[#06B6D4]/70'
-                      : 'text-white/20'
-                }`}>
-                  {stage.label}
-                </span>
-              </div>
             </div>
           );
         })}
       </div>
 
       {messageCount > 8 && activeMode === 'chat' && !isEscalated && onSuggestEscalation && (
-        <div className="text-center mt-1.5">
+        <div className="mt-1.5">
           <button
             onClick={onSuggestEscalation}
             className="text-[10px] text-white/35 hover:text-[#06B6D4] transition-colors"

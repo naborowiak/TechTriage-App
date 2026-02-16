@@ -17,8 +17,10 @@ import { ChatMessage, UserRole, DeviceRecord, EscalationReportData, GuidedAction
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 import { useAuth } from '../../hooks/useAuth';
 
+const AGENT_NAMES = ['Jordan', 'Alex', 'Sam', 'Riley', 'Morgan'];
+
 function pickAgentName(): string {
-  return 'Agent';
+  return AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)];
 }
 
 interface ScoutChatScreenProps {
@@ -63,7 +65,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const hasConnectedRef = useRef(!!initialCaseId);
+  const hasConnectedRef = useRef(false);
 
   // Case tracking
   const [caseId, setCaseId] = useState<string | null>(initialCaseId || null);
@@ -446,6 +448,10 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       const timer = setTimeout(() => {
         sendMessageRef.current(initialMessage);
         onInitialMessageSent?.();
+        // Secondary scroll after React state settles to ensure user message is visible
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -865,11 +871,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           {onBackToDashboard && (
             <button
               onClick={onBackToDashboard}
-              className="flex items-center gap-1.5 mb-1.5 px-2 py-1.5 -ml-1 rounded-lg text-text-secondary dark:text-white/60 hover:bg-light-200 dark:hover:bg-white/10 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 w-full mb-2 px-3 py-2.5 rounded-xl bg-[#6366F1]/10 dark:bg-[#6366F1]/15 border border-[#6366F1]/20 dark:border-[#6366F1]/25 text-[#6366F1] dark:text-[#818CF8] hover:bg-[#6366F1]/20 dark:hover:bg-[#6366F1]/25 transition-colors text-sm font-semibold min-h-[44px]"
               aria-label="Back to Dashboard"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Dashboard
+              <ArrowLeft className="w-4.5 h-4.5" />
+              Back to Dashboard
             </button>
           )}
           {hasActiveSession && (
@@ -999,7 +1005,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         })()}
 
         {isLoading && (
-          <div className="flex justify-start" role="status" aria-label={isConnecting ? 'Connecting you with a support technician' : `${agentName} is researching your issue`}>
+          <div className="flex justify-start" role="status" aria-label={isConnecting ? 'Connecting you with a support technician' : `${agentName} is typing`}>
             <div className="bg-light-200 dark:bg-white/5 backdrop-blur-md border border-light-300 dark:border-white/10 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -1008,7 +1014,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   <div className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1.2s' }} />
                 </div>
                 <span className="text-text-muted dark:text-white/60 text-sm">
-                  {isConnecting ? 'Connecting you with a support technician...' : `${agentName} is researching your issue...`}
+                  {isConnecting ? 'Connecting you with a support technician...' : `${agentName} is typing...`}
                 </span>
               </div>
             </div>

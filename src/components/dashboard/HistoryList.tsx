@@ -161,8 +161,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   onViewAll,
   userEmail,
 }) => {
-  const resolvedCases = cases.filter((c) => c.status !== "open");
-  if (resolvedCases.length === 0) {
+  if (cases.length === 0) {
     return (
       <div>
         <h2 className="text-lg font-bold text-text-primary dark:text-white mb-3">
@@ -170,14 +169,14 @@ export const HistoryList: React.FC<HistoryListProps> = ({
         </h2>
         <div className="card-clean rounded-2xl p-6 text-center">
           <p className="text-sm text-text-secondary dark:text-white/70">
-            No completed support requests yet. Your resolved cases will appear here.
+            No support cases yet. Your cases will appear here.
           </p>
         </div>
       </div>
     );
   }
 
-  const displayCases = resolvedCases.slice(0, 5);
+  const displayCases = cases.slice(0, 5);
 
   return (
     <div>
@@ -185,7 +184,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
         <h2 className="text-lg font-bold text-text-primary dark:text-white">
           History
         </h2>
-        {resolvedCases.length > 5 && (
+        {cases.length > 5 && (
           <button
             onClick={onViewAll}
             className="text-sm font-semibold text-electric-indigo hover:text-electric-indigo/80 transition-colors min-h-[44px] flex items-center gap-1 group"

@@ -370,39 +370,57 @@ function getWelcomeEmailHtml(firstName: string): string {
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                             <td width="50%" valign="top" style="padding-right: 10px; padding-bottom: 20px;">
-                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                                <a href="${APP_BASE_URL}/services/chat" style="text-decoration: none; display: block;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted}; overflow: hidden;">
                                     <tr>
-                                        <td style="padding: 20px;">
-                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">💬</div>
-                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Support Chat</p>
+                                        <td style="padding: 0;">
+                                            <img src="${IMAGE_BASE_URL}/chat-support.png" alt="Support Chat" style="width: 100%; max-width: 100%; height: auto; display: block; border-radius: 12px 12px 0 0;" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 14px 16px;">
+                                            <p style="margin: 0 0 4px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Support Chat</p>
                                             <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Get instant answers to tech questions</p>
                                         </td>
                                     </tr>
                                 </table>
+                                </a>
                             </td>
                             <td width="50%" valign="top" style="padding-left: 10px; padding-bottom: 20px;">
-                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                                <a href="${APP_BASE_URL}/services/photo" style="text-decoration: none; display: block;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted}; overflow: hidden;">
                                     <tr>
-                                        <td style="padding: 20px;">
-                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">📸</div>
-                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Photo Analysis</p>
+                                        <td style="padding: 0;">
+                                            <img src="${IMAGE_BASE_URL}/photo-analysis.png" alt="Photo Analysis" style="width: 100%; max-width: 100%; height: auto; display: block; border-radius: 12px 12px 0 0;" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 14px 16px;">
+                                            <p style="margin: 0 0 4px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Photo Analysis</p>
                                             <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">Snap a photo, get a diagnosis</p>
                                         </td>
                                     </tr>
                                 </table>
+                                </a>
                             </td>
                         </tr>
                         <tr>
                             <td width="50%" valign="top" style="padding-right: 10px;">
-                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                                <a href="${APP_BASE_URL}/dashboard" style="text-decoration: none; display: block;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted}; overflow: hidden;">
                                     <tr>
-                                        <td style="padding: 20px;">
-                                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); border-radius: 10px; margin-bottom: 12px; text-align: center; line-height: 40px; font-size: 18px;">📚</div>
-                                            <p style="margin: 0 0 5px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Session History</p>
+                                        <td style="padding: 0;">
+                                            <img src="${IMAGE_BASE_URL}/session-history.png" alt="Session History" style="width: 100%; max-width: 100%; height: auto; display: block; border-radius: 12px 12px 0 0;" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 14px 16px;">
+                                            <p style="margin: 0 0 4px; color: ${BRAND.midnight}; font-size: 14px; font-weight: 600;">Session History</p>
                                             <p style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">All solutions saved for you</p>
                                         </td>
                                     </tr>
                                 </table>
+                                </a>
                             </td>
                             <td width="50%" valign="top" style="padding-left: 10px;">
                             </td>

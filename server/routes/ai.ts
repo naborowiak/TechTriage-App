@@ -11,8 +11,8 @@ import {
   escalationReportSchema,
 } from "../validation";
 import { db } from "../db";
-import { usersTable } from "../../shared/schema/schema";
-import { eq } from "drizzle-orm";
+import { usersTable, casesTable } from "../../shared/schema/schema";
+import { eq, desc } from "drizzle-orm";
 
 const router = Router();
 
@@ -77,6 +77,52 @@ function buildUserContextBlock(ctx: UserContext): string {
   }
   if (ctx.homeType) block += `- Home type: ${ctx.homeType}\n`;
   if (ctx.primaryIssues?.length) block += `- Common issues they deal with: ${ctx.primaryIssues.join(', ')}\n`;
+  return block;
+}
+
+// Simple in-memory cache for user case history (5 min TTL)
+interface CaseHistoryEntry {
+  title: string;
+  status: string | null;
+  aiSummary: string | null;
+  createdAt: Date | null;
+}
+const caseHistoryCache = new Map<string, { data: CaseHistoryEntry[]; expires: number }>();
+
+async function fetchUserCaseHistory(userId: string): Promise<CaseHistoryEntry[]> {
+  const cached = caseHistoryCache.get(userId);
+  if (cached && cached.expires > Date.now()) return cached.data;
+
+  try {
+    const cases = await db
+      .select({
+        title: casesTable.title,
+        status: casesTable.status,
+        aiSummary: casesTable.aiSummary,
+        createdAt: casesTable.createdAt,
+      })
+      .from(casesTable)
+      .where(eq(casesTable.userId, userId))
+      .orderBy(desc(casesTable.createdAt))
+      .limit(10);
+
+    caseHistoryCache.set(userId, { data: cases, expires: Date.now() + 5 * 60 * 1000 });
+    return cases;
+  } catch (err) {
+    console.error('[AI] Failed to fetch case history:', (err as Error).message);
+    return [];
+  }
+}
+
+function buildCaseHistoryBlock(cases: CaseHistoryEntry[]): string {
+  if (cases.length === 0) return '';
+  let block = '\n\nUSER CASE HISTORY (their past support cases — reference these if they ask about previous issues):\n';
+  for (const c of cases) {
+    const date = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown date';
+    const status = c.status || 'open';
+    const summary = c.aiSummary ? ` — ${c.aiSummary.substring(0, 120)}` : '';
+    block += `- [${date}] "${c.title}" (${status})${summary}\n`;
+  }
   return block;
 }
 
@@ -162,6 +208,11 @@ ASSIST PILLS RULES:
 - If a user types a free-form message instead of tapping a pill, continue naturally — but still use presentChoices in your response if there are predictable next steps.
 - Only skip presentChoices when you genuinely need an open-ended description AND the user has NOT just tapped "It's something else".
 
+CRITICAL — TOOL CALL ENFORCEMENT:
+- You MUST call presentChoices(), showStep(), or confirmResult() on EVERY response. No exceptions except the one "It's Something Else" escape.
+- If your response has no tool call, it is WRONG. Always include one.
+- If unsure what choices to present, present your best guesses — guessing with pills is always better than plain text.
+
 WHAT YOU'RE GOOD AT:
 - Wi-Fi and networking (routers, mesh systems, dead zones, slow speeds)
 - Smart home devices (Ring, Nest, Alexa, Hue, smart plugs)
@@ -172,6 +223,13 @@ WHAT YOU'RE GOOD AT:
 - Phone and tablet issues (settings, connectivity, app configuration)
 
 ${SAFETY_PLAYBOOK}
+
+CAPABILITY LIMITS:
+- You do NOT have internet access. You cannot search the web, look up businesses, find repair shops, or check prices online.
+- You do NOT have access to the user's location, GPS, or maps. If you need their location (e.g., to recommend local services), ASK them for their city or zip code.
+- When the user asks you to find a repair shop, service provider, or local business: tell them you can't look that up directly, suggest they search "[service type] near [their location]" on Google or Yelp, and offer to continue helping with the technical issue.
+- You CANNOT make phone calls, send emails, place orders, or interact with external systems.
+- ALWAYS include conversational text in your response. Never respond with only a function call and no text.
 
 Remember: You're ${agentName} from TotalAssist. Warm, competent, patient. The kind of person a homeowner is relieved to talk to.
 `;
@@ -223,7 +281,19 @@ ASSIST PILLS RULES:
 - If a user types a free-form message instead of tapping a pill, continue naturally — but still use presentChoices in your response if there are predictable next steps.
 - Only skip presentChoices when you genuinely need an open-ended description AND the user has NOT just tapped "It's something else".
 
+CRITICAL — TOOL CALL ENFORCEMENT:
+- You MUST call presentChoices(), showStep(), or confirmResult() on EVERY response. No exceptions except the one "It's Something Else" escape.
+- If your response has no tool call, it is WRONG. Always include one.
+- If unsure what choices to present, present your best guesses — guessing with pills is always better than plain text.
+
 ${SAFETY_PLAYBOOK}
+
+CAPABILITY LIMITS:
+- You do NOT have internet access. You cannot search the web, look up businesses, find repair shops, or check prices online.
+- You do NOT have access to the user's location, GPS, or maps. If you need their location (e.g., to recommend local services), ASK them for their city or zip code.
+- When the user asks you to find a repair shop, service provider, or local business: tell them you can't look that up directly, suggest they search "[service type] near [their location]" on Google or Yelp, and offer to continue helping with the technical issue.
+- You CANNOT make phone calls, send emails, place orders, or interact with external systems.
+- ALWAYS include conversational text in your response. Never respond with only a function call and no text.
 
 Remember: You are ${agentName} from TotalAssist. Warm, competent, and human.
 `;
@@ -422,11 +492,15 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
   try {
     const { history, message, image, deviceContext, agentName } = req.body;
 
-    // Fetch user context for personalization (graceful degradation on failure)
+    // Fetch user context and case history for personalization (graceful degradation on failure)
     let userContext: UserContext | null = null;
+    let caseHistory: CaseHistoryEntry[] = [];
     const userId = (req as any).user?.id;
     if (userId) {
-      userContext = await fetchUserContext(userId);
+      [userContext, caseHistory] = await Promise.all([
+        fetchUserContext(userId),
+        fetchUserCaseHistory(userId),
+      ]);
     }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
@@ -460,7 +534,10 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
       contents.push({ role: 'user', parts: currentParts });
     }
 
-    const systemPrompt = SYSTEM_INSTRUCTION(agentName, userContext);
+    let systemPrompt = SYSTEM_INSTRUCTION(agentName, userContext);
+    if (caseHistory.length > 0) {
+      systemPrompt += buildCaseHistoryBlock(caseHistory);
+    }
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,
       contents: contents,
@@ -494,11 +571,15 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
   try {
     const { history, message, agent, image } = req.body;
 
-    // Fetch user context for personalization (graceful degradation on failure)
+    // Fetch user context and case history for personalization (graceful degradation on failure)
     let userContext: UserContext | null = null;
+    let caseHistory: CaseHistoryEntry[] = [];
     const userId = (req as any).user?.id;
     if (userId) {
-      userContext = await fetchUserContext(userId);
+      [userContext, caseHistory] = await Promise.all([
+        fetchUserContext(userId),
+        fetchUserCaseHistory(userId),
+      ]);
     }
 
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
@@ -531,11 +612,15 @@ router.post("/chat-live-agent", validate(aiChatLiveAgentSchema), async (req: Req
       contents.push({ role: 'user', parts: currentParts });
     }
 
+    let liveAgentPrompt = LIVE_AGENT_INSTRUCTION(agentFullName, userContext);
+    if (caseHistory.length > 0) {
+      liveAgentPrompt += buildCaseHistoryBlock(caseHistory);
+    }
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,
       contents: contents,
       config: {
-        systemInstruction: LIVE_AGENT_INSTRUCTION(agentFullName, userContext),
+        systemInstruction: liveAgentPrompt,
         temperature: 0.7,
         tools: [{ functionDeclarations: [endSessionTool, presentChoicesTool, showStepTool, confirmResultTool] }]
       }

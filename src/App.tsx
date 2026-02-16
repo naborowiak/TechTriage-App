@@ -58,7 +58,6 @@ const VerifyEmail = lazy(() => import("./components/VerifyEmail").then(m => ({ d
 const ForgotPassword = lazy(() => import("./components/ForgotPassword").then(m => ({ default: m.ForgotPassword })));
 const ResetPassword = lazy(() => import("./components/ResetPassword").then(m => ({ default: m.ResetPassword })));
 const ScoutChatScreen = lazy(() => import("./components/scout/ScoutChatScreen").then(m => ({ default: m.ScoutChatScreen })));
-const ScoutInfoPanel = lazy(() => import("./components/scout/ScoutInfoPanel").then(m => ({ default: m.ScoutInfoPanel })));
 const SettingsModal = lazy(() => import("./components/SettingsModal").then(m => ({ default: m.SettingsModal })));
 const CaseAnalytics = lazy(() => import("./components/CaseAnalytics").then(m => ({ default: m.CaseAnalytics })));
 const SpecialistResponse = lazy(() => import("./components/SpecialistResponse").then(m => ({ default: m.SpecialistResponse })));
@@ -1958,14 +1957,7 @@ const App: React.FC = () => {
                 activeView="scout"
                 onUpdateUser={handleUpdateUser}
               >
-                <div className="flex h-full">
-                  <div className="flex-1 min-w-0">
-                    <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} onBackToDashboard={handleBackToDashboard} />
-                  </div>
-                  <div className="hidden xl:block w-80 flex-shrink-0">
-                    <ScoutInfoPanel />
-                  </div>
-                </div>
+                <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} onBackToDashboard={handleBackToDashboard} />
               </Dashboard>
               <SettingsModal
                 isOpen={settingsModalOpen}
@@ -2033,14 +2025,7 @@ const App: React.FC = () => {
                   activeView="scout"
                   onUpdateUser={handleUpdateUser}
                 >
-                  <div className="flex h-full">
-                    <div className="flex-1 min-w-0">
-                      <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} onBackToDashboard={handleBackToDashboard} />
-                    </div>
-                    <div className="hidden xl:block w-80 flex-shrink-0">
-                      <ScoutInfoPanel />
-                    </div>
-                  </div>
+                  <ScoutChatScreen key={scoutSessionKey} embedded initialCaseId={scoutInitialCaseId} initialMode={scoutInitialMode} initialMessage={scoutInitialMessage} onInitialMessageSent={() => setScoutInitialMessage(undefined)} onBackToDashboard={handleBackToDashboard} />
                 </Dashboard>
                 {settingsModalEl}
               </>
