@@ -12,20 +12,18 @@ import {
   Monitor,
   Printer,
   MessageSquare,
-  Camera,
   Zap,
-  AlertTriangle,
   Plus,
   Minus,
   HelpCircle,
   Sun,
   Moon,
-  Video,
-  Sparkles,
-  FileText,
   ArrowRight,
   ChevronDown,
   Check,
+  Camera,
+  FileText,
+  Users,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -40,6 +38,9 @@ import type { SettingsTab } from "./components/SettingsModal";
 import { AnimatedElement } from "./hooks/useAnimations";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { ServicesSection } from "./components/ServicesSection";
+import { HowItWorksLifecycle } from "./components/HowItWorksLifecycle";
+import { FeatureShowcases } from "./components/FeatureShowcases";
+import { InvestorCredibility } from "./components/InvestorCredibility";
 import { usePWAInstall } from "./hooks/usePWAInstall";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
 
@@ -475,8 +476,10 @@ const Hero: React.FC<{
   onFreeTrial: () => void;
   onPricing: () => void;
   onHeroAction?: (mode: 'voice' | 'photo' | 'video' | 'chat') => void;
+  onSecondaryAction?: () => void;
 }> = ({
   onFreeTrial,
+  onSecondaryAction,
 }) => {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -524,8 +527,8 @@ const Hero: React.FC<{
   }, [paused]);
 
   return (
-    <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden -mt-[72px]">
-      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
+    <div className="agentic-hero-banner hero-parallax-wrapper relative bg-xenon-900 dark overflow-hidden -mt-[72px]">
+      <video autoPlay loop muted playsInline className="hero-scroll-bg absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
       {/* Brand gradient overlay */}
@@ -550,44 +553,79 @@ const Hero: React.FC<{
           <div className="relative w-full xl:w-1/2 flex flex-col justify-center">
             <div className="max-w-[520px] xl:max-w-[640px] mx-auto xl:mx-0">
               <h1
-                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-10 text-center xl:text-left"
+                className="hero-animate-1 hero-scroll-title font-bold font-sora text-white mb-6 mt-10 text-center xl:text-left"
                 style={{ letterSpacing: '-2.5px' }}
               >
                 <span className="block text-[24px] sm:text-[30px] lg:text-[36px] xl:text-[44px] leading-tight text-white/80 mb-2 sm:mb-3">
-                  Get help with
+                  Fix <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">{displayText}</span><span className="hero-cursor" aria-hidden="true" /> problems
                 </span>
-                <span className="block text-[32px] sm:text-[42px] lg:text-[48px] xl:text-[58px] leading-none">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
-                    {displayText}
-                  </span>
-                  <span className="hero-cursor" aria-hidden="true" />
+                <span className="block text-[32px] sm:text-[42px] lg:text-[48px] xl:text-[58px] leading-none text-white">
+                  in minutes, not hours.
                 </span>
               </h1>
-              <div className="hero-animate-2 mt-3 sm:mt-4 lg:mt-5 xl:max-w-[480px]">
+              <div className="hero-animate-2 hero-scroll-subtitle mt-3 sm:mt-4 lg:mt-5 xl:max-w-[520px]">
                 <p className="font-sora text-center xl:text-left text-sm sm:text-base lg:text-[17px] xl:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
-                  24/7 AI-powered tech support for your<br />
-                  home — chat, snap a photo, or hop on<br />
-                  a video call.
+                  Show us what's broken with photo or video, tap through guided steps, and get a repair report you can keep.
                 </p>
+              </div>
+
+              {/* Value prop bullets */}
+              <div className="hero-animate-2 mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-center xl:text-left max-w-[520px] mx-auto xl:mx-0">
+                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
+                  <Camera className="w-4 h-4 shrink-0" /> Photo & video diagnosis — no typing required
+                </span>
+                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
+                  <Zap className="w-4 h-4 shrink-0" /> Tap Assist Pills instead of guessing what to say
+                </span>
+                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
+                  <FileText className="w-4 h-4 shrink-0" /> Every session becomes a Case with a PDF report
+                </span>
+                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
+                  <Users className="w-4 h-4 shrink-0" /> Escalate to a human tech — no repeating yourself
+                </span>
               </div>
             </div>
 
-            <div className="hero-animate-3 flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 xl:justify-start xl:mb-20">
-              <div className="flex font-sora justify-center xl:justify-start">
+            {/* Dual CTAs */}
+            <div className="hero-animate-3 hero-scroll-cta flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 xl:justify-start xl:mb-12">
+              <div className="flex font-sora gap-3 justify-center xl:justify-start flex-wrap">
                 <button
                   onClick={onFreeTrial}
-                  className="overflow-hidden flex flex-wrap items-center cursor-pointer font-sora w-full justify-center xl:justify-start text-white px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
+                  className="overflow-hidden flex flex-wrap items-center cursor-pointer font-sora justify-center text-white px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
                 >
-                  <span className="font-semibold mx-auto font-sora leading-[1.5] text-sm lg:text-base tracking-[0.28px] lg:tracking-[0.32px]">
-                    Get Started Free
+                  <span className="font-semibold font-sora leading-[1.5] text-sm lg:text-base tracking-[0.28px] lg:tracking-[0.32px]">
+                    Get help with my tech
                   </span>
                 </button>
+                {onSecondaryAction && (
+                  <button
+                    onClick={onSecondaryAction}
+                    className="flex items-center justify-center cursor-pointer font-sora text-white px-6 rounded-lg min-h-12 lg:min-h-14 bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    <span className="font-semibold font-sora leading-[1.5] text-sm lg:text-base tracking-[0.28px] lg:tracking-[0.32px]">
+                      See how it works
+                    </span>
+                  </button>
+                )}
               </div>
+            </div>
+
+            {/* Trust chips */}
+            <div className="hero-animate-3 flex flex-wrap justify-center xl:justify-start gap-4 mt-4 xl:mb-20">
+              <span className="flex items-center gap-1.5 text-xs text-white/60">
+                <CheckCircle2 className="w-3.5 h-3.5" /> No credit card needed
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-white/60">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Cancel anytime
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-white/60">
+                <CheckCircle2 className="w-3.5 h-3.5" /> 24/7 instant answers
+              </span>
             </div>
           </div>
 
           {/* Right column — carousel */}
-          <div className="hero-animate-4 w-full xl:w-1/2 flex justify-center xl:justify-end mt-6 xl:mt-0">
+          <div className="hero-animate-4 hero-parallax-target w-full xl:w-1/2 flex justify-center xl:justify-end mt-6 xl:mt-0">
             <div
               className={`relative w-full max-w-[700px] aspect-[4/3] xl:aspect-auto xl:h-[680px]${paused ? ' agentic-hero-paused' : ''}`}
               onMouseEnter={() => setPaused(true)}
@@ -632,75 +670,6 @@ const SectionDivider: React.FC<{ variant?: 'gradient' | 'line' | 'wave' | 'hexag
   return <div className="h-px bg-surface-border dark:bg-midnight-700" />;
 };
 
-const HowItWorksSimple: React.FC = () => {
-  const steps = [
-    {
-      step: "1.",
-      title: "Tell Us",
-      desc: '"My Wi-Fi keeps dropping" or "There\'s a weird error code"—just describe it like you would to a friend. Our team understands and guides you through it.',
-      icon: <MessageSquare className="w-7 h-7" />,
-    },
-    {
-      step: "2.",
-      title: "Show what's happening",
-      desc: "Snap a photo of that blinking light, share your screen, or start a video walkthrough. TotalAssist analyzes it instantly.",
-      icon: <Camera className="w-7 h-7" />,
-    },
-    {
-      step: "3.",
-      title: "Get guided to a fix",
-      desc: "No more Googling for 2 hours. TotalAssist guides you step-by-step until it's working—most issues resolved in minutes.",
-      icon: <CheckCircle2 className="w-7 h-7" />,
-    },
-  ];
-
-  return (
-    <section className="py-24 bg-light-100 dark:bg-midnight-950 border-t border-light-300 dark:border-midnight-700 transition-colors">
-      <div className="container mx-auto px-6 max-w-6xl">
-        <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <span className="inline-block text-electric-indigo font-bold text-sm uppercase tracking-wider mb-4">
-            How It Works
-          </span>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-text-primary dark:text-white">
-            Help that actually helps
-          </h2>
-          <p className="text-xl max-w-2xl mx-auto text-text-secondary">
-            No hold music. No "have you tried turning it off and on again." Just
-            clear answers and real solutions.
-          </p>
-        </AnimatedElement>
-        <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-          {steps.map((s, i) => (
-            <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
-              <div className="relative">
-                {/* Connector line */}
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-surface-border dark:bg-midnight-700"></div>
-                )}
-                <div className="relative card-clean rounded-2xl p-8 hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center text-electric-indigo" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
-                      {s.icon}
-                    </div>
-                    <span className="text-5xl font-bold text-gradient-electric">
-                      {s.step}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-text-primary dark:text-white">
-                    {s.title}
-                  </h3>
-                  <p className="leading-relaxed text-text-secondary">
-                    {s.desc}
-                  </p>
-                </div>
-              </div>
-            </AnimatedElement>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ onNavigate }) => {
   const { theme } = useTheme();
@@ -740,9 +709,9 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
   ];
 
   return (
-    <section className="relative py-24 overflow-hidden">
+    <section className="scroll-bg-section relative py-24 overflow-hidden">
       {/* Background image — swaps for dark theme */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${bgImage})` }} aria-hidden="true" />
+      <div className="scroll-bg-image absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${bgImage})` }} aria-hidden="true" />
 
       <div className="relative container mx-auto px-6 max-w-6xl z-10">
         <AnimatedElement animation="fadeInUp" className="text-center mb-16">
@@ -851,25 +820,6 @@ const WhyTotalAssist: React.FC = () => {
     },
   ];
 
-  const differentiators = [
-    {
-      icon: <Camera className="w-7 h-7" />,
-      secondIcon: <Video className="w-5 h-5" />,
-      title: "See It, Don't Explain It",
-      desc: "Most AI chatbots make you describe your problem in words. TotalAssist lets you snap a photo or point your camera — we see what you see and diagnose it instantly.",
-    },
-    {
-      icon: <Sparkles className="w-7 h-7" />,
-      title: "Tap, Don't Type",
-      desc: "No more typing long messages. TotalAssist guides you with interactive assist pills — just tap choices, confirm results, and follow step-by-step cards to a fix.",
-    },
-    {
-      icon: <FileText className="w-7 h-7" />,
-      title: "A Repair Record, Not Just a Chat",
-      desc: "Every session produces a professional PDF diagnostic report — what went wrong, what was fixed, and what to watch for. Share it with a technician if you ever need onsite help.",
-    },
-  ];
-
   const renderIndicator = (value: boolean | 'varies') => {
     if (value === true) {
       return (
@@ -889,7 +839,7 @@ const WhyTotalAssist: React.FC = () => {
   };
 
   return (
-    <section className="py-24 bg-light-100 dark:bg-midnight-950 overflow-x-clip relative border-t border-light-300 dark:border-midnight-700 transition-colors">
+    <section className="py-24 bg-white dark:bg-midnight-900 overflow-x-clip relative border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Header */}
         <AnimatedElement animation="fadeInUp" className="text-center mb-12">
@@ -900,33 +850,9 @@ const WhyTotalAssist: React.FC = () => {
             Not just another chatbot.
           </h2>
           <p className="text-text-secondary text-xl max-w-2xl mx-auto">
-            TotalAssist goes beyond text — it sees your devices, guides you interactively, and documents every fix.
+            See how TotalAssist stacks up against traditional phone support.
           </p>
         </AnimatedElement>
-
-        {/* Differentiator Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-20">
-          {differentiators.map((item, i) => (
-            <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
-              <div className="group p-8 card-clean rounded-2xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg h-full">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-electric-indigo" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
-                    {item.icon}
-                  </div>
-                  {item.secondIcon && (
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-electric-indigo" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
-                      {item.secondIcon}
-                    </div>
-                  )}
-                </div>
-                <h3 className="text-xl font-bold text-text-primary dark:text-white mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-text-secondary leading-relaxed">{item.desc}</p>
-              </div>
-            </AnimatedElement>
-          ))}
-        </div>
 
         {/* Algolia-Style Feature Comparison Table — hidden on mobile */}
         <AnimatedElement animation="fadeInUp" delay={0.5} className="hidden md:block">
@@ -1019,60 +945,6 @@ const WhyTotalAssist: React.FC = () => {
   );
 };
 
-const UseCasesSection: React.FC = () => {
-  const useCases = [
-    {
-      scenario: "Wi-Fi keeps dropping",
-      solution: "Describe the issue or snap a photo of your router's lights. We identify the problem and walk you through the fix.",
-      icon: <Wifi className="w-7 h-7" />,
-    },
-    {
-      scenario: "Smart TV won't connect",
-      solution: "Upload a photo of the error screen. Our team reads it, diagnoses the issue, and provides step-by-step setup instructions.",
-      icon: <Tv className="w-7 h-7" />,
-    },
-    {
-      scenario: "Mysterious error code",
-      solution: "Just show us the error. Whether it's a blinking light pattern or cryptic message, we decode it and tell you what to do.",
-      icon: <AlertTriangle className="w-7 h-7" />,
-    },
-  ];
-
-  return (
-    <section className="py-24 bg-white dark:bg-midnight-950 border-t border-light-300 dark:border-midnight-700 relative transition-colors">
-      <div className="container mx-auto px-6 max-w-6xl">
-        <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
-            Real Problems, Real Solutions
-          </span>
-          <h2 className="text-4xl font-bold mb-4 text-text-primary dark:text-white">
-            When tech breaks, we help
-          </h2>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            No matter the issue, TotalAssist is ready to diagnose and guide you to a fix.
-          </p>
-        </AnimatedElement>
-        <div className="grid md:grid-cols-3 gap-8">
-          {useCases.map((useCase, i) => (
-            <AnimatedElement key={i} animation="fadeInUp" delay={0.15 + i * 0.15}>
-              <div className="group p-8 card-clean rounded-2xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lg h-full">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center text-electric-indigo mb-6" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
-                  {useCase.icon}
-                </div>
-                <h3 className="text-xl font-bold text-text-primary dark:text-white mb-3">
-                  "{useCase.scenario}"
-                </h3>
-                <p className="text-text-secondary leading-relaxed">
-                  {useCase.solution}
-                </p>
-              </div>
-            </AnimatedElement>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const FAQSection: React.FC = () => {
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
@@ -1096,6 +968,14 @@ const FAQSection: React.FC = () => {
     {
       q: "What are the pricing options?",
       a: "We offer three plans: Free (5 chats and 1 photo analysis per month), Home ($9.99/mo for unlimited chat, photo, voice, and weekly video diagnostics), and Pro ($19.99/mo — everything in Home plus 15 video credits/month and multi-home support). All plans include guided assist pills and PDF diagnostic reports.",
+    },
+    {
+      q: "Why use TotalAssist instead of Gemini or ChatGPT?",
+      a: "General AI chatbots can answer questions, but they can't see your devices through photo or video, guide you with interactive Assist Pills, track your case history, or generate a PDF diagnostic report. TotalAssist is purpose-built for home tech support.",
+    },
+    {
+      q: "Do I have to type everything?",
+      a: "Not at all. You can talk through your issue with Voice Support, snap a photo, start a live video session, or tap guided Assist Pills. Typing is just one of four ways to get help.",
     },
   ];
 
@@ -1730,6 +1610,11 @@ const App: React.FC = () => {
     navigate(PageView.SIGNUP);
   }, [navigate]);
 
+  const handleScrollToLifecycle = useCallback(() => {
+    document.getElementById('how-it-works-lifecycle')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const handleHeroAction = useCallback((mode: 'voice' | 'photo' | 'video' | 'chat') => {
     if (dashboardUser) {
       // Authenticated: go to Scout with pre-selected mode
@@ -2135,6 +2020,7 @@ const App: React.FC = () => {
                 onFreeTrial={handleFreeTrial}
                 onPricing={handleNavigateToPricing}
                 onHeroAction={handleHeroAction}
+                onSecondaryAction={handleScrollToLifecycle}
               />
               {/* Free Preview Modal for unauthenticated users */}
               {heroPreviewMode && (
@@ -2185,35 +2071,15 @@ const App: React.FC = () => {
                   </div>
                 </div>
               )}
-              <HowItWorksSimple />
-              <SectionDivider variant="hexagon" />
+              <HowItWorksLifecycle />
               <ServicesSection onNavigate={navigate} />
-              {/* CTA band between services and device grid */}
-              <section className="relative overflow-hidden bg-gradient-to-r from-[#6366F1] to-[#06B6D4] py-14 lg:py-16">
-                <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} aria-hidden="true" />
-                <div className="relative container mx-auto px-6 max-w-4xl text-center">
-                  <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">
-                    No appointments. No hold music. Just answers.
-                  </h2>
-                  <p className="text-white/80 text-base lg:text-lg mb-8 max-w-xl mx-auto">
-                    Get expert help with your home tech in minutes — your first 5 sessions are free.
-                  </p>
-                  <button
-                    onClick={handleNavigateToSignup}
-                    className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-white text-[#6366F1] font-bold text-base hover:bg-white/90 active:scale-[0.97] transition-all shadow-lg shadow-black/10"
-                  >
-                    Start Free Trial
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </section>
+              <FeatureShowcases onNavigate={navigate} />
               <WhatWeHelpWith onNavigate={navigate} />
               <SectionDivider variant="line" />
               <WhyTotalAssist />
-              <SectionDivider variant="hexagon" />
-              <UseCasesSection />
               <SectionDivider variant="line" />
               <FAQSection />
+              <InvestorCredibility />
               <CTASection onSignup={handleNavigateToSignup} />
             </>
           );
