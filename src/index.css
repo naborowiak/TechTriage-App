@@ -117,6 +117,88 @@ body {
   border-top-color: #2A3142;
 }
 
+/* ── Animated Glow Dock ── */
+/* Dock uses dark bg universally to make glow beam visible in both themes */
+.dock-glow {
+  background: #191919;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.dock-glow-light {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dock-glow-bar {
+  width: 24px;
+  height: 3px;
+  border-radius: 0 0 2px 2px;
+}
+
+.dock-glow-beam {
+  width: 60px;
+  height: 40px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+  pointer-events: none;
+}
+
+.dock-icon-glow {
+  transition: color 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
+}
+
+/* ── Header variant (no overflow hidden — allows dropdowns) ── */
+/* Same dark bg as dock-glow, used on the site-wide marketing header */
+.header-glow {
+  background: #191919;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Nav item hover — colored underline bar + text color (Algolia-style) */
+.nav-hover-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  background-color: var(--nav-item-color);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.nav-hover-item:hover::after {
+  width: 100%;
+  left: 0;
+}
+
+.nav-hover-item:not([aria-current="page"]):hover {
+  color: var(--nav-item-color);
+}
+
+.header-glow-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.3s ease,
+              box-shadow 0.3s ease;
+  pointer-events: none;
+}
+
 /* ── DEPRECATED SHIMS (Phase 1 transition — keeps non-Phase-1 components working) ── */
 .glass-card {
   background: #FFFFFF;
@@ -379,37 +461,37 @@ body {
   .scroll-fade-in {
     animation: scroll-fadeIn 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 30%;
+    animation-range: entry calc(15% + var(--stagger, 0%)) entry 50%;
   }
 
   .scroll-fade-in-up {
     animation: scroll-fadeInUp 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 30%;
+    animation-range: entry calc(15% + var(--stagger, 0%)) entry 50%;
   }
 
   .scroll-fade-in-down {
     animation: scroll-fadeInDown 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 30%;
+    animation-range: entry calc(15% + var(--stagger, 0%)) entry 50%;
   }
 
   .scroll-fade-in-left {
     animation: scroll-fadeInLeft 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 30%;
+    animation-range: entry calc(15% + var(--stagger, 0%)) entry 50%;
   }
 
   .scroll-fade-in-right {
     animation: scroll-fadeInRight 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 30%;
+    animation-range: entry calc(15% + var(--stagger, 0%)) entry 50%;
   }
 
   .scroll-scale-in {
     animation: scroll-scaleIn 1ms linear both;
     animation-timeline: view();
-    animation-range: entry var(--stagger, 0%) entry 30%;
+    animation-range: entry calc(15% + var(--stagger, 0%)) entry 50%;
   }
 }
 
@@ -786,6 +868,141 @@ body {
 
 ::view-transition-new(root) {
   animation-name: vt-fade-in;
+}
+
+/* ── How It Works cards — hover interactions ── */
+.hiw-card {
+  transition: transform 0.3s ease-in, box-shadow 0.3s ease-in;
+  border: 4px solid transparent;
+  overflow: hidden;
+}
+
+.hiw-card:hover {
+  transform: scale(1.06);
+  box-shadow: rgba(0, 0, 0, 0.35) 12px 12px 24px;
+}
+
+.dark .hiw-card:hover {
+  box-shadow: rgba(0, 0, 0, 0.6) 12px 12px 30px;
+}
+
+.hiw-card .hiw-step-number {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.hiw-card:hover .hiw-step-number {
+  transform: scale(1.15);
+}
+
+.hiw-card .hiw-icon-box {
+  transition: transform 0.3s ease-in-out 0.1s;
+}
+
+.hiw-card:hover .hiw-icon-box {
+  transform: scale(1.4) translateY(-8px);
+}
+
+/* Icon bounce animation — triggered on card hover */
+.hiw-card:hover .hiw-icon-bounce {
+  animation: hiw-bouncing 0.5s 0.3s;
+}
+
+@keyframes hiw-bouncing {
+  from, to { transform: scale(1, 1); }
+  25% { transform: scale(0.9, 1.1); }
+  50% { transform: scale(1.1, 0.9); }
+  75% { transform: scale(0.95, 1.05); }
+}
+
+.hiw-card .hiw-title {
+  transition: letter-spacing 0.3s ease-in-out;
+}
+
+.hiw-card:hover .hiw-title {
+  letter-spacing: 1.5px;
+}
+
+.hiw-card:active {
+  transform: scale(1.03);
+  transition-duration: 0.1s;
+}
+
+/* ── Algolia-style media accordion ── */
+.media-accordion .accordion_item {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient background pseudo-element (transparent by default) */
+.media-accordion .accordion_item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  mask-image: linear-gradient(to right, black, transparent);
+  -webkit-mask-image: linear-gradient(to right, black, transparent);
+  z-index: 0;
+  pointer-events: none;
+  border: 1.5px solid transparent;
+  border-radius: 14px 0px 0px 14px;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* Separator between items */
+.media-accordion .accordion_item:not(:last-child)::before {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .media-accordion .accordion_item:not(:last-child)::before {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Active/hovered state — light mode */
+.media-accordion .accordion_item.current::before,
+.media-accordion .accordion_item:hover::before {
+  background: linear-gradient(90deg, #FFF 2.5%, rgba(242, 244, 255, 0.51) 100%);
+  border: 1.5px solid rgba(99, 102, 241, 0.45);
+  border-radius: 14px 0px 0px 14px;
+}
+
+/* Active/hovered state — dark mode */
+.dark .media-accordion .accordion_item.current::before,
+.dark .media-accordion .accordion_item:hover::before {
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.15) 2.5%, rgba(6, 182, 212, 0.03) 100%);
+  border: 1.5px solid rgba(99, 102, 241, 0.5);
+  border-radius: 14px 0px 0px 14px;
+}
+
+/* Active item title color */
+.media-accordion .accordion_item.current .accordion-title {
+  color: #6366F1;
+}
+
+.dark .media-accordion .accordion_item.current .accordion-title {
+  color: #F9F9FF;
+}
+
+/* Chevron visibility */
+.media-accordion .accordion_item .accordion-chevron {
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.media-accordion .accordion_item.current .accordion-chevron,
+.media-accordion .accordion_item:hover .accordion-chevron {
+  opacity: 1;
+}
+
+/* Accordion content expand */
+.media-accordion .accordion-content {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.35s ease, opacity 0.3s ease;
+}
+
+.media-accordion .accordion_item.current .accordion-content {
+  max-height: 400px;
+  opacity: 1;
 }
 
 /* ── Skeleton loading shimmer ── */

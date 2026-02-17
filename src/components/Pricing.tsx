@@ -116,6 +116,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     {
       name: 'TotalAssist Free',
       tagline: 'Try It Out',
+      bestFor: 'Trying it out with a quick question',
       monthlyPrice: 0,
       annualPrice: 0,
       isFree: true,
@@ -125,7 +126,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
         '5 support messages per month',
         '1 photo analysis per month',
         'Guided fix steps (Assist Pills)',
-        'Case history saved to your account',
+        'Case history & PDF reports',
       ],
       lockedFeatures: [] as string[],
       cta: 'Sign Up Free',
@@ -134,6 +135,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     {
       name: 'TotalAssist Home',
       tagline: 'Unlimited Support',
+      bestFor: 'Homeowners who need regular tech help',
       monthlyPrice: 9.99,
       annualPrice: 7.99,
       description: 'Unlimited support for your home. Chat and send photos anytime — your tech support is always on.',
@@ -155,6 +157,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     {
       name: 'TotalAssist Pro',
       tagline: 'For Families & Landlords',
+      bestFor: 'Families, landlords, and multi-property managers',
       monthlyPrice: 19.99,
       annualPrice: 15.99,
       description: 'Everything in Home, plus multi-property support. Ideal for families, landlords, and Airbnb hosts.',
@@ -164,6 +167,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
         'Multi-home support (up to 5)',
         'Family member accounts',
         'Video diagnostics — 15 credits/month',
+        'Full case history, search & PDF reports',
         'Professional escalation reports (PDF)',
         'Priority response times',
       ],
@@ -239,7 +243,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <section className="min-h-screen pt-[72px] bg-light-50 dark:bg-midnight-950 transition-colors overflow-x-clip">
+    <section className="min-h-screen pt-[80px] bg-light-50 dark:bg-midnight-950 transition-colors overflow-x-clip">
       {/* Hero Section */}
       <div className="section-light py-20 text-center border-b border-light-300 dark:border-midnight-700">
         <div className="container mx-auto px-6 max-w-4xl">
@@ -481,14 +485,42 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   )}
                 </div>
 
-                <p className={`mb-6 text-[15px] leading-relaxed ${isHighlighted ? 'text-white/80' : 'text-text-secondary'}`}>
+                <p className={`mb-4 text-[15px] leading-relaxed ${isHighlighted ? 'text-white/80' : 'text-text-secondary'}`}>
                   {plan.description}
                 </p>
+
+                {/* Best for pill */}
+                <div className="mb-6">
+                  <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full ${
+                    isHighlighted
+                      ? 'text-white/80 bg-white/15'
+                      : 'text-electric-indigo bg-electric-indigo/10 dark:bg-electric-indigo/20'
+                  }`}>
+                    Best for: {plan.bestFor}
+                  </span>
+                </div>
+
+                <ul className="space-y-3 flex-1 mb-6">
+                  {plan.features.map((feature, j) => (
+                    <li key={j} className="flex items-start gap-3 text-[15px]">
+                      <Check className={`w-5 h-5 shrink-0 mt-0.5 ${
+                        isHighlighted ? 'text-white' : plan.highlight ? 'text-electric-cyan' : 'text-electric-indigo'
+                      }`} />
+                      <span className={isHighlighted ? 'text-white/85' : 'text-text-secondary'}>{feature}</span>
+                    </li>
+                  ))}
+                  {'lockedFeatures' in plan && plan.lockedFeatures && (plan.lockedFeatures as string[]).map((feature, j) => (
+                    <li key={`locked-${j}`} className="flex items-start gap-3 text-sm">
+                      <Lock className={`w-5 h-5 shrink-0 mt-0.5 ${isHighlighted ? 'text-white/40' : 'text-electric-indigo/60'}`} />
+                      <span className={isHighlighted ? 'text-white/50' : 'text-text-muted'}>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
 
                 <button
                   onClick={() => handlePlanSelect(plan.name)}
                   disabled={isButtonDisabled(plan.name)}
-                  className={`w-full py-3 rounded-lg font-semibold text-base transition-all mb-6 flex items-center justify-center gap-2 ${
+                  className={`w-full py-3 rounded-lg font-semibold text-base transition-all mt-auto flex items-center justify-center gap-2 ${
                     isButtonDisabled(plan.name) && isCurrentPlan
                       ? 'bg-light-200 dark:bg-midnight-700 text-text-muted cursor-not-allowed'
                       : isButtonDisabled(plan.name)
@@ -505,23 +537,6 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   {isCheckingOut === plan.name && <Loader2 className="w-5 h-5 animate-spin" />}
                   {getButtonText(plan.name, plan.cta)}
                 </button>
-
-                <ul className="space-y-3 flex-1">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-start gap-3 text-[15px]">
-                      <Check className={`w-5 h-5 shrink-0 mt-0.5 ${
-                        isHighlighted ? 'text-white' : plan.highlight ? 'text-electric-cyan' : 'text-electric-indigo'
-                      }`} />
-                      <span className={isHighlighted ? 'text-white/85' : 'text-text-secondary'}>{feature}</span>
-                    </li>
-                  ))}
-                  {'lockedFeatures' in plan && plan.lockedFeatures && (plan.lockedFeatures as string[]).map((feature, j) => (
-                    <li key={`locked-${j}`} className="flex items-start gap-3 text-sm">
-                      <Lock className={`w-5 h-5 shrink-0 mt-0.5 ${isHighlighted ? 'text-white/40' : 'text-electric-indigo/60'}`} />
-                      <span className={isHighlighted ? 'text-white/50' : 'text-text-muted'}>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
                 </div>
               </div>
               </AnimatedElement>
@@ -560,10 +575,10 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
               </div>
 
               <div role="table" aria-label="Feature comparison by plan">
-                {/* Sticky Column Headers — sticks below fixed nav (72px) */}
+                {/* Sticky Column Headers — sticks below fixed nav (80px) */}
                 <div
                   role="row"
-                  className="sticky top-[72px] z-10 grid grid-cols-[1fr_60px_60px_60px] sm:grid-cols-[1fr_100px_100px_100px] lg:grid-cols-[1fr_140px_140px_140px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]"
+                  className="sticky top-[80px] z-10 grid grid-cols-[1fr_60px_60px_60px] sm:grid-cols-[1fr_100px_100px_100px] lg:grid-cols-[1fr_140px_140px_140px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]"
                 >
                   <div role="columnheader" className="py-4 px-3 sm:px-4 text-text-secondary font-medium text-sm">Feature</div>
                   <div role="columnheader" className="py-4 px-2 sm:px-4 text-center">

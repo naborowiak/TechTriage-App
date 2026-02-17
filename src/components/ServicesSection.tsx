@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import { PageView } from '../types';
 import { services } from '../data/servicePageData';
 import { AnimatedElement } from '../hooks/useAnimations';
@@ -13,18 +13,6 @@ const serviceImages: Record<string, string> = {
   photo: '/show_problem.jpg',
   voice: '/talk_support.jpeg',
   video: '/video_support.png',
-};
-
-const accentColors: Record<string, string> = {
-  cyan: '#06B6D4',
-  indigo: '#6366F1',
-  purple: '#8B5CF6',
-};
-
-const linkTextColors: Record<string, string> = {
-  cyan: 'text-[#06B6D4]',
-  indigo: 'text-[#6366F1]',
-  purple: 'text-[#8B5CF6]',
 };
 
 const AUTO_ROTATE_MS = 6000;
@@ -48,7 +36,6 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
   }, []);
 
   const activeService = services[activeIndex];
-  const activeAccent = accentColors[activeService.colorClass] || accentColors.indigo;
 
   return (
     <section
@@ -57,121 +44,90 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
       onMouseLeave={() => setPaused(false)}
     >
       <div className="container mx-auto px-6 max-w-6xl">
-        <AnimatedElement animation="fadeInUp" className="text-center mb-16">
-          <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
-            Our Services
-          </span>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6 text-text-primary dark:text-white">
-            Four ways to get help
+        <AnimatedElement animation="fadeInUp" className="mb-12 lg:mb-16">
+          <h2 className="text-3xl lg:text-4xl font-bold text-text-primary dark:text-white">
+            Support that fits your problem
           </h2>
-          <p className="text-xl max-w-2xl mx-auto text-text-secondary">
-            Pick the way that works best for you.
-          </p>
         </AnimatedElement>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-0 items-start">
 
-          {/* Left — Accordion */}
-          <AnimatedElement animation="fadeInLeft" className="w-full lg:w-[45%] space-y-3">
-            {services.map((service, i) => {
-              const Icon = service.icon;
-              const isActive = i === activeIndex;
-              const accent = accentColors[service.colorClass] || accentColors.indigo;
-              const linkColor = linkTextColors[service.colorClass] || linkTextColors.indigo;
+          {/* Left — Algolia-style accordion */}
+          <AnimatedElement animation="fadeInLeft" className="w-full lg:w-[45%]">
+            <ul className="media-accordion">
+              {services.map((service, i) => {
+                const Icon = service.icon;
+                const isActive = i === activeIndex;
 
-              return (
-                <div
-                  key={service.id}
-                  className={[
-                    'rounded-xl border transition-all duration-300 overflow-hidden',
-                    isActive
-                      ? 'bg-white dark:bg-midnight-800 border-light-300 dark:border-midnight-600 shadow-lg dark:shadow-midnight-950/40'
-                      : 'bg-light-50 dark:bg-midnight-900 border-light-200 dark:border-midnight-700 hover:border-light-300 dark:hover:border-midnight-600',
-                  ].join(' ')}
-                >
-                  {/* Header */}
-                  <button
+                return (
+                  <li
+                    key={service.id}
+                    className={`relative w-full accordion_item group overflow-hidden py-[29px] px-4 lg:pl-6 lg:pr-10 cursor-pointer${isActive ? ' current' : ''}`}
                     onClick={() => handleToggle(i)}
-                    className="w-full flex items-center gap-4 px-5 py-4 text-left cursor-pointer"
                     aria-expanded={isActive}
                     aria-controls={`service-panel-${service.id}`}
                   >
-                    {/* Progress bar accent (active only) */}
-                    <div
-                      className="w-1 self-stretch rounded-full shrink-0 transition-colors duration-300"
-                      style={{ backgroundColor: isActive ? accent : 'transparent' }}
-                    />
-                    <div
-                      className={[
-                        'w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-300',
-                        isActive ? 'bg-opacity-15' : 'bg-opacity-8',
-                      ].join(' ')}
-                      style={{ backgroundColor: `${accent}${isActive ? '22' : '14'}` }}
+                    {/* Header */}
+                    <button
+                      type="button"
+                      className="relative block w-full text-left modern-accordion-button"
                     >
-                      <Icon className="w-5 h-5" style={{ color: accent }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className={[
-                        'text-base font-bold transition-colors duration-300',
-                        isActive ? 'text-text-primary dark:text-white' : 'text-text-secondary dark:text-white/60',
-                      ].join(' ')}>
-                        {service.name}
-                      </h3>
-                      {!isActive && (
-                        <p className="text-sm text-text-muted truncate mt-0.5">
-                          {service.tagline}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronDown
-                      className={[
-                        'w-5 h-5 shrink-0 text-text-muted transition-transform duration-300',
-                        isActive ? 'rotate-180' : '',
-                      ].join(' ')}
-                    />
-                  </button>
-
-                  {/* Expandable panel */}
-                  <div
-                    id={`service-panel-${service.id}`}
-                    className="overflow-hidden transition-all duration-300"
-                    style={{
-                      maxHeight: isActive ? '240px' : '0',
-                      opacity: isActive ? 1 : 0,
-                    }}
-                  >
-                    <div className="px-5 pb-5 pl-[4.25rem]">
-                      {/* Mobile-only image */}
-                      <div className="lg:hidden mb-4 rounded-xl overflow-hidden aspect-[16/10]">
-                        <img
-                          src={serviceImages[service.id]}
-                          alt={service.name}
-                          width={1200}
-                          height={800}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
+                      <div className="relative z-10 flex justify-between lg:justify-start items-center gap-8 lg:gap-16">
+                        <div className="flex items-center gap-3">
+                          <Icon
+                            className="w-5 h-5 shrink-0 transition-colors duration-300 dark:text-white/50"
+                            style={isActive ? { color: '#6366F1' } : undefined}
+                          />
+                          <span className="accordion-title font-sora text-lg lg:text-[21px] lg:leading-[140%] font-bold text-gray-700 dark:text-white/60 transition-colors duration-300">
+                            {service.name}
+                          </span>
+                        </div>
+                        <ChevronRight
+                          className="accordion-chevron w-4 h-4 shrink-0 transition-all duration-300 text-text-muted dark:text-white/40"
+                          style={isActive ? { transform: 'rotate(90deg)' } : undefined}
                         />
                       </div>
-                      <p className="text-sm leading-relaxed text-text-secondary dark:text-white/70 mb-4">
-                        {service.description}
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-muted dark:text-white/40 mb-3">
-                        {service.availability}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(service.pageView);
-                        }}
-                        className={`flex items-center gap-1.5 text-sm font-semibold ${linkColor} hover:gap-2.5 transition-all group/link`}
-                      >
-                        Learn more <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-0.5" />
-                      </button>
+                    </button>
+
+                    {/* Accordion content */}
+                    <div
+                      id={`service-panel-${service.id}`}
+                      className="accordion-content mt-4"
+                      aria-hidden={!isActive}
+                    >
+                      <div className="relative z-10 text-gray-700 dark:text-white/70 leading-relaxed pr-8">
+                        {/* Mobile-only image */}
+                        <div className="lg:hidden mb-4 rounded-xl overflow-hidden aspect-[16/10]">
+                          <img
+                            src={serviceImages[service.id]}
+                            alt={service.name}
+                            width={1200}
+                            height={800}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <p className="text-[15px] leading-relaxed mb-3">
+                          {service.description}
+                        </p>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-muted dark:text-white/40 mb-3">
+                          {service.availability}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onNavigate(service.pageView);
+                          }}
+                          className="flex items-center gap-1.5 text-sm font-bold text-[#6366F1] hover:gap-2.5 transition-all group/link"
+                        >
+                          Learn more <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-0.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  </li>
+                );
+              })}
+            </ul>
           </AnimatedElement>
 
           {/* Right — Image preview (desktop only) */}
@@ -194,10 +150,6 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
               {/* Caption */}
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: activeAccent }}
-                  />
                   <span className="text-xs font-bold uppercase tracking-wider text-white/70">
                     {activeService.tagline}
                   </span>

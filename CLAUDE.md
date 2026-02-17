@@ -527,6 +527,40 @@ If The_Skeptic and a Dev agent disagree:
 - New `src/data/` directory convention (first usage; future data files should follow same pattern)
 - Four new routes increase client-side routing surface (negligible: static marketing pages with no API calls)
 
+### Animated Glow Dock + Header Glow Treatment (Feb 17, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **src/components/dashboard/MobileBottomDock.tsx** — Replaced flat dock with animated dark glow dock: sliding colored light bar, trapezoid beam, per-tab brand colors (indigo/cyan/purple/glow), icon drop-shadow glow, CSS grid layout
+2. **src/index.css** — Added `.dock-glow`, `.dock-glow-light`, `.dock-glow-bar`, `.dock-glow-beam`, `.dock-icon-glow` classes; added `.header-glow`, `.header-glow-indicator` classes
+3. **src/App.tsx (Header)** — Replaced light/dark conditional header with universal dark (#191919) header matching dock aesthetic. Added sliding glow indicator under active nav item with per-item colors (cyan/indigo/purple). Logo always uses light variant. Mobile menu also dark. Measured via refs + getBoundingClientRect.
+
+#### Key Skeptic Conditions Applied:
+- Text labels retained on dock tabs
+- New `.dock-glow` class (`.dock-clean` untouched)
+- CSS comment documenting universal-dark design decision
+- `focus-visible:ring-white/60` (dock) and `focus-visible:ring-white/40` (header) for contrast
+- Decorative elements `aria-hidden="true"` + `pointer-events: none`
+
+#### Risks Accepted:
+- Universal dark nav in light mode (deliberate design decision for glow visibility)
+- `clip-path: polygon()` graceful degradation on very old browsers
+
+### Homepage Polish — Hero Simplification + Section Cleanup (Feb 17, 2026)
+
+**Verdict: APPROVED** (The_Skeptic)
+
+#### Changes:
+1. **src/App.tsx (Hero)** — Replaced two-column hero with centered layout. Headline simplified to "Get help with [typewriter]" (large gradient text). Subtitle: single line about AI-powered support. Carousel moved below text in contained 16:9 rounded box — text can never be covered by images. Removed value-prop bullet grid. Removed all `hero-scroll-*` fade-away classes (title, subtitle, CTA, bg).
+2. **src/App.tsx (HOME view)** — Removed `<ServicesSection>` (displayed poorly on various viewports). Service pages still accessible via footer links and `/services/*` routes.
+3. **src/components/FeatureShowcases.tsx** — Case history image now theme-aware (`case_history-white.png` / `case_history-dark.png`). Internal showcase padding reduced from `pt-16 pb-16` (4rem) to `pt-10 pb-10` (2.5rem).
+4. **src/index.css** — Scroll-driven animation range changed from `entry 0% entry 30%` to `entry 15% entry 50%` (Phantom-style conservative triggers).
+
+#### Risks Accepted:
+- ServicesSection removed from homepage (content accessible via dedicated service pages)
+- Hero carousel images now `object-contain` in fixed 16:9 box (may show background around edges)
+
 <!-- DECISIONS END -->
 
 ---

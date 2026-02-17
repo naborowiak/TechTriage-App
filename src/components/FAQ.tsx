@@ -205,7 +205,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
   };
 
   return (
-    <section className="min-h-screen pt-[72px] transition-colors" style={{ backgroundImage: 'url(/gradient-poly.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
+    <section className="min-h-screen pt-[80px] transition-colors" style={{ backgroundImage: 'url(/gradient-poly.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}>
       {/* Hero Section */}
       <div className="section-light py-20 relative overflow-hidden border-b border-surface-border dark:border-midnight-700">
         <div className="container mx-auto px-6 max-w-4xl relative">
@@ -249,7 +249,7 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       </div>
 
       {/* Category Pills */}
-      <div className="bg-white dark:bg-midnight-900 border-b border-surface-border dark:border-midnight-700 sticky top-[72px] z-40">
+      <div className="bg-white dark:bg-midnight-900 border-b border-surface-border dark:border-midnight-700 sticky top-[80px] z-40">
         <div className="container mx-auto px-6 py-4">
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             <button

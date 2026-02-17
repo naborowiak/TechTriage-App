@@ -10,25 +10,51 @@ interface MobileBottomDockProps {
 const tabs: {
   id: DashboardTab;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  color: string;
 }[] = [
-  { id: "chat", label: "Chat", icon: MessageSquare },
-  { id: "history", label: "History", icon: Clock },
-  { id: "devices", label: "Devices", icon: Smartphone },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "chat", label: "Chat", icon: MessageSquare, color: "#6366F1" },
+  { id: "history", label: "History", icon: Clock, color: "#06B6D4" },
+  { id: "devices", label: "Devices", icon: Smartphone, color: "#A855F7" },
+  { id: "settings", label: "Settings", icon: Settings, color: "#C084FC" },
 ];
 
 export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
   activeTab,
   onTabChange,
 }) => {
+  const activeIndex = tabs.findIndex((t) => t.id === activeTab);
+  const activeColor = tabs[activeIndex]?.color ?? tabs[0].color;
+
   return (
     <nav
-      className="lg:hidden shrink-0 z-40 dock-clean pb-safe"
+      className="lg:hidden shrink-0 z-40 dock-glow pb-safe"
       role="tablist"
       aria-label="Main navigation"
     >
-      <div className="flex items-center justify-around px-2 pt-2 pb-1.5">
+      {/* Sliding light beam — decorative */}
+      <div
+        className="dock-glow-light"
+        style={{ transform: `translateX(${activeIndex * 100}%)` }}
+        aria-hidden="true"
+      >
+        <div
+          className="dock-glow-bar"
+          style={{
+            backgroundColor: activeColor,
+            boxShadow: `0 0 12px ${activeColor}, 0 0 24px ${activeColor}80`,
+          }}
+        />
+        <div
+          className="dock-glow-beam"
+          style={{
+            background: `linear-gradient(to bottom, ${activeColor}50 0%, ${activeColor}00 100%)`,
+          }}
+        />
+      </div>
+
+      {/* Tab buttons */}
+      <div className="grid grid-cols-4 px-2 pt-3 pb-1.5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -41,20 +67,29 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
               aria-label={tab.label}
               aria-current={isActive ? "page" : undefined}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] transition-all duration-200 ${
-                isActive
-                  ? "text-electric-indigo"
-                  : "text-text-muted hover:text-text-secondary"
-              }`}
+              className={[
+                "flex flex-col items-center justify-center min-h-[48px] dock-icon-glow",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:rounded-md",
+              ].join(" ")}
             >
-              <div className="relative">
-                {isActive && (
-                  <span className="absolute -inset-1.5 rounded-lg bg-electric-indigo/10 dark:bg-electric-indigo/15" />
-                )}
-                <Icon className="relative w-5 h-5" />
-              </div>
+              <Icon
+                className="w-5 h-5"
+                style={
+                  isActive
+                    ? {
+                        color: tab.color,
+                        filter: `drop-shadow(0 0 6px ${tab.color}) drop-shadow(0 0 12px ${tab.color}80)`,
+                      }
+                    : { color: "rgba(255,255,255,0.6)" }
+                }
+              />
               <span
-                className={`text-xs font-medium mt-1 ${isActive ? "font-semibold" : ""}`}
+                className="text-[11px] font-medium mt-1"
+                style={
+                  isActive
+                    ? { color: tab.color, fontWeight: 600 }
+                    : { color: "rgba(255,255,255,0.6)" }
+                }
               >
                 {tab.label}
               </span>

@@ -21,9 +21,6 @@ import {
   ArrowRight,
   ChevronDown,
   Check,
-  Camera,
-  FileText,
-  Users,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -39,7 +36,6 @@ import { AnimatedElement } from "./hooks/useAnimations";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { ServicesSection } from "./components/ServicesSection";
 import { HowItWorksLifecycle } from "./components/HowItWorksLifecycle";
-import { FeatureShowcases } from "./components/FeatureShowcases";
 import { InvestorCredibility } from "./components/InvestorCredibility";
 import { usePWAInstall } from "./hooks/usePWAInstall";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
@@ -230,47 +226,88 @@ const Header: React.FC<{
     }
   };
 
-  // Theme-aware text colors
-  const textColor = "text-text-primary dark:text-white";
-  const textColorMuted = "text-text-secondary";
-  const hoverColor = "hover:text-electric-indigo";
+  // Nav items with per-item glow colors (matching dock treatment)
+  const NAV_ITEMS = [
+    { view: PageView.HOW_IT_WORKS, label: 'How It Works', color: '#06B6D4' },
+    { view: PageView.PRICING, label: 'Pricing', color: '#6366F1' },
+    { view: PageView.FAQ, label: 'FAQs', color: '#A855F7' },
+  ];
+  const navRef = useRef<HTMLElement>(null);
+  const navBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
+
+  // Measure active nav button for sliding glow indicator
+  useEffect(() => {
+    const activeIdx = NAV_ITEMS.findIndex(item => item.view === currentView);
+    if (activeIdx === -1 || !navRef.current) {
+      setIndicator(null);
+      return;
+    }
+    const btn = navBtnRefs.current[activeIdx];
+    if (!btn || !navRef.current) return;
+    const navRect = navRef.current.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    setIndicator({
+      left: btnRect.left - navRect.left,
+      width: btnRect.width,
+    });
+  }, [currentView]);
+
+  const activeNavItem = NAV_ITEMS.find(item => item.view === currentView);
+  const activeNavColor = activeNavItem?.color ?? '#6366F1';
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 h-[72px] bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 shadow-sm transition-colors">
+    <header className="fixed top-0 left-0 w-full z-50 h-[80px] header-glow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-        {/* LEFT: Logo */}
+        {/* LEFT: Logo (always light on dark bg) */}
         <button
           onClick={() => handleNav(PageView.HOME)}
-          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-indigo/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-midnight-900 rounded shrink-0"
+          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded shrink-0"
           aria-label="Go to home"
         >
-          <Logo variant="dark" className="dark:hidden" />
-          <Logo variant="light" className="hidden dark:flex" />
+          <Logo variant="light" />
         </button>
 
-        {/* CENTER: Primary Navigation (desktop only) */}
-        <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <button
-            onClick={() => handleNav(PageView.HOW_IT_WORKS)}
-            aria-current={currentView === PageView.HOW_IT_WORKS ? "page" : undefined}
-            className={`whitespace-nowrap ${currentView === PageView.HOW_IT_WORKS ? "text-electric-indigo" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px] focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-indigo/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-midnight-900 rounded px-1 py-1`}
-          >
-            How It Works
-          </button>
-          <button
-            onClick={() => handleNav(PageView.PRICING)}
-            aria-current={currentView === PageView.PRICING ? "page" : undefined}
-            className={`whitespace-nowrap ${currentView === PageView.PRICING ? "text-electric-indigo" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px] focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-indigo/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-midnight-900 rounded px-1 py-1`}
-          >
-            Pricing
-          </button>
-          <button
-            onClick={() => handleNav(PageView.FAQ)}
-            aria-current={currentView === PageView.FAQ ? "page" : undefined}
-            className={`whitespace-nowrap ${currentView === PageView.FAQ ? "text-electric-indigo" : `${textColor} ${hoverColor}`} transition-colors font-semibold text-[15px] focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-indigo/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-midnight-900 rounded px-1 py-1`}
-          >
-            FAQs
-          </button>
+        {/* CENTER: Primary Navigation with sliding glow indicator (desktop) */}
+        <nav ref={navRef} className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2 h-full">
+          {NAV_ITEMS.map((item, i) => {
+            const isActive = currentView === item.view;
+            return (
+              <button
+                key={item.view}
+                ref={(el) => { navBtnRefs.current[i] = el; }}
+                onClick={() => handleNav(item.view)}
+                aria-current={isActive ? "page" : undefined}
+                className={[
+                  "nav-hover-item relative whitespace-nowrap transition-colors duration-200 font-semibold text-[15px]",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-lg px-3 py-1.5 h-full flex items-center",
+                  isActive ? "" : "text-white/60",
+                ].join(" ")}
+                style={{
+                  '--nav-item-color': item.color,
+                  ...(isActive ? {
+                    color: item.color,
+                    filter: `drop-shadow(0 0 8px ${item.color}80)`,
+                  } : {}),
+                } as React.CSSProperties}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+          {/* Sliding glow indicator bar */}
+          {indicator && (
+            <div
+              className="header-glow-indicator"
+              style={{
+                left: indicator.left,
+                width: indicator.width,
+                backgroundColor: activeNavColor,
+                boxShadow: `0 0 12px ${activeNavColor}, 0 0 24px ${activeNavColor}80`,
+              }}
+              aria-hidden="true"
+            />
+          )}
         </nav>
 
         {/* RIGHT: Utility items (desktop) */}
@@ -278,7 +315,7 @@ const Header: React.FC<{
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-indigo/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-midnight-900"
+            className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           >
             {theme === 'light' ? (
@@ -290,7 +327,7 @@ const Header: React.FC<{
 
           {/* Auth section */}
           {isLoading ? (
-            <div className={`${textColorMuted} text-sm`}>...</div>
+            <div className="text-white/40 text-sm">...</div>
           ) : isAuthenticated && user ? (
             <>
               <button
@@ -310,7 +347,7 @@ const Header: React.FC<{
             <>
               <button
                 onClick={() => onNavigate(PageView.LOGIN)}
-                className={`${textColorMuted} ${hoverColor} transition-colors text-sm font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-indigo/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-midnight-900 rounded-lg px-4 py-2.5`}
+                className="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-lg px-4 py-2.5"
               >
                 Log In
               </button>
@@ -334,14 +371,14 @@ const Header: React.FC<{
           </button>
           <button
             onClick={toggleMenu}
-            className="p-2 rounded-lg hover:bg-light-200 dark:hover:bg-midnight-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-indigo/60 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-midnight-900"
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? (
-              <X className="w-6 h-6 text-text-primary dark:text-white" />
+              <X className="w-6 h-6 text-white" />
             ) : (
-              <Menu className="w-6 h-6 text-text-primary dark:text-white" />
+              <Menu className="w-6 h-6 text-white" />
             )}
           </button>
         </div>
@@ -349,51 +386,41 @@ const Header: React.FC<{
 
       {/* Mobile Menu Overlay + Panel */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" style={{ top: 72 }}>
+        <div className="fixed inset-0 z-40 lg:hidden" style={{ top: 80 }}>
           {/* Backdrop overlay */}
           <div
-            className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-200 ${
+            className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
               menuAnimating ? 'opacity-0' : 'opacity-100'
             }`}
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          {/* Menu panel with slide animation */}
+          {/* Menu panel — dark to match header */}
           <div
             ref={mobileMenuRef}
-            className={`absolute top-0 left-0 right-0 bg-white dark:bg-midnight-900 border-b border-light-300 dark:border-midnight-700 shadow-xl transform transition-all duration-200 ease-out ${
+            className={`absolute top-0 left-0 right-0 bg-[#191919] border-b border-white/10 shadow-xl transform transition-all duration-200 ease-out ${
               menuAnimating
                 ? 'opacity-0 -translate-y-2'
                 : 'opacity-100 translate-y-0'
             }`}
           >
             <div className="px-6 py-5 flex flex-col gap-1">
-              {/* Navigation items with 44px+ tap targets */}
-              <button
-                onClick={() => handleNav(PageView.HOW_IT_WORKS)}
-                className="min-h-[48px] flex items-center font-semibold text-base text-text-primary dark:text-white hover:text-electric-indigo active:text-electric-indigo transition-colors text-left px-2 -mx-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800"
-              >
-                How It Works
-              </button>
-              <button
-                onClick={() => handleNav(PageView.PRICING)}
-                className="min-h-[48px] flex items-center font-semibold text-base text-text-primary dark:text-white hover:text-electric-indigo active:text-electric-indigo transition-colors text-left px-2 -mx-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800"
-              >
-                Pricing
-              </button>
-              <button
-                onClick={() => handleNav(PageView.FAQ)}
-                className="min-h-[48px] flex items-center font-semibold text-base text-text-primary dark:text-white hover:text-electric-indigo active:text-electric-indigo transition-colors text-left px-2 -mx-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800"
-              >
-                FAQs
-              </button>
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.view}
+                  onClick={() => handleNav(item.view)}
+                  className="min-h-[48px] flex items-center font-semibold text-base text-white/80 hover:text-white active:text-white transition-colors text-left px-2 -mx-2 rounded-lg hover:bg-white/10"
+                >
+                  {item.label}
+                </button>
+              ))}
 
-              <div className="h-px bg-light-300 dark:bg-midnight-700 my-3" />
+              <div className="h-px bg-white/10 my-3" />
 
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="min-h-[48px] flex items-center gap-3 text-text-secondary hover:text-electric-indigo active:text-electric-indigo transition-colors px-2 -mx-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800"
+                className="min-h-[48px] flex items-center gap-3 text-white/60 hover:text-white transition-colors px-2 -mx-2 rounded-lg hover:bg-white/10"
               >
                 {theme === 'light' ? (
                   <>
@@ -408,12 +435,12 @@ const Header: React.FC<{
                 )}
               </button>
 
-              <div className="h-px bg-light-300 dark:bg-midnight-700 my-3" />
+              <div className="h-px bg-white/10 my-3" />
 
               {/* Auth section */}
               {isAuthenticated && user ? (
                 <>
-                  <div className="min-h-[48px] flex items-center gap-3 text-text-primary dark:text-white font-medium px-2 -mx-2">
+                  <div className="min-h-[48px] flex items-center gap-3 text-white font-medium px-2 -mx-2">
                     {user.profileImageUrl ? (
                       <img
                         src={user.profileImageUrl}
@@ -432,7 +459,7 @@ const Header: React.FC<{
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="min-h-[48px] flex items-center gap-3 text-text-secondary hover:text-electric-indigo active:text-electric-indigo font-medium transition-colors px-2 -mx-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800"
+                    className="min-h-[48px] flex items-center gap-3 text-white/60 hover:text-white font-medium transition-colors px-2 -mx-2 rounded-lg hover:bg-white/10"
                   >
                     <LogOut className="w-5 h-5" />
                     Logout
@@ -441,7 +468,7 @@ const Header: React.FC<{
               ) : (
                 <button
                   onClick={() => handleNav(PageView.LOGIN)}
-                  className="min-h-[48px] flex items-center font-semibold text-base text-text-primary dark:text-white hover:text-electric-indigo active:text-electric-indigo transition-colors px-2 -mx-2 rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800"
+                  className="min-h-[48px] flex items-center font-semibold text-base text-white/80 hover:text-white transition-colors px-2 -mx-2 rounded-lg hover:bg-white/10"
                 >
                   Log In
                 </button>
@@ -527,8 +554,8 @@ const Hero: React.FC<{
   }, [paused]);
 
   return (
-    <div className="agentic-hero-banner hero-parallax-wrapper relative bg-xenon-900 dark overflow-hidden -mt-[72px]">
-      <video autoPlay loop muted playsInline className="hero-scroll-bg absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
+    <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden pt-[80px]">
+      <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
       {/* Brand gradient overlay */}
@@ -546,72 +573,55 @@ const Hero: React.FC<{
         }}
         aria-hidden="true"
       />
-      <div className="relative mx-auto max-w-[1440px] overflow-x-clip overflow-y-visible z-10 pt-[120px] lg:pt-[160px] px-6 lg:px-16">
-        <div className="mx-auto relative z-20 flex flex-col xl:flex-row xl:items-center">
 
-          {/* Left column */}
-          <div className="relative w-full xl:w-1/2 flex flex-col justify-center">
-            <div className="max-w-[520px] xl:max-w-[640px] mx-auto xl:mx-0">
+      {/* Content container — matches Algolia's max-w-[1512px] pattern */}
+      <div className="relative mx-auto max-w-[1440px] overflow-hidden z-10">
+        {/* Flex row — stacks on mobile, side-by-side on desktop */}
+        <div className="mx-auto relative z-20 flex flex-col lg:flex-row">
+
+          {/* Left column — text. justify-center vertically within the 680px set by carousel */}
+          <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center px-6 lg:pl-16 lg:pr-0">
+            <div className="max-w-[520px] lg:max-w-none mx-auto">
               <h1
-                className="hero-animate-1 hero-scroll-title font-bold font-sora text-white mb-6 mt-10 text-center xl:text-left"
-                style={{ letterSpacing: '-2.5px' }}
+                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-8 lg:mt-10 text-balance text-center lg:text-left text-[32px] sm:text-[40px] lg:text-[52px] xl:text-[56px]"
+                style={{ lineHeight: '105%', letterSpacing: '-2.5px' }}
               >
-                <span className="block text-[24px] sm:text-[30px] lg:text-[36px] xl:text-[44px] leading-tight text-white/80 mb-2 sm:mb-3">
-                  Fix <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">{displayText}</span><span className="hero-cursor" aria-hidden="true" /> problems
+                Get help with<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
+                  {displayText}
                 </span>
-                <span className="block text-[32px] sm:text-[42px] lg:text-[48px] xl:text-[58px] leading-none text-white">
-                  in minutes, not hours.
-                </span>
+                <span className="hero-cursor" aria-hidden="true" />
               </h1>
-              <div className="hero-animate-2 hero-scroll-subtitle mt-3 sm:mt-4 lg:mt-5 xl:max-w-[520px]">
-                <p className="font-sora text-center xl:text-left text-sm sm:text-base lg:text-[17px] xl:text-[18px] font-normal leading-relaxed text-white/80 my-0 text-balance">
-                  Show us what's broken with photo or video, tap through guided steps, and get a repair report you can keep.
+              <div className="hero-animate-2 mt-4 lg:mr-8 lg:max-w-[430px]">
+                <p className="font-sora text-center lg:text-left text-base sm:text-lg lg:text-[19px] font-normal leading-relaxed text-white my-0 text-balance">
+                  24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
               </div>
-
-              {/* Value prop bullets */}
-              <div className="hero-animate-2 mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-center xl:text-left max-w-[520px] mx-auto xl:mx-0">
-                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
-                  <Camera className="w-4 h-4 shrink-0" /> Photo & video diagnosis — no typing required
-                </span>
-                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
-                  <Zap className="w-4 h-4 shrink-0" /> Tap Assist Pills instead of guessing what to say
-                </span>
-                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
-                  <FileText className="w-4 h-4 shrink-0" /> Every session becomes a Case with a PDF report
-                </span>
-                <span className="flex items-center gap-2 text-xs sm:text-sm text-white/70 justify-center xl:justify-start">
-                  <Users className="w-4 h-4 shrink-0" /> Escalate to a human tech — no repeating yourself
-                </span>
-              </div>
             </div>
 
-            {/* Dual CTAs */}
-            <div className="hero-animate-3 hero-scroll-cta flex justify-center gap-4 mt-8 md:mt-9 lg:mt-11 xl:justify-start xl:mb-12">
-              <div className="flex font-sora gap-3 justify-center xl:justify-start flex-wrap">
+            {/* CTAs + trust chips */}
+            <div className="hero-animate-3 flex justify-center gap-4 mt-8 sm:mt-9 lg:mt-11 xl:mt-8 lg:justify-start lg:mb-[100px] px-6 lg:px-0">
+              <button
+                onClick={onFreeTrial}
+                className="flex items-center cursor-pointer font-sora justify-center text-white px-4 lg:px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
+              >
+                <span className="font-semibold font-sora text-sm lg:text-base">
+                  Get help with my tech
+                </span>
+              </button>
+              {onSecondaryAction && (
                 <button
-                  onClick={onFreeTrial}
-                  className="overflow-hidden flex flex-wrap items-center cursor-pointer font-sora justify-center text-white px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
+                  onClick={onSecondaryAction}
+                  className="flex items-center justify-center cursor-pointer font-sora text-white px-4 lg:px-6 rounded-lg min-h-12 lg:min-h-14 bg-white/10 hover:bg-white/20 transition-colors"
                 >
-                  <span className="font-semibold font-sora leading-[1.5] text-sm lg:text-base tracking-[0.28px] lg:tracking-[0.32px]">
-                    Get help with my tech
+                  <span className="font-semibold font-sora text-sm lg:text-base">
+                    See how it works
                   </span>
                 </button>
-                {onSecondaryAction && (
-                  <button
-                    onClick={onSecondaryAction}
-                    className="flex items-center justify-center cursor-pointer font-sora text-white px-6 rounded-lg min-h-12 lg:min-h-14 bg-white/10 hover:bg-white/20 transition-colors"
-                  >
-                    <span className="font-semibold font-sora leading-[1.5] text-sm lg:text-base tracking-[0.28px] lg:tracking-[0.32px]">
-                      See how it works
-                    </span>
-                  </button>
-                )}
-              </div>
+              )}
             </div>
-
-            {/* Trust chips */}
-            <div className="hero-animate-3 flex flex-wrap justify-center xl:justify-start gap-4 mt-4 xl:mb-20">
+            {/* Trust chips — below CTAs on mobile, above mb on desktop */}
+            <div className="hero-animate-3 flex flex-wrap justify-center lg:justify-start gap-4 mt-4 lg:-mt-[84px] px-6 lg:pl-16 lg:pr-0">
               <span className="flex items-center gap-1.5 text-xs text-white/60">
                 <CheckCircle2 className="w-3.5 h-3.5" /> No credit card needed
               </span>
@@ -624,25 +634,43 @@ const Hero: React.FC<{
             </div>
           </div>
 
-          {/* Right column — carousel */}
-          <div className="hero-animate-4 hero-parallax-target w-full xl:w-1/2 flex justify-center xl:justify-end mt-6 xl:mt-0">
-            <div
-              className={`relative w-full max-w-[700px] aspect-[4/3] xl:aspect-auto xl:h-[680px]${paused ? ' agentic-hero-paused' : ''}`}
-              onMouseEnter={() => setPaused(true)}
-              onMouseLeave={() => setPaused(false)}
-            >
-
+          {/* Right column — carousel. lg:h-[680px] drives the banner height on desktop */}
+          <div
+            className={`hero-animate-4 w-full lg:w-[53.3%] flex justify-center lg:justify-end mt-8 lg:mt-0${paused ? ' agentic-hero-paused' : ''}`}
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+          >
+            <div className="relative w-full max-w-[820px] lg:h-[680px]">
+              {/* Invisible spacer — sets natural height on mobile, hidden on desktop */}
+              <img
+                src={HERO_SLIDES[0].top}
+                className="invisible w-full h-auto lg:hidden"
+                alt=""
+                aria-hidden="true"
+                loading="eager"
+              />
+              {/* Slides */}
               {HERO_SLIDES.map((slide, i) => (
                 <div
                   key={slide.id}
-                  className="agentic-hero-slide absolute inset-0 transition-opacity pointer-events-none"
-                  style={{ opacity: active === i ? 1 : 0, transition: 'opacity 1.5s ease-out' }}
+                  className={`agentic-hero-slide absolute inset-0 transition-opacity${active === i ? ' opacity-100' : ' opacity-0 pointer-events-none'}`}
+                  style={{ transition: 'opacity 1.5s ease-out' }}
                 >
-                  <img alt="" src="/color-blur.png" width={1351} height={690} className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ opacity: 0.9 }} loading="eager" />
-                  <img src={slide.top} width={800} height={597} className="absolute bottom-0 left-0 xl:left-auto xl:right-0 w-full h-auto xl:w-auto xl:h-full xl:max-w-none" alt={slide.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+                  <img
+                    alt=""
+                    src="/color-blur.png"
+                    className="agentic-hero-blur absolute inset-0 w-full h-full object-cover pointer-events-none"
+                    style={{ opacity: 0.9 }}
+                    loading="eager"
+                  />
+                  <img
+                    src={slide.top}
+                    className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:max-w-none"
+                    alt={slide.alt}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                  />
                 </div>
               ))}
-
               {/* Dots */}
               <div className="agentic-hero-dots absolute flex gap-2">
                 {HERO_SLIDES.map((_, i) => (
@@ -858,8 +886,8 @@ const WhyTotalAssist: React.FC = () => {
         <AnimatedElement animation="fadeInUp" delay={0.5} className="hidden md:block">
           <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm">
 
-            {/* Sticky Column Headers — sticks below fixed nav (72px) */}
-            <div className="sticky top-[72px] z-10 grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
+            {/* Sticky Column Headers — sticks below fixed nav (80px) */}
+            <div className="sticky top-[80px] z-10 grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
               {/* Empty top-left */}
               <div className="p-4 lg:p-5" />
               {/* TotalAssist — Highlighted column header */}
@@ -2073,7 +2101,6 @@ const App: React.FC = () => {
               )}
               <HowItWorksLifecycle />
               <ServicesSection onNavigate={navigate} />
-              <FeatureShowcases onNavigate={navigate} />
               <WhatWeHelpWith onNavigate={navigate} />
               <SectionDivider variant="line" />
               <WhyTotalAssist />

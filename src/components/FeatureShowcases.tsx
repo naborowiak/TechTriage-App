@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { PageView } from '../types';
 import { AnimatedElement } from '../hooks/useAnimations';
+import { useTheme } from '../context/ThemeContext';
 
 interface FeatureShowcasesProps {
   onNavigate: (view: PageView) => void;
@@ -30,7 +31,7 @@ const showcases = [
     badge: 'Assist Pills',
     heading: "Tap, don't type.",
     copy: "TotalAssist uses on-screen choices like 'Wi-Fi keeps dropping' or 'This light is blinking' — so you answer with a tap instead of typing essays.",
-    image: '/chat-support.png',
+    image: '/chat-support-new.png',
     imageAlt: 'Assist Pills guided troubleshooting interface',
     link: PageView.SERVICE_CHAT,
     linkText: 'Learn more',
@@ -39,7 +40,7 @@ const showcases = [
     badge: 'Repair Records',
     heading: 'Keep a repair record for your home tech.',
     copy: "Every session becomes a Case: what went wrong, what you tried, what worked. Download a PDF to share with family or a future technician.",
-    image: '/case-history.png',
+    image: { light: '/case_history-white.png', dark: '/case_history-dark.png' },
     imageAlt: 'Case history and PDF repair records',
     link: null,
     linkText: null,
@@ -47,6 +48,8 @@ const showcases = [
 ];
 
 export const FeatureShowcases: React.FC<FeatureShowcasesProps> = ({ onNavigate }) => {
+  const { theme } = useTheme();
+
   return (
     <section className="py-24 bg-white dark:bg-midnight-900 border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-6xl">
@@ -64,19 +67,22 @@ export const FeatureShowcases: React.FC<FeatureShowcasesProps> = ({ onNavigate }
             const isReversed = i % 2 === 1;
             const animLeft = isReversed ? 'fadeInRight' : 'fadeInLeft';
             const animRight = isReversed ? 'fadeInLeft' : 'fadeInRight';
+            const imageSrc = typeof item.image === 'string'
+              ? item.image
+              : theme === 'dark' ? item.image.dark : item.image.light;
 
             return (
               <div
                 key={i}
                 className={`flex flex-col lg:flex-row ${isReversed ? 'lg:flex-row-reverse' : ''} gap-8 lg:gap-16 items-center ${
-                  i > 0 ? 'pt-16 border-t border-light-200 dark:border-midnight-800' : ''
-                } ${i < showcases.length - 1 ? 'pb-16' : ''}`}
+                  i > 0 ? 'pt-10 border-t border-light-200 dark:border-midnight-800' : ''
+                } ${i < showcases.length - 1 ? 'pb-10' : ''}`}
               >
                 {/* Image */}
                 <AnimatedElement animation={animLeft} className="w-full lg:w-1/2">
                   <div className="rounded-2xl overflow-hidden bg-light-100 dark:bg-midnight-800">
                     <img
-                      src={item.image}
+                      src={imageSrc}
                       alt={item.imageAlt}
                       className="w-full aspect-[16/10] object-cover"
                       loading="lazy"
