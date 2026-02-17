@@ -39,9 +39,9 @@ export function ChoicePills({
               aria-pressed={isSelected}
               aria-label={choice}
               className={`
-                ${pillClass} font-medium transition-all
+                assist-pill ${pillClass} font-medium transition-all
                 ${isSelected
-                  ? 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white ring-2 ring-white/30'
+                  ? 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white ring-2 ring-white/30 scale-[1.02]'
                   : isAnswered
                     ? 'bg-gray-100 dark:bg-white/5 text-gray-300 dark:text-white/30 cursor-default'
                     : 'bg-light-200 dark:bg-white/10 border border-light-400 dark:border-white/20 text-text-primary dark:text-white hover:bg-light-300 dark:hover:bg-white/20 hover:border-[#06B6D4]/50 active:scale-95'
@@ -63,7 +63,7 @@ export function ChoicePills({
           aria-pressed={isSomethingElseSelected}
           aria-label={SOMETHING_ELSE_LABEL}
           className={`
-            ${pillClass} font-medium transition-all
+            assist-pill ${pillClass} font-medium transition-all
             ${isSomethingElseSelected
               ? 'bg-light-300 dark:bg-white/20 text-gray-800 dark:text-white ring-2 ring-gray-300 dark:ring-white/20'
               : isAnswered

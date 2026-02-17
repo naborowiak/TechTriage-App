@@ -1004,7 +1004,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           return messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.role === UserRole.USER ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === UserRole.USER ? 'justify-end' : 'justify-start'} ${message.role === UserRole.USER ? 'chat-msg-user' : 'chat-msg-assistant'}`}
           >
             <div
               className={`
@@ -1056,7 +1056,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         })()}
 
         {isLoading && (
-          <div className="flex justify-start" role="status" aria-label={isConnecting ? 'Connecting you with a support technician' : `${agentName} is typing`}>
+          <div className="flex justify-start chat-msg-assistant" role="status" aria-label={isConnecting ? 'Connecting you with a support technician' : `${agentName} is typing`}>
             <div className="bg-light-200 dark:bg-white/5 backdrop-blur-md border border-light-300 dark:border-white/10 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -1172,8 +1172,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       {/* Escalation Confirmation Modal */}
       {showEscalateConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="escalate-dialog-title">
-          <div className="bg-white dark:bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-light-300 dark:border-white/10">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm modal-backdrop-animate" role="dialog" aria-modal="true" aria-labelledby="escalate-dialog-title">
+          <div className="bg-white dark:bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-light-300 dark:border-white/10 modal-panel-animate">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
                 <UserPlus className="w-5 h-5 text-orange-400" />
@@ -1206,8 +1206,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       {/* Upgrade Modal */}
       {showUpgradeModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="upgrade-dialog-title">
-          <div className="bg-white dark:bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-light-300 dark:border-white/10">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm modal-backdrop-animate" role="dialog" aria-modal="true" aria-labelledby="upgrade-dialog-title">
+          <div className="bg-white dark:bg-[#151922] rounded-2xl p-6 mx-4 max-w-sm w-full border border-light-300 dark:border-white/10 modal-panel-animate">
             <h3 id="upgrade-dialog-title" className="text-text-primary dark:text-white text-xl font-semibold mb-2">Upgrade Your Plan</h3>
             <p className="text-text-secondary dark:text-white/70 mb-4">
               {lockedFeature === 'chat' && "You've used all your free messages for this month. Upgrade for unlimited support."}

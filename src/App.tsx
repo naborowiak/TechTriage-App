@@ -1672,8 +1672,16 @@ const App: React.FC = () => {
     if (window.location.pathname !== path) {
       window.history.pushState({ view }, "", path);
     }
-    setCurrentView(view);
-    window.scrollTo(0, 0);
+    const applyNavigation = () => {
+      setCurrentView(view);
+      window.scrollTo(0, 0);
+    };
+    // Use View Transitions API where supported for smoother page changes
+    if ((document as any).startViewTransition) {
+      (document as any).startViewTransition(applyNavigation);
+    } else {
+      applyNavigation();
+    }
   }, []);
 
   // Sync dashboardUser from session when authenticated (no auto-redirect from homepage)

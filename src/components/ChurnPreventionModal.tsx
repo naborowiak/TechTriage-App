@@ -68,12 +68,12 @@ export const ChurnPreventionModal: React.FC<ChurnPreventionModalProps> = ({
   // Success state after accepting offer
   if (offerAccepted) {
     return (
-      <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
+      <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center modal-backdrop-animate">
         <div
           className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
           onClick={onClose}
         />
-        <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden">
+        <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden modal-panel-animate">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-500 via-electric-cyan to-green-500" />
 
           <div className="p-8 pt-10 text-center">
@@ -102,7 +102,7 @@ export const ChurnPreventionModal: React.FC<ChurnPreventionModalProps> = ({
   }
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center modal-backdrop-animate">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
@@ -110,7 +110,7 @@ export const ChurnPreventionModal: React.FC<ChurnPreventionModalProps> = ({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden modal-panel-animate">
         {/* Gradient accent top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-scout-purple via-electric-cyan to-scout-glow" />
 

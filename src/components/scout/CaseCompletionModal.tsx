@@ -75,12 +75,12 @@ export function CaseCompletionModal({ caseId, caseTitle, onClose, userEmail }: C
   };
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 modal-backdrop-animate" role="dialog" aria-modal="true" aria-labelledby="completion-title">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-white dark:bg-[#151922] rounded-2xl shadow-2xl border border-light-300 dark:border-white/10 overflow-hidden">
+      <div className="relative w-full max-w-md bg-white dark:bg-[#151922] rounded-2xl shadow-2xl border border-light-300 dark:border-white/10 overflow-hidden modal-panel-animate">
         {/* Gradient accent */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-[#6366F1] to-[#06B6D4]" />
 

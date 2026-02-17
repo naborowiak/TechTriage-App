@@ -53,7 +53,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
   const plan = getRecommendedPlan();
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center modal-backdrop-animate">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
@@ -61,7 +61,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, fea
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden modal-panel-animate">
         {/* Gradient accent top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-indigo via-electric-cyan to-scout-purple" />
 
@@ -165,7 +165,7 @@ export const SignupGateModal: React.FC<SignupGateModalProps> = ({ isOpen, onClos
   if (!isOpen) return null;
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center modal-backdrop-animate">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
@@ -173,7 +173,7 @@ export const SignupGateModal: React.FC<SignupGateModalProps> = ({ isOpen, onClos
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden modal-panel-animate">
         {/* Gradient accent top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-indigo to-electric-cyan" />
 
@@ -285,7 +285,7 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
   };
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div ref={modalRef} className="fixed inset-0 z-[9999] flex items-center justify-center modal-backdrop-animate">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
@@ -293,7 +293,7 @@ export const RefillCreditsModal: React.FC<RefillCreditsModalProps> = ({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md mx-4 bg-midnight-900 rounded-3xl border border-midnight-700 shadow-2xl overflow-hidden modal-panel-animate">
         {/* Gradient accent top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-scout-purple via-scout-glow to-electric-cyan" />
 

@@ -143,7 +143,7 @@ export const VoiceReportModal: React.FC<VoiceReportModalProps> = ({
   };
 
   return (
-    <div ref={modalRef} className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
+    <div ref={modalRef} className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6 modal-backdrop-animate">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-midnight-950/90 backdrop-blur-sm"
@@ -151,7 +151,7 @@ export const VoiceReportModal: React.FC<VoiceReportModalProps> = ({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-midnight-900 rounded-2xl shadow-2xl">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-midnight-900 rounded-2xl shadow-2xl modal-panel-animate">
         {/* Gradient accent top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-scout-purple via-electric-indigo to-electric-cyan" />
 

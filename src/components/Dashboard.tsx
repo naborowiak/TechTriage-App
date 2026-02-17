@@ -495,14 +495,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         }
                       }}
                       className={[
-                        "card-clean relative flex flex-col justify-end text-left",
+                        "card-clean tile-card relative flex flex-col justify-end text-left",
                         "rounded-lg overflow-hidden cursor-pointer",
                         "p-4 md:p-6",
                         "min-h-[72px] md:min-h-0 md:aspect-[16/10] md:max-h-[260px]",
                         "transition-all duration-200",
                         isLocked
                           ? "opacity-75 cursor-pointer"
-                          : "hover:-translate-y-[1px] active:scale-[0.98]",
+                          : "hover:-translate-y-[2px] hover:shadow-lg active:translate-y-[1px] active:shadow-inner",
                       ].join(" ")}
                       aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
                     >
@@ -512,7 +512,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         aria-hidden="true"
                       >
                         <div
-                          className="absolute inset-0 bg-cover bg-center"
+                          className="absolute inset-0 bg-cover bg-center tile-mesh"
                           style={{ backgroundImage: `url(${tile.backgroundImage})` }}
                         />
                       </div>
@@ -672,8 +672,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-light-100/90 dark:bg-midnight-950/90 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-midnight-800 rounded-lg p-6 max-w-md w-full shadow-2xl border border-surface-border dark:border-midnight-700">
+        <div className="fixed inset-0 bg-light-100/90 dark:bg-midnight-950/90 z-[60] flex items-center justify-center p-4 modal-backdrop-animate">
+          <div className="bg-white dark:bg-midnight-800 rounded-lg p-6 max-w-md w-full shadow-2xl border border-surface-border dark:border-midnight-700 modal-panel-animate">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-yellow-400" />

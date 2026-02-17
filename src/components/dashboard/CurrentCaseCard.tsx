@@ -4,7 +4,6 @@ import {
   Clock,
   Circle,
   ArrowRight,
-  Loader2,
 } from "lucide-react";
 import { formatCaseDisplayId, type CaseProgressStep } from "../../types";
 
@@ -102,9 +101,14 @@ export const CurrentCaseCard: React.FC<CurrentCaseCardProps> = ({
 
         {/* Progress steps */}
         {isLoading ? (
-          <div className="flex items-center gap-2 py-6 justify-center text-text-secondary dark:text-white/70">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Loading progress...</span>
+          <div className="space-y-3 py-2" aria-label="Loading case progress">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-6 h-6 rounded-full bg-light-200 dark:bg-white/5 animate-pulse" />
+                <div className="flex-1 h-4 rounded bg-light-200 dark:bg-white/5 animate-pulse" style={{ width: `${70 - i * 10}%` }} />
+                <div className="w-16 h-5 rounded-full bg-light-200 dark:bg-white/5 animate-pulse" />
+              </div>
+            ))}
           </div>
         ) : steps.length > 0 ? (
           <div

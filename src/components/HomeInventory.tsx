@@ -229,8 +229,8 @@ export const HomeInventory: React.FC<HomeInventoryProps> = ({ embedded = false }
 
       {/* Add/Edit Device Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 max-w-lg w-full border border-gray-100 dark:border-midnight-700 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 modal-backdrop-animate">
+          <div className="bg-white dark:bg-midnight-800 rounded-2xl p-6 max-w-lg w-full border border-gray-100 dark:border-midnight-700 shadow-2xl max-h-[90vh] overflow-y-auto modal-panel-animate">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-text-primary dark:text-white">
                 {editingDevice ? 'Edit Device' : 'Add Device'}
