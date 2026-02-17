@@ -113,7 +113,8 @@
       "Bash(npx:*)",
       "Bash(nix-shell:*)",
       "Bash(git -C /home/runner/workspace add server/index.ts server/services/authService.ts src/App.tsx src/components/ChatWidget.tsx src/components/Dashboard.tsx src/components/ProfileDropdown.tsx src/components/Settings.tsx src/components/SettingsModal.tsx src/components/dashboard/DashboardSidebar.tsx src/components/scout/ScoutChatScreen.tsx src/components/scout/VideoSessionModal.tsx src/hooks/useAuth.ts)",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(replit deploy:*)"
     ]
   }
 }
