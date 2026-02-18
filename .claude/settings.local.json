@@ -119,7 +119,8 @@
       "WebFetch(domain:assetgallery.co)",
       "WebFetch(domain:bakkenbaeck.com)",
       "WebFetch(domain:www.landing.love)",
-      "WebFetch(domain:docs.stripe.com)"
+      "WebFetch(domain:docs.stripe.com)",
+      "Bash(node:*)"
     ]
   }
 }
