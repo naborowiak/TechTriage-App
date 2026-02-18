@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, BarChart3, TrendingUp, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { ArrowLeft, BarChart3, TrendingUp, CheckCircle, AlertTriangle } from 'lucide-react';
+import { LoadingScreen } from './LoadingScreen';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -119,11 +120,7 @@ export const CaseAnalytics: React.FC<CaseAnalyticsProps> = ({ embedded = false, 
   }, [cases]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-electric-indigo" />
-      </div>
-    );
+    return <LoadingScreen size="sm" />;
   }
 
   if (error) {

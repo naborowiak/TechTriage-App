@@ -39,6 +39,7 @@ import { HowItWorksLifecycle } from "./components/HowItWorksLifecycle";
 import { InvestorCredibility } from "./components/InvestorCredibility";
 import { usePWAInstall } from "./hooks/usePWAInstall";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
+import { LoadingScreen } from "./components/LoadingScreen";
 
 // Lazy-loaded page components (code splitting)
 const HowItWorks = lazy(() => import("./components/HowItWorks").then(m => ({ default: m.HowItWorks })));
@@ -61,14 +62,7 @@ const SpecialistResponse = lazy(() => import("./components/SpecialistResponse").
 const ServicePage = lazy(() => import("./components/ServicePage").then(m => ({ default: m.ServicePage })));
 
 // Page loading fallback for lazy-loaded routes
-const PageLoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-light-100 dark:bg-midnight-950 transition-colors">
-    <div className="text-center">
-      <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-text-secondary font-medium">Loading...</p>
-    </div>
-  </div>
-);
+const PageLoadingFallback = () => <LoadingScreen />;
 
 // ============================================
 // Animation Hooks & Components
@@ -259,13 +253,14 @@ const Header: React.FC<{
   return (
     <header className="fixed top-0 left-0 w-full z-50 h-[80px] header-glow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-        {/* LEFT: Logo (always light on dark bg) */}
+        {/* LEFT: Logo (theme-aware) */}
         <button
           onClick={() => handleNav(PageView.HOME)}
-          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded shrink-0"
+          className="focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:focus-visible:ring-white/40 rounded shrink-0"
           aria-label="Go to home"
         >
-          <Logo variant="light" />
+          <Logo variant="dark" className="dark:hidden" />
+          <Logo variant="light" className="hidden dark:flex" />
         </button>
 
         {/* CENTER: Primary Navigation with sliding glow indicator (desktop) */}
@@ -280,14 +275,14 @@ const Header: React.FC<{
                 aria-current={isActive ? "page" : undefined}
                 className={[
                   "nav-hover-item relative whitespace-nowrap transition-colors duration-200 font-semibold text-[15px]",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-lg px-3 py-1.5 h-full flex items-center",
-                  isActive ? "" : "text-white/60",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:focus-visible:ring-white/40 rounded-lg px-3 py-1.5 h-full flex items-center",
+                  isActive ? "" : "text-gray-500 dark:text-white/60",
                 ].join(" ")}
                 style={{
                   '--nav-item-color': item.color,
                   ...(isActive ? {
                     color: item.color,
-                    filter: `drop-shadow(0 0 8px ${item.color}80)`,
+                    ...(theme === 'dark' ? { filter: `drop-shadow(0 0 8px ${item.color}80)` } : {}),
                   } : {}),
                 } as React.CSSProperties}
               >
@@ -303,7 +298,9 @@ const Header: React.FC<{
                 left: indicator.left,
                 width: indicator.width,
                 backgroundColor: activeNavColor,
-                boxShadow: `0 0 12px ${activeNavColor}, 0 0 24px ${activeNavColor}80`,
+                boxShadow: theme === 'dark'
+                  ? `0 0 12px ${activeNavColor}, 0 0 24px ${activeNavColor}80`
+                  : `0 0 6px ${activeNavColor}60`,
               }}
               aria-hidden="true"
             />
@@ -315,7 +312,7 @@ const Header: React.FC<{
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:focus-visible:ring-white/40"
             aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           >
             {theme === 'light' ? (
@@ -327,7 +324,7 @@ const Header: React.FC<{
 
           {/* Auth section */}
           {isLoading ? (
-            <div className="text-white/40 text-sm">...</div>
+            <div className="text-gray-400 dark:text-white/40 text-sm">...</div>
           ) : isAuthenticated && user ? (
             <>
               <button
@@ -347,7 +344,7 @@ const Header: React.FC<{
             <>
               <button
                 onClick={() => onNavigate(PageView.LOGIN)}
-                className="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-lg px-4 py-2.5"
+                className="text-gray-500 hover:text-gray-900 dark:text-white/60 dark:hover:text-white transition-colors text-sm font-medium whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:focus-visible:ring-white/40 rounded-lg px-4 py-2.5"
               >
                 Log In
               </button>
@@ -371,14 +368,14 @@ const Header: React.FC<{
           </button>
           <button
             onClick={toggleMenu}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:focus-visible:ring-white/40"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? (
-              <X className="w-6 h-6 text-white" />
+              <X className="w-6 h-6 text-gray-700 dark:text-white" />
             ) : (
-              <Menu className="w-6 h-6 text-white" />
+              <Menu className="w-6 h-6 text-gray-700 dark:text-white" />
             )}
           </button>
         </div>
@@ -395,10 +392,10 @@ const Header: React.FC<{
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          {/* Menu panel — dark to match header */}
+          {/* Menu panel — theme-aware to match header */}
           <div
             ref={mobileMenuRef}
-            className={`absolute top-0 left-0 right-0 bg-[#191919] border-b border-white/10 shadow-xl transform transition-all duration-200 ease-out ${
+            className={`absolute top-0 left-0 right-0 bg-white dark:bg-[#191919] border-b border-gray-200 dark:border-white/10 shadow-xl transform transition-all duration-200 ease-out ${
               menuAnimating
                 ? 'opacity-0 -translate-y-2'
                 : 'opacity-100 translate-y-0'
@@ -409,18 +406,18 @@ const Header: React.FC<{
                 <button
                   key={item.view}
                   onClick={() => handleNav(item.view)}
-                  className="min-h-[48px] flex items-center font-semibold text-base text-white/80 hover:text-white active:text-white transition-colors text-left px-2 -mx-2 rounded-lg hover:bg-white/10"
+                  className="min-h-[48px] flex items-center font-semibold text-base text-gray-700 hover:text-gray-900 dark:text-white/80 dark:hover:text-white active:text-gray-900 dark:active:text-white transition-colors text-left px-2 -mx-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   {item.label}
                 </button>
               ))}
 
-              <div className="h-px bg-white/10 my-3" />
+              <div className="h-px bg-gray-200 dark:bg-white/10 my-3" />
 
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="min-h-[48px] flex items-center gap-3 text-white/60 hover:text-white transition-colors px-2 -mx-2 rounded-lg hover:bg-white/10"
+                className="min-h-[48px] flex items-center gap-3 text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white transition-colors px-2 -mx-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
               >
                 {theme === 'light' ? (
                   <>
@@ -435,12 +432,12 @@ const Header: React.FC<{
                 )}
               </button>
 
-              <div className="h-px bg-white/10 my-3" />
+              <div className="h-px bg-gray-200 dark:bg-white/10 my-3" />
 
               {/* Auth section */}
               {isAuthenticated && user ? (
                 <>
-                  <div className="min-h-[48px] flex items-center gap-3 text-white font-medium px-2 -mx-2">
+                  <div className="min-h-[48px] flex items-center gap-3 text-gray-900 dark:text-white font-medium px-2 -mx-2">
                     {user.profileImageUrl ? (
                       <img
                         src={user.profileImageUrl}
@@ -459,7 +456,7 @@ const Header: React.FC<{
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="min-h-[48px] flex items-center gap-3 text-white/60 hover:text-white font-medium transition-colors px-2 -mx-2 rounded-lg hover:bg-white/10"
+                    className="min-h-[48px] flex items-center gap-3 text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white font-medium transition-colors px-2 -mx-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
                   >
                     <LogOut className="w-5 h-5" />
                     Logout
@@ -468,7 +465,7 @@ const Header: React.FC<{
               ) : (
                 <button
                   onClick={() => handleNav(PageView.LOGIN)}
-                  className="min-h-[48px] flex items-center font-semibold text-base text-white/80 hover:text-white transition-colors px-2 -mx-2 rounded-lg hover:bg-white/10"
+                  className="min-h-[48px] flex items-center font-semibold text-base text-gray-700 hover:text-gray-900 dark:text-white/80 dark:hover:text-white transition-colors px-2 -mx-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   Log In
                 </button>
@@ -1443,7 +1440,7 @@ const App: React.FC = () => {
   // Get subscription tier for the authenticated user
   // Use dashboardUser.id as fallback so subscription fetch starts immediately from localStorage
   const effectiveUserId = sessionUser?.id || dashboardUser?.id;
-  const { tier: subscriptionTier, isLoading: subscriptionLoading, videoCredits: serverVideoCredits } = useSubscription(effectiveUserId);
+  const { tier: subscriptionTier, isLoading: subscriptionLoading, isPostCheckout, startPostCheckoutSync, videoCredits: serverVideoCredits } = useSubscription(effectiveUserId);
 
   // Sync usage store tier with auth/subscription state
   // Treat dashboardUser as auth signal so we don't flash guest tier while auth is loading
@@ -1669,14 +1666,17 @@ const App: React.FC = () => {
 
   const handleNavigateToPricing = useCallback(() => {
     navigate(PageView.PRICING);
-    // Scroll to pricing plans section after navigation renders
-    // Use setTimeout to wait for lazy-loaded Pricing component to mount
-    setTimeout(() => {
+    // Poll for the pricing-plans anchor until the lazy-loaded component mounts
+    let attempts = 0;
+    const poll = setInterval(() => {
       const el = document.getElementById('pricing-plans');
       if (el) {
+        clearInterval(poll);
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else if (++attempts >= 20) {
+        clearInterval(poll);
       }
-    }, 100);
+    }, 50);
   }, [navigate]);
 
   // Handle signup completion - store user and go to dashboard (memoized for Login/SignUp)
@@ -1834,7 +1834,7 @@ const App: React.FC = () => {
         case PageView.HOW_IT_WORKS:
           return <HowItWorks onStart={handleStart} />;
         case PageView.PRICING:
-          return <Pricing onStart={handleStart} onNavigate={navigate} />;
+          return <Pricing onStart={handleStart} onNavigate={navigate} onCheckoutSuccess={() => startPostCheckoutSync(subscriptionTier)} />;
         case PageView.FAQ:
           return <FAQ onNavigate={navigate} />;
         case PageView.SIGNUP:
@@ -1910,6 +1910,10 @@ const App: React.FC = () => {
         }
         return <ScoutChatScreen />;
       case PageView.DASHBOARD:
+        // After Stripe checkout, poll until subscription tier updates before showing dashboard
+        if (dashboardUser && isPostCheckout) {
+          return <LoadingScreen message="Activating your subscription..." />;
+        }
         if (dashboardUser) {
           // Determine what content to show inside dashboard
           let dashboardContent: React.ReactNode = null;
@@ -2003,14 +2007,7 @@ const App: React.FC = () => {
         // If auth is still loading OR user is authenticated but dashboardUser not synced yet,
         // show loading state (prevents white screen for OAuth users)
         if (authLoading || (isAuthenticated && !dashboardUser)) {
-          return (
-            <div className="min-h-screen flex items-center justify-center bg-light-100 dark:bg-midnight-950 transition-colors">
-              <div className="text-center">
-                <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-text-secondary font-medium">Loading your dashboard...</p>
-              </div>
-            </div>
-          );
+          return <LoadingScreen message="Loading your dashboard..." />;
         }
         // Auth finished but no user - redirect will be handled by useEffect below
         return null;

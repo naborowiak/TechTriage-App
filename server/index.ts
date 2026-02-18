@@ -45,6 +45,8 @@ import {
   resetPasswordSchema,
   checkoutSessionSchema,
   portalSessionSchema,
+  subscriptionIntentSchema,
+  paymentIntentSchema,
 } from "./validation";
 
 const app = express();
@@ -178,6 +180,9 @@ app.post(
             break;
           case "invoice.payment_failed":
             await stripeService.handlePaymentFailed(event.data.object as any);
+            break;
+          case "payment_intent.succeeded":
+            await stripeService.handlePaymentIntentSucceeded(event.data.object as any);
             break;
           default:
             console.log(`[STRIPE] Unhandled event type: ${event.type}`);
@@ -1035,6 +1040,43 @@ app.post("/api/stripe/create-checkout-session", validate(checkoutSessionSchema),
   }
 });
 
+// Return Stripe publishable key for frontend Elements initialization
+app.get("/api/stripe/config", (_req, res) => {
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+  if (!publishableKey) {
+    return res.status(500).json({ error: "Stripe publishable key not configured" });
+  }
+  res.json({ publishableKey });
+});
+
+// Create a subscription with PaymentIntent/SetupIntent for embedded checkout
+app.post("/api/stripe/create-subscription-intent", requireAuth, validate(subscriptionIntentSchema), async (req, res) => {
+  try {
+    const userId = (req.user as any)?.id;
+    const { priceId, promotionCode } = req.body;
+
+    const result = await stripeService.createSubscriptionIntent(userId, priceId, promotionCode);
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Subscription intent error:", error);
+    res.status(500).json({ error: "Failed to create subscription" });
+  }
+});
+
+// Create a PaymentIntent for one-time credit purchases (embedded checkout)
+app.post("/api/stripe/create-payment-intent", requireAuth, validate(paymentIntentSchema), async (req, res) => {
+  try {
+    const userId = (req.user as any)?.id;
+    const { priceId } = req.body;
+
+    const result = await stripeService.createCreditPaymentIntent(userId, priceId);
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Payment intent error:", error);
+    res.status(500).json({ error: "Failed to create payment" });
+  }
+});
+
 // Create a customer portal session
 app.post("/api/stripe/create-portal-session", validate(portalSessionSchema), async (req, res) => {
   try {
@@ -1056,7 +1098,8 @@ app.post("/api/stripe/create-portal-session", validate(portalSessionSchema), asy
 // Get subscription status
 app.get("/api/subscription/status/:userId", async (req, res) => {
   try {
-    const result = await stripeService.getSubscriptionStatus(req.params.userId);
+    const forceSync = req.query.sync === 'true';
+    const result = await stripeService.getSubscriptionStatus(req.params.userId, forceSync);
     res.json(result);
   } catch (error) {
     console.error("[STRIPE] Get subscription status error:", error);

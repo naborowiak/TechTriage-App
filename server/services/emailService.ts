@@ -1485,3 +1485,1092 @@ export async function sendSessionGuideEmail(
     return { success: false, error: String(error) };
   }
 }
+
+// ============================================
+// Subscription Lifecycle Emails
+// ============================================
+
+function getPlanFeatures(planName: string): string[] {
+  const lower = planName.toLowerCase();
+  if (lower === 'pro') {
+    return [
+      'Unlimited AI chat support',
+      'Unlimited photo analysis',
+      '15 video sessions/month included',
+      'Multi-home support (up to 5)',
+      'Priority support',
+    ];
+  }
+  if (lower === 'home') {
+    return [
+      'Unlimited AI chat support',
+      'Unlimited photo analysis',
+      '1 video session/week included',
+      'Buy extra video credits anytime',
+    ];
+  }
+  return ['5 chat sessions/month', '1 photo analysis/month'];
+}
+
+// --- 1. Subscription Confirmation ---
+
+function getSubscriptionConfirmationText(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(planName);
+  return `Welcome to TotalAssist ${planName} — You're all set!
+
+Hey ${displayName},
+
+Welcome to TotalAssist ${planName}! Your subscription is now active and you have full access to all your plan features.
+
+What's included in your ${planName} plan:
+${features.map(f => `- ${f}`).join('\n')}
+
+Go to your dashboard to get started: ${APP_BASE_URL}/dashboard
+
+---
+Powered by TotalAssist
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getSubscriptionConfirmationHtml(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(planName);
+
+  const featuresHtml = features.map(f => `
+    <tr>
+      <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+        <span style="color: ${BRAND.electricCyan}; font-size: 16px;">&#10003;</span>
+      </td>
+      <td valign="top" style="padding-bottom: 12px;">
+        <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">${f}</p>
+      </td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Welcome to TotalAssist ${planName}</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Welcome ${displayName}! Your TotalAssist ${planName} plan is now active.`)}
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("You're In!", `Your ${planName} plan is active`)}
+
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Welcome to <strong style="color: ${BRAND.scoutPurple};">TotalAssist ${planName}</strong>! Your subscription is now active and you have full access to all your plan features.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">What's included</p>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        ${featuresHtml}
+                    </table>
+                </td>
+            </tr>
+
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Ready to get started?</h2>
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Head to your dashboard and describe what's going on.
+                    </p>
+                    ${getPrimaryButtonHtml("Go to Dashboard", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+export async function sendSubscriptionConfirmationEmail(
+  email: string,
+  firstName: string | undefined,
+  planName: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending subscription confirmation email to ${email} (${planName})`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, Plan: ${planName}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Welcome to TotalAssist ${planName} — You're all set!`,
+      html: getSubscriptionConfirmationHtml(firstName || "", planName),
+      text: getSubscriptionConfirmationText(firstName || "", planName),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Subscription confirmation email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send subscription confirmation email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// --- 2. Plan Upgrade ---
+
+function getPlanUpgradeText(firstName: string, newPlan: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(newPlan);
+  return `You've upgraded to TotalAssist ${newPlan}!
+
+Hey ${displayName},
+
+Congratulations! Your plan has been upgraded to ${newPlan}. You now have access to even more features.
+
+Your ${newPlan} plan includes:
+${features.map(f => `- ${f}`).join('\n')}
+
+Your billing has been prorated — you'll only pay the difference for the remainder of your current billing period.
+
+Explore your new features: ${APP_BASE_URL}/dashboard
+
+---
+Powered by TotalAssist
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getPlanUpgradeHtml(firstName: string, newPlan: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(newPlan);
+
+  const featuresHtml = features.map(f => `
+    <tr>
+      <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+        <span style="color: ${BRAND.electricCyan}; font-size: 16px;">&#10003;</span>
+      </td>
+      <td valign="top" style="padding-bottom: 12px;">
+        <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">${f}</p>
+      </td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Plan Upgraded to ${newPlan}</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Congrats ${displayName}! You've upgraded to TotalAssist ${newPlan}.`)}
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Plan Upgraded!", `You're now on ${newPlan}`)}
+
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Congratulations! Your plan has been upgraded to <strong style="color: ${BRAND.scoutPurple};">${newPlan}</strong>. You now have access to even more features.
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
+                        Your billing has been prorated &mdash; you'll only pay the difference for the remainder of your current billing period.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Your new features</p>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        ${featuresHtml}
+                    </table>
+                </td>
+            </tr>
+
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Explore your new features</h2>
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Your upgraded plan is ready to use right now.
+                    </p>
+                    ${getPrimaryButtonHtml("Explore Your New Features", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+export async function sendPlanUpgradeEmail(
+  email: string,
+  firstName: string | undefined,
+  newPlan: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending plan upgrade email to ${email} (${newPlan})`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, New Plan: ${newPlan}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `You've upgraded to TotalAssist ${newPlan}!`,
+      html: getPlanUpgradeHtml(firstName || "", newPlan),
+      text: getPlanUpgradeText(firstName || "", newPlan),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Plan upgrade email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send plan upgrade email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// --- 3. Plan Downgrade ---
+
+function getPlanDowngradeText(firstName: string, newPlan: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(newPlan);
+  return `Your TotalAssist plan has been updated
+
+Hey ${displayName},
+
+Your plan has been changed to ${newPlan}. You still have access to great features.
+
+Your ${newPlan} plan includes:
+${features.map(f => `- ${f}`).join('\n')}
+
+Any prorated credit will be applied to your next invoice.
+
+Go to Dashboard: ${APP_BASE_URL}/dashboard
+
+---
+Powered by TotalAssist
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getPlanDowngradeHtml(firstName: string, newPlan: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(newPlan);
+
+  const featuresHtml = features.map(f => `
+    <tr>
+      <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+        <span style="color: ${BRAND.electricCyan}; font-size: 16px;">&#10003;</span>
+      </td>
+      <td valign="top" style="padding-bottom: 12px;">
+        <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">${f}</p>
+      </td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Your TotalAssist Plan Has Been Updated</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Hey ${displayName}, your TotalAssist plan has been changed to ${newPlan}.`)}
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Plan Updated", "Your plan has been changed")}
+
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Your plan has been changed to <strong style="color: ${BRAND.scoutPurple};">${newPlan}</strong>. You still have access to great features.
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
+                        Any prorated credit will be applied to your next invoice.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Features still available</p>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        ${featuresHtml}
+                    </table>
+                </td>
+            </tr>
+
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    ${getPrimaryButtonHtml("Go to Dashboard", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+export async function sendPlanDowngradeEmail(
+  email: string,
+  firstName: string | undefined,
+  newPlan: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending plan downgrade email to ${email} (${newPlan})`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, New Plan: ${newPlan}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Your TotalAssist plan has been updated",
+      html: getPlanDowngradeHtml(firstName || "", newPlan),
+      text: getPlanDowngradeText(firstName || "", newPlan),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Plan downgrade email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send plan downgrade email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// --- 4. Cancellation Scheduled ---
+
+function getCancellationScheduledText(firstName: string, planName: string, periodEndDate: Date): string {
+  const displayName = firstName || "there";
+  const formattedDate = periodEndDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  return `Your TotalAssist cancellation is confirmed
+
+Hey ${displayName},
+
+We're sorry to see you go. Your TotalAssist ${planName} plan has been set to cancel.
+
+You'll still have full access to all your ${planName} features until ${formattedDate}.
+
+Changed your mind? You can reactivate your subscription anytime before ${formattedDate} and keep all your features.
+
+Reactivate Subscription: ${APP_BASE_URL}/dashboard
+
+---
+Powered by TotalAssist
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getCancellationScheduledHtml(firstName: string, planName: string, periodEndDate: Date): string {
+  const displayName = firstName || "there";
+  const formattedDate = periodEndDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Your TotalAssist Cancellation</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Your TotalAssist ${planName} cancellation is confirmed. You have access until ${formattedDate}.`)}
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("We're Sorry to See You Go", "Your cancellation is confirmed")}
+
+            <!-- Access Until Banner -->
+            <tr>
+              <td align="center" style="background-color: ${BRAND.electricCyan}15; padding: 20px 30px;">
+                <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding-right: 12px;" valign="middle">
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" valign="middle" width="44" height="44" style="width: 44px; height: 44px; background: ${BRAND.electricCyan}; border-radius: 50%; font-size: 20px;">&#128197;</td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td>
+                      <p style="margin: 0; color: ${BRAND.electricCyan}; font-size: 16px; font-weight: 700;">Access until ${formattedDate}</p>
+                      <p style="margin: 4px 0 0; color: ${BRAND.slate}; font-size: 14px;">Your ${planName} features remain active</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Your TotalAssist <strong style="color: ${BRAND.scoutPurple};">${planName}</strong> plan has been set to cancel. You'll still have full access to all your features until <strong style="color: ${BRAND.midnight};">${formattedDate}</strong>.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="card-bg" style="background: #ffffff; border-radius: 12px; border: 1px solid ${BRAND.lightMuted};">
+                        <tr>
+                            <td style="padding: 25px;">
+                                <p style="margin: 0 0 10px; color: ${BRAND.midnight}; font-size: 16px; font-weight: 600;">Changed your mind?</p>
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
+                                    You can reactivate your subscription anytime before ${formattedDate} and keep all your features. No need to re-enter payment details.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Want to stay?</h2>
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Reactivate with one click and pick up right where you left off.
+                    </p>
+                    ${getPrimaryButtonHtml("Reactivate Subscription", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+export async function sendCancellationScheduledEmail(
+  email: string,
+  firstName: string | undefined,
+  planName: string,
+  periodEndDate: Date
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending cancellation scheduled email to ${email} (${planName})`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, Plan: ${planName}, Ends: ${periodEndDate.toISOString()}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Your TotalAssist cancellation is confirmed",
+      html: getCancellationScheduledHtml(firstName || "", planName, periodEndDate),
+      text: getCancellationScheduledText(firstName || "", planName, periodEndDate),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Cancellation scheduled email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send cancellation scheduled email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// --- 5. Subscription Ended (Win-back) ---
+
+function getSubscriptionEndedText(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(planName);
+  return `Your TotalAssist ${planName} membership has ended
+
+Hey ${displayName},
+
+Your TotalAssist ${planName} membership has ended. We hope you enjoyed using our service.
+
+What you're missing:
+${features.map(f => `- ${f}`).join('\n')}
+
+We'd love to have you back! You can resubscribe anytime.
+
+View Plans: ${APP_BASE_URL}/pricing
+
+Plans start at $9.99/month.
+
+---
+Powered by TotalAssist
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getSubscriptionEndedHtml(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(planName);
+
+  const featuresHtml = features.map(f => `
+    <tr>
+      <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+        <span style="color: #ef4444; font-size: 16px;">&#10007;</span>
+      </td>
+      <td valign="top" style="padding-bottom: 12px;">
+        <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">${f}</p>
+      </td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Your TotalAssist Membership Has Ended</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Your TotalAssist ${planName} membership has ended. We'd love to have you back!`)}
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Membership Ended", `Your ${planName} plan has expired`)}
+
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Your TotalAssist <strong style="color: ${BRAND.scoutPurple};">${planName}</strong> membership has ended. We hope you enjoyed using our service.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">What you're missing</p>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        ${featuresHtml}
+                    </table>
+                </td>
+            </tr>
+
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <div style="display: inline-block; background: linear-gradient(135deg, ${BRAND.electricIndigo}, ${BRAND.electricCyan}); color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+                        Come Back
+                    </div>
+
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">We'd love to have you back</h2>
+
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Resubscribe anytime and get instant access to all your features.
+                    </p>
+
+                    ${getPrimaryButtonHtml("View Plans", APP_BASE_URL + "/pricing")}
+
+                    <p style="margin: 25px 0 0; color: #64748b; font-size: 13px;">
+                        Plans start at $9.99/month
+                    </p>
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+export async function sendSubscriptionEndedEmail(
+  email: string,
+  firstName: string | undefined,
+  planName: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending subscription ended email to ${email} (${planName})`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, Former Plan: ${planName}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Your TotalAssist ${planName} membership has ended`,
+      html: getSubscriptionEndedHtml(firstName || "", planName),
+      text: getSubscriptionEndedText(firstName || "", planName),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Subscription ended email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send subscription ended email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// --- 6. Reactivation ---
+
+function getReactivationText(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(planName);
+  return `Welcome back to TotalAssist ${planName}!
+
+Hey ${displayName},
+
+Great news! Your TotalAssist ${planName} plan is active again. All your features have been restored.
+
+Your ${planName} plan includes:
+${features.map(f => `- ${f}`).join('\n')}
+
+Your subscription will continue normally from your next billing date.
+
+Go to Dashboard: ${APP_BASE_URL}/dashboard
+
+---
+Powered by TotalAssist
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getReactivationHtml(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+  const features = getPlanFeatures(planName);
+
+  const featuresHtml = features.map(f => `
+    <tr>
+      <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+        <span style="color: ${BRAND.electricCyan}; font-size: 16px;">&#10003;</span>
+      </td>
+      <td valign="top" style="padding-bottom: 12px;">
+        <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">${f}</p>
+      </td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Welcome Back to TotalAssist</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Welcome back ${displayName}! Your TotalAssist ${planName} plan is active again.`)}
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Welcome Back!", `Your ${planName} plan is active again`)}
+
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        Great news! Your TotalAssist <strong style="color: ${BRAND.scoutPurple};">${planName}</strong> plan is active again. All your features have been restored.
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.6;">
+                        Your subscription will continue normally from your next billing date.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Features restored</p>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        ${featuresHtml}
+                    </table>
+                </td>
+            </tr>
+
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Pick up where you left off</h2>
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Your dashboard and session history are waiting for you.
+                    </p>
+                    ${getPrimaryButtonHtml("Go to Dashboard", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+export async function sendReactivationEmail(
+  email: string,
+  firstName: string | undefined,
+  planName: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending reactivation email to ${email} (${planName})`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, Plan: ${planName}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Welcome back to TotalAssist ${planName}!`,
+      html: getReactivationHtml(firstName || "", planName),
+      text: getReactivationText(firstName || "", planName),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Reactivation email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send reactivation email:", error);
+    return { success: false, error: String(error) };
+  }
+}
+
+// --- 7. Payment Failed (Dunning) ---
+
+function getPaymentFailedText(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+  return `Action needed: Payment failed for your TotalAssist subscription
+
+Hey ${displayName},
+
+We were unable to process your payment for your TotalAssist ${planName} plan.
+
+What happens next:
+- We'll automatically retry the payment in a few days
+- Your access continues while we retry
+- If the payment continues to fail, your subscription may be canceled
+
+Please update your payment method to avoid any interruption to your service.
+
+Update Payment Method: ${APP_BASE_URL}/dashboard
+
+---
+Powered by TotalAssist
+(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.
+Privacy Policy: ${APP_BASE_URL}/privacy
+Terms of Service: ${APP_BASE_URL}/terms`;
+}
+
+function getPaymentFailedHtml(firstName: string, planName: string): string {
+  const displayName = firstName || "there";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>Payment Issue - TotalAssist</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+
+    ${getPreheaderHtml(`Payment failed for your TotalAssist ${planName} plan. Please update your payment method.`)}
+
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td>
+        <![endif]-->
+
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+            ${getHeaderHtml("Payment Issue", "Action needed for your subscription")}
+
+            <!-- Red Warning Banner -->
+            <tr>
+              <td align="center" style="background-color: #fef2f2; padding: 20px 30px; border-bottom: 2px solid #fecaca;">
+                <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding-right: 12px;" valign="middle">
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" valign="middle" width="44" height="44" style="width: 44px; height: 44px; background: #ef4444; border-radius: 50%; font-size: 20px; color: #ffffff;">!</td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td>
+                      <p style="margin: 0; color: #ef4444; font-size: 16px; font-weight: 700;">Your payment could not be processed</p>
+                      <p style="margin: 4px 0 0; color: ${BRAND.slate}; font-size: 14px;">Please update your payment method</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hey <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        We were unable to process your payment for your TotalAssist <strong style="color: ${BRAND.scoutPurple};">${planName}</strong> plan.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="light-section content-padding" style="background-color: ${BRAND.light}; padding: 35px 40px;">
+                    <p style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">What happens next</p>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+                                <span style="color: ${BRAND.electricIndigo}; font-size: 16px;">1.</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 12px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">We'll automatically retry the payment in a few days</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px; padding-bottom: 12px;">
+                                <span style="color: ${BRAND.electricIndigo}; font-size: 16px;">2.</span>
+                            </td>
+                            <td valign="top" style="padding-bottom: 12px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">Your access continues while we retry</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="30" valign="top" style="padding-right: 12px;">
+                                <span style="color: ${BRAND.electricIndigo}; font-size: 16px;">3.</span>
+                            </td>
+                            <td valign="top">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 14px; line-height: 1.5;">If the payment continues to fail, your subscription may be canceled</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 26px; font-weight: 700; line-height: 1.3;">Keep your access</h2>
+                    <p style="margin: 0 0 30px; color: #94a3b8; font-size: 15px; line-height: 1.6;">
+                        Update your payment method to avoid any interruption.
+                    </p>
+                    ${getPrimaryButtonHtml("Update Payment Method", APP_BASE_URL + "/dashboard")}
+                </td>
+            </tr>
+
+            ${getFooterHtml()}
+
+        </table>
+
+        <!--[if mso]>
+        </td></tr>
+        </table>
+        <![endif]-->
+    </center>
+</body>
+</html>`;
+}
+
+export async function sendPaymentFailedEmail(
+  email: string,
+  firstName: string | undefined,
+  planName: string
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending payment failed email to ${email} (${planName})`);
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, Plan: ${planName}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const data = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Action needed: Payment failed for your TotalAssist subscription",
+      html: getPaymentFailedHtml(firstName || "", planName),
+      text: getPaymentFailedText(firstName || "", planName),
+    });
+
+    if (data.error) {
+      console.error("[EMAIL] Resend API Error:", data.error);
+      return { success: false, error: data.error.message };
+    }
+
+    console.log("[EMAIL] Payment failed email sent:", data.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send payment failed email:", error);
+    return { success: false, error: String(error) };
+  }
+}

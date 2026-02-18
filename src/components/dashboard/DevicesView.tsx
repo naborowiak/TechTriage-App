@@ -17,6 +17,7 @@ import {
   Trash2,
   Edit3,
 } from "lucide-react";
+import { LoadingScreen } from "../LoadingScreen";
 import { formatCaseDisplayId } from "../../types";
 
 interface Device {
@@ -200,7 +201,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-8 h-8 border-3 border-electric-indigo border-t-transparent rounded-full animate-spin" />
+        <LoadingScreen size="sm" />
       </div>
     );
   }

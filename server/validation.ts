@@ -126,6 +126,15 @@ export const portalSessionSchema = z.object({
   returnUrl: z.string().url().max(2000).optional(),
 });
 
+export const subscriptionIntentSchema = z.object({
+  priceId: z.string().min(1, "priceId is required").max(255).regex(/^price_/, "Invalid price ID format"),
+  promotionCode: z.string().max(255).trim().optional(),
+});
+
+export const paymentIntentSchema = z.object({
+  priceId: z.string().min(1, "priceId is required").max(255).regex(/^price_/, "Invalid price ID format"),
+});
+
 // ============================================
 // Validation middleware factory
 // ============================================

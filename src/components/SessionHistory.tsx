@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Clock, Download, Trash2, MessageSquare, Video, Camera, Search, FileText, Mic, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { LoadingScreen } from './LoadingScreen';
 import { CaseRecord } from '../types';
 
 interface SessionHistoryProps {
@@ -322,9 +323,8 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
         {/* Cases List */}
         <div className="lg:col-span-1 space-y-3">
           {isLoading ? (
-            <div className="bg-white dark:bg-midnight-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-midnight-700">
-              <div className="w-8 h-8 border-3 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-text-muted text-sm">Loading cases...</p>
+            <div className="bg-white dark:bg-midnight-800 rounded-2xl p-8 border border-gray-100 dark:border-midnight-700">
+              <LoadingScreen size="sm" message="Loading cases..." />
             </div>
           ) : filteredCases.length === 0 ? (
             <div className="bg-white dark:bg-midnight-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-midnight-700">

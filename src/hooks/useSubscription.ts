@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { CheckoutProduct } from '../components/CheckoutModal';
+import { isCreditPackPurchase } from '../config/stripe';
 
 export type SubscriptionTier = 'free' | 'home' | 'pro';
 
@@ -46,6 +48,15 @@ export interface StripePrices {
   };
 }
 
+export interface CheckoutState {
+  isOpen: boolean;
+  clientSecret: string;
+  type: 'payment' | 'setup';
+  product: CheckoutProduct | null;
+  loading: boolean;
+  error: string | null;
+}
+
 const defaultState: SubscriptionState = {
   tier: 'free',
   status: 'active',
@@ -63,16 +74,26 @@ const defaultState: SubscriptionState = {
 export function useSubscription(userId: string | undefined) {
   const [state, setState] = useState<SubscriptionState>(defaultState);
   const [prices, setPrices] = useState<StripePrices | null>(null);
+  const [isPostCheckout, setIsPostCheckout] = useState(false);
+  const [checkoutState, setCheckoutState] = useState<CheckoutState>({
+    isOpen: false,
+    clientSecret: '',
+    type: 'payment',
+    product: null,
+    loading: false,
+    error: null,
+  });
 
-  // Fetch subscription status
-  const fetchStatus = useCallback(async () => {
+  // Fetch subscription status. Pass forceSync=true after checkout to sync from Stripe.
+  const fetchStatus = useCallback(async (forceSync = false) => {
     if (!userId) {
       setState((prev) => ({ ...prev, isLoading: false }));
       return;
     }
 
     try {
-      const res = await fetch(`/api/subscription/status/${userId}`, {
+      const syncParam = forceSync ? '?sync=true' : '';
+      const res = await fetch(`/api/subscription/status/${userId}${syncParam}`, {
         credentials: 'include',
       });
 
@@ -138,24 +159,115 @@ export function useSubscription(userId: string | undefined) {
     fetchPrices();
   }, [fetchStatus, fetchPrices]);
 
-  // Handle upgraded=true query param (after successful checkout)
+  // Poll with forceSync=true until tier changes from current tier or max attempts reached.
+  // Used after both redirect checkout (upgraded=true param) and embedded modal checkout.
+  const startPostCheckoutSync = useCallback((previousTier?: string) => {
+    setIsPostCheckout(true);
+    const baseTier = previousTier || state.tier;
+
+    let attempts = 0;
+    const maxAttempts = 8;
+    const pollInterval = 2000;
+
+    const poll = setInterval(async () => {
+      attempts++;
+      await fetchStatus(true);
+
+      setState((prev) => {
+        if (prev.tier !== baseTier || attempts >= maxAttempts) {
+          clearInterval(poll);
+          setIsPostCheckout(false);
+        }
+        return prev;
+      });
+    }, pollInterval);
+  }, [fetchStatus, state.tier]);
+
+  // Handle upgraded=true query param (after successful redirect checkout)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('upgraded') === 'true') {
-      // Remove the param from URL to prevent re-triggering
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, '', newUrl);
+    if (params.get('upgraded') !== 'true') return;
 
-      // Refetch subscription status after a brief delay to allow webhook processing
-      const timer = setTimeout(() => {
-        fetchStatus();
-      }, 1500);
+    window.history.replaceState({}, '', window.location.pathname);
+    startPostCheckoutSync();
+  }, [startPostCheckoutSync]);
 
-      return () => clearTimeout(timer);
+  // Open embedded checkout modal (Stripe Elements)
+  // Falls back to legacy redirect checkout if Elements endpoints aren't available
+  const openCheckout = async (priceId: string, product: CheckoutProduct) => {
+    if (!userId) {
+      throw new Error('User not authenticated');
     }
-  }, [fetchStatus]);
 
-  // Start checkout flow
+    setCheckoutState((prev) => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const isCredit = isCreditPackPurchase(priceId);
+      const endpoint = isCredit
+        ? '/api/stripe/create-payment-intent'
+        : '/api/stripe/create-subscription-intent';
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ priceId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        // If the Elements endpoint isn't available, fall back to legacy redirect
+        if (res.status === 404) {
+          console.warn('[Checkout] Elements endpoint not available, falling back to redirect');
+          setCheckoutState((prev) => ({ ...prev, loading: false }));
+          await startCheckout(priceId);
+          return;
+        }
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      const data = await res.json();
+
+      // For plan changes with no payment needed (e.g. downgrade with proration credit)
+      if (!data.clientSecret) {
+        await fetchStatus(true);
+        setCheckoutState((prev) => ({ ...prev, loading: false }));
+        return 'plan_changed' as const;
+      }
+
+      setCheckoutState({
+        isOpen: true,
+        clientSecret: data.clientSecret,
+        type: data.type || 'payment',
+        product,
+        loading: false,
+        error: null,
+      });
+    } catch (err) {
+      setCheckoutState((prev) => ({
+        ...prev,
+        loading: false,
+        error: err instanceof Error ? err.message : 'Checkout failed',
+      }));
+      throw err;
+    }
+  };
+
+  // Close checkout modal and refresh subscription status
+  const closeCheckout = () => {
+    setCheckoutState({
+      isOpen: false,
+      clientSecret: '',
+      type: 'payment',
+      product: null,
+      loading: false,
+      error: null,
+    });
+    // Force sync from Stripe after checkout to pick up plan changes immediately
+    fetchStatus(true);
+  };
+
+  // Legacy redirect checkout (fallback)
   const startCheckout = async (priceId: string) => {
     if (!userId) {
       throw new Error('User not authenticated');
@@ -310,10 +422,15 @@ export function useSubscription(userId: string | undefined) {
     ...state,
     prices,
     isInTrial,
+    isPostCheckout,
+    checkoutState,
 
     // Actions
-    refetch: fetchStatus,
+    refetch: () => fetchStatus(true),
     startCheckout,
+    openCheckout,
+    closeCheckout,
+    startPostCheckoutSync,
     openPortal,
     cancelSubscription,
     reactivateSubscription,

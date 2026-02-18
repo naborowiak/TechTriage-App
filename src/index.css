@@ -157,10 +157,17 @@ body {
 }
 
 /* ── Header variant (no overflow hidden — allows dropdowns) ── */
-/* Same dark bg as dock-glow, used on the site-wide marketing header */
+/* Light mode: clean white with subtle border; dark mode: dark bg matching dock */
 .header-glow {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dark .header-glow {
   background: #191919;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: none;
 }
 
 /* Nav item hover — colored underline bar + text color (Algolia-style) */
@@ -1070,4 +1077,118 @@ body {
 
 .pb-safe-8 {
   padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── Hex Loader ── */
+.hex-socket {
+  width: 200px;
+  height: 200px;
+  position: relative;
+}
+
+.hex-socket-sm {
+  transform: scale(0.5);
+  /* 200px scaled to 100px visual; reclaim (200-100)/2 = 50px per side */
+  margin: -50px;
+}
+
+.hex-brick {
+  background: #6366F1;
+  width: 30px;
+  height: 17px;
+  position: absolute;
+  top: 5px;
+  animation: hex-fade 2s infinite;
+}
+
+.hex-brick.h2 { transform: rotate(60deg); }
+.hex-brick.h3 { transform: rotate(-60deg); }
+
+.gel {
+  height: 30px;
+  width: 30px;
+  transition: all .3s;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.center-gel {
+  margin-left: -15px;
+  margin-top: -15px;
+  animation: hex-pulse 2s infinite;
+}
+
+.c1  { margin-left: -47px;  margin-top: -15px; }
+.c2  { margin-left: -31px;  margin-top: -43px; }
+.c3  { margin-left: 1px;    margin-top: -43px; }
+.c4  { margin-left: 17px;   margin-top: -15px; }
+.c5  { margin-left: -31px;  margin-top: 13px;  }
+.c6  { margin-left: 1px;    margin-top: 13px;  }
+.c7  { margin-left: -63px;  margin-top: -43px; }
+.c8  { margin-left: 33px;   margin-top: -43px; }
+.c9  { margin-left: -15px;  margin-top: 41px;  }
+.c10 { margin-left: -63px;  margin-top: 13px;  }
+.c11 { margin-left: 33px;   margin-top: 13px;  }
+.c12 { margin-left: -15px;  margin-top: -71px; }
+.c13 { margin-left: -47px;  margin-top: -71px; }
+.c14 { margin-left: 17px;   margin-top: -71px; }
+.c15 { margin-left: -47px;  margin-top: 41px;  }
+.c16 { margin-left: 17px;   margin-top: 41px;  }
+.c17 { margin-left: -79px;  margin-top: -15px; }
+.c18 { margin-left: 49px;   margin-top: -15px; }
+.c19 { margin-left: -63px;  margin-top: -99px; }
+.c20 { margin-left: 33px;   margin-top: -99px; }
+.c21 { margin-left: 1px;    margin-top: -99px; }
+.c22 { margin-left: -31px;  margin-top: -99px; }
+.c23 { margin-left: -63px;  margin-top: 69px;  }
+.c24 { margin-left: 33px;   margin-top: 69px;  }
+.c25 { margin-left: 1px;    margin-top: 69px;  }
+.c26 { margin-left: -31px;  margin-top: 69px;  }
+.c28 { margin-left: -95px;  margin-top: -43px; }
+.c29 { margin-left: -95px;  margin-top: 13px;  }
+.c30 { margin-left: 49px;   margin-top: 41px;  }
+.c31 { margin-left: -79px;  margin-top: -71px; }
+.c32 { margin-left: -111px; margin-top: -15px; }
+.c33 { margin-left: 65px;   margin-top: -43px; }
+.c34 { margin-left: 65px;   margin-top: 13px;  }
+.c35 { margin-left: -79px;  margin-top: 41px;  }
+.c36 { margin-left: 49px;   margin-top: -71px; }
+.c37 { margin-left: 81px;   margin-top: -15px; }
+
+.r1 { animation: hex-pulse 2s infinite .2s; }
+.r2 { animation: hex-pulse 2s infinite .4s; }
+.r3 { animation: hex-pulse 2s infinite .6s; }
+
+.r1 > .hex-brick { animation: hex-fade 2s infinite .2s; }
+.r2 > .hex-brick { animation: hex-fade 2s infinite .4s; }
+.r3 > .hex-brick { animation: hex-fade 2s infinite .6s; }
+
+@keyframes hex-pulse {
+  0%   { transform: scale(1);    }
+  50%  { transform: scale(0.01); }
+  100% { transform: scale(1);    }
+}
+
+@keyframes hex-fade {
+  0%   { background: #6366F1; }
+  50%  { background: #4338CA; }
+  100% { background: #6366F1; }
+}
+
+/* Light mode: indigo → deeper indigo */
+/* Dark mode: cycle indigo → cyan for more contrast on dark bg */
+.dark .hex-brick {
+  background: #06B6D4;
+}
+
+.dark .r1 > .hex-brick { animation-name: hex-fade-dark; }
+.dark .r2 > .hex-brick { animation-name: hex-fade-dark; }
+.dark .r3 > .hex-brick { animation-name: hex-fade-dark; }
+.dark .center-gel > .hex-brick { animation-name: hex-fade-dark; }
+
+@keyframes hex-fade-dark {
+  0%   { background: #06B6D4; }
+  50%  { background: #6366F1; }
+  100% { background: #06B6D4; }
 }

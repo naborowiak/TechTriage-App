@@ -1,23 +1,34 @@
 import React, { useState } from 'react';
-import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Mic, Video, Shield, Clock, Home, Users, Zap, Loader2, Lock, Plus, Minus, HelpCircle, FileText, Sparkles } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Check, ArrowRight, ArrowLeft, MessageSquare, Camera, Mic, Video, Shield, Clock, Home, Users, Zap, Loader2, Lock, Plus, Minus, HelpCircle, FileText, Sparkles, X } from 'lucide-react';
 import { PageView } from '../types';
 import { useSubscription, SubscriptionTier } from '../hooks/useSubscription';
 import { useAuth } from '../hooks/useAuth';
 import { ScoutSignalIcon } from './Logo';
 import { AnimatedElement } from '../hooks/useAnimations';
+import { CheckoutModal } from './CheckoutModal';
+import type { CheckoutProduct } from './CheckoutModal';
 
 interface PricingProps {
   onStart: () => void;
   onNavigate: (view: PageView) => void;
+  onCheckoutSuccess?: () => void;
 }
 
-export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
+export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess }) => {
   const [isAnnual, setIsAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
-
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    planName: string;
+    targetTier: string;
+    priceId: string;
+    product: CheckoutProduct | null;
+    isUpgrade: boolean;
+  } | null>(null);
   const { user, isLoading: authLoading } = useAuth();
-  const { tier: currentTier, prices, startCheckout, isLoading: subLoading } = useSubscription(user?.id);
+  const { tier: currentTier, prices, openCheckout, closeCheckout, checkoutState, isLoading: subLoading } = useSubscription(user?.id);
 
   // Map plan names to tier identifiers
   const planToTier: Record<string, SubscriptionTier> = {
@@ -25,6 +36,13 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
     'TotalAssist Home': 'home',
     'TotalAssist Pro': 'pro',
   };
+
+  // Dynamically highlight the next tier up to encourage upgrades
+  const highlightedTier: SubscriptionTier | null = (() => {
+    if (!user || currentTier === 'free') return 'home';
+    if (currentTier === 'home') return 'pro';
+    return null; // Pro users: no highlight needed
+  })();
 
   // Handle plan selection
   const handlePlanSelect = async (planName: string) => {
@@ -53,22 +71,73 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       return;
     }
 
+    const priceId = isAnnual
+      ? prices[tier as 'home' | 'pro'].annual
+      : prices[tier as 'home' | 'pro'].monthly;
+
+    if (!priceId) {
+      console.error('Price ID not configured for', tier, isAnnual ? 'annual' : 'monthly');
+      alert('Payment is not configured yet. Please contact support.');
+      return;
+    }
+
+    const plan = plans.find((p) => p.name === planName);
+    const product: CheckoutProduct = {
+      name: planName,
+      description: plan?.tagline || '',
+      price: `$${isAnnual ? plan?.annualPrice : plan?.monthlyPrice}`,
+      interval: '/mo',
+      features: plan?.features?.slice(0, 5),
+      isSubscription: true,
+    };
+
+    // If user already has a paid plan, show confirmation dialog before charging
+    if (currentTier !== 'free' && currentTier !== tier) {
+      const isUpgrade = (currentTier === 'home' && tier === 'pro');
+      setConfirmDialog({
+        open: true,
+        planName,
+        targetTier: tier,
+        priceId,
+        product,
+        isUpgrade,
+      });
+      return;
+    }
+
+    // New subscription (free → paid): open checkout modal
     setIsCheckingOut(planName);
     try {
-      const priceId = isAnnual
-        ? prices[tier as 'home' | 'pro'].annual
-        : prices[tier as 'home' | 'pro'].monthly;
-
-      if (!priceId) {
-        console.error('Price ID not configured for', tier, isAnnual ? 'annual' : 'monthly');
-        alert('Payment is not configured yet. Please contact support.');
-        return;
-      }
-
-      await startCheckout(priceId);
+      await openCheckout(priceId, product);
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Failed to start checkout. Please try again.');
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to start checkout: ${msg}`);
+    } finally {
+      setIsCheckingOut(null);
+    }
+  };
+
+  // Execute confirmed plan change (upgrade or downgrade with card on file)
+  const handleConfirmedPlanChange = async () => {
+    if (!confirmDialog) return;
+    const { planName, priceId, product } = confirmDialog;
+    setConfirmDialog(null);
+    setIsCheckingOut(planName);
+
+    try {
+      const result = await openCheckout(priceId, product!);
+
+      if (result === 'plan_changed') {
+        // Trigger the loading screen via App.tsx's startPostCheckoutSync,
+        // which polls until the tier updates in the frontend state
+        if (onCheckoutSuccess) onCheckoutSuccess();
+        onNavigate(PageView.DASHBOARD);
+      }
+    } catch (error) {
+      console.error('Plan change error:', error);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to change plan: ${msg}`);
     } finally {
       setIsCheckingOut(null);
     }
@@ -84,6 +153,11 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
 
     if (user && currentTier === tier) {
       return 'Current Plan';
+    }
+
+    // Logged-in user viewing the free plan (but on a paid tier)
+    if (user && tier === 'free') {
+      return 'Free Plan';
     }
 
     if (user && tier !== 'free') {
@@ -152,7 +226,6 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
       ],
       cta: 'Get Started',
       ctaStyle: 'primary',
-      highlight: true,
     },
     {
       name: 'TotalAssist Pro',
@@ -378,7 +451,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-start">
             {plans.map((plan, i) => {
               const isCurrentPlan = !!(user && currentTier === planToTier[plan.name]);
-              const isHighlighted = plan.highlight && !isCurrentPlan;
+              const isHighlighted = highlightedTier !== null && planToTier[plan.name] === highlightedTier;
 
               return (
               <AnimatedElement key={i} animation="fadeInUp" delay={0.2 + i * 0.15}>
@@ -422,12 +495,12 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   )}
                   {isHighlighted && (
                     <div className="absolute left-1/2 -translate-x-1/2 -top-4 z-10 bg-white text-electric-indigo text-xs font-bold px-5 py-2 rounded-full shadow-lg shadow-electric-indigo/30 whitespace-nowrap">
-                      MOST POPULAR
+                      {highlightedTier === 'pro' ? 'RECOMMENDED' : 'MOST POPULAR'}
                     </div>
                   )}
 
                 <div className={`relative flex flex-col flex-1 ${
-                  isCurrentPlan || plan.highlight ? 'pt-4' : ''
+                  isCurrentPlan || isHighlighted ? 'pt-4' : ''
                 }`}>
 
                 <div className="flex items-center gap-3 mb-4">
@@ -494,7 +567,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   <span className={`inline-block text-xs font-medium px-3 py-1 rounded-full ${
                     isHighlighted
                       ? 'text-white/80 bg-white/15'
-                      : 'text-electric-indigo bg-electric-indigo/10 dark:bg-electric-indigo/20'
+                      : 'text-electric-indigo dark:text-electric-cyan bg-electric-indigo/10 dark:bg-electric-cyan/15'
                   }`}>
                     Best for: {plan.bestFor}
                   </span>
@@ -504,7 +577,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                   {plan.features.map((feature, j) => (
                     <li key={j} className="flex items-start gap-3 text-[15px]">
                       <Check className={`w-5 h-5 shrink-0 mt-0.5 ${
-                        isHighlighted ? 'text-white' : plan.highlight ? 'text-electric-cyan' : 'text-electric-indigo'
+                        isHighlighted ? 'text-white' : 'text-electric-indigo'
                       }`} />
                       <span className={isHighlighted ? 'text-white/85' : 'text-text-secondary'}>{feature}</span>
                     </li>
@@ -767,6 +840,75 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
           </AnimatedElement>
         </div>
       </div>
+
+      {/* Plan Change Confirmation Dialog — portaled to body to avoid transform issues */}
+      {confirmDialog?.open && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="absolute inset-0 bg-midnight-950/80 backdrop-blur-sm" onClick={() => setConfirmDialog(null)} />
+          <div className="relative w-full max-w-md mx-4 bg-white dark:bg-midnight-900 rounded-2xl border border-light-300 dark:border-midnight-700 shadow-2xl overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-electric-indigo via-electric-cyan to-scout-purple" />
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-text-primary dark:text-white">
+                  {confirmDialog.isUpgrade ? 'Confirm Upgrade' : 'Confirm Downgrade'}
+                </h3>
+                <button onClick={() => setConfirmDialog(null)} className="p-1.5 text-text-secondary hover:text-text-primary dark:hover:text-white rounded-lg hover:bg-light-200 dark:hover:bg-midnight-700 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-3 p-3 rounded-xl bg-light-100 dark:bg-midnight-800">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
+                    {confirmDialog.targetTier === 'pro' ? <Users className="w-5 h-5 text-electric-indigo" /> : <Home className="w-5 h-5 text-electric-indigo" />}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-text-primary dark:text-white">{confirmDialog.planName}</div>
+                    <div className="text-sm text-text-secondary">{confirmDialog.product?.price}{confirmDialog.product?.interval}</div>
+                  </div>
+                </div>
+
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  {confirmDialog.isUpgrade
+                    ? 'The prorated difference will be charged to your card on file. Your new plan takes effect immediately.'
+                    : 'You\'ll receive a prorated credit on your next invoice. Your plan changes immediately.'}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDialog(null)}
+                  className="flex-1 py-2.5 rounded-xl font-medium border border-light-300 dark:border-midnight-600 text-text-primary dark:text-white hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmedPlanChange}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-white btn-gradient-electric shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/50 hover:brightness-110 transition-all"
+                >
+                  {confirmDialog.isUpgrade ? 'Upgrade Now' : 'Downgrade'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Checkout Modal */}
+      {checkoutState.isOpen && checkoutState.product && (
+        <CheckoutModal
+          isOpen={checkoutState.isOpen}
+          onClose={closeCheckout}
+          clientSecret={checkoutState.clientSecret}
+          type={checkoutState.type}
+          product={checkoutState.product}
+          onSuccess={() => {
+            if (onCheckoutSuccess) onCheckoutSuccess();
+            onNavigate(PageView.DASHBOARD);
+          }}
+        />
+      )}
 
       {/* Final CTA */}
       <div

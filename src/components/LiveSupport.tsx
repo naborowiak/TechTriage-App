@@ -21,6 +21,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { Logo } from "./Logo";
+import { HexLoader } from "./LoadingScreen";
 import jsPDF from "jspdf";
 
 interface LiveSupportProps {
@@ -883,8 +884,10 @@ export const LiveSupport: React.FC<LiveSupportProps> = ({
         {/* Connecting overlay */}
         {isConnecting && !connectionError && (
           <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-midnight-900/90 backdrop-blur-sm">
-            <Loader2 className="w-12 h-12 text-electric-indigo animate-spin mb-4" />
-            <p className="text-white font-bold text-lg tracking-wide">Connecting to TotalAssist...</p>
+            <div className="dark">
+              <HexLoader size="sm" />
+            </div>
+            <p className="text-white font-bold text-lg tracking-wide mt-2">Connecting to TotalAssist...</p>
             <p className="text-white/50 text-sm mt-2">Setting up camera and microphone</p>
           </div>
         )}

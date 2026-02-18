@@ -561,6 +561,34 @@ If The_Skeptic and a Dev agent disagree:
 - ServicesSection removed from homepage (content accessible via dedicated service pages)
 - Hero carousel images now `object-contain` in fixed 16:9 box (may show background around edges)
 
+### Decision: Header Light-Mode Theme Support (Feb 18, 2026)
+- **Scope**: Frontend only — `src/App.tsx` (Header component), `src/index.css`
+- **Verdict**: Small Change Exemption (CSS/class-name styling fix, 2 files, no auth/payment/security)
+- **Changes**:
+  1. `.header-glow` CSS split into light (white bg, subtle border/shadow) and `.dark .header-glow` (original #191919)
+  2. Logo uses theme-conditional rendering (`variant="dark"` + `dark:hidden` / `variant="light"` + `hidden dark:flex`)
+  3. All nav text, hover states, focus rings, mobile menu panel/items updated from hardcoded `text-white` to `text-gray-X dark:text-white` pattern
+  4. Active nav glow (drop-shadow, boxShadow) reduced in light mode for readability on white bg
+- **Reverses**: "Universal dark nav" design decision from Animated Glow Dock phase (user-requested)
+
+### Decision: Subscription Email Fix + Pricing Highlight Logic (Feb 18, 2026)
+- **Scope**: Cross-boundary (Backend + Frontend)
+- **Files**: `server/services/stripeService.ts`, `src/components/Pricing.tsx`
+- **Verdict**: APPROVED_WITH_CONDITIONS by The_Skeptic
+
+#### Changes:
+1. **server/services/stripeService.ts** — Fixed race condition where `handleCheckoutCompleted()` updated DB tier before `handleSubscriptionUpdated()` could detect the transition, causing subscription confirmation emails to never be sent. Fix: capture `oldTier` before DB write in `handleCheckoutCompleted`, send tier-transition email after write. Added explanatory comments in both handlers documenting the intentional deduplication pattern.
+2. **src/components/Pricing.tsx** — Replaced static `highlight: true` on Home plan with dynamic `highlightedTier` computation: Free/unauthenticated → highlight Home ("MOST POPULAR"), Home tier → highlight Pro ("RECOMMENDED"), Pro tier → no highlight. Fixed residual `plan.highlight` references in padding class and checkmark color.
+
+#### Skeptic Conditions Applied:
+- Code comments in both `handleCheckoutCompleted` and `handleSubscriptionUpdated` documenting the email deduplication pattern
+- Debug log in `handleSubscriptionUpdated` uses `console.log` (not warn/error) since `oldTier === newTier` is now expected for initial subscriptions
+- Badge text contextual: "MOST POPULAR" for social proof (unauthenticated), "RECOMMENDED" for upgrade encouragement (Home users)
+
+#### Risks Accepted:
+- If Stripe changes webhook delivery ordering, email deduplication relies on DB write in `handleCheckoutCompleted` committing before `handleSubscriptionUpdated` reads (acceptable for single-instance deployment)
+- If a fourth tier is added, `highlightedTier` computation needs updating
+
 <!-- DECISIONS END -->
 
 ---

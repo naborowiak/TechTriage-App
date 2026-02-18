@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Wifi, Speaker, Thermometer, Monitor, Laptop, Printer, Gamepad2, Lock, Camera as CameraIcon, Package, X } from 'lucide-react';
+import { LoadingScreen } from './LoadingScreen';
 import { DeviceRecord } from '../types';
 
 interface HomeInventoryProps {
@@ -167,10 +168,7 @@ export const HomeInventory: React.FC<HomeInventoryProps> = ({ embedded = false }
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12">
-          <div className="w-8 h-8 border-3 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-text-muted">Loading devices...</p>
-        </div>
+        <LoadingScreen size="sm" message="Loading devices..." />
       ) : devices.length === 0 ? (
         <div className="bg-white dark:bg-midnight-800 rounded-2xl p-12 text-center border border-gray-100 dark:border-midnight-700">
           <Package className="w-16 h-16 text-gray-200 dark:text-midnight-600 mx-auto mb-4" />

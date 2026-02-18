@@ -8,3 +8,8 @@ export const STRIPE_CREDIT_PRICES = {
     pack: 'price_1SzOhPPeLuLIM8GmXLqoj7yt',     // $12 — 5 video diagnostic sessions (save $3)
   },
 } as const;
+
+// Check if a price ID is a credit pack purchase (one-time, not subscription)
+export function isCreditPackPurchase(priceId: string): boolean {
+  return Object.values(STRIPE_CREDIT_PRICES.videoDiagnostic).includes(priceId as any);
+}

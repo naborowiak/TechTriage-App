@@ -3,6 +3,7 @@ import { PageView } from "../types";
 import { OTPInput } from "./OTPInput";
 import { Logo } from "./Logo";
 import { AlertCircle, Mail } from "lucide-react";
+import { HexLoader } from "./LoadingScreen";
 
 interface VerifyEmailProps {
   onNavigate: (view: PageView) => void;
@@ -84,7 +85,7 @@ const LegacyTokenVerify: React.FC<{
       <div className="max-w-md w-full space-y-6 bg-white dark:bg-midnight-800 p-8 rounded-2xl shadow-lg border border-light-300 dark:border-midnight-700 text-center">
         {status === "verifying" && (
           <>
-            <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <HexLoader size="sm" />
             <h2 className="text-xl font-bold text-text-primary dark:text-white">
               Verifying Email
             </h2>

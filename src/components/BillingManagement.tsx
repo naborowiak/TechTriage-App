@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Calendar, ArrowUpRight, Check, AlertTriangle, Loader2, Zap, MessageSquare, Camera, Video, RefreshCw, Star, Home, Building } from 'lucide-react';
+import { LoadingScreen } from './LoadingScreen';
 import { useSubscription, SubscriptionTier, VideoCredits } from '../hooks/useSubscription';
 import { ChurnPreventionModal } from './ChurnPreventionModal';
 import { STRIPE_CREDIT_PRICES } from '../config/stripe';
+import { CheckoutModal } from './CheckoutModal';
+import type { CheckoutProduct } from './CheckoutModal';
 
 interface BillingManagementProps {
   userId: string;
@@ -40,7 +43,9 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
     isInTrial,
     isLoading,
     openPortal,
-    startCheckout,
+    openCheckout,
+    closeCheckout,
+    checkoutState,
     cancelSubscription,
     reactivateSubscription,
     getDaysUntilRenewal,
@@ -123,7 +128,14 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
   const handleBuyCredits = async (packType: 'single' | 'pack') => {
     setIsBuyingCredits(packType);
     try {
-      await startCheckout(creditPrices[packType]);
+      const product: CheckoutProduct = {
+        name: packType === 'single' ? '1 Video Credit' : '5 Video Credits',
+        description: packType === 'single' ? 'One video diagnostic session' : 'Five video diagnostic sessions',
+        price: packType === 'single' ? '$3' : '$12',
+        isSubscription: false,
+        features: ['Live video diagnostic session', 'Credits never expire'],
+      };
+      await openCheckout(creditPrices[packType], product);
     } catch (error) {
       console.error('Failed to start credit purchase:', error);
       alert('Failed to start checkout. Please try again.');
@@ -144,11 +156,7 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
   const daysUntilRenewal = getDaysUntilRenewal();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="w-8 h-8 animate-spin text-electric-indigo" />
-      </div>
-    );
+    return <LoadingScreen size="sm" />;
   }
 
   return (
@@ -398,7 +406,7 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
 
       {/* Upgrade Plans for Free Users */}
       {tier === 'free' && (
-        <UpgradePlansSection startCheckout={startCheckout} prices={prices} />
+        <UpgradePlansSection openCheckout={openCheckout} prices={prices} />
       )}
 
       {/* Cancel Confirmation Modal */}
@@ -444,6 +452,18 @@ export const BillingManagement: React.FC<BillingManagementProps> = ({ userId }) 
         tier={tier === 'pro' ? 'pro' : 'home'}
         periodEndDate={currentPeriodEnd}
       />
+
+      {/* Checkout Modal */}
+      {checkoutState.isOpen && checkoutState.product && (
+        <CheckoutModal
+          isOpen={checkoutState.isOpen}
+          onClose={closeCheckout}
+          clientSecret={checkoutState.clientSecret}
+          type={checkoutState.type}
+          product={checkoutState.product}
+          onSuccess={refetch}
+        />
+      )}
     </div>
   );
 };
@@ -572,16 +592,24 @@ const VideoCreditsCard: React.FC<{
 
 // Upgrade Plans Section for Free Users
 const UpgradePlansSection: React.FC<{
-  startCheckout: (priceId: string) => Promise<void>;
+  openCheckout: (priceId: string, product: CheckoutProduct) => Promise<'plan_changed' | undefined>;
   prices: { home: { monthly: string; annual: string }; pro: { monthly: string; annual: string } } | null;
-}> = ({ startCheckout, prices }) => {
+}> = ({ openCheckout, prices }) => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
 
-  const handleUpgrade = async (planPriceId: string) => {
+  const handleUpgrade = async (planPriceId: string, planName: string, planFeatures: string[], planPrice: string) => {
     setIsCheckingOut(planPriceId);
     try {
-      await startCheckout(planPriceId);
+      const product: CheckoutProduct = {
+        name: `TotalAssist ${planName}`,
+        description: planName === 'Home' ? 'Perfect for homeowners' : 'Best for families & landlords',
+        price: `$${planPrice}`,
+        interval: '/mo',
+        features: planFeatures.slice(0, 5),
+        isSubscription: true,
+      };
+      await openCheckout(planPriceId, product);
     } catch (error) {
       console.error('Checkout failed:', error);
       alert('Failed to start checkout. Please try again.');
@@ -738,7 +766,7 @@ const UpgradePlansSection: React.FC<{
               </ul>
 
               <button
-                onClick={() => priceId && handleUpgrade(priceId)}
+                onClick={() => priceId && handleUpgrade(priceId, plan.name, plan.features, String(price))}
                 disabled={!priceId || isCheckingOut !== null}
                 className={`w-full py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg ${
                   isPurple

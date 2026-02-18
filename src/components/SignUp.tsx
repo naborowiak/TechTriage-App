@@ -24,6 +24,7 @@ import { Logo } from "./Logo";
 import { PageView } from "../types";
 import { checkTrialEligibility, startTrial } from "../services/trialService";
 import { useAuth } from "../hooks/useAuth";
+import { HexLoader } from "./LoadingScreen";
 import { OTPInput } from "./OTPInput";
 
 interface SignUpProps {
@@ -303,12 +304,10 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   // Show loading state while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center relative transition-colors">
+      <div className="min-h-screen flex flex-col items-center justify-center relative transition-colors">
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(/bg-login.png)' }} aria-hidden="true" />
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-electric-indigo border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-text-secondary font-medium">Loading...</p>
-        </div>
+        <HexLoader />
+        <p className="mt-8 text-text-secondary dark:text-gray-400 font-medium relative">Loading...</p>
       </div>
     );
   }
