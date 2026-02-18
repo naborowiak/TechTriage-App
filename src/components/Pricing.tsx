@@ -82,6 +82,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
     }
 
     const plan = plans.find((p) => p.name === planName);
+    const isUpgrade = currentTier !== 'free' && currentTier !== tier && (currentTier === 'home' && tier === 'pro');
     const product: CheckoutProduct = {
       name: planName,
       description: plan?.tagline || '',
@@ -89,23 +90,27 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
       interval: '/mo',
       features: plan?.features?.slice(0, 5),
       isSubscription: true,
+      ctaLabel: isUpgrade ? 'Confirm Upgrade' : undefined,
     };
 
-    // If user already has a paid plan, show confirmation dialog before charging
+    // If user is downgrading (paid → lower paid), show confirmation dialog
     if (currentTier !== 'free' && currentTier !== tier) {
-      const isUpgrade = (currentTier === 'home' && tier === 'pro');
-      setConfirmDialog({
-        open: true,
-        planName,
-        targetTier: tier,
-        priceId,
-        product,
-        isUpgrade,
-      });
-      return;
+      if (!isUpgrade) {
+        // Downgrade: show confirmation dialog (no payment needed, credit applied)
+        setConfirmDialog({
+          open: true,
+          planName,
+          targetTier: tier,
+          priceId,
+          product,
+          isUpgrade: false,
+        });
+        return;
+      }
+      // Upgrade: fall through to open the full checkout modal below
     }
 
-    // New subscription (free → paid): open checkout modal
+    // New subscription (free → paid) or upgrade (home → pro): open checkout modal
     setIsCheckingOut(planName);
     try {
       await openCheckout(priceId, product);
@@ -118,22 +123,28 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
     }
   };
 
-  // Execute confirmed plan change (upgrade or downgrade with card on file)
+  // Execute confirmed plan change (downgrades only — upgrades go through the checkout modal)
   const handleConfirmedPlanChange = async () => {
     if (!confirmDialog) return;
-    const { planName, priceId, product } = confirmDialog;
+    const { planName, priceId } = confirmDialog;
     setConfirmDialog(null);
     setIsCheckingOut(planName);
 
     try {
-      const result = await openCheckout(priceId, product!);
+      const res = await fetch('/api/stripe/apply-plan-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ priceId }),
+      });
 
-      if (result === 'plan_changed') {
-        // Trigger the loading screen via App.tsx's startPostCheckoutSync,
-        // which polls until the tier updates in the frontend state
-        if (onCheckoutSuccess) onCheckoutSuccess();
-        onNavigate(PageView.DASHBOARD);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to change plan');
       }
+
+      if (onCheckoutSuccess) onCheckoutSuccess();
+      onNavigate(PageView.DASHBOARD);
     } catch (error) {
       console.error('Plan change error:', error);
       const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -907,6 +918,18 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
             if (onCheckoutSuccess) onCheckoutSuccess();
             onNavigate(PageView.DASHBOARD);
           }}
+          onPaymentConfirmed={checkoutState.pendingPlanChange ? async () => {
+            const res = await fetch('/api/stripe/apply-plan-change', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ priceId: checkoutState.pendingPlanChange!.priceId }),
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || 'Failed to change plan');
+            }
+          } : undefined}
         />
       )}
 

@@ -178,7 +178,7 @@ export async function createSubscriptionIntent(
   userId: string,
   priceId: string,
   promotionCode?: string
-): Promise<{ clientSecret: string; subscriptionId: string; type: 'payment' | 'setup' }> {
+): Promise<{ clientSecret: string; subscriptionId: string; type: 'payment' | 'setup'; pendingPlanChange?: boolean }> {
   const customerId = await getOrCreateStripeCustomer(userId);
 
   // Check Stripe directly for active subscriptions (source of truth — prevents duplicates
@@ -199,7 +199,10 @@ export async function createSubscriptionIntent(
   const allActiveSubs = [...stripeSubscriptions.data, ...trialingSubscriptions.data];
 
   if (allActiveSubs.length > 0) {
-    // Use the most recent active subscription for the plan change
+    // User already has an active subscription — this is a plan change.
+    // Do NOT update the subscription here. Instead, create a SetupIntent so the
+    // checkout modal displays a payment form. The actual plan change is applied
+    // via applyPlanChange() after the user confirms in the modal.
     const primarySub = allActiveSubs[0];
 
     // Cancel any duplicate subscriptions (cleanup from prior bugs)
@@ -208,75 +211,22 @@ export async function createSubscriptionIntent(
       await stripe.subscriptions.cancel(allActiveSubs[i].id, { prorate: true });
     }
 
-    // Plan change (upgrade or downgrade): apply immediately with proration.
-    // For upgrades: user is charged the prorated difference.
-    // For downgrades: user receives a prorated credit applied to next invoice.
-    const updatedSubscription = await stripe.subscriptions.update(primarySub.id, {
-      items: [{
-        id: primarySub.items.data[0].id,
-        price: priceId,
-      }],
-      proration_behavior: 'create_prorations',
-      expand: ['latest_invoice.payment_intent'],
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      metadata: { userId, action: 'plan_change' },
     });
 
-    // Capture old tier BEFORE updating DB (for email dispatch).
-    // After we write the new tier, the webhook (handleSubscriptionUpdated) will find
-    // oldTier === newTier and skip its own email — so this is the authoritative sender.
-    const [currentSubRecord] = await db
-      .select({ tier: subscriptionsTable.tier })
-      .from(subscriptionsTable)
-      .where(eq(subscriptionsTable.userId, userId))
-      .limit(1);
-    const oldTier = currentSubRecord?.tier || 'free';
-
-    // Update local database immediately
-    await updateSubscriptionRecord(userId, updatedSubscription);
-
-    // Send tier-transition email for plan changes via embedded checkout
-    const newTier = getTierFromPriceId(priceId) || 'home';
-    if (oldTier !== newTier) {
-      const newPlanName = PLAN_INFO[newTier]?.name || newTier;
-      const oldRank = TIER_RANK[oldTier] ?? 0;
-      const newRank = TIER_RANK[newTier] ?? 0;
-      try {
-        const emailUser = await fetchUserForEmail(userId);
-        if (emailUser) {
-          if (oldTier === 'free') {
-            await sendSubscriptionConfirmationEmail(emailUser.email, emailUser.firstName, newPlanName);
-          } else if (newRank > oldRank) {
-            await sendPlanUpgradeEmail(emailUser.email, emailUser.firstName, newPlanName);
-          } else if (newRank < oldRank) {
-            await sendPlanDowngradeEmail(emailUser.email, emailUser.firstName, newPlanName);
-          }
-        }
-      } catch (err) {
-        console.error('[EMAIL] Failed to send plan change email:', err);
-      }
-    }
-
-    const latestInvoice = updatedSubscription.latest_invoice as Stripe.Invoice;
-    const paymentIntent = latestInvoice?.payment_intent as Stripe.PaymentIntent;
-
-    // If there's a payment needed for the proration (upgrade)
-    if (paymentIntent?.client_secret) {
-      return {
-        clientSecret: paymentIntent.client_secret,
-        subscriptionId: updatedSubscription.id,
-        type: 'payment',
-      };
-    }
-
-    // No payment needed (downgrade credit or zero-amount proration)
     return {
-      clientSecret: '',
-      subscriptionId: updatedSubscription.id,
-      type: 'payment',
+      clientSecret: setupIntent.client_secret!,
+      subscriptionId: primarySub.id,
+      type: 'setup' as const,
+      pendingPlanChange: true,
     };
   }
 
   // New subscription (no active subscriptions in Stripe)
-  // Clean up any incomplete/past_due subscriptions from prior failed attempts
+  // Clean up any incomplete subscriptions from prior failed attempts
   const incompleteSubs = await stripe.subscriptions.list({
     customer: customerId,
     status: 'incomplete',
@@ -285,6 +235,20 @@ export async function createSubscriptionIntent(
   for (const sub of incompleteSubs.data) {
     console.log(`[STRIPE] Canceling incomplete subscription ${sub.id} for customer ${customerId}`);
     await stripe.subscriptions.cancel(sub.id);
+  }
+
+  // Clean up any trialing subscriptions without a payment method
+  // (abandoned checkout — user opened modal but never entered their card)
+  const trialingSubs = await stripe.subscriptions.list({
+    customer: customerId,
+    status: 'trialing',
+    limit: 10,
+  });
+  for (const sub of trialingSubs.data) {
+    if (!sub.default_payment_method) {
+      console.log(`[STRIPE] Canceling abandoned trial subscription ${sub.id} for customer ${customerId}`);
+      await stripe.subscriptions.cancel(sub.id);
+    }
   }
 
   const [existingSub] = await db
@@ -331,32 +295,12 @@ export async function createSubscriptionIntent(
 
   const subscription = await stripe.subscriptions.create(subscriptionParams);
 
-  // For trialing subscriptions, the subscription is active immediately.
-  // Update DB and send confirmation email now so the user doesn't depend on webhooks.
-  // When the webhook (handleSubscriptionUpdated) fires, it will find oldTier === newTier
-  // in the DB and skip its own email dispatch (no duplicate).
-  if (subscription.status === 'trialing') {
-    await updateSubscriptionRecord(userId, subscription);
-    await initializeUsageRecord(
-      userId,
-      new Date(subscription.current_period_start * 1000),
-      new Date(subscription.current_period_end * 1000)
-    );
-
-    const newTier = getTierFromPriceId(priceId) || 'home';
-    const oldTier = existingSub?.tier || 'free';
-    if (oldTier !== newTier) {
-      try {
-        const emailUser = await fetchUserForEmail(userId);
-        if (emailUser) {
-          const newPlanName = PLAN_INFO[newTier]?.name || newTier;
-          await sendSubscriptionConfirmationEmail(emailUser.email, emailUser.firstName, newPlanName);
-        }
-      } catch (err) {
-        console.error('[EMAIL] Failed to send subscription confirmation email:', err);
-      }
-    }
-  }
+  // IMPORTANT: Do NOT update DB here for trialing subscriptions.
+  // The subscription exists in Stripe but the user hasn't entered their credit card yet.
+  // DB will be updated via handleSubscriptionUpdated webhook AFTER the user completes
+  // the SetupIntent (enters card), which triggers Stripe to set default_payment_method.
+  // Both handleSubscriptionUpdated and syncSubscriptionFromStripe gate on
+  // default_payment_method being present for trialing subscriptions.
 
   // Trial subscriptions use SetupIntent (save card, no charge yet)
   if (subscription.pending_setup_intent) {
@@ -377,6 +321,68 @@ export async function createSubscriptionIntent(
     subscriptionId: subscription.id,
     type: 'payment',
   };
+}
+
+// Apply a deferred plan change after the user confirms in the checkout modal.
+// Called by POST /api/stripe/apply-plan-change after SetupIntent confirmation.
+export async function applyPlanChange(userId: string, priceId: string) {
+  const customerId = await getOrCreateStripeCustomer(userId);
+
+  // Find the user's active subscription in Stripe
+  const activeSubs = await stripe.subscriptions.list({
+    customer: customerId,
+    status: 'all',
+    limit: 10,
+  });
+  const primarySub = activeSubs.data.find(s => ['active', 'trialing'].includes(s.status));
+  if (!primarySub) {
+    throw new Error('No active subscription found');
+  }
+
+  // Capture old tier BEFORE updating
+  const [currentSubRecord] = await db
+    .select({ tier: subscriptionsTable.tier })
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.userId, userId))
+    .limit(1);
+  const oldTier = currentSubRecord?.tier || 'free';
+
+  // Apply the plan change in Stripe
+  const updatedSubscription = await stripe.subscriptions.update(primarySub.id, {
+    items: [{
+      id: primarySub.items.data[0].id,
+      price: priceId,
+    }],
+    proration_behavior: 'create_prorations',
+  });
+
+  // Update local database
+  await updateSubscriptionRecord(userId, updatedSubscription);
+
+  // Send tier-transition email
+  const newTier = getTierFromPriceId(priceId) || 'home';
+  if (oldTier !== newTier) {
+    const newPlanName = PLAN_INFO[newTier]?.name || newTier;
+    const oldRank = TIER_RANK[oldTier] ?? 0;
+    const newRank = TIER_RANK[newTier] ?? 0;
+    try {
+      const emailUser = await fetchUserForEmail(userId);
+      if (emailUser) {
+        if (oldTier === 'free') {
+          await sendSubscriptionConfirmationEmail(emailUser.email, emailUser.firstName, newPlanName);
+        } else if (newRank > oldRank) {
+          await sendPlanUpgradeEmail(emailUser.email, emailUser.firstName, newPlanName);
+        } else if (newRank < oldRank) {
+          await sendPlanDowngradeEmail(emailUser.email, emailUser.firstName, newPlanName);
+        }
+      }
+    } catch (err) {
+      console.error('[EMAIL] Failed to send plan change email:', err);
+    }
+  }
+
+  console.log(`[STRIPE] Plan change applied for user ${userId}: ${oldTier} → ${newTier}`);
+  return { success: true, tier: newTier };
 }
 
 // Create a PaymentIntent for one-time credit purchases (embedded Elements checkout)
@@ -500,6 +506,14 @@ export async function syncSubscriptionFromStripe(userId: string): Promise<boolea
 
     // Only sync if subscription is active or trialing
     if (!['active', 'trialing'].includes(stripeSubscription.status)) {
+      return false;
+    }
+
+    // For trialing subscriptions, only sync if a payment method has been collected.
+    // Without this check, a user who opens the checkout modal (which creates the
+    // Stripe subscription) but never enters their credit card would appear upgraded.
+    if (stripeSubscription.status === 'trialing' && !stripeSubscription.default_payment_method) {
+      console.log(`[STRIPE] Skipping sync for trialing subscription without payment method (user ${userId})`);
       return false;
     }
 
@@ -875,6 +889,18 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
     resolvedUserId = user.id;
   }
 
+  // For trialing subscriptions without a payment method, don't update the DB yet.
+  // The user opened the checkout modal (which created the Stripe subscription) but
+  // hasn't entered their credit card. Once the SetupIntent succeeds, Stripe sets
+  // default_payment_method and fires another subscription.updated event.
+  if (subscription.status === 'trialing' && !subscription.default_payment_method) {
+    console.log(`[STRIPE] Skipping DB update for trialing subscription without payment method (user ${resolvedUserId})`);
+    return;
+  }
+
+  // Skip incomplete subscriptions
+  if (subscription.status === 'incomplete') return;
+
   // Fetch current DB tier BEFORE updating
   const [currentSub] = await db
     .select({ tier: subscriptionsTable.tier })
@@ -886,17 +912,25 @@ export async function handleSubscriptionUpdated(subscription: Stripe.Subscriptio
   // Update the subscription record
   await updateSubscriptionRecord(resolvedUserId, subscription);
 
+  // Initialize usage record for new subscriptions
+  if (oldTier === 'free') {
+    await initializeUsageRecord(
+      resolvedUserId,
+      new Date(subscription.current_period_start * 1000),
+      new Date(subscription.current_period_end * 1000)
+    );
+  }
+
   // Determine new tier
   const priceId = subscription.items.data[0]?.price.id;
   const newTier = getTierFromPriceId(priceId) || 'home';
 
-  // Skip email for incomplete subscriptions
-  if (subscription.status === 'incomplete') return;
-
   // Detect tier transition and send appropriate email.
-  // For initial subscriptions, handleCheckoutCompleted sends the email before this handler
-  // runs, so oldTier will already equal newTier here. This logic handles mid-cycle plan
-  // changes (e.g., via Stripe billing portal) where no checkout event fires.
+  // For embedded checkout (Elements), this is the primary email path — the email is sent
+  // here after the user's SetupIntent succeeds and the payment method is attached.
+  // For redirect checkout, handleCheckoutCompleted may send the email first, in which case
+  // oldTier will already equal newTier here (no duplicate). This also handles mid-cycle
+  // plan changes (e.g., via Stripe billing portal) where no checkout event fires.
   if (oldTier !== newTier) {
     const newPlanName = PLAN_INFO[newTier]?.name || newTier;
     const oldRank = TIER_RANK[oldTier] ?? 0;

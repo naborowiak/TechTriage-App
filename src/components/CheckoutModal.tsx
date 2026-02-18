@@ -14,6 +14,7 @@ export interface CheckoutProduct {
   interval?: string; // e.g. "/mo" or one-time
   features?: string[];
   isSubscription: boolean;
+  ctaLabel?: string; // Custom button label (e.g. "Confirm Upgrade")
 }
 
 interface CheckoutModalProps {
@@ -23,6 +24,7 @@ interface CheckoutModalProps {
   type: 'payment' | 'setup';
   product: CheckoutProduct;
   onSuccess: () => void;
+  onPaymentConfirmed?: () => Promise<void>;
 }
 
 // Inner form component (must be inside Elements provider)
@@ -31,7 +33,8 @@ const CheckoutForm: React.FC<{
   product: CheckoutProduct;
   onSuccess: () => void;
   onClose: () => void;
-}> = ({ type, product, onSuccess, onClose }) => {
+  onPaymentConfirmed?: () => Promise<void>;
+}> = ({ type, product, onSuccess, onClose, onPaymentConfirmed }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
@@ -88,6 +91,16 @@ const CheckoutForm: React.FC<{
         setStatus('error');
         setErrorMessage(error.message || 'Payment failed. Please try again.');
       } else {
+        // Payment/setup confirmed by Stripe. Apply any pending actions (e.g., plan change).
+        if (onPaymentConfirmed) {
+          try {
+            await onPaymentConfirmed();
+          } catch (err) {
+            setStatus('error');
+            setErrorMessage(err instanceof Error ? err.message : 'Failed to activate plan. Please contact support.');
+            return;
+          }
+        }
         setStatus('success');
         setTimeout(() => {
           onSuccess();
@@ -107,11 +120,11 @@ const CheckoutForm: React.FC<{
           <CheckCircle2 className="w-8 h-8 text-green-500" />
         </div>
         <h3 className="text-xl font-bold text-text-primary dark:text-white mb-2">
-          {type === 'setup' ? 'Trial Started!' : 'Payment Successful!'}
+          {type === 'setup' ? 'You\'re All Set!' : 'Payment Successful!'}
         </h3>
         <p className="text-text-secondary">
           {type === 'setup'
-            ? 'Your free trial is active. Enjoy TotalAssist!'
+            ? `Your ${product.name} plan is active. Enjoy TotalAssist!`
             : 'Thank you for your purchase. Enjoy TotalAssist!'}
         </p>
       </div>
@@ -226,11 +239,18 @@ const CheckoutForm: React.FC<{
           disabled={!stripe || !elements || status === 'processing'}
           className="w-full py-3.5 rounded-xl font-bold text-white btn-gradient-electric shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/50 hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {status === 'processing' ? (
+          {!stripe || !elements ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Loading payment form...
+            </>
+          ) : status === 'processing' ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
               Processing...
             </>
+          ) : product.ctaLabel ? (
+            product.ctaLabel
           ) : type === 'setup' ? (
             `Start Free Trial`
           ) : (
@@ -256,6 +276,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   type,
   product,
   onSuccess,
+  onPaymentConfirmed,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
@@ -330,6 +351,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               product={product}
               onSuccess={onSuccess}
               onClose={onClose}
+              onPaymentConfirmed={onPaymentConfirmed}
             />
           </Elements>
         )}

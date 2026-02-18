@@ -1063,6 +1063,20 @@ app.post("/api/stripe/create-subscription-intent", requireAuth, validate(subscri
   }
 });
 
+// Apply a deferred plan change after user confirms in checkout modal
+app.post("/api/stripe/apply-plan-change", requireAuth, validate(paymentIntentSchema), async (req, res) => {
+  try {
+    const userId = (req.user as any)?.id;
+    const { priceId } = req.body;
+
+    const result = await stripeService.applyPlanChange(userId, priceId);
+    res.json(result);
+  } catch (error) {
+    console.error("[STRIPE] Plan change error:", error);
+    res.status(500).json({ error: "Failed to change plan" });
+  }
+});
+
 // Create a PaymentIntent for one-time credit purchases (embedded checkout)
 app.post("/api/stripe/create-payment-intent", requireAuth, validate(paymentIntentSchema), async (req, res) => {
   try {

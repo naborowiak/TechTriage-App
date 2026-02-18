@@ -55,6 +55,7 @@ export interface CheckoutState {
   product: CheckoutProduct | null;
   loading: boolean;
   error: string | null;
+  pendingPlanChange: { priceId: string } | null;
 }
 
 const defaultState: SubscriptionState = {
@@ -82,6 +83,7 @@ export function useSubscription(userId: string | undefined) {
     product: null,
     loading: false,
     error: null,
+    pendingPlanChange: null,
   });
 
   // Fetch subscription status. Pass forceSync=true after checkout to sync from Stripe.
@@ -242,6 +244,7 @@ export function useSubscription(userId: string | undefined) {
         product,
         loading: false,
         error: null,
+        pendingPlanChange: data.pendingPlanChange ? { priceId } : null,
       });
     } catch (err) {
       setCheckoutState((prev) => ({
@@ -262,6 +265,7 @@ export function useSubscription(userId: string | undefined) {
       product: null,
       loading: false,
       error: null,
+      pendingPlanChange: null,
     });
     // Force sync from Stripe after checkout to pick up plan changes immediately
     fetchStatus(true);

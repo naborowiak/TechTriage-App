@@ -109,11 +109,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
   // Sidebar tab state — maps from activeView or standalone
   const [sidebarTab, setSidebarTab] = useState<DashboardTab>("chat");
 
-  // Sync sidebarTab from activeView when it changes
+  // Sync sidebarTab from activeView when it changes.
+  // When returning to "main", only reset to "chat" if the current tab requires
+  // a different parent view (e.g., coming back from scout). Preserve "devices"
+  // since it renders inline within the "main" view.
   useEffect(() => {
     if (activeView === "history") setSidebarTab("history");
     else if (activeView === "scout") { /* don't reset — let sidebar keep its state */ }
-    else if (activeView === "main") setSidebarTab("chat");
+    else if (activeView === "main") {
+      setSidebarTab((prev) => (prev === "devices" ? "devices" : "chat"));
+    }
   }, [activeView]);
 
   const confirmLogout = () => {
@@ -195,7 +200,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     } else if (tab === "history") {
       onOpenHistory();
     } else if (tab === "devices") {
-      // Show inline
+      // Reset parent view to "main" so the sync effect doesn't fight local state
+      if (onBackToDashboard) onBackToDashboard();
     } else if (tab === "settings") {
       onOpenSettings();
     }
@@ -209,7 +215,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     } else if (tab === "history") {
       onOpenHistory();
     } else if (tab === "devices") {
-      // Show inline
+      // Reset parent view to "main" so the sync effect doesn't fight local state
+      if (onBackToDashboard) onBackToDashboard();
     } else if (tab === "settings") {
       onOpenSettings();
     }
