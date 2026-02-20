@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 import { PageView } from '../types';
 import { services } from '../data/servicePageData';
-import { AnimatedElement } from '../hooks/useAnimations';
+import { useScrollReveal } from '../hooks/useAnimations';
 
 interface ServicesSectionProps {
   onNavigate: (view: PageView) => void;
@@ -18,6 +18,7 @@ const serviceImages: Record<string, string> = {
 const AUTO_ROTATE_MS = 6000;
 
 export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) => {
+  useScrollReveal();
   const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -44,16 +45,16 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
       onMouseLeave={() => setPaused(false)}
     >
       <div className="container mx-auto px-6 max-w-6xl">
-        <AnimatedElement animation="fadeInUp" className="mb-12 lg:mb-16">
+        <div className="reveal mb-12 lg:mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-text-primary dark:text-white">
             Support that fits your problem
           </h2>
-        </AnimatedElement>
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-0 items-start">
 
           {/* Left — Algolia-style accordion */}
-          <AnimatedElement animation="fadeInLeft" className="w-full lg:w-[45%]">
+          <div className="reveal w-full lg:w-[45%]">
             <ul className="media-accordion">
               {services.map((service, i) => {
                 const Icon = service.icon;
@@ -120,7 +121,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
                           }}
                           className="flex items-center gap-1.5 text-sm font-bold text-[#6366F1] hover:gap-2.5 transition-all group/link"
                         >
-                          Learn more <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-0.5" />
+                          Learn more <ArrowRight className="w-4 h-4 arcade-arrow" />
                         </button>
                       </div>
                     </div>
@@ -128,10 +129,10 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
                 );
               })}
             </ul>
-          </AnimatedElement>
+          </div>
 
           {/* Right — Image preview (desktop only) */}
-          <AnimatedElement animation="fadeInRight" delay={0.2} className="hidden lg:block w-full lg:w-[55%] sticky top-24">
+          <div className="reveal hidden lg:block w-full lg:w-[55%] sticky top-24" style={{ transitionDelay: '200ms' }}>
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-light-100 dark:bg-midnight-800">
               {services.map((service, i) => (
                 <img
@@ -162,7 +163,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onNavigate }) 
                 </p>
               </div>
             </div>
-          </AnimatedElement>
+          </div>
 
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { PageView } from '../types';
-import { AnimatedElement } from '../hooks/useAnimations';
+import { useScrollReveal } from '../hooks/useAnimations';
 import { useTheme } from '../context/ThemeContext';
 
 interface FeatureShowcasesProps {
@@ -49,24 +49,23 @@ const showcases = [
 
 export const FeatureShowcases: React.FC<FeatureShowcasesProps> = ({ onNavigate }) => {
   const { theme } = useTheme();
+  useScrollReveal();
 
   return (
     <section className="py-24 bg-white dark:bg-midnight-900 border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-6xl">
-        <AnimatedElement animation="fadeInUp" className="text-center mb-16">
+        <div className="reveal text-center mb-16">
           <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
             Features
           </span>
           <h2 className="text-4xl lg:text-5xl font-bold text-text-primary dark:text-white">
             Built for how you actually get help
           </h2>
-        </AnimatedElement>
+        </div>
 
         <div className="space-y-0">
           {showcases.map((item, i) => {
             const isReversed = i % 2 === 1;
-            const animLeft = isReversed ? 'fadeInRight' : 'fadeInLeft';
-            const animRight = isReversed ? 'fadeInLeft' : 'fadeInRight';
             const imageSrc = typeof item.image === 'string'
               ? item.image
               : theme === 'dark' ? item.image.dark : item.image.light;
@@ -79,8 +78,8 @@ export const FeatureShowcases: React.FC<FeatureShowcasesProps> = ({ onNavigate }
                 } ${i < showcases.length - 1 ? 'pb-10' : ''}`}
               >
                 {/* Image */}
-                <AnimatedElement animation={animLeft} className="w-full lg:w-1/2">
-                  <div className="rounded-2xl overflow-hidden bg-light-100 dark:bg-midnight-800">
+                <div className="reveal w-full lg:w-1/2">
+                  <div className="rounded-2xl overflow-hidden bg-light-100 dark:bg-midnight-800 shadow-layered">
                     <img
                       src={imageSrc}
                       alt={item.imageAlt}
@@ -88,10 +87,10 @@ export const FeatureShowcases: React.FC<FeatureShowcasesProps> = ({ onNavigate }
                       loading="lazy"
                     />
                   </div>
-                </AnimatedElement>
+                </div>
 
                 {/* Text */}
-                <AnimatedElement animation={animRight} delay={0.15} className="w-full lg:w-1/2">
+                <div className="reveal w-full lg:w-1/2" style={{ transitionDelay: '150ms' }}>
                   <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-3">
                     {item.badge}
                   </span>
@@ -104,13 +103,13 @@ export const FeatureShowcases: React.FC<FeatureShowcasesProps> = ({ onNavigate }
                   {item.link && (
                     <button
                       onClick={() => onNavigate(item.link!)}
-                      className="inline-flex items-center gap-2 text-electric-indigo font-semibold hover:gap-3 transition-all group"
+                      className="group inline-flex items-center gap-2 text-electric-indigo font-semibold hover:gap-3 transition-all"
                     >
                       {item.linkText}
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="w-4 h-4 arcade-arrow" />
                     </button>
                   )}
-                </AnimatedElement>
+                </div>
               </div>
             );
           })}

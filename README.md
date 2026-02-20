@@ -1,7 +1,7 @@
 
-# TechTriage - AI-Powered Home Support
+# TotalAssist - AI-Powered Home Tech Support
 
-TechTriage is a React application that combines computer vision (Google Gemini 1.5 Pro) with real-time video support concepts to help homeowners diagnose and fix issues.
+TotalAssist is a full-stack React/Node.js application that provides AI-powered technical support for homeowners, helping them diagnose and fix issues with Wi-Fi, smart devices, appliances, HVAC, and more through text chat, photo analysis, or live video support.
 
 ## 🚀 Quick Start
 

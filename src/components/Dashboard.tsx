@@ -480,13 +480,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex-1 overflow-y-auto pb-4 lg:pb-8 relative">
             <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
               {/* Heading */}
-              <h1 className="text-xl sm:text-2xl md:text-4xl font-bold tracking-tight text-text-primary dark:text-white">
+              <h1 className="arcade-up-1 text-xl sm:text-2xl md:text-4xl font-bold tracking-tight text-text-primary dark:text-white">
                 How can we assist you today?
               </h1>
 
               {/* Triage Tiles */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                {triageTiles.map((tile) => {
+                {triageTiles.map((tile, tileIdx) => {
                   const Icon = tile.icon;
                   const isLocked = tile.lockedForTiers.includes(tier);
 
@@ -502,15 +502,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         }
                       }}
                       className={[
-                        "card-clean tile-card relative flex flex-col justify-end text-left",
-                        "rounded-lg overflow-hidden cursor-pointer",
+                        "shadow-layered tile-card relative flex flex-col justify-end text-left",
+                        "rounded-xl overflow-hidden cursor-pointer",
                         "p-4 md:p-6",
                         "min-h-[72px] md:min-h-0 md:aspect-[16/10] md:max-h-[260px]",
-                        "transition-all duration-200",
+                        "bg-white dark:bg-[#1E2330]",
                         isLocked
                           ? "opacity-75 cursor-pointer"
-                          : "hover:-translate-y-[2px] hover:shadow-lg active:translate-y-[1px] active:shadow-inner",
+                          : "hover-lift",
                       ].join(" ")}
+                      style={{ animation: `arcadeSlideUp 800ms ease-out ${100 + tileIdx * 120}ms 1 normal backwards` }}
                       aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
                     >
                       {/* Photo background — desktop only */}
@@ -558,9 +559,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                       {/* Upgrade CTA (locked tiles) */}
                       {isLocked && (
-                        <div className="relative z-10 mt-2 flex items-center gap-1 text-sm font-semibold text-electric-indigo dark:text-white/80">
+                        <div className="group relative z-10 mt-2 flex items-center gap-1 text-sm font-semibold text-electric-indigo dark:text-white/80">
                           Upgrade to unlock
-                          <ArrowRight className="w-3 h-3" />
+                          <ArrowRight className="w-3 h-3 arcade-arrow" />
                         </div>
                       )}
                     </button>
@@ -575,11 +576,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </h3>
                 {/* Desktop: show all chips */}
                 <div className="hidden sm:flex flex-wrap gap-2">
-                  {commonIssues.map((chip) => (
+                  {commonIssues.map((chip, chipIdx) => (
                     <button
                       key={chip}
                       onClick={() => onNewChat?.(chip)}
-                      className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[44px]"
+                      className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[44px] shadow-layered"
+                      style={{ animation: `arcadeSlideUp 600ms ease-out ${600 + chipIdx * 80}ms 1 normal backwards` }}
                     >
                       {chip}
                     </button>

@@ -120,7 +120,8 @@
       "WebFetch(domain:bakkenbaeck.com)",
       "WebFetch(domain:www.landing.love)",
       "WebFetch(domain:docs.stripe.com)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebFetch(domain:www.arcade.software)"
     ]
   }
 }

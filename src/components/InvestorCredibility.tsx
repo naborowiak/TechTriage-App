@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sparkles, FileText, Shield } from 'lucide-react';
-import { AnimatedElement } from '../hooks/useAnimations';
+import { useScrollReveal } from '../hooks/useAnimations';
 
 const items = [
   {
@@ -21,20 +21,21 @@ const items = [
 ];
 
 export const InvestorCredibility: React.FC = () => {
+  useScrollReveal();
   return (
     <section className="py-16 bg-light-100 dark:bg-midnight-950 border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-4xl">
-        <AnimatedElement animation="fadeInUp">
+        <div className="reveal">
           <h2 className="text-2xl font-bold text-text-primary dark:text-white text-center mb-12">
             Built for scale and safety
           </h2>
-        </AnimatedElement>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 reveal-stagger">
           {items.map((item, i) => {
             const Icon = item.icon;
             return (
-              <AnimatedElement key={i} animation="fadeInUp" delay={0.1 + i * 0.1}>
+              <div key={i} className="reveal">
                 <div className="text-center">
                   <div
                     className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
@@ -49,7 +50,7 @@ export const InvestorCredibility: React.FC = () => {
                     {item.description}
                   </p>
                 </div>
-              </AnimatedElement>
+              </div>
             );
           })}
         </div>

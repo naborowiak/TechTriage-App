@@ -28,11 +28,11 @@ import { Logo } from "./components/Logo";
 import { PageView } from "./types";
 import { useAuth } from "./hooks/useAuth";
 import { LiveSupport } from "./components/LiveSupport";
-import { useSyncUsageWithAuth, useUsage } from "./stores/usageStore";
+import { useSyncUsageWithAuth } from "./stores/usageStore";
 import { useSubscription } from "./hooks/useSubscription";
 import { useTheme } from "./context/ThemeContext";
 import type { SettingsTab } from "./components/SettingsModal";
-import { AnimatedElement } from "./hooks/useAnimations";
+import { useScrollReveal, useScrolled } from "./hooks/useAnimations";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import { ServicesSection } from "./components/ServicesSection";
 import { HowItWorksLifecycle } from "./components/HowItWorksLifecycle";
@@ -93,59 +93,6 @@ const PageTransition: React.FC<{ children: React.ReactNode; pageKey: string }> =
 // End Animation Hooks & Components (now imported from useAnimations.tsx)
 // ============================================
 
-// Usage Banner - slim bar above header for free-tier users
-const UsageBanner: React.FC<{
-  onNavigate: (view: PageView) => void;
-}> = ({ onNavigate }) => {
-  const { tier, usage, getVideoCreditsRemaining } = useUsage();
-  const { isAuthenticated } = useAuth();
-
-  // Only show for authenticated free/home users (not pro, not guests)
-  if (!isAuthenticated || tier === 'pro' || tier === 'guest') return null;
-
-  const isUnlimited = tier === 'home';
-  const chatRemaining = isUnlimited ? null : Math.max(0, usage.chat.limit - usage.chat.used);
-  const photoRemaining = isUnlimited ? null : Math.max(0, usage.photo.limit - usage.photo.used);
-  const videoCredits = tier === 'home' ? getVideoCreditsRemaining() : null;
-
-  return (
-    <div className="w-full bg-light-50 dark:bg-midnight-900 border-b border-light-200 dark:border-midnight-800">
-      <div className="container mx-auto px-4 sm:px-6 flex items-center justify-between h-8">
-        <div className="flex items-center gap-4 text-[11px] font-medium text-text-secondary">
-          <Zap className="w-3 h-3 text-electric-cyan flex-shrink-0" />
-          {chatRemaining !== null && (
-            <span>
-              <span className="text-text-primary dark:text-white font-semibold">{chatRemaining}</span> chats
-            </span>
-          )}
-          {photoRemaining !== null && (
-            <span>
-              <span className="text-text-primary dark:text-white font-semibold">{photoRemaining}</span> photos
-            </span>
-          )}
-          {videoCredits !== null && (
-            <span>
-              <span className="text-text-primary dark:text-white font-semibold">{videoCredits}</span> video credits
-            </span>
-          )}
-          {isUnlimited && (
-            <span className="text-electric-cyan">Unlimited chat & photos</span>
-          )}
-        </div>
-        {!isUnlimited && (
-          <button
-            onClick={() => onNavigate(PageView.PRICING)}
-            className="text-[11px] font-bold text-electric-indigo hover:text-electric-indigo/80 transition-colors flex items-center gap-1"
-          >
-            Upgrade
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-};
-
 type HeaderDashboardView = 'main' | 'history' | 'settings' | 'billing';
 
 const Header: React.FC<{
@@ -159,6 +106,7 @@ const Header: React.FC<{
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const isScrolled = useScrolled(6);
 
   const handleNav = (view: PageView) => {
     onNavigate(view);
@@ -251,8 +199,9 @@ const Header: React.FC<{
   const activeNavColor = activeNavItem?.color ?? '#6366F1';
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 h-[80px] header-glow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+    <div className={`header-outer${isScrolled ? ' scrolled' : ''}`}>
+      <header className="header-inner">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
         {/* LEFT: Logo (theme-aware) */}
         <button
           onClick={() => handleNav(PageView.HOME)}
@@ -379,11 +328,12 @@ const Header: React.FC<{
             )}
           </button>
         </div>
-      </div>
+        </div>
+      </header>
 
       {/* Mobile Menu Overlay + Panel */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" style={{ top: 80 }}>
+        <div className="fixed inset-0 z-40 lg:hidden" style={{ top: 74 }}>
           {/* Backdrop overlay */}
           <div
             className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
@@ -474,7 +424,7 @@ const Header: React.FC<{
           </div>
         </div>
       )}
-    </header>
+    </div>
   );
 };
 
@@ -551,7 +501,7 @@ const Hero: React.FC<{
   }, [paused]);
 
   return (
-    <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden pt-[80px]">
+    <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden pt-[64px]">
       <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
         <source src="/hero-bg.mp4" type="video/mp4" />
       </video>
@@ -580,7 +530,7 @@ const Hero: React.FC<{
           <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center px-6 lg:pl-16 lg:pr-0">
             <div className="max-w-[520px] lg:max-w-none mx-auto">
               <h1
-                className="hero-animate-1 font-bold font-sora text-white mb-6 mt-8 lg:mt-10 text-balance text-center lg:text-left text-[32px] sm:text-[40px] lg:text-[52px] xl:text-[56px]"
+                className="arcade-up-1 font-bold font-sora text-white mb-6 mt-8 lg:mt-10 text-balance text-center lg:text-left text-[32px] sm:text-[40px] lg:text-[52px] xl:text-[56px]"
                 style={{ lineHeight: '105%', letterSpacing: '-2.5px' }}
               >
                 Get help with<br />
@@ -589,7 +539,7 @@ const Hero: React.FC<{
                 </span>
                 <span className="hero-cursor" aria-hidden="true" />
               </h1>
-              <div className="hero-animate-2 mt-4 lg:mr-8 lg:max-w-[430px]">
+              <div className="arcade-up-2 mt-4 lg:mr-8 lg:max-w-[430px]">
                 <p className="font-sora text-center lg:text-left text-base sm:text-lg lg:text-[19px] font-normal leading-relaxed text-white my-0 text-balance">
                   24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
@@ -597,7 +547,7 @@ const Hero: React.FC<{
             </div>
 
             {/* CTAs + trust chips */}
-            <div className="hero-animate-3 flex justify-center gap-4 mt-8 sm:mt-9 lg:mt-11 xl:mt-8 lg:justify-start lg:mb-[100px] px-6 lg:px-0">
+            <div className="arcade-up-3 flex justify-center gap-4 mt-8 sm:mt-9 lg:mt-11 xl:mt-8 lg:justify-start lg:mb-[100px] px-6 lg:px-0">
               <button
                 onClick={onFreeTrial}
                 className="flex items-center cursor-pointer font-sora justify-center text-white px-4 lg:px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
@@ -618,7 +568,7 @@ const Hero: React.FC<{
               )}
             </div>
             {/* Trust chips — below CTAs on mobile, above mb on desktop */}
-            <div className="hero-animate-3 flex flex-wrap justify-center lg:justify-start gap-4 mt-4 lg:-mt-[84px] px-6 lg:pl-16 lg:pr-0">
+            <div className="arcade-up-3 flex flex-wrap justify-center lg:justify-start gap-4 mt-4 lg:-mt-[84px] px-6 lg:pl-16 lg:pr-0">
               <span className="flex items-center gap-1.5 text-xs text-white/60">
                 <CheckCircle2 className="w-3.5 h-3.5" /> No credit card needed
               </span>
@@ -633,7 +583,7 @@ const Hero: React.FC<{
 
           {/* Right column — carousel. lg:h-[680px] drives the banner height on desktop */}
           <div
-            className={`hero-animate-4 w-full lg:w-[53.3%] flex justify-center lg:justify-end mt-8 lg:mt-0${paused ? ' agentic-hero-paused' : ''}`}
+            className={`arcade-up-4 w-full lg:w-[53.3%] flex justify-center lg:justify-end mt-8 lg:mt-0${paused ? ' agentic-hero-paused' : ''}`}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
           >
@@ -739,7 +689,7 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
       <div className="scroll-bg-image absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${bgImage})` }} aria-hidden="true" />
 
       <div className="relative container mx-auto px-6 max-w-6xl z-10">
-        <AnimatedElement animation="fadeInUp" className="text-center mb-16">
+        <div className="reveal text-center mb-16">
           <div className="inline-block bg-white/80 dark:bg-midnight-950/70 backdrop-blur-md rounded-2xl px-8 py-8 lg:px-12 lg:py-10 border border-light-200/50 dark:border-white/10">
             <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
               What We Help With
@@ -752,12 +702,12 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
               keeps your home running.
             </p>
           </div>
-        </AnimatedElement>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 reveal-stagger">
           {problems.map((item, i) => (
-            <AnimatedElement key={i} animation="scaleIn" delay={0.1 + i * 0.08}>
+            <div key={i} className="reveal">
               <div
-                className="group relative bg-white dark:bg-midnight-800 border border-light-200 dark:border-midnight-600 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer hover:-translate-y-1.5 hover:shadow-xl dark:hover:shadow-midnight-950/50 dark:hover:border-midnight-500 h-full flex flex-col"
+                className="group relative bg-white dark:bg-midnight-800 border border-light-200 dark:border-midnight-600 rounded-2xl overflow-hidden cursor-pointer h-full flex flex-col shadow-layered hover-lift"
                 onClick={() => onNavigate(PageView.HOW_IT_WORKS)}
                 role="button"
                 tabIndex={0}
@@ -776,13 +726,13 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
                     {item.desc}
                   </p>
                   <span className="inline-flex items-center gap-1 text-sm font-semibold text-electric-indigo dark:text-[#818CF8] group-hover:gap-2 transition-all">
-                    Learn more <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                    Learn more <ArrowRight className="w-3.5 h-3.5 arcade-arrow" />
                   </span>
                 </div>
                 {/* Bottom gradient accent — visible on hover */}
                 <div className="h-[3px] w-full bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#06B6D4] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
-            </AnimatedElement>
+            </div>
           ))}
         </div>
       </div>
@@ -867,7 +817,7 @@ const WhyTotalAssist: React.FC = () => {
     <section className="py-24 bg-white dark:bg-midnight-900 overflow-x-clip relative border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Header */}
-        <AnimatedElement animation="fadeInUp" className="text-center mb-12">
+        <div className="reveal text-center mb-12">
           <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
             Why TotalAssist Is Different
           </span>
@@ -877,14 +827,14 @@ const WhyTotalAssist: React.FC = () => {
           <p className="text-text-secondary text-xl max-w-2xl mx-auto">
             See how TotalAssist stacks up against traditional phone support.
           </p>
-        </AnimatedElement>
+        </div>
 
         {/* Algolia-Style Feature Comparison Table — hidden on mobile */}
-        <AnimatedElement animation="fadeInUp" delay={0.5} className="hidden md:block">
+        <div className="reveal hidden md:block">
           <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm">
 
-            {/* Sticky Column Headers — sticks below fixed nav (80px) */}
-            <div className="sticky top-[80px] z-10 grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
+            {/* Sticky Column Headers — sticks below fixed nav (64px) */}
+            <div className="sticky top-[64px] z-10 grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
               {/* Empty top-left */}
               <div className="p-4 lg:p-5" />
               {/* TotalAssist — Highlighted column header */}
@@ -963,7 +913,7 @@ const WhyTotalAssist: React.FC = () => {
               );
             })}
           </div>
-        </AnimatedElement>
+        </div>
 
       </div>
     </section>
@@ -1008,7 +958,7 @@ const FAQSection: React.FC = () => {
     <section className="py-24 bg-light-100 dark:bg-midnight-950 border-t border-light-300 dark:border-midnight-700 relative transition-colors">
       <div className="container mx-auto px-6 max-w-3xl">
         {/* Header */}
-        <AnimatedElement animation="fadeInUp" className="text-center mb-12">
+        <div className="reveal text-center mb-12">
           {/* FAQ Badge */}
           <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-surface-border dark:border-midnight-700 shadow-sm">
             <HelpCircle className="w-4 h-4 text-electric-indigo" />
@@ -1020,10 +970,10 @@ const FAQSection: React.FC = () => {
           <p className="text-text-secondary text-lg max-w-xl mx-auto">
             Find quick answers to common questions about TotalAssist.
           </p>
-        </AnimatedElement>
+        </div>
 
         {/* FAQ Items */}
-        <AnimatedElement animation="fadeInUp" delay={0.2}>
+        <div className="reveal">
           <div className="space-y-4">
             {faqs.map((faq, i) => (
               <div
@@ -1067,7 +1017,7 @@ const FAQSection: React.FC = () => {
               </div>
             ))}
           </div>
-        </AnimatedElement>
+        </div>
       </div>
     </section>
   );
@@ -1108,18 +1058,18 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
         }}
       />
       <div className="container mx-auto px-6 max-w-4xl text-center relative z-10">
-        <AnimatedElement animation="fadeInUp">
+        <div className="reveal">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             Life's too short for tech headaches.
           </h2>
-        </AnimatedElement>
-        <AnimatedElement animation="fadeInUp" delay={0.15}>
+        </div>
+        <div className="reveal" style={{ transitionDelay: '150ms' }}>
           <p className="text-white/90 font-medium max-w-2xl mx-auto mb-10 text-xl lg:text-2xl">
             No more searching for answers at midnight. No more feeling stuck with
             your own devices. Just instant AI-powered help, whenever you need it.
           </p>
-        </AnimatedElement>
-        <AnimatedElement animation="fadeInUp" delay={0.3}>
+        </div>
+        <div className="reveal hover-scale" style={{ transitionDelay: '300ms' }}>
           <form
             onSubmit={handleSubmit}
             className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto mb-6"
@@ -1139,8 +1089,8 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
               Get Started Free
             </button>
           </form>
-        </AnimatedElement>
-        <AnimatedElement animation="fadeIn" delay={0.5}>
+        </div>
+        <div className="reveal" style={{ transitionDelay: '450ms' }}>
           <div className="flex items-center justify-center gap-6 text-white/80 text-sm flex-wrap">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
@@ -1155,7 +1105,7 @@ const CTASection: React.FC<{ onSignup: (email?: string) => void }> = ({
               <span>Support available 24/7</span>
             </div>
           </div>
-        </AnimatedElement>
+        </div>
       </div>
     </section>
   );
@@ -1172,9 +1122,9 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
   return (
     <footer className="bg-midnight-950 text-white pt-20 pb-10">
       <div className="container mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 reveal-stagger">
           {/* Brand Column */}
-          <AnimatedElement animation="fadeInUp" className="col-span-2 md:col-span-1">
+          <div className="reveal col-span-2 md:col-span-1">
             <button
               onClick={() => handleNav(PageView.HOME)}
               className="mb-6 block"
@@ -1184,10 +1134,10 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
               Your 24/7 technical safety net. TotalAssist diagnoses and fixes your home's Wi-Fi, gadgets, and appliances instantly. Expert support is now just a heartbeat away.
             </p>
-          </AnimatedElement>
+          </div>
 
           {/* Product Column */}
-          <AnimatedElement animation="fadeInUp" delay={0.1}>
+          <div className="reveal">
             <h4 className="font-bold mb-6 text-white">Product</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>
@@ -1250,10 +1200,10 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
             </ul>
-          </AnimatedElement>
+          </div>
 
           {/* Support Column */}
-          <AnimatedElement animation="fadeInUp" delay={0.2}>
+          <div className="reveal">
             <h4 className="font-bold mb-6 text-white">Support</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>
@@ -1281,10 +1231,10 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
             </ul>
-          </AnimatedElement>
+          </div>
 
           {/* Legal Column */}
-          <AnimatedElement animation="fadeInUp" delay={0.3}>
+          <div className="reveal">
             <h4 className="font-bold mb-6 text-white">Legal</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>
@@ -1312,7 +1262,7 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
                 </button>
               </li>
             </ul>
-          </AnimatedElement>
+          </div>
         </div>
 
         {/* Bottom Bar */}
@@ -1452,6 +1402,9 @@ const App: React.FC = () => {
     subscriptionLoading,
     subscriptionLoading ? null : { remaining: serverVideoCredits.remaining, purchased: serverVideoCredits.purchased }
   );
+
+  // Activate Arcade-style scroll-reveal animations on .reveal elements
+  useScrollReveal();
 
   // Check if user should see dashboard on initial load
   useEffect(() => {
@@ -2161,7 +2114,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
-      <UsageBanner onNavigate={navigate} />
       <Header
         onNavigate={navigate}
         currentView={currentView}

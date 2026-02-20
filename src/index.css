@@ -1029,6 +1029,281 @@ body {
   background-size: 200% 100%;
 }
 
+/* ══════════════════════════════════════════════════════════
+   Arcade-style Animation System
+   Pure CSS animations — no libraries. GPU-composited only
+   (opacity + transform). Staggered cascades for entrances.
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Core Keyframes ── */
+
+/* Slide down + fade in (nav, top-anchored elements) */
+@keyframes arcadeSlideDown {
+  0% { opacity: 0; transform: translate3d(0, -16px, 0); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* Slide up + fade in (hero text, cards, content) */
+@keyframes arcadeSlideUp {
+  0% { opacity: 0.01; transform: translate3d(0, 16px, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Pure fade (backgrounds, large sections) */
+@keyframes arcadeFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Shimmer sweep for gradient text highlights */
+@keyframes arcadeShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Subtle float for decorative elements */
+@keyframes arcadeFloat {
+  0% { transform: translate3d(0, 0px, 0); }
+  50% { transform: translate3d(0, -6px, 0); }
+  100% { transform: translate3d(0, 0px, 0); }
+}
+
+/* Infinite logo/marquee slide */
+@keyframes arcadeMarquee {
+  0% { transform: translate3d(0%, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+
+/* ── Staggered Slide-Up Entrance (Arcade WowCoolNiceReverse pattern) ── */
+/* Each child delays 200ms after the previous. backwards fill = invisible until delay fires */
+.arcade-up-1 { animation: arcadeSlideUp 1000ms ease-out 10ms 1 normal backwards; }
+.arcade-up-2 { animation: arcadeSlideUp 1000ms ease-out 200ms 1 normal backwards; }
+.arcade-up-3 { animation: arcadeSlideUp 1000ms ease-out 400ms 1 normal backwards; }
+.arcade-up-4 { animation: arcadeSlideUp 1000ms ease-out 600ms 1 normal backwards; }
+.arcade-up-5 { animation: arcadeSlideUp 1000ms ease-out 800ms 1 normal backwards; }
+.arcade-up-6 { animation: arcadeSlideUp 1000ms ease-out 1000ms 1 normal backwards; }
+
+/* ── Staggered Slide-Down Entrance ── */
+.arcade-down-1 { animation: arcadeSlideDown 1000ms ease-out 10ms 1 normal backwards; }
+.arcade-down-2 { animation: arcadeSlideDown 1000ms ease-out 200ms 1 normal backwards; }
+.arcade-down-3 { animation: arcadeSlideDown 1000ms ease-out 400ms 1 normal backwards; }
+
+/* ── Staggered Fade Entrance ── */
+.arcade-fade-1 { animation: arcadeFade 800ms ease-out 200ms 1 normal backwards; }
+.arcade-fade-2 { animation: arcadeFade 1200ms ease-out 600ms 1 normal backwards; }
+.arcade-fade-3 { animation: arcadeFade 1500ms ease-out 1000ms 1 normal backwards; }
+
+/* ── Scroll-Reveal: elements start invisible, animate when .is-visible is added ── */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+  transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Stagger children inside a reveal group */
+.reveal-stagger > .reveal:nth-child(1) { transition-delay: 0ms; }
+.reveal-stagger > .reveal:nth-child(2) { transition-delay: 100ms; }
+.reveal-stagger > .reveal:nth-child(3) { transition-delay: 200ms; }
+.reveal-stagger > .reveal:nth-child(4) { transition-delay: 300ms; }
+.reveal-stagger > .reveal:nth-child(5) { transition-delay: 400ms; }
+.reveal-stagger > .reveal:nth-child(6) { transition-delay: 500ms; }
+.reveal-stagger > .reveal:nth-child(7) { transition-delay: 600ms; }
+.reveal-stagger > .reveal:nth-child(8) { transition-delay: 700ms; }
+
+/* ── Shimmer Gradient Text ── */
+.shimmer-text {
+  background: linear-gradient(90deg, currentColor 0%, currentColor 40%, #6366F1 50%, #06B6D4 55%, currentColor 65%, currentColor 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: arcadeShimmer 4s linear infinite;
+}
+
+/* Dark mode shimmer uses lighter base */
+.dark .shimmer-text {
+  background: linear-gradient(90deg, #e5e7eb 0%, #e5e7eb 40%, #6366F1 50%, #06B6D4 55%, #e5e7eb 65%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Progressive Layered Shadows (Arcade signature depth) ── */
+.shadow-layered {
+  box-shadow:
+    0 0 0 1px rgba(17, 24, 39, 0.08),
+    0 2px 2px -2px rgba(17, 24, 39, 0.03),
+    0 4px 4px 0 rgba(17, 24, 39, 0.03),
+    0 8px 8px 0 rgba(17, 24, 39, 0.03),
+    0 16px 16px 0 rgba(17, 24, 39, 0.03);
+  transition: box-shadow 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.shadow-layered:hover {
+  box-shadow:
+    0 0 0 1px rgba(17, 24, 39, 0.10),
+    0 2px 2px -2px rgba(17, 24, 39, 0.04),
+    0 4px 4px 0 rgba(17, 24, 39, 0.04),
+    0 8px 8px 0 rgba(17, 24, 39, 0.04),
+    0 16px 16px 0 rgba(17, 24, 39, 0.04),
+    0 32px 32px 0 rgba(17, 24, 39, 0.04);
+}
+
+.dark .shadow-layered {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 2px -2px rgba(0, 0, 0, 0.15),
+    0 4px 4px 0 rgba(0, 0, 0, 0.12),
+    0 8px 8px 0 rgba(0, 0, 0, 0.10),
+    0 16px 16px 0 rgba(0, 0, 0, 0.08);
+}
+
+.dark .shadow-layered:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 2px 2px -2px rgba(0, 0, 0, 0.18),
+    0 4px 4px 0 rgba(0, 0, 0, 0.15),
+    0 8px 8px 0 rgba(0, 0, 0, 0.12),
+    0 16px 16px 0 rgba(0, 0, 0, 0.10),
+    0 32px 32px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* ── Scale-on-Hover (Arcade input/card pattern: resting slightly smaller) ── */
+.hover-scale {
+  transform: scale(0.97);
+  transition: transform 260ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform;
+}
+
+.hover-scale:hover,
+.hover-scale:focus-within {
+  transform: scale(1);
+}
+
+/* Subtle lift — no scale shrink at rest, just elevate on hover */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Arrow Micro-Interaction (Arcade arrow-link pattern) ── */
+.arcade-arrow {
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
+}
+
+.group:hover .arcade-arrow,
+.arcade-arrow-trigger:hover .arcade-arrow {
+  transform: translateX(6px);
+}
+
+/* ── Floating Elements ── */
+.arcade-float {
+  animation: arcadeFloat 4s ease-in-out infinite;
+}
+
+/* ── Floating Header (Arcade-style: static at top, rounded pill on scroll) ── */
+
+/* Outer wrapper — always fixed, full-width. Provides the positioning. */
+.header-outer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 0;
+  transition: padding 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.header-outer.scrolled {
+  padding: 8px 16px 0;
+}
+
+@media (min-width: 640px) {
+  .header-outer.scrolled {
+    padding: 10px 24px 0;
+  }
+}
+
+/* Inner bar — the visible header. Full-width at top, constrained pill on scroll. */
+.header-inner {
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  transition:
+    background 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-radius 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 0.3s ease,
+    box-shadow 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    backdrop-filter 0.3s ease,
+    max-width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.dark .header-inner {
+  background: #151922;
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Scrolled state: floating pill with frosted glass, constrained to 80rem (max-w-7xl) */
+.header-outer.scrolled .header-inner {
+  max-width: 80rem;
+  border-radius: 16px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(17, 24, 39, 0.06),
+    0 2px 4px -1px rgba(17, 24, 39, 0.06),
+    0 6px 12px -2px rgba(17, 24, 39, 0.05),
+    0 12px 24px -4px rgba(17, 24, 39, 0.04);
+}
+
+.dark .header-outer.scrolled .header-inner {
+  background: rgba(21, 25, 34, 0.80);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 4px -1px rgba(0, 0, 0, 0.2),
+    0 6px 12px -2px rgba(0, 0, 0, 0.15),
+    0 12px 24px -4px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Marquee Container (edge-fade mask) ── */
+.marquee-mask {
+  mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgb(0,0,0) 15%, rgb(0,0,0) 85%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgb(0,0,0) 15%, rgb(0,0,0) 85%, rgba(0,0,0,0) 100%);
+  overflow: hidden;
+}
+
+.marquee-track {
+  animation: arcadeMarquee 40s linear infinite;
+}
+
+.marquee-mask:hover .marquee-track {
+  animation-play-state: paused;
+}
+
 /* ── Accessibility: Respect reduced motion preference ── */
 @media (prefers-reduced-motion: reduce) {
   *,

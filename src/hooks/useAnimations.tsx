@@ -27,6 +27,68 @@ export const useInView = (options?: IntersectionObserverInit) => {
   return { ref, isInView };
 };
 
+// ── Arcade-style scroll reveal ──
+// Single shared IntersectionObserver that adds 'is-visible' class to .reveal elements.
+// Usage: call useScrollReveal() in any component — it auto-observes all .reveal elements
+// within containerRef (or document if no container).
+let sharedObserver: IntersectionObserver | null = null;
+const observedElements = new Set<Element>();
+
+function getSharedObserver(): IntersectionObserver {
+  if (!sharedObserver) {
+    sharedObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            sharedObserver?.unobserve(entry.target);
+            observedElements.delete(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+    );
+  }
+  return sharedObserver;
+}
+
+export const useScrollReveal = (containerRef?: React.RefObject<HTMLElement | null>) => {
+  useEffect(() => {
+    const observer = getSharedObserver();
+    const root = containerRef?.current ?? document;
+
+    // Observe all .reveal elements that aren't already visible
+    const elements = root.querySelectorAll('.reveal:not(.is-visible)');
+    elements.forEach((el) => {
+      if (!observedElements.has(el)) {
+        observedElements.add(el);
+        observer.observe(el);
+      }
+    });
+
+    return () => {
+      elements.forEach((el) => {
+        observer.unobserve(el);
+        observedElements.delete(el);
+      });
+    };
+  });
+};
+
+// ── Scroll position hook (for header blur-on-scroll) ──
+export const useScrolled = (threshold = 6): boolean => {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const check = () => setScrolled(window.scrollY >= threshold);
+    check(); // initial
+    window.addEventListener('scroll', check, { passive: true });
+    return () => window.removeEventListener('scroll', check);
+  }, [threshold]);
+
+  return scrolled;
+};
+
 // Animation types
 type AnimationType = 'fadeIn' | 'fadeInUp' | 'fadeInDown' | 'fadeInLeft' | 'fadeInRight' | 'scaleIn' | 'none';
 

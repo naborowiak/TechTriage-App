@@ -1,6 +1,6 @@
 {
-  "name": "TechTriage",
-  "description": "Your Home & Tech Lifeline. Remote triage and support service.",
+  "name": "TotalAssist",
+  "description": "AI-Powered Home Tech Support. Diagnose and fix issues with expert AI guidance.",
   "requestFramePermissions": [
     "camera",
     "microphone"

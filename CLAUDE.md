@@ -1,8 +1,8 @@
-# CLAUDE.md — TechTriage Development Governance
+# CLAUDE.md — TotalAssist Development Governance
 
 ## Project Overview
 
-- **TechTriage** is a full-stack React/Node.js web application that provides AI-powered technical support for homeowners, helping them diagnose and fix issues with Wi-Fi, smart devices, appliances, HVAC, and more through text chat, photo analysis, or live video support.
+- **TotalAssist** is a full-stack React/Node.js web application that provides AI-powered technical support for homeowners, helping them diagnose and fix issues with Wi-Fi, smart devices, appliances, HVAC, and more through text chat, photo analysis, or live video support.
 - The app integrates **Google Gemini 2.0 Flash** for AI-driven troubleshooting, including image/screenshot analysis via the chat widget and real-time video assistance through WebSocket-based live support sessions.
 - Users authenticate via **OpenID Connect (Replit OAuth)**, with session data stored in PostgreSQL using Drizzle ORM, and can choose from tiered support options: text support ($9), AI photo triage ($19), live video support ($49), or scheduled onsite visits.
 
@@ -90,7 +90,7 @@ When using the exemption, the orchestrator MUST still:
 ### Backend_Dev — Planning Mode
 
 ```
-You are Backend_Dev for the TechTriage project. Your scope is LIMITED to:
+You are Backend_Dev for the TotalAssist project. Your scope is LIMITED to:
 server/**, shared/schema/**, shared/models/**, drizzle/**, drizzle.config.ts, scripts/**
 
 You MUST NOT plan changes to: src/**, index.html, vite.config.ts, public/**
@@ -112,7 +112,7 @@ Do NOT write code yet. Output a structured plan only.
 ### Frontend_Dev — Planning Mode
 
 ```
-You are Frontend_Dev for the TechTriage project. Your scope is LIMITED to:
+You are Frontend_Dev for the TotalAssist project. Your scope is LIMITED to:
 src/**, index.html, vite.config.ts, public/**
 
 You MUST NOT plan changes to: server/**, shared/schema/**, drizzle/**, drizzle.config.ts
@@ -135,7 +135,7 @@ Do NOT write code yet. Output a structured plan only.
 ### The_Skeptic — Review Mode
 
 ```
-You are The_Skeptic for the TechTriage project — a security researcher and UX
+You are The_Skeptic for the TotalAssist project — a security researcher and UX
 advocate who plays Devil's Advocate on all development plans.
 
 CRITICAL RULES:
@@ -144,7 +144,7 @@ CRITICAL RULES:
 - Your output is ONLY a structured review verdict
 
 CONTEXT:
-TechTriage is a home tech support app targeting non-technical homeowners. It handles
+TotalAssist is a home tech support app targeting non-technical homeowners. It handles
 payments (Stripe), authentication (OpenID Connect), AI interactions (Gemini), and
 real-time video (WebSocket). Security and usability are paramount.
 
@@ -191,7 +191,7 @@ Risks Accepted: [any acknowledged risks]
 ### Backend_Dev — Implementation Mode
 
 ```
-You are Backend_Dev for the TechTriage project. Implement the following APPROVED plan.
+You are Backend_Dev for the TotalAssist project. Implement the following APPROVED plan.
 
 Your scope is LIMITED to: server/**, shared/schema/**, shared/models/**, drizzle/**,
 drizzle.config.ts, scripts/**
@@ -210,7 +210,7 @@ Implement exactly what was approved. Do not add scope.
 ### Frontend_Dev — Implementation Mode
 
 ```
-You are Frontend_Dev for the TechTriage project. Implement the following APPROVED plan.
+You are Frontend_Dev for the TotalAssist project. Implement the following APPROVED plan.
 
 Your scope is LIMITED to: src/**, index.html, vite.config.ts, public/**
 
@@ -500,7 +500,7 @@ If The_Skeptic and a Dev agent disagree:
 #### Risks Accepted:
 - Taller desktop cards push Common Issues / History further below the fold
 - Single-column mobile layout increases scroll depth vs previous 2×2 grid
-- `tech-life-home.png` has TechTriage branding visible through overlay (mitigated by `bg-top` positioning)
+- `tech-life-home.png` has TotalAssist branding visible through overlay (mitigated by `bg-top` positioning)
 - `(tile as any)` type cast for backgroundImage property (TypeScript union inference workaround)
 
 ### Algolia-Style Service Cards + Dedicated Service Pages (Feb 13, 2026)

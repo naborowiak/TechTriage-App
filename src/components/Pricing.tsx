@@ -327,7 +327,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
   ];
 
   return (
-    <section className="min-h-screen pt-[80px] bg-light-50 dark:bg-midnight-950 transition-colors overflow-x-clip">
+    <section className="min-h-screen pt-[64px] bg-light-50 dark:bg-midnight-950 transition-colors overflow-x-clip">
       {/* Hero Section */}
       <div className="section-light py-20 text-center border-b border-light-300 dark:border-midnight-700">
         <div className="container mx-auto px-6 max-w-4xl">
@@ -659,10 +659,10 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
               </div>
 
               <div role="table" aria-label="Feature comparison by plan">
-                {/* Sticky Column Headers — sticks below fixed nav (80px) */}
+                {/* Sticky Column Headers — sticks below fixed nav (64px) */}
                 <div
                   role="row"
-                  className="sticky top-[80px] z-10 grid grid-cols-[1fr_60px_60px_60px] sm:grid-cols-[1fr_100px_100px_100px] lg:grid-cols-[1fr_140px_140px_140px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]"
+                  className="sticky top-[64px] z-10 grid grid-cols-[1fr_60px_60px_60px] sm:grid-cols-[1fr_100px_100px_100px] lg:grid-cols-[1fr_140px_140px_140px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]"
                 >
                   <div role="columnheader" className="py-4 px-3 sm:px-4 text-text-secondary font-medium text-sm">Feature</div>
                   <div role="columnheader" className="py-4 px-2 sm:px-4 text-center">
