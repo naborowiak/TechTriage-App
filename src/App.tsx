@@ -543,28 +543,28 @@ const Hero: React.FC<{
                   24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
               </div>
-            </div>
 
-            {/* CTAs + trust chips */}
-            <div className="arcade-up-3 flex justify-center gap-4 mt-8 sm:mt-9 lg:mt-11 xl:mt-8 lg:justify-start lg:mb-[100px] px-6 lg:px-0">
-              <button
-                onClick={onFreeTrial}
-                className="flex items-center cursor-pointer font-sora justify-center text-white px-4 lg:px-6 rounded-lg min-h-12 lg:min-h-14 blue-gradient"
-              >
-                <span className="font-semibold font-sora text-sm lg:text-base">
-                  Get help with my tech
-                </span>
-              </button>
-              {onSecondaryAction && (
+              {/* CTAs */}
+              <div className="arcade-up-3 flex justify-center gap-4 mt-8 sm:mt-9 lg:mt-11 xl:mt-8 lg:justify-start lg:mb-[100px]">
                 <button
-                  onClick={onSecondaryAction}
-                  className="flex items-center justify-center cursor-pointer font-sora text-white px-4 lg:px-6 rounded-lg min-h-12 lg:min-h-14 bg-white/10 hover:bg-white/20 transition-colors"
+                  onClick={onFreeTrial}
+                  className="flex items-center cursor-pointer font-sora justify-center text-white px-6 lg:px-8 h-12 lg:h-14 rounded-full blue-gradient"
                 >
-                  <span className="font-semibold font-sora text-sm lg:text-base">
-                    See how it works
+                  <span className="font-semibold font-sora text-sm lg:text-base whitespace-nowrap">
+                    Get Help
                   </span>
                 </button>
-              )}
+                {onSecondaryAction && (
+                  <button
+                    onClick={onSecondaryAction}
+                    className="flex items-center justify-center cursor-pointer font-sora text-white px-6 lg:px-8 h-12 lg:h-14 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors"
+                  >
+                    <span className="font-semibold font-sora text-sm lg:text-base whitespace-nowrap">
+                      See how it works
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
             {/* Trust chips — below CTAs on mobile, above mb on desktop */}
             <div className="arcade-up-3 flex flex-wrap justify-center lg:justify-start gap-4 mt-4 lg:-mt-[84px] px-6 lg:pl-16 lg:pr-0">
