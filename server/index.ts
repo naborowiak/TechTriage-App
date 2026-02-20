@@ -93,7 +93,7 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       connectSrc: ["'self'", "wss:", "https://api.stripe.com", "https://js.stripe.com"],
-      frameSrc: ["https://js.stripe.com"],
+      frameSrc: ["https://js.stripe.com", "https://demo.arcade.software"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
     },
