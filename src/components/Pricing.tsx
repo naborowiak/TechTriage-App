@@ -200,62 +200,65 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
   const plans = [
     {
       name: 'TotalAssist Free',
-      tagline: 'Try It Out',
-      bestFor: 'Trying it out with a quick question',
+      tagline: 'Try it out on a quick issue.',
+      bestFor: 'Trying TotalAssist with a few simple questions',
       monthlyPrice: 0,
       annualPrice: 0,
       isFree: true,
-      description: 'See how easy tech support can be. No credit card required.',
+      description: 'See how easy home tech support can be — no credit card required.',
       icon: MessageSquare,
       features: [
         '5 support messages per month',
         '1 photo analysis per month',
-        'Guided fix steps (Assist Pills)',
-        'Case history & PDF reports',
+        'Guided fix steps with Assist Pills (tap instead of typing)',
+        '1 saved Case with a PDF diagnostic report',
+        'Basic gear recommendations when replacement makes more sense',
       ],
       lockedFeatures: [] as string[],
-      cta: 'Sign Up Free',
+      cta: 'Get started free',
       ctaStyle: 'outlined',
     },
     {
       name: 'TotalAssist Home',
-      tagline: 'Unlimited Support',
-      bestFor: 'Homeowners who need regular tech help',
+      tagline: 'Unlimited support for your home.',
+      bestFor: 'Homeowners and families who rely on Wi-Fi, TVs, and printers every day',
       monthlyPrice: 9.99,
       annualPrice: 7.99,
-      description: 'Unlimited support for your home. Chat and send photos anytime — your tech support is always on.',
+      description: 'Chat, send photos, or start a guided session whenever something breaks. Your home has a dedicated tech support line.',
       icon: Home,
       features: [
         'Unlimited support messages',
-        'Unlimited photo analysis',
-        'Voice support — talk through issues',
-        'Video diagnostic — 1 credit/week',
-        'Guided fix steps (Assist Pills)',
-        'PDF diagnostic reports',
-        'Full case history and search',
+        'Unlimited photo analysis (Wi-Fi, TVs, printers, smart devices, and more)',
+        'Voice support — talk through issues hands-free',
+        'Video diagnostics — 1 credit per week for short live sessions',
+        'Guided fix steps with Assist Pills',
+        'PDF diagnostic reports for every Case',
+        'Full Case history and search',
         'Email case summaries',
+        'TotalAssist Recommendations when it\'s time to replace gear',
       ],
-      cta: 'Get Started',
+      cta: 'Choose Home',
       ctaStyle: 'primary',
     },
     {
       name: 'TotalAssist Pro',
-      tagline: 'For Families & Landlords',
-      bestFor: 'Families, landlords, and multi-property managers',
+      tagline: 'For families, landlords, and multi-property setups.',
+      bestFor: 'Families, landlords, and small hosts (Airbnb, duplexes) with more than one home or unit',
       monthlyPrice: 19.99,
       annualPrice: 15.99,
-      description: 'Everything in Home, plus multi-property support. Ideal for families, landlords, and Airbnb hosts.',
+      description: 'Everything in Home, plus multi-home support and more video diagnostics.',
       icon: Users,
       features: [
-        'Everything in Home, plus:',
-        'Multi-home support (up to 5)',
-        'Family member accounts',
-        'Video diagnostics — 15 credits/month',
-        'Full case history, search & PDF reports',
-        'Professional escalation reports (PDF)',
-        'Priority response times',
+        'Everything in TotalAssist Home, plus:',
+        'Multi-home support (up to 5 properties)',
+        'Family member accounts under one subscription',
+        'Video diagnostics — up to 15 credits per month',
+        'Full Case history, search, and PDF reports across all homes',
+        'Professional escalation reports (PDF) for technicians or property managers',
+        'Priority response times for new diagnostics',
+        'Enhanced gear recommendations tuned per property size and usage',
       ],
-      cta: 'Get Started',
+      cta: 'Upgrade to Pro',
       ctaStyle: 'secondary',
     },
   ];
@@ -306,7 +309,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
     },
     {
       q: 'What\'s the difference between Home and Pro?',
-      a: 'Both plans include unlimited chat, photo analysis, and voice support. Pro adds 15 video credits per month (vs. 1/week on Home), multi-home support (up to 5 properties), family member accounts, professional escalation reports, and priority response times. It\'s ideal for landlords, Airbnb hosts, or families managing multiple homes.',
+      a: 'Both plans include unlimited chat, photo analysis, voice support, Assist Pills, and PDF diagnostic reports. Pro adds 15 video credits per month (vs. 1/week on Home), multi-home support (up to 5 properties), family member accounts under one subscription, professional escalation reports you can hand to a technician or property manager, priority response times, and enhanced gear recommendations tuned per property. It\'s ideal for landlords, Airbnb hosts, or families managing multiple homes.',
     },
     {
       q: 'What types of issues do you support?',
@@ -323,6 +326,10 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
     {
       q: 'Why not just use ChatGPT or Google Gemini?',
       a: 'General-purpose AI chatbots can answer tech questions, but they can\'t see your devices through photo or video, walk you through fixes with interactive step-by-step assist pills, or generate a professional diagnostic report. TotalAssist is built specifically for home tech support — it understands your devices, remembers your history, and gives you a clear path to resolution.',
+    },
+    {
+      q: 'What are TotalAssist Recommendations?',
+      a: 'When we see the same device causing repeat problems, we may suggest replacement options — like a mesh Wi-Fi kit for larger homes or a more reliable printer. We may earn a small commission if you buy through our links, but we only recommend gear we believe will actually reduce future issues. This is included in all plans.',
     },
   ];
 
@@ -686,7 +693,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
                   { icon: <Camera className="w-4 h-4 text-electric-indigo" />, name: 'Photo Analysis', sub: 'Send photos for diagnosis', free: '1/month', home: 'Unlimited', pro: 'Unlimited' },
                   { icon: <Mic className="w-4 h-4 text-electric-indigo" />, name: 'Voice Support', sub: 'Talk through issues hands-free', free: 'locked', home: 'Unlimited', pro: 'Unlimited' },
                   { icon: <Video className="w-4 h-4 text-electric-indigo" />, name: 'Video Diagnostic', sub: 'Live camera diagnosis', free: 'locked', home: '1/week', pro: '15/month' },
-                  { icon: <Clock className="w-4 h-4 text-electric-indigo" />, name: 'Case History', sub: 'Saved conversations', free: 'Last 5', home: 'Full history', pro: 'Full history' },
+                  { icon: <Clock className="w-4 h-4 text-electric-indigo" />, name: 'Case History', sub: 'Saved conversations', free: '1 Case', home: 'Full history', pro: 'Full history' },
                   { icon: <Sparkles className="w-4 h-4 text-electric-indigo" />, name: 'Assist Pills', sub: 'Guided step-by-step fixes', free: 'check', home: 'check', pro: 'check' },
                   { icon: <FileText className="w-4 h-4 text-electric-indigo" />, name: 'PDF Reports', sub: 'Diagnostic case reports', free: 'check', home: 'check', pro: 'check' },
                   { icon: <Home className="w-4 h-4 text-electric-indigo" />, name: 'Multi-Home', sub: 'Properties supported', free: '1', home: '1', pro: 'Up to 5', isLast: true },
@@ -729,6 +736,27 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </AnimatedElement>
+
+          {/* Smart Upgrade Suggestions */}
+          <AnimatedElement animation="fadeInUp" delay={0.7}>
+            <div className="mt-16 pt-12 border-t border-light-300 dark:border-midnight-700">
+              <div className="max-w-2xl mx-auto text-center">
+                <div className="inline-flex items-center gap-2 bg-white dark:bg-midnight-800 px-4 py-2 rounded-full mb-6 border border-surface-border dark:border-midnight-700 shadow-sm">
+                  <Sparkles className="w-4 h-4 text-electric-indigo" />
+                  <span className="text-gradient-electric font-semibold text-sm">Smart Recommendations</span>
+                </div>
+                <h3 className="text-2xl font-bold text-text-primary dark:text-white mb-4">
+                  Smart upgrade suggestions, not random ads
+                </h3>
+                <p className="text-text-secondary text-[15px] leading-relaxed">
+                  When we see the same device causing repeat problems, TotalAssist can suggest
+                  replacement options — like a mesh Wi-Fi kit for larger homes or a more reliable
+                  printer. We may earn a small commission if you buy through our links, but we only
+                  recommend gear we believe will actually reduce future issues.
+                </p>
               </div>
             </div>
           </AnimatedElement>

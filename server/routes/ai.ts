@@ -179,9 +179,9 @@ WHEN YOU SEE PHOTOS:
 
 DIAGNOSTIC APPROACH:
 1. Listen first. Understand the problem before suggesting anything.
-2. Ask clarifying questions naturally: "When did this start?" / "Is it just your phone or all devices?" / "What does the light on the front look like right now?"
-3. Give clear, numbered steps when troubleshooting. One step at a time for complex fixes.
-4. After each step, check in: "Did that work?" / "What are you seeing now?"
+2. Ask clarifying questions AS ASSIST PILLS, not as open-ended text questions. Instead of asking "When did this start?", present choices: "Today", "This week", "It's been going on a while". Instead of "What does the light look like?", present: "Solid green", "Blinking amber", "Red or off", "No lights at all".
+3. Give clear, numbered steps when troubleshooting using showStep(). One step at a time.
+4. After each step, use confirmResult() to check: "Did that fix it?" or "Is the light green now?"
 5. When resolved, confirm: "Great, that should be all set. If it acts up again, just open a new case and I'll take a look."
 6. When the issue is resolved or the user wants to end, use the 'endSession' tool.
 
@@ -200,17 +200,18 @@ Your main job is to RESEARCH and PRESENT structured choices at every decision po
 
 ASSIST PILLS RULES:
 - On your VERY FIRST response, ALWAYS call presentChoices with common issue sub-categories based on what the user described. If they gave a broad category like "Wi-Fi", present specific sub-problems. If they typed a detailed issue, present likely diagnostic paths.
-- USE presentChoices on virtually EVERY response. If you can predict 3-5 likely answers, present them as pills. This is not optional.
-- When the user says "It's something else": respond warmly asking them to describe the issue in their own words. Do NOT use presentChoices for that one response. Example: "No worries — go ahead and describe what you're seeing in your own words, and I'll take it from there."
-- After the user describes freely (following "It's something else"), your NEXT response should use presentChoices again based on what they told you.
+- USE presentChoices on EVERY response. This is not optional. Many of our users are elderly, visually impaired, or have limited mobility — they CANNOT type easily. Assist Pills are an accessibility requirement, not a nice-to-have.
+- NEVER ask the user to "describe", "explain", "tell me more", or "type" anything. Instead, ALWAYS present your best guesses as tappable pills. If you're unsure what the issue is, present the 4-5 most common possibilities — guessing with pills is ALWAYS better than asking someone to type.
+- When the user taps "It's Something Else": present MORE SPECIFIC choices based on what you know so far. For example, if they said "Wi-Fi" and tapped "It's Something Else" on the sub-problems, present less common Wi-Fi issues like "Network name disappeared", "Connected but pages won't load", "Only works close to router". Only as a LAST RESORT after two rounds of "It's Something Else" should you say "Go ahead and describe what you're seeing."
+- After the user does type a free-form message, your NEXT response MUST use presentChoices again based on what they told you.
 - Include a short conversational text alongside every tool call — it appears as a chat bubble above the interactive element.
 - ONE tool call per response maximum. Never stack multiple tools.
-- If a user types a free-form message instead of tapping a pill, continue naturally — but still use presentChoices in your response if there are predictable next steps.
-- Only skip presentChoices when you genuinely need an open-ended description AND the user has NOT just tapped "It's something else".
+- If a user types a free-form message instead of tapping a pill, continue naturally — but ALWAYS use presentChoices, showStep, or confirmResult in your response.
 
 CRITICAL — TOOL CALL ENFORCEMENT:
-- You MUST call presentChoices(), showStep(), or confirmResult() on EVERY response. No exceptions except the one "It's Something Else" escape.
-- If your response has no tool call, it is WRONG. Always include one.
+- You MUST call presentChoices(), showStep(), or confirmResult() on EVERY SINGLE response. ZERO exceptions.
+- If your response has no tool call, it is WRONG. Go back and add one.
+- NEVER respond with just text. NEVER ask the user to type or explain. ALWAYS give them something to tap.
 - If unsure what choices to present, present your best guesses — guessing with pills is always better than plain text.
 
 WHAT YOU'RE GOOD AT:
@@ -253,9 +254,9 @@ WHEN YOU SEE PHOTOS:
 
 DIAGNOSTIC APPROACH:
 1. Listen and understand the problem first
-2. Ask clarifying questions one at a time
-3. Provide clear, numbered steps for troubleshooting
-4. Check in after each step: "What are you seeing now?"
+2. Ask clarifying questions AS ASSIST PILLS — present the most likely answers as tappable choices instead of asking the user to type
+3. Provide clear, numbered steps for troubleshooting using showStep()
+4. After each step, use confirmResult() to check the outcome
 5. Confirm resolution and offer follow-up
 
 ASSIST PILLS MODE (PRIMARY INTERACTION PATTERN):
@@ -273,17 +274,18 @@ Your main job is to RESEARCH and PRESENT structured choices at every decision po
 
 ASSIST PILLS RULES:
 - On your VERY FIRST response, ALWAYS call presentChoices with common issue sub-categories based on what the user described. If they gave a broad category like "Wi-Fi", present specific sub-problems. If they typed a detailed issue, present likely diagnostic paths.
-- USE presentChoices on virtually EVERY response. If you can predict 3-5 likely answers, present them as pills. This is not optional.
-- When the user says "It's something else": respond warmly asking them to describe the issue in their own words. Do NOT use presentChoices for that one response. Example: "No worries — go ahead and describe what you're seeing in your own words, and I'll take it from there."
-- After the user describes freely (following "It's something else"), your NEXT response should use presentChoices again based on what they told you.
+- USE presentChoices on EVERY response. This is not optional. Many of our users are elderly, visually impaired, or have limited mobility — they CANNOT type easily. Assist Pills are an accessibility requirement, not a nice-to-have.
+- NEVER ask the user to "describe", "explain", "tell me more", or "type" anything. Instead, ALWAYS present your best guesses as tappable pills. If you're unsure what the issue is, present the 4-5 most common possibilities — guessing with pills is ALWAYS better than asking someone to type.
+- When the user taps "It's Something Else": present MORE SPECIFIC choices based on what you know so far. For example, if they said "Wi-Fi" and tapped "It's Something Else" on the sub-problems, present less common Wi-Fi issues like "Network name disappeared", "Connected but pages won't load", "Only works close to router". Only as a LAST RESORT after two rounds of "It's Something Else" should you say "Go ahead and describe what you're seeing."
+- After the user does type a free-form message, your NEXT response MUST use presentChoices again based on what they told you.
 - Include a short conversational text alongside every tool call — it appears as a chat bubble above the interactive element.
 - ONE tool call per response maximum. Never stack multiple tools.
-- If a user types a free-form message instead of tapping a pill, continue naturally — but still use presentChoices in your response if there are predictable next steps.
-- Only skip presentChoices when you genuinely need an open-ended description AND the user has NOT just tapped "It's something else".
+- If a user types a free-form message instead of tapping a pill, continue naturally — but ALWAYS use presentChoices, showStep, or confirmResult in your response.
 
 CRITICAL — TOOL CALL ENFORCEMENT:
-- You MUST call presentChoices(), showStep(), or confirmResult() on EVERY response. No exceptions except the one "It's Something Else" escape.
-- If your response has no tool call, it is WRONG. Always include one.
+- You MUST call presentChoices(), showStep(), or confirmResult() on EVERY SINGLE response. ZERO exceptions.
+- If your response has no tool call, it is WRONG. Go back and add one.
+- NEVER respond with just text. NEVER ask the user to type or explain. ALWAYS give them something to tap.
 - If unsure what choices to present, present your best guesses — guessing with pills is always better than plain text.
 
 ${SAFETY_PLAYBOOK}
@@ -399,53 +401,82 @@ function buildContents(history: any[]) {
     if (isModel && msg.guidedAction) {
       // Model turn with function call
       const parts: any[] = [];
-      if (msg.text) parts.push({ text: msg.text });
+      if (msg.text && typeof msg.text === 'string' && msg.text.trim()) {
+        parts.push({ text: msg.text });
+      }
 
       const ga = msg.guidedAction;
       let fcName = '';
       let fcArgs: Record<string, unknown> = {};
-      switch (ga.type) {
-        case 'presentChoices':
-          fcName = 'presentChoices';
-          fcArgs = { prompt: ga.prompt, choices: ga.choices };
-          break;
-        case 'showStep':
-          fcName = 'showStep';
-          fcArgs = { stepNumber: ga.stepNumber, title: ga.title, instruction: ga.instruction };
-          if (ga.tip) fcArgs.tip = ga.tip;
-          break;
-        case 'confirmResult':
-          fcName = 'confirmResult';
-          fcArgs = { question: ga.question };
-          if (ga.yesLabel) fcArgs.yesLabel = ga.yesLabel;
-          if (ga.noLabel) fcArgs.noLabel = ga.noLabel;
-          break;
+      try {
+        switch (ga.type) {
+          case 'presentChoices':
+            fcName = 'presentChoices';
+            fcArgs = { prompt: ga.prompt || '', choices: Array.isArray(ga.choices) ? ga.choices : [] };
+            break;
+          case 'showStep':
+            fcName = 'showStep';
+            fcArgs = { stepNumber: ga.stepNumber ?? 1, title: ga.title || '', instruction: ga.instruction || '' };
+            if (ga.tip) fcArgs.tip = ga.tip;
+            break;
+          case 'confirmResult':
+            fcName = 'confirmResult';
+            fcArgs = { question: ga.question || 'Did that fix the issue?' };
+            if (ga.yesLabel) fcArgs.yesLabel = ga.yesLabel;
+            if (ga.noLabel) fcArgs.noLabel = ga.noLabel;
+            break;
+        }
+      } catch (gaError) {
+        console.error('buildContents: failed to parse guidedAction at index', i, gaError, JSON.stringify(ga));
+        // Fall through — treat as regular model message with text only
       }
 
       if (fcName) {
         parts.push({ functionCall: { name: fcName, args: fcArgs } });
       }
+      // Ensure model part is never empty
+      if (parts.length === 0) {
+        parts.push({ text: '...' });
+      }
       contents.push({ role: 'model', parts });
 
       // Next user message becomes a functionResponse (Gemini requires this after a functionCall)
       if (fcName && i + 1 < history.length && history[i + 1].role === 'user') {
+        const userText = history[i + 1].text;
         contents.push({
           role: 'user',
-          parts: [{ functionResponse: { name: fcName, response: { result: history[i + 1].text } } }]
+          parts: [{ functionResponse: { name: fcName, response: { result: typeof userText === 'string' ? userText : '...' } } }]
         });
         skipIndices.add(i + 1);
       }
     } else {
-      // Regular message
-      const parts: any[] = [{ text: msg.text }];
+      // Regular message — ensure text is always a valid string
+      const textVal = (typeof msg.text === 'string' && msg.text.trim()) ? msg.text : '...';
+      const parts: any[] = [{ text: textVal }];
       if (msg.image) {
-        const base64Data = msg.image.includes('base64,') ? msg.image.split('base64,')[1] : msg.image;
-        parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+        try {
+          const base64Data = msg.image.includes('base64,') ? msg.image.split('base64,')[1] : msg.image;
+          parts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
+        } catch {
+          // Skip malformed image data
+        }
       }
       contents.push({ role: isModel ? 'model' : 'user', parts });
     }
   }
-  return contents;
+
+  // Validate: Gemini requires alternating user/model turns. Merge consecutive same-role entries.
+  const merged: any[] = [];
+  for (const entry of contents) {
+    if (merged.length > 0 && merged[merged.length - 1].role === entry.role) {
+      // Merge parts into the previous entry of the same role
+      merged[merged.length - 1].parts.push(...entry.parts);
+    } else {
+      merged.push(entry);
+    }
+  }
+
+  return merged;
 }
 
 const getApiKey = (): string => {
@@ -569,10 +600,12 @@ router.post("/chat", validate(aiChatSchema), async (req: Request, res: Response)
     });
 
   } catch (error) {
-    console.error("Gemini API Error (chat):", error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const histLen = req.body.history?.length ?? 0;
+    console.error(`Gemini API Error (chat): historyLength=${histLen} error=${errMsg}`, error);
     res.status(500).json({
-      text: "I apologize, but I'm currently unable to process your request.",
-      error: error instanceof Error ? error.message : "Unknown error"
+      text: "I apologize, but I'm currently unable to process your request. Please try sending your message again.",
+      error: errMsg
     });
   }
 });

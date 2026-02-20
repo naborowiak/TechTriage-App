@@ -89,6 +89,29 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           </AnimatedElement>
         </div>
 
+        {/* Arcade Demo Embed */}
+        <AnimatedElement animation="fadeInUp" delay={0.3}>
+          <div className="max-w-5xl mx-auto mb-24">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-text-primary dark:text-white mb-2">See it in action</h2>
+              <p className="text-text-secondary text-sm">Walk through a real Wi-Fi troubleshooting session — from diagnosis to case report.</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-layered border border-light-300 dark:border-midnight-700">
+              <div style={{ position: 'relative', paddingBottom: 'calc(54.60793502030615% + 41px)', height: '0', width: '100%' }}>
+                <iframe
+                  src="https://demo.arcade.software/mQTnZSy0FqkBmcbbbk0U?embed&embed_mobile=tab&embed_desktop=inline&show_copy_link=true"
+                  title="Resolve a Wi-Fi outage and download the case report"
+                  frameBorder="0"
+                  loading="lazy"
+                  allowFullScreen
+                  allow="clipboard-write"
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', colorScheme: 'light' }}
+                />
+              </div>
+            </div>
+          </div>
+        </AnimatedElement>
+
         {/* Feature Cards */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-24">
           {features.map((feature, i) => (

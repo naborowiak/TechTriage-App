@@ -153,11 +153,11 @@ export const FAQ: React.FC<FAQProps> = ({ onNavigate }) => {
       faqs: [
         {
           question: 'What\'s included in TotalAssist Free?',
-          answer: 'TotalAssist Free includes 5 chat messages and 1 photo analysis per month. It\'s a great way to experience TotalAssist. Voice support and additional features require TotalAssist Home or Pro.',
+          answer: 'TotalAssist Free includes 5 support messages and 1 photo analysis per month, guided fix steps with Assist Pills, 1 saved Case with a PDF diagnostic report, and basic gear recommendations. It\'s a great way to experience TotalAssist — no credit card required.',
         },
         {
           question: 'What\'s the difference between Home and Pro plans?',
-          answer: 'TotalAssist Home ($9.99/mo) includes unlimited chat, photo analysis, and voice support, plus 1 video diagnostic per week. TotalAssist Pro ($19.99/mo) adds 15 video diagnostics per month, multi-home support (up to 5 properties), family member accounts, professional escalation reports, and priority response times. Ideal for landlords, Airbnb hosts, or families managing multiple homes.',
+          answer: 'TotalAssist Home ($9.99/mo) includes unlimited chat, photo analysis, and voice support, plus 1 video diagnostic per week, PDF diagnostic reports for every Case, full Case history, email summaries, and gear recommendations. TotalAssist Pro ($19.99/mo) adds 15 video diagnostics per month, multi-home support (up to 5 properties), family member accounts, professional escalation reports, priority response times, and enhanced gear recommendations tuned per property. Ideal for landlords, Airbnb hosts, or families managing multiple homes.',
         },
         {
           question: 'Can I change my plan later?',

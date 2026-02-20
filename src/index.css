@@ -1199,6 +1199,45 @@ body {
   transform: translateY(-2px);
 }
 
+/* ── Frustration Grid (WhyTotalAssist comparison) ── */
+.frustration-card-bad {
+  background: #FEF2F2;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 12px;
+}
+
+.dark .frustration-card-bad {
+  background: rgba(127, 29, 29, 0.12);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+.frustration-card-good {
+  background: rgba(99, 102, 241, 0.04);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 12px;
+}
+
+.dark .frustration-card-good {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.20);
+}
+
+.frustration-quote::before {
+  content: '\201C';
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: rgba(239, 68, 68, 0.15);
+  font-family: Georgia, serif;
+  pointer-events: none;
+}
+
+.dark .frustration-quote::before {
+  color: rgba(239, 68, 68, 0.20);
+}
+
 /* ── Arrow Micro-Interaction (Arcade arrow-link pattern) ── */
 .arcade-arrow {
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);

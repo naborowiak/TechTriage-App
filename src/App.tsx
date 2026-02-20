@@ -11,7 +11,6 @@ import {
   Smartphone,
   Monitor,
   Printer,
-  MessageSquare,
   Zap,
   Plus,
   Minus,
@@ -19,8 +18,8 @@ import {
   Sun,
   Moon,
   ArrowRight,
-  ChevronDown,
   Check,
+  Phone,
 } from "lucide-react";
 import { ChatWidget, ChatWidgetHandle } from "./components/ChatWidget";
 import { ProfileDropdown } from "./components/ProfileDropdown";
@@ -741,178 +740,83 @@ const WhatWeHelpWith: React.FC<{ onNavigate: (view: PageView) => void }> = ({ on
 };
 
 const WhyTotalAssist: React.FC = () => {
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    'response': true,
-    'diagnostics': true,
-    'support': true,
-    'experience': true,
-  });
-
-  const toggleCategory = useCallback((key: string) => {
-    setExpandedCategories(prev => ({ ...prev, [key]: !prev[key] }));
-  }, []);
-
-  const comparisonCategories = [
+  const frustrationRows = [
     {
-      key: 'response',
-      label: 'Response & Availability',
-      features: [
-        { benefit: 'Instant answers', ta: true, phone: false },
-        { benefit: '24/7 availability', ta: true, phone: false },
-        { benefit: 'Under 30-second average response', ta: true, phone: false },
-        { benefit: 'No hold music or call queue', ta: true, phone: false },
-      ],
+      bad: '"Please hold for the next available agent..."',
+      good: 'Instant answers in under 30 seconds, 24/7.',
     },
     {
-      key: 'diagnostics',
-      label: 'Diagnostics & Resolution',
-      features: [
-        { benefit: 'Photo-based diagnosis', ta: true, phone: false },
-        { benefit: 'AI-powered troubleshooting', ta: true, phone: false },
-        { benefit: 'Step-by-step guided fixes', ta: true, phone: false },
-        { benefit: 'PDF diagnostic reports', ta: true, phone: false },
-      ],
+      bad: '"Can you repeat that? I\'m transferring you."',
+      good: 'One Case. One history. No re-explaining.',
     },
     {
-      key: 'support',
-      label: 'Support Channels',
-      features: [
-        { benefit: 'Text chat', ta: true, phone: false },
-        { benefit: 'Voice call support', ta: true, phone: true },
-        { benefit: 'Live video support', ta: true, phone: false },
-        { benefit: 'On-site scheduling', ta: true, phone: 'varies' as const },
-      ],
+      bad: '"I\'m from Microsoft, I need your bank info."',
+      good: 'Verified, secure, and scam-proof support.',
     },
     {
-      key: 'experience',
-      label: 'Experience',
-      features: [
-        { benefit: 'Explain your issue once', ta: true, phone: false },
-        { benefit: 'Interactive assist pills (tap, don\'t type)', ta: true, phone: false },
-        { benefit: 'Device history & recall', ta: true, phone: false },
-        { benefit: 'Full support case history', ta: true, phone: false },
-      ],
+      bad: '"I\'ll need to come by between 8 AM and 4 PM."',
+      good: 'Visual diagnostics right from your phone.',
     },
   ];
 
-  const renderIndicator = (value: boolean | 'varies') => {
-    if (value === true) {
-      return (
-        <div className="w-6 h-6 rounded-full bg-[#6366F1]/15 flex items-center justify-center">
-          <Check className="w-3.5 h-3.5 text-[#6366F1]" />
-        </div>
-      );
-    }
-    if (value === 'varies') {
-      return <span className="text-xs font-medium text-text-muted">Varies</span>;
-    }
-    return (
-      <div className="w-6 h-6 rounded-full bg-light-200 dark:bg-midnight-700 flex items-center justify-center">
-        <Minus className="w-3.5 h-3.5 text-text-muted" />
-      </div>
-    );
-  };
-
   return (
     <section className="py-24 bg-white dark:bg-midnight-900 overflow-x-clip relative border-t border-light-300 dark:border-midnight-700 transition-colors">
-      <div className="container mx-auto px-6 max-w-6xl relative z-10">
+      <div className="container mx-auto px-6 max-w-5xl relative z-10">
         {/* Header */}
-        <div className="reveal text-center mb-12">
+        <div className="reveal text-center mb-14">
           <span className="inline-block text-gradient-electric font-bold text-sm uppercase tracking-wider mb-4">
-            Why TotalAssist Is Different
+            Why TotalAssist
           </span>
-          <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight text-text-primary dark:text-white">
-            Not just another chatbot.
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-5 leading-tight text-text-primary dark:text-white">
+            The technical lifeline your home actually needs.
           </h2>
-          <p className="text-text-secondary text-xl max-w-2xl mx-auto">
-            See how TotalAssist stacks up against traditional phone support.
+          <p className="text-text-secondary text-lg sm:text-xl max-w-2xl mx-auto">
+            Stop waiting on hold. Stop explaining yourself twice. Stop worrying about scammers.
           </p>
         </div>
 
-        {/* Algolia-Style Feature Comparison Table — hidden on mobile */}
-        <div className="reveal hidden md:block">
-          <div className="rounded-2xl border border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 shadow-sm">
-
-            {/* Sticky Column Headers — sticks below fixed nav (64px) */}
-            <div className="sticky top-[64px] z-10 grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] border-b border-light-300 dark:border-midnight-700 bg-white dark:bg-midnight-900 rounded-t-2xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
-              {/* Empty top-left */}
-              <div className="p-4 lg:p-5" />
-              {/* TotalAssist — Highlighted column header */}
-              <div className="p-4 lg:p-5 flex flex-col items-center justify-center gap-1.5 bg-[#6366F1]/[0.06] dark:bg-[#6366F1]/[0.12] border-x border-light-300 dark:border-midnight-700 relative">
-                <div className="absolute top-0 left-0 right-0 h-[3px] bg-[#6366F1] rounded-b-sm" />
-                <img
-                  src="/total_assist-new.png"
-                  alt="TotalAssist"
-                  className="w-7 h-7 lg:w-8 lg:h-8 object-contain"
-                />
-                <span className="font-bold text-text-primary dark:text-white text-xs lg:text-sm">TotalAssist</span>
-              </div>
-              {/* Phone Support column header */}
-              <div className="p-4 lg:p-5 flex flex-col items-center justify-center gap-1.5">
-                <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-light-200 dark:bg-midnight-700 flex items-center justify-center">
-                  <MessageSquare className="w-4 h-4 text-text-muted" />
-                </div>
-                <span className="font-bold text-text-secondary text-xs lg:text-sm">Phone Support</span>
-              </div>
+        {/* Frustration Grid */}
+        <div className="reveal-stagger mb-16">
+          {/* Column headers — desktop only */}
+          <div className="hidden md:grid grid-cols-2 gap-6 mb-4 px-1">
+            <div className="flex items-center gap-2 text-sm font-semibold text-text-muted uppercase tracking-wider">
+              <Phone className="w-4 h-4" />
+              The &ldquo;Other Guys&rdquo;
             </div>
-
-            {/* Category Sections */}
-            {comparisonCategories.map((category) => {
-              const isExpanded = expandedCategories[category.key];
-              return (
-                <div key={category.key}>
-                  {/* Category Header — Collapsible */}
-                  <button
-                    onClick={() => toggleCategory(category.key)}
-                    className="w-full grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] bg-light-50 dark:bg-midnight-800/60 border-b border-light-300 dark:border-midnight-700 hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors cursor-pointer"
-                    aria-expanded={isExpanded}
-                    aria-controls={`comparison-${category.key}`}
-                  >
-                    <div className="p-3.5 lg:p-4 flex items-center gap-2.5">
-                      <ChevronDown
-                        className={`w-4 h-4 text-text-muted transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'}`}
-                      />
-                      <span className="font-semibold text-sm text-text-primary dark:text-white">
-                        {category.label}
-                      </span>
-                    </div>
-                    {/* Empty cells to maintain grid alignment */}
-                    <div className="border-x border-light-300 dark:border-midnight-700 bg-[#6366F1]/[0.03] dark:bg-[#6366F1]/[0.06]" />
-                    <div />
-                  </button>
-
-                  {/* Feature Rows — Collapsible */}
-                  <div
-                    id={`comparison-${category.key}`}
-                    className="transition-all duration-300 overflow-hidden"
-                    style={{
-                      maxHeight: isExpanded ? `${category.features.length * 60}px` : '0',
-                      opacity: isExpanded ? 1 : 0,
-                    }}
-                  >
-                    {category.features.map((feature, fi) => (
-                      <div
-                        key={fi}
-                        className={`grid grid-cols-[1fr_88px_88px] sm:grid-cols-[1fr_140px_140px] lg:grid-cols-[1fr_180px_180px] ${
-                          fi !== category.features.length - 1 ? 'border-b border-light-200 dark:border-midnight-700/60' : 'border-b border-light-300 dark:border-midnight-700'
-                        } hover:bg-light-50 dark:hover:bg-midnight-800/40 transition-colors`}
-                      >
-                        <div className="px-4 lg:px-5 py-3.5 flex items-center text-sm text-text-primary dark:text-white/80 pl-11 lg:pl-12">
-                          {feature.benefit}
-                        </div>
-                        <div className="px-4 lg:px-5 py-3.5 flex items-center justify-center border-x border-light-200 dark:border-midnight-700/60 bg-[#6366F1]/[0.03] dark:bg-[#6366F1]/[0.06]">
-                          {renderIndicator(feature.ta)}
-                        </div>
-                        <div className="px-4 lg:px-5 py-3.5 flex items-center justify-center">
-                          {renderIndicator(feature.phone)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            <div className="flex items-center gap-2 text-sm font-semibold text-electric-indigo uppercase tracking-wider">
+              <Check className="w-4 h-4" />
+              TotalAssist
+            </div>
           </div>
+
+          {/* Rows — paired cards */}
+          <div className="space-y-4">
+            {frustrationRows.map((row, i) => (
+              <div key={i} className="reveal grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+                {/* "Other Guys" card */}
+                <div className="frustration-card-bad frustration-quote relative p-5 pl-10 md:pl-12">
+                  <p className="text-sm sm:text-[15px] italic text-text-muted leading-relaxed">
+                    {row.bad}
+                  </p>
+                </div>
+                {/* TotalAssist card */}
+                <div className="frustration-card-good p-5 flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-electric-indigo/15 flex items-center justify-center shrink-0">
+                    <Check className="w-3.5 h-3.5 text-electric-indigo" />
+                  </div>
+                  <p className="text-sm sm:text-[15px] font-medium text-text-primary dark:text-white leading-relaxed">
+                    {row.good}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer line */}
+        <div className="reveal text-center text-sm text-text-muted max-w-3xl mx-auto">
+          Compared to typical remote support plans at $9.99&ndash;$34.99/mo plus setup and long hold times,
+          TotalAssist gives you instant, visual diagnostics and saved repair records at home-friendly pricing.
         </div>
 
       </div>
@@ -942,7 +846,7 @@ const FAQSection: React.FC = () => {
     },
     {
       q: "What are the pricing options?",
-      a: "We offer three plans: Free (5 chats and 1 photo analysis per month), Home ($9.99/mo for unlimited chat, photo, voice, and weekly video diagnostics), and Pro ($19.99/mo — everything in Home plus 15 video credits/month and multi-home support). All plans include guided assist pills and PDF diagnostic reports.",
+      a: "We offer three plans: Free (5 messages and 1 photo analysis — great for trying us out), Home ($9.99/mo for unlimited chat, photos, voice support, and a weekly video diagnostic), and Pro ($19.99/mo — everything in Home plus 15 video credits/month, multi-home support for up to 5 properties, and family member accounts). All plans include guided Assist Pills, PDF diagnostic reports, and smart gear recommendations.",
     },
     {
       q: "Why use TotalAssist instead of Gemini or ChatGPT?",
