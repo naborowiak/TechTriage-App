@@ -51,11 +51,12 @@ export interface CasePDFData {
     photosIncluded: number;
     estimatedCostRange: string;
   } | null;
-  messages: Array<{ role: string; text: string; timestamp: number }>;
+  messages: Array<{ role: string; text: string; timestamp: number; agentName?: string }>;
   createdAt: string;
   userName?: string;
   userEmail?: string;
   userTimezone?: string;
+  agentName?: string;
 }
 
 // ============================================
@@ -273,9 +274,9 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
   const issueText = data.title || data.aiSummary?.split(".")[0] || "Technical issue diagnosed";
   yPosition = drawTableRow(doc, "Issue Detected:", issueText, yPosition, margin);
 
-  // Action Taken
-  const actionText = data.aiSummary || "Diagnostic session completed.";
-  yPosition = drawTableRow(doc, "Action Taken:", actionText, yPosition, margin, 50);
+  // Assisted By
+  const assistedBy = data.agentName || (data.messages.find(m => m.role !== "user" && m.agentName)?.agentName) || "TotalAssist Support";
+  yPosition = drawTableRow(doc, "Assisted By:", assistedBy, yPosition, margin);
 
   // Status badge
   const status = (data.status || "resolved").toLowerCase();
@@ -331,24 +332,62 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...PDF_COLORS.bodyText);
 
-    // Full AI summary as bullets
+    // Parse AI summary into structured sections if it contains labeled sections
     if (data.aiSummary) {
-      const sentences = data.aiSummary
-        .split(/(?<=[.!?])\s+/)
-        .filter((s) => s.trim().length > 5);
+      const summary = data.aiSummary;
 
-      for (const sentence of sentences) {
-        addNewPageIfNeeded(15);
-        // Bullet point
-        doc.setFillColor(...PDF_COLORS.accent);
-        doc.circle(margin + 7, yPosition - 1, 1.2, "F");
+      // Try to extract labeled sections (Problem:, Analysis:, Fix:, Next Steps:, etc.)
+      const sectionPattern = /(?:^|\n)\s*(Problem|Analysis|Fix|Resolution|Next Steps?|Recommendation|Action Taken|Cause|Root Cause|Steps Taken|What Happened|What We Found|What We Did|Summary)\s*:\s*/gi;
+      const sectionMatches = [...summary.matchAll(sectionPattern)];
 
-        const lines = doc.splitTextToSize(sentence.trim(), contentWidth - 15);
-        doc.setTextColor(...PDF_COLORS.bodyText);
-        for (let i = 0; i < lines.length; i++) {
-          doc.text(lines[i], margin + 12, yPosition + (i * 4.5));
+      if (sectionMatches.length >= 2) {
+        // Structured summary — render each section with a bold label
+        for (let s = 0; s < sectionMatches.length; s++) {
+          const match = sectionMatches[s];
+          const label = match[1];
+          const startIdx = match.index! + match[0].length;
+          const endIdx = s + 1 < sectionMatches.length ? sectionMatches[s + 1].index! : summary.length;
+          const content = summary.substring(startIdx, endIdx).trim();
+
+          if (!content) continue;
+
+          addNewPageIfNeeded(20);
+
+          // Section label (bold)
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...PDF_COLORS.sectionHeaderText);
+          doc.text(`${label}:`, margin + 5, yPosition);
+          yPosition += 5;
+
+          // Section content (normal)
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...PDF_COLORS.bodyText);
+          const contentLines = doc.splitTextToSize(content, contentWidth - 12);
+          for (const line of contentLines) {
+            addNewPageIfNeeded(10);
+            doc.text(line, margin + 8, yPosition);
+            yPosition += 4.5;
+          }
+          yPosition += 4;
         }
-        yPosition += lines.length * 4.5 + 3;
+      } else {
+        // Unstructured summary — split into sentences as bullet points
+        const sentences = summary
+          .split(/(?<=[.!?])\s+/)
+          .filter((s) => s.trim().length > 5);
+
+        for (const sentence of sentences) {
+          addNewPageIfNeeded(15);
+          doc.setFillColor(...PDF_COLORS.accent);
+          doc.circle(margin + 7, yPosition - 1, 1.2, "F");
+
+          const lines = doc.splitTextToSize(sentence.trim(), contentWidth - 15);
+          doc.setTextColor(...PDF_COLORS.bodyText);
+          for (let i = 0; i < lines.length; i++) {
+            doc.text(lines[i], margin + 12, yPosition + (i * 4.5));
+          }
+          yPosition += lines.length * 4.5 + 3;
+        }
       }
     }
 
@@ -400,13 +439,14 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
         }
       }
 
-      // Scout's analysis
+      // Agent's analysis
       if (report.scoutAnalysis) {
+        const analysisLabel = data.agentName ? `${data.agentName}'s Analysis:` : "Support Analysis:";
         yPosition += 3;
         addNewPageIfNeeded(15);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...PDF_COLORS.sectionHeaderText);
-        doc.text("Scout's Analysis:", margin + 5, yPosition);
+        doc.text(analysisLabel, margin + 5, yPosition);
         yPosition += 6;
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...PDF_COLORS.bodyText);
@@ -432,7 +472,8 @@ export function generateCaseGuidePDF(data: CasePDFData): string {
     for (const msg of data.messages) {
       addNewPageIfNeeded(20);
 
-      const speaker = msg.role === "user" ? "You" : "Scout AI";
+      const agentLabel = msg.agentName || data.agentName || "TotalAssist Support";
+      const speaker = msg.role === "user" ? "You" : agentLabel;
       const time = new Date(msg.timestamp).toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",

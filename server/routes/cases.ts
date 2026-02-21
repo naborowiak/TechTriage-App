@@ -50,6 +50,10 @@ async function buildCasePDFData(
     ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || undefined
     : undefined;
 
+  // Extract agent name from messages (first non-user message with an agentName)
+  const rawMessages = (messageRecord?.messages as CasePDFData["messages"]) || [];
+  const agentName = rawMessages.find(m => m.role !== "user" && m.agentName)?.agentName;
+
   const pdfData: CasePDFData = {
     caseId,
     title: caseDetails.title,
@@ -57,10 +61,11 @@ async function buildCasePDFData(
     sessionMode: caseDetails.sessionMode,
     aiSummary: caseDetails.aiSummary,
     escalationReport: caseDetails.escalationReport as CasePDFData["escalationReport"],
-    messages: (messageRecord?.messages as CasePDFData["messages"]) || [],
+    messages: rawMessages,
     createdAt: caseDetails.createdAt?.toISOString() || new Date().toISOString(),
     userName,
     userTimezone,
+    agentName,
   };
 
   return {
@@ -268,6 +273,8 @@ router.patch("/:id", async (req, res) => {
 
           let pdfBase64: string | undefined;
           try {
+            const escMessages = (messageRecord?.messages as CasePDFData["messages"]) || [];
+            const escAgentName = escMessages.find(m => m.role !== "user" && m.agentName)?.agentName;
             pdfBase64 = generateCaseGuidePDF({
               caseId: id,
               title: updated.title,
@@ -275,8 +282,9 @@ router.patch("/:id", async (req, res) => {
               sessionMode: updated.sessionMode,
               aiSummary: updated.aiSummary,
               escalationReport: updated.escalationReport as CasePDFData["escalationReport"],
-              messages: (messageRecord?.messages as CasePDFData["messages"]) || [],
+              messages: escMessages,
               createdAt: updated.createdAt?.toISOString() || new Date().toISOString(),
+              agentName: escAgentName,
             });
           } catch {
             console.warn(`[CASE] Could not generate PDF for escalation ${id}`);
