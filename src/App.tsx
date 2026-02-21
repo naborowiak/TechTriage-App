@@ -733,20 +733,20 @@ const WhyTotalAssist: React.FC = () => {
     },
     {
       bad: '"Can you repeat that? I\'m transferring you."',
-      good: 'One Case. One history. No re-explaining.',
+      good: 'One case. One history. No re-explaining.',
     },
     {
-      bad: '"I\'m from Microsoft, I need your bank info."',
-      good: 'Verified, secure, and scam-proof support.',
+      bad: '"Can you describe what you see on screen?"',
+      good: 'Snap a photo or show us on video — we see it too.',
     },
     {
-      bad: '"I\'ll need to come by between 8 AM and 4 PM."',
-      good: 'Visual diagnostics right from your phone.',
+      bad: '"That\'ll be $150 for the service call."',
+      good: 'Most issues fixed in minutes, starting free.',
     },
   ];
 
   return (
-    <section className="py-24 bg-white dark:bg-midnight-900 overflow-x-clip relative border-t border-light-300 dark:border-midnight-700 transition-colors">
+    <section className="hidden md:block py-24 bg-white dark:bg-midnight-900 overflow-x-clip relative border-t border-light-300 dark:border-midnight-700 transition-colors">
       <div className="container mx-auto px-6 max-w-5xl relative z-10">
         {/* Header */}
         <div className="reveal text-center mb-14">

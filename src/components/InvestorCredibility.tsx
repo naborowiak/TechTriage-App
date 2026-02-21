@@ -5,18 +5,18 @@ import { useScrollReveal } from '../hooks/useAnimations';
 const items = [
   {
     icon: Sparkles,
-    title: 'Multi-modal AI diagnostics',
-    description: 'Gemini 2.0 Flash powers text, photo, voice, and video analysis.',
+    title: 'Type it, snap it, or show it',
+    description: 'Get help by chat, photo, voice, or live video — whatever feels easiest.',
   },
   {
     icon: FileText,
-    title: 'Case-based repair history',
-    description: 'Structured case records with downloadable PDF diagnostic reports.',
+    title: 'Every fix is saved',
+    description: 'Your repair history is stored and you get a downloadable report for every case.',
   },
   {
     icon: Shield,
-    title: 'Enterprise-grade infrastructure',
-    description: 'Stripe payments, OpenID Connect auth, PostgreSQL, real-time WebSocket.',
+    title: 'Secure from the start',
+    description: 'Bank-level encryption, secure login, and safe payments — your data stays private.',
   },
 ];
 
@@ -27,7 +27,7 @@ export const InvestorCredibility: React.FC = () => {
       <div className="container mx-auto px-6 max-w-4xl">
         <div className="reveal">
           <h2 className="text-2xl font-bold text-text-primary dark:text-white text-center mb-12">
-            Built for scale and safety
+            Built for your peace of mind
           </h2>
         </div>
 

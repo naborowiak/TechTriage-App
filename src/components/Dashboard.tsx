@@ -18,9 +18,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { useUsage, UNLIMITED } from "../stores/usageStore";
+import { useUsage } from "../stores/usageStore";
 import { UpgradeModal } from "./UpgradeModal";
-import { SystemStatusBadge } from "./dashboard/SystemStatusBadge";
 import { MobileBottomDock } from "./dashboard/MobileBottomDock";
 import { CurrentCaseCard } from "./dashboard/CurrentCaseCard";
 import { HistoryList } from "./dashboard/HistoryList";
@@ -104,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
-  const { tier, usage } = useUsage();
+  const { tier } = useUsage();
 
   // Sidebar tab state — maps from activeView or standalone
   const [sidebarTab, setSidebarTab] = useState<DashboardTab>("chat");
@@ -194,6 +193,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Handle sidebar tab changes
   const handleSidebarTabChange = (tab: DashboardTab) => {
+    if (tab === "settings") {
+      // Settings is a modal — don't change the active content tab
+      onOpenSettings();
+      return;
+    }
     setSidebarTab(tab);
     if (tab === "chat") {
       if (onBackToDashboard) onBackToDashboard();
@@ -202,13 +206,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
     } else if (tab === "devices") {
       // Reset parent view to "main" so the sync effect doesn't fight local state
       if (onBackToDashboard) onBackToDashboard();
-    } else if (tab === "settings") {
-      onOpenSettings();
     }
   };
 
   // Handle dock tab changes (mobile)
   const handleDockTabChange = (tab: DashboardTab) => {
+    if (tab === "settings") {
+      // Settings is a modal — don't change the active content tab
+      onOpenSettings();
+      return;
+    }
     setSidebarTab(tab);
     if (tab === "chat") {
       if (onBackToDashboard) onBackToDashboard();
@@ -217,8 +224,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     } else if (tab === "devices") {
       // Reset parent view to "main" so the sync effect doesn't fight local state
       if (onBackToDashboard) onBackToDashboard();
-    } else if (tab === "settings") {
-      onOpenSettings();
     }
   };
 
@@ -228,7 +233,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "text" as const,
       icon: MessageSquare,
       label: "Type a Question",
-      description: "Get text-based support",
+      description: "Chat to troubleshoot any issue",
       lockedForTiers: [] as string[],
       action: () => {
         if (onOpenScout) onOpenScout();
@@ -241,7 +246,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "photo" as const,
       icon: Camera,
       label: "Snap a Photo",
-      description: "Send a picture of the issue",
+      description: "Show us what you're seeing",
       lockedForTiers: [] as string[],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("photo");
@@ -255,7 +260,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "voice" as const,
       icon: Mic,
       label: "Talk to Support",
-      description: "Call a TotalAssist expert",
+      description: "Talk through it hands-free",
       lockedForTiers: ["guest", "free"],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("voice");
@@ -269,7 +274,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       id: "video" as const,
       icon: Video,
       label: "Live Video Support",
-      description: "Real-time video session with an expert",
+      description: "Point your camera, we'll guide you",
       lockedForTiers: ["guest", "free"],
       action: () => {
         if (onOpenScoutWithMode) onOpenScoutWithMode("video");
@@ -312,7 +317,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="flex-1 flex flex-col min-w-0">
         {/* Slim Header */}
         <header className="relative bg-white/80 dark:bg-midnight-900/80 backdrop-blur-md border-b border-surface-border dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
-          {/* Left: Logo (mobile only) + Status */}
+          {/* Left: Logo (mobile only) */}
           <div className="flex items-center gap-3">
             <div className="lg:hidden flex items-center gap-2">
               <img src="/total_assist-new.png" alt="TotalAssist" className="w-7 h-7 object-contain" />
@@ -320,29 +325,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 Total<span className="text-electric-indigo">Assist</span>
               </span>
             </div>
-            <SystemStatusBadge />
           </div>
 
-          {/* Right: Upgrade + Theme + Avatar */}
+          {/* Right: Theme + Avatar */}
           <div className="flex items-center gap-2">
-            {tier !== "home" && tier !== "pro" && (
-              <button
-                onClick={() => setUpgradeModalOpen(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold btn-gradient-electric text-white"
-              >
-                <Zap className="w-3 h-3" />
-                Upgrade to Home
-              </button>
-            )}
-            {/* Credit pill */}
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-light-100 dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-xs font-medium text-text-secondary dark:text-white/70" aria-label="Credits remaining">
-              <MessageSquare className="w-3 h-3" />
-              {usage.chat.limit >= UNLIMITED ? (
-                <span className="text-green-600 dark:text-green-400 font-semibold">Unlimited</span>
-              ) : (
-                <span>{Math.max(0, usage.chat.limit - usage.chat.used)}/{usage.chat.limit} chats</span>
-              )}
-            </div>
             <button
               onClick={toggleTheme}
               className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-light-100 dark:hover:bg-midnight-800 transition-colors text-text-secondary hover:text-text-primary dark:hover:text-white"
@@ -480,107 +466,47 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex-1 overflow-y-auto pb-4 lg:pb-8 relative">
             <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
               {/* Heading */}
-              <h1 className="arcade-up-1 text-xl sm:text-2xl md:text-4xl font-bold tracking-tight text-text-primary dark:text-white">
-                How can we assist you today?
-              </h1>
-
-              {/* Triage Tiles */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                {triageTiles.map((tile, tileIdx) => {
-                  const Icon = tile.icon;
-                  const isLocked = tile.lockedForTiers.includes(tier);
-
-                  return (
-                    <button
-                      key={tile.id}
-                      onClick={() => {
-                        if (isLocked) {
-                          setUpgradeFeature(tile.feature);
-                          setUpgradeModalOpen(true);
-                        } else {
-                          tile.action();
-                        }
-                      }}
-                      className={[
-                        "shadow-layered tile-card relative flex flex-col justify-end text-left",
-                        "rounded-xl overflow-hidden cursor-pointer",
-                        "p-4 md:p-6",
-                        "min-h-[72px] md:min-h-0 md:aspect-[16/10] md:max-h-[260px]",
-                        "bg-white dark:bg-[#1E2330]",
-                        isLocked
-                          ? "opacity-75 cursor-pointer"
-                          : "hover-lift",
-                      ].join(" ")}
-                      style={{ animation: `arcadeSlideUp 800ms ease-out ${100 + tileIdx * 120}ms 1 normal backwards` }}
-                      aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
-                    >
-                      {/* Photo background — desktop only */}
-                      <div
-                        className="hidden md:block absolute inset-0 rounded-lg overflow-hidden pointer-events-none"
-                        aria-hidden="true"
-                      >
-                        <div
-                          className="absolute inset-0 bg-cover bg-center tile-mesh"
-                          style={{ backgroundImage: `url(${tile.backgroundImage})` }}
-                        />
-                      </div>
-                      <div
-                        className="hidden md:block absolute inset-0 rounded-lg bg-gradient-to-b from-black/10 via-black/40 to-black/70 pointer-events-none"
-                        aria-hidden="true"
-                      />
-
-                      {/* Lock badge pill (locked tiles) */}
-                      {isLocked && (
-                        <div
-                          className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-100 dark:bg-midnight-700 border border-surface-border dark:border-midnight-700 px-2.5 py-1"
-                          aria-hidden="true"
-                        >
-                          <Lock className="w-3 h-3 text-text-secondary dark:text-white/80" />
-                          <span className="text-xs font-semibold text-text-secondary dark:text-white/80">
-                            Home+
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Content */}
-                      <div className="relative z-10 flex items-center gap-3 w-full">
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-electric-indigo/[0.08] rounded-lg flex items-center justify-center shrink-0">
-                          <Icon className={`w-5 h-5 md:w-6 md:h-6 ${tile.iconColor}`} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm md:text-lg font-bold leading-tight truncate text-text-primary dark:text-white md:text-white">
-                            {tile.label}
-                          </h3>
-                          <p className="text-sm md:text-sm mt-0.5 md:mt-1 line-clamp-2 text-text-secondary dark:text-white/70 md:text-white/70">
-                            {isLocked ? "Requires Home or Pro plan" : tile.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Upgrade CTA (locked tiles) */}
-                      {isLocked && (
-                        <div className="group relative z-10 mt-2 flex items-center gap-1 text-sm font-semibold text-electric-indigo dark:text-white/80">
-                          Upgrade to unlock
-                          <ArrowRight className="w-3 h-3 arcade-arrow" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+              <div className="arcade-up-1 space-y-1">
+                <h1 className="text-xl sm:text-2xl md:text-4xl font-bold tracking-tight text-text-primary dark:text-white">
+                  Hi {user.firstName || "there"}, what's going on?
+                </h1>
+                <p className="text-sm sm:text-base text-text-secondary">
+                  Describe your issue or pick a topic below.
+                </p>
               </div>
 
-              {/* Common Issues */}
-              <div>
-                <h3 className="text-sm font-semibold text-text-secondary dark:text-white/80 mb-2.5">
-                  Common Issues
-                </h3>
+              {/* Text Input — primary action */}
+              <div className="space-y-3">
+                <div className="relative w-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 rounded-lg px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo focus-within:ring-2 focus-within:ring-electric-indigo/10 transition-all">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Describe your issue..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleSendFromEmpty()
+                    }
+                    className="flex-1 bg-transparent outline-none text-base text-text-primary dark:text-white placeholder:text-text-muted min-h-[44px]"
+                  />
+                  <button
+                    onClick={handleSendFromEmpty}
+                    disabled={!chatInput.trim()}
+                    className="p-3 rounded-lg btn-gradient-electric text-white disabled:opacity-30 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Send message"
+                  >
+                    <ChevronUp className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Common Issues chips — directly below input */}
                 {/* Desktop: show all chips */}
                 <div className="hidden sm:flex flex-wrap gap-2">
                   {commonIssues.map((chip, chipIdx) => (
                     <button
                       key={chip}
                       onClick={() => onNewChat?.(chip)}
-                      className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[44px] shadow-layered"
+                      className="px-4 py-2 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 text-text-primary dark:text-white text-sm font-medium hover:border-electric-indigo/30 hover:shadow-sm active:scale-[0.97] transition-all min-h-[44px]"
                       style={{ animation: `arcadeSlideUp 600ms ease-out ${600 + chipIdx * 80}ms 1 normal backwards` }}
                     >
                       {chip}
@@ -613,27 +539,91 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
 
-              {/* Text Input */}
-              <div className="relative w-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700 rounded-lg px-4 py-3 flex items-center gap-2 shadow-sm focus-within:border-electric-indigo focus-within:ring-2 focus-within:ring-electric-indigo/10 transition-all">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Or type your question here..."
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && handleSendFromEmpty()
-                  }
-                  className="flex-1 bg-transparent outline-none text-base text-text-primary dark:text-white placeholder:text-text-muted min-h-[44px]"
-                />
-                <button
-                  onClick={handleSendFromEmpty}
-                  disabled={!chatInput.trim()}
-                  className="p-3 rounded-lg btn-gradient-electric text-white disabled:opacity-30 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  aria-label="Send message"
-                >
-                  <ChevronUp className="w-5 h-5" />
-                </button>
+              {/* Triage Tiles */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                {triageTiles.map((tile, tileIdx) => {
+                  const Icon = tile.icon;
+                  const isLocked = tile.lockedForTiers.includes(tier);
+
+                  return (
+                    <button
+                      key={tile.id}
+                      onClick={() => {
+                        if (isLocked) {
+                          setUpgradeFeature(tile.feature);
+                          setUpgradeModalOpen(true);
+                        } else {
+                          tile.action();
+                        }
+                      }}
+                      className={[
+                        "shadow-layered tile-card relative flex flex-col justify-end text-left",
+                        "rounded-xl overflow-hidden cursor-pointer",
+                        "p-4 md:p-6",
+                        "min-h-[72px] md:min-h-0 md:aspect-[16/10] md:max-h-[260px]",
+                        "bg-white dark:bg-[#1E2330]",
+                        isLocked
+                          ? "grayscale-[40%] hover:grayscale-0 transition-all duration-300 cursor-pointer"
+                          : "hover-lift",
+                      ].join(" ")}
+                      style={{ animation: `arcadeSlideUp 800ms ease-out ${100 + tileIdx * 120}ms 1 normal backwards` }}
+                      aria-label={`${tile.label}${isLocked ? " — requires upgrade" : ""}`}
+                    >
+                      {/* Photo background — desktop only */}
+                      <div
+                        className="hidden md:block absolute inset-0 rounded-lg overflow-hidden pointer-events-none"
+                        aria-hidden="true"
+                      >
+                        <div
+                          className="absolute inset-0 bg-cover bg-center tile-mesh"
+                          style={{ backgroundImage: `url(${tile.backgroundImage})` }}
+                        />
+                      </div>
+                      <div
+                        className="hidden md:block absolute inset-0 rounded-lg bg-gradient-to-b from-black/10 via-black/40 to-black/70 pointer-events-none"
+                        aria-hidden="true"
+                      />
+
+                      {/* Lock badge pill (locked tiles) */}
+                      {isLocked && (
+                        <div
+                          className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-midnight-900/80 border border-white/20 px-2.5 py-1"
+                          aria-hidden="true"
+                        >
+                          <Lock className="w-3 h-3 text-white" />
+                          <span className="text-xs font-semibold text-white">
+                            Home+
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      <div className="relative z-10 flex items-center gap-3 w-full">
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-electric-indigo/[0.08] rounded-lg flex items-center justify-center shrink-0">
+                          <Icon className={`w-5 h-5 md:w-6 md:h-6 ${tile.iconColor}`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm md:text-lg font-bold leading-tight truncate text-text-primary dark:text-white md:text-white">
+                            {tile.label}
+                          </h3>
+                          <p className="text-sm md:text-sm mt-0.5 md:mt-1 line-clamp-2 text-text-secondary dark:text-white/70 md:text-white/70">
+                            {isLocked ? "Requires Home or Pro plan" : tile.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Upgrade CTA (locked tiles) */}
+                      {isLocked && (
+                        <div className="relative z-10 mt-2">
+                          <span className="inline-flex items-center gap-1 bg-electric-indigo/15 rounded-full px-3 py-1.5 text-sm font-semibold text-electric-indigo dark:text-white/90">
+                            Upgrade to unlock
+                            <ArrowRight className="w-3 h-3 arcade-arrow" />
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Current Case */}

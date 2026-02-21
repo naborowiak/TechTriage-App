@@ -124,7 +124,8 @@
       "WebFetch(domain:www.arcade.software)",
       "Bash(tr:*)",
       "Bash(ffmpeg:*)",
-      "Bash(ffprobe:*)"
+      "Bash(ffprobe:*)",
+      "WebFetch(domain:www.creativecorner.studio)"
     ]
   }
 }

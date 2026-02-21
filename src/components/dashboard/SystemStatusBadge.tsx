@@ -14,27 +14,24 @@ export const SystemStatusBadge: React.FC = () => {
     };
   }, []);
 
+  // Only show visually when offline — avoid always-on noise
+  if (isOnline) {
+    return (
+      <div role="status" aria-live="polite" className="sr-only">
+        Support Available
+      </div>
+    );
+  }
+
   return (
     <div
-      className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-midnight-800 border border-surface-border dark:border-midnight-700"
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/40"
       role="status"
-      aria-live="polite"
+      aria-live="assertive"
     >
-      <span className="relative flex items-center justify-center w-2.5 h-2.5">
-        {isOnline && (
-          <span className="absolute inset-0 rounded-full bg-emerald-400/40 status-dot-pulse" />
-        )}
-        <span
-          className={`relative w-2 h-2 rounded-full shrink-0 ${
-            isOnline
-              ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
-              : "bg-yellow-500 animate-pulse"
-          }`}
-          aria-hidden="true"
-        />
-      </span>
-      <span className="text-sm text-text-secondary dark:text-white/70 font-medium tracking-tight">
-        {isOnline ? "Support Available" : "Reconnecting..."}
+      <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse shrink-0" aria-hidden="true" />
+      <span className="text-sm text-yellow-700 dark:text-yellow-400 font-medium">
+        Reconnecting...
       </span>
     </div>
   );
