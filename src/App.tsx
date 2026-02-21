@@ -1415,14 +1415,23 @@ const App: React.FC = () => {
   }, [currentView]);
 
   // Custom navigate function that updates URL (memoized to prevent child re-renders)
-  const navigate = useCallback((view: PageView) => {
+  const navigate = useCallback((view: PageView, scrollToId?: string) => {
     const path = viewToPath[view] || "/";
     if (window.location.pathname !== path) {
       window.history.pushState({ view }, "", path);
     }
     const applyNavigation = () => {
       setCurrentView(view);
-      window.scrollTo(0, 0);
+      if (scrollToId) {
+        // Delay scroll to allow the new view to render
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            document.getElementById(scrollToId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        });
+      } else {
+        window.scrollTo(0, 0);
+      }
     };
     // Use View Transitions API where supported for smoother page changes
     if ((document as any).startViewTransition) {
@@ -1884,7 +1893,9 @@ const App: React.FC = () => {
                 onFreeTrial={handleFreeTrial}
                 onPricing={handleNavigateToPricing}
                 onHeroAction={handleHeroAction}
-                onSecondaryAction={() => navigate(PageView.HOW_IT_WORKS)}
+                onSecondaryAction={() => {
+                  navigate(PageView.HOW_IT_WORKS, 'see-it-in-action');
+                }}
               />
               {/* Free Preview Modal for unauthenticated users */}
               {heroPreviewMode && (

@@ -106,7 +106,7 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
         </div>
 
         {/* Arcade Demo Embed — separated with background + divider */}
-        <div className="relative -mx-6 px-6 py-16 mb-24 bg-light-100/70 dark:bg-midnight-900/50 border-y border-light-200 dark:border-midnight-800">
+        <div id="see-it-in-action" className="relative -mx-6 px-6 py-16 mb-24 bg-light-100/70 dark:bg-midnight-900/50 border-y border-light-200 dark:border-midnight-800">
           <AnimatedElement animation="fadeInUp" delay={0.3}>
             <div className="max-w-5xl mx-auto">
               <div className="text-center mb-10">
