@@ -108,6 +108,26 @@ export const casesTable = pgTable("cases", {
   specialistTokenExpiresAt: timestamp("specialist_token_expires_at"),
   specialistNotes: text("specialist_notes"),
   specialistRespondedAt: timestamp("specialist_responded_at"),
+  playbookProcessed: boolean("playbook_processed"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Playbook Branches Table — recursive learning decision tree
+export const playbookBranchesTable = pgTable("playbook_branches", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  pathKey: jsonb("path_key").$type<string[]>().notNull(),
+  pathHash: varchar("path_hash", { length: 64 }).notNull().unique(),
+  category: varchar("category", { length: 255 }).notNull(),
+  choiceCounts: jsonb("choice_counts").$type<Record<string, number>>().default({}),
+  somethingElseCount: integer("something_else_count").default(0),
+  freeformCounts: jsonb("freeform_counts").$type<Record<string, number>>().default({}),
+  totalHits: integer("total_hits").default(0),
+  resolvedCount: integer("resolved_count").default(0),
+  promotedChoices: jsonb("promoted_choices").$type<string[]>().default([]),
+  depth: integer("depth").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -277,3 +297,5 @@ export type PromoCode = typeof promoCodesTable.$inferSelect;
 export type InsertPromoCode = typeof promoCodesTable.$inferInsert;
 export type PromoCodeRedemption = typeof promoCodeRedemptionsTable.$inferSelect;
 export type InsertPromoCodeRedemption = typeof promoCodeRedemptionsTable.$inferInsert;
+export type PlaybookBranch = typeof playbookBranchesTable.$inferSelect;
+export type InsertPlaybookBranch = typeof playbookBranchesTable.$inferInsert;

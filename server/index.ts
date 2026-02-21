@@ -28,6 +28,7 @@ import type { IncomingMessage } from "http";
 
 import * as stripeService from "./services/stripeService";
 import * as promoCodeService from "./services/promoCodeService";
+import { getPlaybookBlock } from "./services/playbookService";
 import { startTrialNotificationJob, runTrialNotificationCheckNow } from "./services/scheduledJobs";
 import {
   loadSubscription,
@@ -205,8 +206,8 @@ app.post(
   }
 );
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Trust proxy for secure cookies behind reverse proxy (must be before session)
 app.set("trust proxy", 1);
@@ -882,6 +883,21 @@ interface TrialRecord {
 }
 
 const trialRecords: Map<string, TrialRecord> = new Map();
+const MAX_TRIAL_RECORDS = 5000;
+
+// Evict expired trial records when approaching capacity
+function evictExpiredTrials() {
+  if (trialRecords.size < MAX_TRIAL_RECORDS) return;
+  const now = Date.now();
+  for (const [key, record] of trialRecords) {
+    if (record.expiresAt < now) trialRecords.delete(key);
+  }
+  // If still over limit, drop oldest 25%
+  if (trialRecords.size >= MAX_TRIAL_RECORDS) {
+    const keysToDelete = Array.from(trialRecords.keys()).slice(0, Math.floor(MAX_TRIAL_RECORDS / 4));
+    for (const k of keysToDelete) trialRecords.delete(k);
+  }
+}
 
 // Helper to get client IP
 const getClientIP = (req: express.Request): string => {
@@ -892,108 +908,125 @@ const getClientIP = (req: express.Request): string => {
   return req.socket.remoteAddress || 'unknown';
 };
 
-// Check trial eligibility
-app.post("/api/trial/check", (req, res) => {
-  const { email, fingerprint } = req.body;
-  const ip = getClientIP(req);
+// Check trial eligibility — DB-backed with in-memory fast path
+app.post("/api/trial/check", async (req, res) => {
+  try {
+    const { email, fingerprint } = req.body;
+    const ip = getClientIP(req);
 
-  // Check by email
-  const emailRecord = trialRecords.get(`email:${email}`);
-  if (emailRecord && Date.now() < emailRecord.expiresAt) {
-    return res.json({
-      eligible: false,
-      reason: 'email_used',
-      message: 'This email has already been used for a trial.',
-      expiresAt: emailRecord.expiresAt
-    });
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Fast path: check in-memory cache first
+    const cached = trialRecords.get(`email:${email}`);
+    if (cached && Date.now() < cached.expiresAt) {
+      return res.json({
+        eligible: false,
+        reason: 'email_used',
+        message: 'This email has already been used for a trial.',
+        expiresAt: cached.expiresAt
+      });
+    }
+
+    // DB check (persistent across restarts)
+    const result = await authService.checkTrialEligibility(email, ip, fingerprint);
+    if (!result.eligible) {
+      return res.json({
+        eligible: false,
+        reason: 'email_used',
+        message: result.reason || 'This email has already been used for a trial.',
+      });
+    }
+
+    res.json({ eligible: true });
+  } catch (error) {
+    console.error('[TRIAL] Check eligibility error:', error);
+    res.status(500).json({ error: 'Failed to check trial eligibility' });
   }
-
-  res.json({ eligible: true });
 });
 
-// Start a new trial
-app.post("/api/trial/start", (req, res) => {
-  const { email, fingerprint } = req.body;
-  const ip = getClientIP(req);
+// Start a new trial — DB-backed, in-memory cache populated on success
+app.post("/api/trial/start", async (req, res) => {
+  try {
+    const { email, fingerprint } = req.body;
+    const ip = getClientIP(req);
 
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
-  }
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
 
-  // Check eligibility by email only
-  const emailRecord = trialRecords.get(`email:${email}`);
+    // DB-backed start (checks eligibility internally)
+    const result = await authService.startTrial(email, ip, fingerprint);
 
-  if (emailRecord && Date.now() < emailRecord.expiresAt) {
-    return res.status(403).json({
-      error: 'Trial already used',
-      message: 'You have already used your free trial.'
-    });
-  }
+    if (!result.success) {
+      return res.status(403).json({
+        error: 'Trial already used',
+        message: 'You have already used your free trial.'
+      });
+    }
 
-  const now = Date.now();
-  const trialDuration = 24 * 60 * 60 * 1000; // 24 hours
-  const expiresAt = now + trialDuration;
-
-  const record: TrialRecord = {
-    email,
-    ip,
-    startedAt: now,
-    expiresAt,
-    fingerprint
-  };
-
-  // Store by email and IP
-  trialRecords.set(`email:${email}`, record);
-  trialRecords.set(`ip:${ip}`, record);
-  if (fingerprint) {
-    trialRecords.set(`fp:${fingerprint}`, record);
-  }
-
-  console.log(`[TRIAL] Started trial for ${email} from IP ${ip}`);
-
-  res.json({
-    success: true,
-    trialStarted: now,
-    trialExpires: expiresAt,
-    message: 'Your 24-hour free trial has started!'
-  });
-});
-
-// Get trial status
-app.get("/api/trial/status", (req, res) => {
-  const ip = getClientIP(req);
-  const email = req.query.email as string;
-
-  let record: TrialRecord | undefined;
-
-  if (email) {
-    record = trialRecords.get(`email:${email}`);
-  }
-
-  if (!record) {
-    record = trialRecords.get(`ip:${ip}`);
-  }
-
-  if (record) {
     const now = Date.now();
-    const isActive = now < record.expiresAt;
-    const remainingMs = Math.max(0, record.expiresAt - now);
+    const expiresAt = result.trial!.expiresAt.getTime();
 
-    return res.json({
-      hasTrial: true,
-      isActive,
-      startedAt: record.startedAt,
-      expiresAt: record.expiresAt,
-      remainingMs,
-      remainingHours: Math.floor(remainingMs / (60 * 60 * 1000)),
-      remainingMinutes: Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000))
+    // Populate in-memory cache for fast lookups
+    evictExpiredTrials();
+    const record: TrialRecord = { email, ip, startedAt: now, expiresAt, fingerprint };
+    trialRecords.set(`email:${email}`, record);
+    trialRecords.set(`ip:${ip}`, record);
+    if (fingerprint) trialRecords.set(`fp:${fingerprint}`, record);
+
+    console.log(`[TRIAL] Started trial for ${email} from IP ${ip} (DB-backed)`);
+
+    res.json({
+      success: true,
+      trialStarted: now,
+      trialExpires: expiresAt,
+      message: 'Your 24-hour free trial has started!'
     });
+  } catch (error) {
+    console.error('[TRIAL] Start trial error:', error);
+    res.status(500).json({ error: 'Failed to start trial' });
   }
+});
 
-  res.json({
-    hasTrial: false,
-    isActive: false
-  });
+// Get trial status — DB-backed with in-memory fast path
+app.get("/api/trial/status", async (req, res) => {
+  try {
+    const ip = getClientIP(req);
+    const email = req.query.email as string;
+
+    // Fast path: check in-memory cache first
+    let record: TrialRecord | undefined;
+    if (email) record = trialRecords.get(`email:${email}`);
+    if (!record) record = trialRecords.get(`ip:${ip}`);
+
+    if (record) {
+      const now = Date.now();
+      const isActive = now < record.expiresAt;
+      const remainingMs = Math.max(0, record.expiresAt - now);
+      return res.json({
+        hasTrial: true,
+        isActive,
+        startedAt: record.startedAt,
+        expiresAt: record.expiresAt,
+        remainingMs,
+        remainingHours: Math.floor(remainingMs / (60 * 60 * 1000)),
+        remainingMinutes: Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000))
+      });
+    }
+
+    // DB fallback (survives server restarts)
+    if (email) {
+      const dbStatus = await authService.getTrialStatus(email);
+      return res.json(dbStatus);
+    }
+
+    res.json({ hasTrial: false, isActive: false });
+  } catch (error) {
+    console.error('[TRIAL] Status check error:', error);
+    res.json({ hasTrial: false, isActive: false });
+  }
 });
 
 // Chat audit logging endpoint
@@ -1021,9 +1054,10 @@ app.post("/api/audit/chat", (req, res) => {
 // ============================================
 
 // Create a checkout session for subscription
-app.post("/api/stripe/create-checkout-session", validate(checkoutSessionSchema), async (req, res) => {
+app.post("/api/stripe/create-checkout-session", requireAuth, validate(checkoutSessionSchema), async (req, res) => {
   try {
-    const { userId, priceId, successUrl, cancelUrl } = req.body;
+    const userId = (req.user as any).id;
+    const { priceId, successUrl, cancelUrl } = req.body;
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const result = await stripeService.createCheckoutSession(
@@ -1092,9 +1126,10 @@ app.post("/api/stripe/create-payment-intent", requireAuth, validate(paymentInten
 });
 
 // Create a customer portal session
-app.post("/api/stripe/create-portal-session", validate(portalSessionSchema), async (req, res) => {
+app.post("/api/stripe/create-portal-session", requireAuth, validate(portalSessionSchema), async (req, res) => {
   try {
-    const { userId, returnUrl } = req.body;
+    const userId = (req.user as any).id;
+    const { returnUrl } = req.body;
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const result = await stripeService.createPortalSession(
@@ -1109,11 +1144,12 @@ app.post("/api/stripe/create-portal-session", validate(portalSessionSchema), asy
   }
 });
 
-// Get subscription status
-app.get("/api/subscription/status/:userId", async (req, res) => {
+// Get subscription status — uses authenticated user, ignores :userId param
+app.get("/api/subscription/status/:userId", requireAuth, async (req, res) => {
   try {
+    const userId = (req.user as any).id;
     const forceSync = req.query.sync === 'true';
-    const result = await stripeService.getSubscriptionStatus(req.params.userId, forceSync);
+    const result = await stripeService.getSubscriptionStatus(userId, forceSync);
     res.json(result);
   } catch (error) {
     console.error("[STRIPE] Get subscription status error:", error);
@@ -1122,14 +1158,9 @@ app.get("/api/subscription/status/:userId", async (req, res) => {
 });
 
 // Cancel subscription
-app.post("/api/subscription/cancel", async (req, res) => {
+app.post("/api/subscription/cancel", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
+    const userId = (req.user as any).id;
     const result = await stripeService.cancelSubscription(userId);
     res.json(result);
   } catch (error) {
@@ -1139,14 +1170,9 @@ app.post("/api/subscription/cancel", async (req, res) => {
 });
 
 // Reactivate subscription
-app.post("/api/subscription/reactivate", async (req, res) => {
+app.post("/api/subscription/reactivate", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
+    const userId = (req.user as any).id;
     const result = await stripeService.reactivateSubscription(userId);
     res.json(result);
   } catch (error) {
@@ -1168,14 +1194,9 @@ app.get("/api/stripe/prices", (_req, res) => {
 // ============================================
 
 // Apply retention discount to prevent churn
-app.post("/api/subscription/apply-retention-discount", async (req, res) => {
+app.post("/api/subscription/apply-retention-discount", requireAuth, async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-
+    const userId = (req.user as any).id;
     const result = await stripeService.applyRetentionDiscount(userId);
 
     if (!result.success) {
@@ -1583,6 +1604,13 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
     let sessionReady = false;
     let sessionInstance: any = null;
 
+    // Fetch learned playbook branches (cached, 10-min TTL)
+    let systemInstructionText = mode === 'voice'
+      ? buildVoiceSystemInstruction(selectedVoice.style, userContext)
+      : buildSystemInstruction(selectedVoice.style, userContext);
+    const playbookBlock = await getPlaybookBlock();
+    if (playbookBlock) systemInstructionText += playbookBlock;
+
     const session = await ai.live.connect({
       model: "gemini-2.5-flash-native-audio-preview-12-2025",
       callbacks: {
@@ -1760,7 +1788,7 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
       config: {
         responseModalities: [Modality.AUDIO],
         systemInstruction: {
-          parts: [{ text: mode === 'voice' ? buildVoiceSystemInstruction(selectedVoice.style, userContext) : buildSystemInstruction(selectedVoice.style, userContext) }],
+          parts: [{ text: systemInstructionText }],
         },
         speechConfig: {
           voiceConfig: {

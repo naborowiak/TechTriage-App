@@ -520,17 +520,15 @@ const Hero: React.FC<{
         aria-hidden="true"
       />
 
-      {/* Content container — matches Algolia's max-w-[1512px] pattern */}
-      <div className="relative mx-auto max-w-[1440px] overflow-hidden z-10">
-        {/* Flex row — stacks on mobile, side-by-side on desktop */}
+      {/* Content container — matches Algolia's exact structure */}
+      <div className="relative mx-auto max-w-[1512px] overflow-hidden z-10">
         <div className="mx-auto relative z-20 flex flex-col lg:flex-row">
 
-          {/* Left column — text. justify-center vertically within the 680px set by carousel */}
-          <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center px-6 lg:pl-16 lg:pr-0">
-            <div className="max-w-[520px] lg:max-w-none mx-auto">
+          {/* Left column — matches Algolia: 47.7% width, left padding */}
+          <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-[85px] px-6 sm:px-10 lg:px-0 py-12 lg:py-20">
               <h1
-                className="arcade-up-1 font-bold font-sora text-white mb-6 mt-8 lg:mt-10 text-balance text-center lg:text-left text-[32px] sm:text-[40px] lg:text-[52px] xl:text-[56px]"
-                style={{ lineHeight: '105%', letterSpacing: '-2.5px' }}
+                className="arcade-up-1 font-bold font-sora text-white mb-0 text-balance text-center lg:text-left text-[36px] sm:text-[44px] lg:text-[56px] xl:text-[64px] 2xl:text-[72px]"
+                style={{ lineHeight: '110%', letterSpacing: '-2px' }}
               >
                 Get help with<br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
@@ -538,56 +536,57 @@ const Hero: React.FC<{
                 </span>
                 <span className="hero-cursor" aria-hidden="true" />
               </h1>
-              <div className="arcade-up-2 mt-4 lg:mr-8 lg:max-w-[430px]">
-                <p className="font-sora text-center lg:text-left text-base sm:text-lg lg:text-[19px] font-normal leading-relaxed text-white my-0 text-balance">
+
+              <div className="arcade-up-2 mt-6 lg:mt-8">
+                <p className="font-sora text-center lg:text-left text-base sm:text-lg lg:text-xl xl:text-[22px] font-normal leading-relaxed text-white/85 my-0 max-w-[560px] mx-auto lg:mx-0">
                   24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
                 </p>
               </div>
 
               {/* CTAs */}
-              <div className="arcade-up-3 flex justify-center gap-4 mt-8 sm:mt-9 lg:mt-11 xl:mt-8 lg:justify-start lg:mb-[100px]">
+              <div className="arcade-up-3 flex justify-center gap-4 mt-10 lg:mt-12 lg:justify-start">
                 <button
                   onClick={onFreeTrial}
-                  className="flex items-center cursor-pointer font-sora justify-center text-white px-6 lg:px-8 h-12 lg:h-14 rounded-full blue-gradient"
+                  className="flex items-center cursor-pointer font-sora justify-center text-white px-8 lg:px-10 h-13 lg:h-[58px] rounded-full blue-gradient text-base lg:text-lg"
                 >
-                  <span className="font-semibold font-sora text-sm lg:text-base whitespace-nowrap">
+                  <span className="font-semibold font-sora whitespace-nowrap">
                     Get Help
                   </span>
                 </button>
                 {onSecondaryAction && (
                   <button
                     onClick={onSecondaryAction}
-                    className="flex items-center justify-center cursor-pointer font-sora text-white px-6 lg:px-8 h-12 lg:h-14 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors"
+                    className="flex items-center justify-center cursor-pointer font-sora text-white px-8 lg:px-10 h-13 lg:h-[58px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors text-base lg:text-lg"
                   >
-                    <span className="font-semibold font-sora text-sm lg:text-base whitespace-nowrap">
+                    <span className="font-semibold font-sora whitespace-nowrap">
                       See how it works
                     </span>
                   </button>
                 )}
               </div>
-            </div>
-            {/* Trust chips — below CTAs on mobile, above mb on desktop */}
-            <div className="arcade-up-3 flex flex-wrap justify-center lg:justify-start gap-4 mt-4 lg:-mt-[84px] px-6 lg:pl-16 lg:pr-0">
-              <span className="flex items-center gap-1.5 text-xs text-white/60">
-                <CheckCircle2 className="w-3.5 h-3.5" /> No credit card needed
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-white/60">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Cancel anytime
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-white/60">
-                <CheckCircle2 className="w-3.5 h-3.5" /> 24/7 instant answers
-              </span>
-            </div>
+
+              {/* Trust chips — natural flow below CTAs */}
+              <div className="arcade-up-3 flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 mt-8 lg:mt-10">
+                <span className="flex items-center gap-1.5 text-sm text-white/60">
+                  <CheckCircle2 className="w-4 h-4" /> No credit card needed
+                </span>
+                <span className="flex items-center gap-1.5 text-sm text-white/60">
+                  <CheckCircle2 className="w-4 h-4" /> Cancel anytime
+                </span>
+                <span className="flex items-center gap-1.5 text-sm text-white/60">
+                  <CheckCircle2 className="w-4 h-4" /> 24/7 instant answers
+                </span>
+              </div>
           </div>
 
-          {/* Right column — carousel. lg:h-[680px] drives the banner height on desktop */}
+          {/* Right column — verbatim Algolia structure */}
           <div
             className={`arcade-up-4 w-full lg:w-[53.3%] flex justify-center lg:justify-end mt-8 lg:mt-0${paused ? ' agentic-hero-paused' : ''}`}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
           >
             <div className="relative w-full max-w-[820px] lg:h-[680px]">
-              {/* Invisible spacer — sets natural height on mobile, hidden on desktop */}
+              {/* Invisible spacer — sets height on mobile, hidden on desktop where lg:h-[680px] takes over */}
               <img
                 src={HERO_SLIDES[0].top}
                 className="invisible w-full h-auto lg:hidden"
@@ -595,7 +594,7 @@ const Hero: React.FC<{
                 aria-hidden="true"
                 loading="eager"
               />
-              {/* Slides */}
+              {/* Slides — each has blur layer + product image */}
               {HERO_SLIDES.map((slide, i) => (
                 <div
                   key={slide.id}
@@ -611,7 +610,7 @@ const Hero: React.FC<{
                   />
                   <img
                     src={slide.top}
-                    className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:max-w-none"
+                    className="absolute bottom-0 left-0 lg:left-auto lg:right-0 w-full h-auto lg:w-auto lg:h-full lg:max-w-none"
                     alt={slide.alt}
                     loading={i === 0 ? 'eager' : 'lazy'}
                   />

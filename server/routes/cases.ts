@@ -4,6 +4,7 @@ import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable } fro
 import { eq, desc, and, max } from "drizzle-orm";
 import { generateCaseGuidePDF, type CasePDFData } from "../services/pdfService";
 import { sendSessionGuideEmail, sendEscalationEmail } from "../services/emailService";
+import { processResolvedCase } from "../services/playbookService";
 import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
@@ -240,6 +241,13 @@ router.patch("/:id", async (req, res) => {
 
     // Note: PDF email is now user-initiated via CaseCompletionModal ("Email Report" button)
     // rather than auto-sent on resolve, to avoid sending duplicate emails.
+
+    // Fire-and-forget: process resolved case for playbook learning
+    if (status === "resolved" && updated) {
+      processResolvedCase(updated.id).catch((err) => {
+        console.error(`[PLAYBOOK] Failed to process resolved case ${id}:`, err);
+      });
+    }
 
     // Fire-and-forget: send escalation email with specialist link
     if (status === "escalated" && updated?.specialistToken) {

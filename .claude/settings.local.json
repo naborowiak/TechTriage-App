@@ -121,7 +121,8 @@
       "WebFetch(domain:www.landing.love)",
       "WebFetch(domain:docs.stripe.com)",
       "Bash(node:*)",
-      "WebFetch(domain:www.arcade.software)"
+      "WebFetch(domain:www.arcade.software)",
+      "Bash(tr:*)"
     ]
   }
 }

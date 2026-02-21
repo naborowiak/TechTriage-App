@@ -586,27 +586,21 @@ body {
   to { transform: scaleX(1); }
 }
 
-/* Color-blur mask — eliminates hard edge */
-/* Desktop: soft fade on left/right edges, extend blur upward to reach header */
+/* Color-blur mask — verbatim from Algolia */
+/* Desktop: soft fade on left/right edges */
 .agentic-hero-blur {
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 30%, black 75%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, black 30%, black 75%, transparent 100%);
 }
-@media (min-width: 1280px) {
-  .agentic-hero-blur {
-    top: -200px;
-    height: calc(100% + 200px);
-  }
-}
-/* Mobile/tablet: fade top, bottom, and side edges */
-@media (max-width: 1279px) {
+/* Mobile/tablet: fade top + side edges */
+@media (max-width: 1023px) {
   .agentic-hero-blur {
     -webkit-mask-image:
-      linear-gradient(to bottom, transparent 0%, black 15%, black 80%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 15%, black 100%),
       linear-gradient(to right, transparent 0%, black 25%, black 75%, transparent 100%);
     -webkit-mask-composite: source-in;
     mask-image:
-      linear-gradient(to bottom, transparent 0%, black 15%, black 80%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 15%, black 100%),
       linear-gradient(to right, transparent 0%, black 25%, black 75%, transparent 100%);
     mask-composite: intersect;
   }

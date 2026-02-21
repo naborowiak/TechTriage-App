@@ -34,12 +34,15 @@ export async function loadSubscription(
   res: Response,
   next: NextFunction
 ) {
-  // Try to get userId from various sources
+  // SECURITY: Always prefer authenticated session user over request params.
+  // req.body/params/query userId kept only as fallback for unauthenticated
+  // public routes (e.g., promo code validation). Authenticated routes should
+  // always have req.user set by requireAuth middleware.
   const userId =
-    (req.body?.userId as string) ||
+    (req.user as any)?.id ||
     (req.params?.userId as string) ||
-    (req.query?.userId as string) ||
-    (req.user as any)?.id;
+    (req.body?.userId as string) ||
+    (req.query?.userId as string);
 
   if (!userId) {
     return next();

@@ -16,6 +16,7 @@ import { useGeminiVoice } from '../../hooks/useGeminiVoice';
 import { ChatMessage, UserRole, DeviceRecord, EscalationReportData, GuidedAction, formatCaseDisplayId } from '../../types';
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 import { useAuth } from '../../hooks/useAuth';
+import { ROOT_CATEGORIES } from '../../../shared/models/playbook';
 
 const AGENT_NAMES = ['Jordan', 'Alex', 'Sam', 'Riley', 'Morgan'];
 
@@ -54,13 +55,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       guidedAction: {
         type: 'presentChoices' as const,
         prompt: '',
-        choices: [
-          'Wi-Fi / Internet',
-          'Smart Home Devices',
-          'Appliances',
-          'HVAC / Thermostat',
-          'TV / Streaming',
-        ],
+        choices: [...ROOT_CATEGORIES],
       },
     },
   ]);

@@ -409,6 +409,7 @@ export async function createCreditPaymentIntent(
       userId,
       creditType: creditInfo?.type || 'videoDiagnostic',
       creditQuantity: String(creditInfo?.quantity || 1),
+      source: 'direct_payment', // Distinguishes from checkout-session-created PIs
     },
     automatic_payment_methods: {
       enabled: true,
@@ -428,6 +429,15 @@ export async function handlePaymentIntentSucceeded(paymentIntent: Stripe.Payment
 
   if (!userId || creditQuantity <= 0) {
     // Not a credit purchase — may be a subscription payment, ignore
+    return;
+  }
+
+  // Only process direct PaymentIntent purchases (created via create-payment-intent).
+  // Checkout-session-created PIs are handled by handleCheckoutCompleted instead.
+  // Without this guard, the same purchase could grant credits twice via two
+  // different Stripe webhook events (checkout.session.completed + payment_intent.succeeded).
+  if (paymentIntent.metadata?.source !== 'direct_payment') {
+    console.log(`[STRIPE] Skipping PaymentIntent ${paymentIntent.id} — not a direct payment (likely from checkout session)`);
     return;
   }
 

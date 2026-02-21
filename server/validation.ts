@@ -115,14 +115,14 @@ export const escalationReportSchema = z.object({
 // ============================================
 
 export const checkoutSessionSchema = z.object({
-  userId: z.string().min(1, "userId is required").max(255),
+  userId: z.string().max(255).optional(), // Ignored — server uses authenticated session user
   priceId: z.string().min(1, "priceId is required").max(255).regex(/^price_/, "Invalid price ID format"),
   successUrl: z.string().url().max(2000).optional(),
   cancelUrl: z.string().url().max(2000).optional(),
 });
 
 export const portalSessionSchema = z.object({
-  userId: z.string().min(1, "userId is required").max(255),
+  userId: z.string().max(255).optional(), // Ignored — server uses authenticated session user
   returnUrl: z.string().url().max(2000).optional(),
 });
 

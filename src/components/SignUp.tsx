@@ -259,6 +259,7 @@ export const SignUp = memo<SignUpProps>(function SignUp({
   const [showPassword, setShowPassword] = useState(false);
   const [trialError, setTrialError] = useState<string | null>(null);
   const [isCheckingTrial, setIsCheckingTrial] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isOAuthUser] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: initialEmail,
@@ -784,10 +785,35 @@ export const SignUp = memo<SignUpProps>(function SignUp({
             </div>
           )}
 
+          {/* Terms acceptance checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer group mt-1">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1 w-4 h-4 rounded border-light-400 dark:border-midnight-500 text-electric-indigo focus:ring-electric-indigo/30 focus:ring-offset-0 cursor-pointer flex-shrink-0"
+            />
+            <span className="text-sm text-text-secondary dark:text-gray-400 leading-relaxed">
+              I accept TotalAssist's{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-electric-indigo hover:underline font-medium">
+                Terms of Service
+              </a>
+              ,{" "}
+              <a href="/terms#plans" target="_blank" rel="noopener noreferrer" className="text-electric-indigo hover:underline font-medium">
+                Build Plan Terms and Service Limits
+              </a>
+              , and have read TotalAssist's{" "}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-electric-indigo hover:underline font-medium">
+                Privacy Policy
+              </a>
+              .
+            </span>
+          </label>
+
           <button
             onClick={nextStep}
             disabled={
-              !formData.email || formData.password.length < 8 || isCheckingTrial
+              !formData.email || formData.password.length < 8 || isCheckingTrial || !acceptedTerms
             }
             className="w-full btn-gradient-electric disabled:bg-midnight-700 disabled:text-text-muted disabled:cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-electric-indigo/30 hover:shadow-electric-indigo/40 hover:-translate-y-0.5 mt-2"
           >
