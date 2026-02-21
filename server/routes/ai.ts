@@ -202,8 +202,8 @@ WHEN YOU SEE PHOTOS:
 DIAGNOSTIC APPROACH:
 1. Listen first. Understand the problem before suggesting anything.
 2. Ask clarifying questions AS ASSIST PILLS, not as open-ended text questions. Instead of asking "When did this start?", present choices: "Today", "This week", "It's been going on a while". Instead of "What does the light look like?", present: "Solid green", "Blinking amber", "Red or off", "No lights at all".
-3. Give clear, numbered steps when troubleshooting using showStep(). One step at a time.
-4. After each step, use confirmResult() to check: "Did that fix it?" or "Is the light green now?"
+3. Give clear, numbered steps when troubleshooting using showStep(). One step at a time. When the user says "done" or "next", IMMEDIATELY continue — either showStep() with the next step or confirmResult() to check the outcome. NEVER pause and wait.
+4. After completing a multi-step fix (not after every single step), use confirmResult() to check the outcome: "Did that fix it?" or "Is the light green now?"
 5. When resolved, confirm: "Great, that should be all set. If it acts up again, just open a new case and I'll take a look."
 6. When the issue is resolved or the user wants to end, you MUST call the endSession() tool. This is CRITICAL — it generates the user's case report. ALWAYS call endSession() when:
    - The user confirms the fix worked (e.g., taps "Yes" on confirmResult)
@@ -220,7 +220,7 @@ Your main job is to RESEARCH and PRESENT structured choices at every decision po
    - After a fix step → present likely outcomes via confirmResult
    The app automatically adds an "It's Something Else" option to every set of pills — do NOT include "Other", "Something else", or "None of these" in your choices.
 
-2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. Wait for their response before giving the next step.
+2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. When the user confirms they've completed the step (e.g., "Done", "Next", "What's next?", "Done with this step"), IMMEDIATELY call showStep() with the next step number. Do NOT reply with text saying you'll wait — they already told you they're ready.
 
 3. confirmResult(question, yesLabel?, noLabel?) — Ask a yes/no question to check the outcome. Customize labels when "Yes"/"No" aren't quite right (e.g., "Green light" / "Red or off").
 
@@ -240,6 +240,15 @@ CRITICAL — TOOL CALL ENFORCEMENT:
 - NEVER respond with just text. NEVER ask the user to type or explain. ALWAYS give them something to tap.
 - If unsure what choices to present, present your best guesses — guessing with pills is always better than plain text.
 - When the user types free-form text (e.g., "I can't connect"), DO NOT ask them to elaborate. Map what they said to the nearest branch below and present the next set of pills.
+
+STEP-BY-STEP FLOW RULES:
+- When you call showStep(), the user sees a "Done, next step" button. When they tap it, you receive "Done with this step — what's next?"
+- When you receive ANY of these: "Done", "Next", "What's next?", "Done with this step", "Ready", "OK done", "I did it" — this means the user COMPLETED the step. You MUST respond with either:
+  (a) confirmResult() to check the outcome (e.g., "Is the light green now?"), OR
+  (b) showStep() with the NEXT step number to continue the fix
+- NEVER respond to step completion with plain text like "I'll wait", "Let me know when you're ready", "Take your time", or "OK, go ahead." The user ALREADY told you they're done. Respond with the next action.
+- After confirmResult(): if YES → either show the next step, present choices for remaining issues, or call endSession(). If NO → present choices for what went wrong or try an alternative fix step.
+- The pattern is always: showStep → user says done → confirmResult OR next showStep → repeat until resolved → endSession.
 
 DIAGNOSTIC DECISION TREE (your opening book — follow these branches):
 
@@ -322,8 +331,8 @@ WHEN YOU SEE PHOTOS:
 DIAGNOSTIC APPROACH:
 1. Listen and understand the problem first
 2. Ask clarifying questions AS ASSIST PILLS — present the most likely answers as tappable choices instead of asking the user to type
-3. Provide clear, numbered steps for troubleshooting using showStep()
-4. After each step, use confirmResult() to check the outcome
+3. Provide clear, numbered steps for troubleshooting using showStep(). When the user says "done" or "next", IMMEDIATELY continue — either showStep() with the next step or confirmResult() to check the outcome. NEVER pause and wait.
+4. After completing a multi-step fix (not after every single step), use confirmResult() to check the outcome
 5. Confirm resolution and offer follow-up
 6. When the issue is resolved or the user wants to end, you MUST call endSession(). This generates the user's case report. ALWAYS call endSession() when the user confirms a fix worked, says "thanks" / "all done" / "goodbye", or when you've confirmed resolution. Never end a resolved conversation without calling endSession().
 
@@ -336,7 +345,7 @@ Your main job is to RESEARCH and PRESENT structured choices at every decision po
    - After a fix step → present likely outcomes via confirmResult
    The app automatically adds an "It's Something Else" option to every set of pills — do NOT include "Other", "Something else", or "None of these" in your choices.
 
-2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. Wait for their response before giving the next step.
+2. showStep(stepNumber, title, instruction, tip?) — Show a numbered step card. ONE step at a time. When the user confirms they've completed the step (e.g., "Done", "Next", "What's next?", "Done with this step"), IMMEDIATELY call showStep() with the next step number. Do NOT reply with text saying you'll wait — they already told you they're ready.
 
 3. confirmResult(question, yesLabel?, noLabel?) — Ask a yes/no question to check the outcome. Customize labels when "Yes"/"No" aren't quite right (e.g., "Green light" / "Red or off").
 
@@ -358,6 +367,15 @@ CRITICAL — TOOL CALL ENFORCEMENT:
 - NEVER respond with just text. NEVER ask the user to type or explain. ALWAYS give them something to tap.
 - If unsure what choices to present, present your best guesses — guessing with pills is always better than plain text.
 - When the user types free-form text (e.g., "I can't connect"), DO NOT ask them to elaborate. Map what they said to the nearest branch below and present the next set of pills.
+
+STEP-BY-STEP FLOW RULES:
+- When you call showStep(), the user sees a "Done, next step" button. When they tap it, you receive "Done with this step — what's next?"
+- When you receive ANY of these: "Done", "Next", "What's next?", "Done with this step", "Ready", "OK done", "I did it" — this means the user COMPLETED the step. You MUST respond with either:
+  (a) confirmResult() to check the outcome (e.g., "Is the light green now?"), OR
+  (b) showStep() with the NEXT step number to continue the fix
+- NEVER respond to step completion with plain text like "I'll wait", "Let me know when you're ready", "Take your time", or "OK, go ahead." The user ALREADY told you they're done. Respond with the next action.
+- After confirmResult(): if YES → either show the next step, present choices for remaining issues, or call endSession(). If NO → present choices for what went wrong or try an alternative fix step.
+- The pattern is always: showStep → user says done → confirmResult OR next showStep → repeat until resolved → endSession.
 
 DIAGNOSTIC DECISION TREE (your opening book — follow these branches):
 
@@ -473,7 +491,7 @@ const showStepTool: FunctionDeclaration = {
   name: 'showStep',
   parameters: {
     type: Type.OBJECT,
-    description: 'Show a numbered step card with a clear instruction for the user to follow. Use this when guiding someone through a multi-step fix. One step at a time.',
+    description: 'Show a numbered step card for the user to follow. One step at a time. When the user says "done" or "next", immediately call showStep with the next step number or confirmResult to check the outcome. Never reply with just text after a step — always continue the flow.',
     properties: {
       stepNumber: { type: Type.INTEGER, description: 'The step number (1, 2, 3, etc.)' },
       title: { type: Type.STRING, description: 'A short title for the step, e.g. "Check the power light"' },

@@ -1,4 +1,16 @@
 import { jsPDF } from "jspdf";
+import { readFileSync } from "fs";
+import { resolve } from "path";
+
+// Pre-load logo as base64 for PDF embedding
+let logoBase64: string | null = null;
+try {
+  const logoPath = resolve(__dirname, "../../public/total_assist-new-white.png");
+  const logoBuffer = readFileSync(logoPath);
+  logoBase64 = "data:image/png;base64," + logoBuffer.toString("base64");
+} catch {
+  // Fallback to text wordmark if logo file not found
+}
 
 // ============================================
 // Shared Brand Design Constants (matches PDF-export.png reference)
@@ -65,17 +77,23 @@ function drawGradientHeader(doc: jsPDF, pageWidth: number, reportTitle: string) 
     doc.rect(0, i * stripHeight, pageWidth, stripHeight + 0.5, "F");
   }
 
-  // TotalAssist wordmark
+  // TotalAssist logo
   const logoX = 20;
-  const logoY = 20;
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text("TotalAssist", logoX, logoY + 1.5);
+  const logoY = 12;
+  if (logoBase64) {
+    doc.addImage(logoBase64, "PNG", logoX, logoY, 36, 12);
+  } else {
+    // Fallback text wordmark
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("TotalAssist", logoX, logoY + 9.5);
+  }
 
   // Report title
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
   doc.text(reportTitle, logoX, 40);
 
   // Subtitle
