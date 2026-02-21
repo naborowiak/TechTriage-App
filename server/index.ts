@@ -95,6 +95,7 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "blob:", "https:"],
       connectSrc: ["'self'", "wss:", "https://api.stripe.com", "https://js.stripe.com"],
       frameSrc: ["https://js.stripe.com", "https://demo.arcade.software"],
+      workerSrc: ["'self'", "blob:"],
       objectSrc: ["'none'"],
       baseUri: ["'self'"],
     },

@@ -776,12 +776,10 @@ function buildHTMLReport(data: CasePDFData): string {
 }
 
 // ============================================
-// PDF Generation via Puppeteer
+// PDF Generation via Puppeteer (with jsPDF fallback)
 // ============================================
 
-export async function generateCaseGuidePDF(data: CasePDFData): Promise<string> {
-  const html = buildHTMLReport(data);
-
+async function generatePDFWithPuppeteer(html: string): Promise<string> {
   let browser;
   try {
     browser = await puppeteer.launch({
@@ -811,5 +809,179 @@ export async function generateCaseGuidePDF(data: CasePDFData): Promise<string> {
     if (browser) {
       await browser.close().catch(() => {});
     }
+  }
+}
+
+/**
+ * jsPDF fallback for when Chromium is not available (e.g., deployment without nix packages).
+ * Generates a functional but simpler PDF using jsPDF directly.
+ */
+function generateFallbackPDF(data: CasePDFData): string {
+  const { jsPDF } = require("jspdf");
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 0;
+
+  // Header bar
+  for (let i = 0; i < 30; i++) {
+    const ratio = i / 30;
+    const r = Math.round(99 + (67 - 99) * ratio);
+    const g = Math.round(102 + (56 - 102) * ratio);
+    const b = Math.round(241 + (202 - 241) * ratio);
+    doc.setFillColor(r, g, b);
+    doc.rect(0, i * (50 / 30), pageWidth, (50 / 30) + 0.5, "F");
+  }
+
+  // Logo
+  if (logoBase64) {
+    try { doc.addImage(logoBase64, "PNG", margin, 10, 36, 12); } catch {}
+  } else {
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("TotalAssist", margin, 20);
+  }
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("Diagnostic Report", margin, 38);
+
+  y = 60;
+
+  // Report Summary
+  doc.setFillColor(243, 244, 246);
+  doc.roundedRect(margin, y, contentWidth, 10, 1, 1, "F");
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(55, 65, 81);
+  doc.text("Report Summary", margin + 5, y + 7);
+  y += 16;
+
+  const addRow = (label: string, value: string) => {
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(107, 114, 128);
+    doc.text(label, margin + 5, y);
+    doc.setTextColor(17, 24, 39);
+    const lines = doc.splitTextToSize(value, contentWidth - 55);
+    doc.text(lines, margin + 50, y);
+    y += lines.length * 4.5 + 2;
+  };
+
+  if (data.userName) addRow("Client:", data.userName);
+  addRow("Date:", formatDate(data.createdAt, data.userTimezone));
+  addRow("Session ID:", data.caseId.substring(0, 8).toUpperCase());
+  const assistedBy = data.agentName || data.messages.find(m => m.role !== "user" && m.agentName)?.agentName || "TotalAssist Support";
+  addRow("Assisted By:", assistedBy);
+  addRow("Status:", (data.status || "resolved").charAt(0).toUpperCase() + (data.status || "resolved").slice(1));
+  addRow("Issue:", data.title || "Technical issue");
+  y += 8;
+
+  // Details
+  if (data.aiSummary) {
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFillColor(243, 244, 246);
+    doc.roundedRect(margin, y, contentWidth, 10, 1, 1, "F");
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(55, 65, 81);
+    doc.text("Details & Recommendations", margin + 5, y + 7);
+    y += 16;
+
+    const parsed = parseAISummary(data.aiSummary);
+    if (parsed && parsed.length > 0) {
+      for (const section of parsed) {
+        if (y > 260) { doc.addPage(); y = 20; }
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(55, 65, 81);
+        doc.text(`${section.label}:`, margin + 5, y);
+        y += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(75, 85, 99);
+        const lines = doc.splitTextToSize(section.content, contentWidth - 12);
+        for (const line of lines) {
+          if (y > 275) { doc.addPage(); y = 20; }
+          doc.text(line, margin + 8, y);
+          y += 4.5;
+        }
+        y += 4;
+      }
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(75, 85, 99);
+      const lines = doc.splitTextToSize(data.aiSummary, contentWidth - 10);
+      for (const line of lines) {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.text(line, margin + 5, y);
+        y += 4.5;
+      }
+    }
+    y += 8;
+  }
+
+  // Transcript
+  if (data.messages.length > 0) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFillColor(243, 244, 246);
+    doc.roundedRect(margin, y, contentWidth, 10, 1, 1, "F");
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(55, 65, 81);
+    doc.text("Conversation Transcript", margin + 5, y + 7);
+    y += 16;
+
+    for (const msg of data.messages) {
+      if (y > 265) { doc.addPage(); y = 20; }
+      const speaker = msg.role === "user" ? (data.userName?.split(" ")[0] || "You") : (msg.agentName || assistedBy);
+      const time = formatTime(msg.timestamp, data.userTimezone);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(msg.role === "user" ? 67 : 99, msg.role === "user" ? 56 : 102, msg.role === "user" ? 202 : 241);
+      doc.text(speaker, margin + 5, y);
+      doc.setTextColor(156, 163, 175);
+      doc.setFont("helvetica", "normal");
+      doc.text(`  ${time}`, margin + 5 + doc.getTextWidth(speaker), y);
+      y += 5;
+      doc.setTextColor(55, 65, 81);
+      doc.setFontSize(8);
+      const msgLines = doc.splitTextToSize(msg.text, contentWidth - 12);
+      for (const line of msgLines) {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.text(line, margin + 8, y);
+        y += 4;
+      }
+      y += 4;
+    }
+  }
+
+  // Footer on every page
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    const ph = doc.internal.pageSize.getHeight();
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.3);
+    doc.line(0, ph - 16, pageWidth, ph - 16);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(156, 163, 175);
+    doc.text("TotalAssist", margin, ph - 7);
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, ph - 7, { align: "right" });
+  }
+
+  return doc.output("datauristring").split(",")[1];
+}
+
+export async function generateCaseGuidePDF(data: CasePDFData): Promise<string> {
+  const html = buildHTMLReport(data);
+
+  try {
+    return await generatePDFWithPuppeteer(html);
+  } catch (puppeteerError) {
+    console.warn("[PDF] Puppeteer/Chromium unavailable, falling back to jsPDF:", (puppeteerError as Error).message);
+    return generateFallbackPDF(data);
   }
 }

@@ -744,17 +744,36 @@ router.post("/chat", requireAuth, loadSubscription, requireFeature('chat'), vali
     let responseText = response.text;
     let functionCall = response.functionCalls?.[0];
 
-    // Retry once if Gemini returns empty text AND no function call
-    if (!responseText && !functionCall) {
+    // Retry up to 2 more times if Gemini returns no function call.
+    // On the 2nd retry, add an explicit nudge to force tool usage.
+    if (!functionCall) {
+      // 1st retry — same config
       response = await ai.models.generateContent(chatConfig);
-      responseText = response.text;
+      responseText = response.text || responseText;
+      functionCall = response.functionCalls?.[0];
+    }
+    if (!functionCall) {
+      // 2nd retry — add explicit nudge as the final user message
+      const nudgedContents = [...chatConfig.contents, {
+        role: 'user',
+        parts: [{ text: `[SYSTEM: Your previous response had no tool call. You MUST call presentChoices(), showStep(), confirmResult(), or endSession() now. The user said: "${message}"]` }]
+      }];
+      response = await ai.models.generateContent({ ...chatConfig, contents: nudgedContents });
+      responseText = response.text || responseText;
       functionCall = response.functionCalls?.[0];
     }
 
+    // If all retries failed to produce a function call, synthesize a presentChoices fallback
+    if (!functionCall && !responseText) {
+      responseText = "Let me pull up some options for you.";
+      functionCall = {
+        name: 'presentChoices',
+        args: { prompt: "What would you like help with?", choices: ["Wi-Fi / Internet", "Smart Home Devices", "Appliances", "HVAC / Thermostat", "TV / Streaming"] }
+      } as any;
+    }
+
     res.json({
-      text: responseText || (functionCall
-        ? "I'm processing that for you..."
-        : "I'd like to help with that — could you describe what's happening in a bit more detail?"),
+      text: responseText || "Let me help you with that.",
       functionCall: functionCall ? { name: functionCall.name || '', args: functionCall.args as Record<string, unknown> || {} } : undefined
     });
 
@@ -836,17 +855,33 @@ router.post("/chat-live-agent", requireAuth, loadSubscription, requireFeature('c
     let responseText = response.text;
     let functionCall = response.functionCalls?.[0];
 
-    // Retry once if Gemini returns empty text AND no function call
-    if (!responseText && !functionCall) {
+    // Retry up to 2 more times if Gemini returns no function call.
+    if (!functionCall) {
       response = await ai.models.generateContent(liveAgentConfig);
-      responseText = response.text;
+      responseText = response.text || responseText;
+      functionCall = response.functionCalls?.[0];
+    }
+    if (!functionCall) {
+      const nudgedContents = [...liveAgentConfig.contents, {
+        role: 'user',
+        parts: [{ text: `[SYSTEM: Your previous response had no tool call. You MUST call presentChoices(), showStep(), confirmResult(), or endSession() now. The user said: "${message}"]` }]
+      }];
+      response = await ai.models.generateContent({ ...liveAgentConfig, contents: nudgedContents });
+      responseText = response.text || responseText;
       functionCall = response.functionCalls?.[0];
     }
 
+    // Synthesize fallback if all retries failed
+    if (!functionCall && !responseText) {
+      responseText = "Let me pull up some options for you.";
+      functionCall = {
+        name: 'presentChoices',
+        args: { prompt: "What would you like help with?", choices: ["Wi-Fi / Internet", "Smart Home Devices", "Appliances", "HVAC / Thermostat", "TV / Streaming"] }
+      } as any;
+    }
+
     res.json({
-      text: responseText || (functionCall
-        ? "Let me look into that for you..."
-        : "I'd like to help with that — could you tell me a bit more about what's going on?"),
+      text: responseText || "Let me help you with that.",
       functionCall: functionCall ? { name: functionCall.name || '', args: functionCall.args as Record<string, unknown> || {} } : undefined
     });
 
