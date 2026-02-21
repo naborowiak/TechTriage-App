@@ -510,7 +510,7 @@ const Hero: React.FC<{
         <div className="mx-auto relative z-20 flex flex-col lg:flex-row">
 
           {/* Left column — matches Algolia: 47.7% width, left padding */}
-          <div className="relative z-10 w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-[85px] px-6 sm:px-10 lg:px-0 py-8 sm:py-12 lg:py-20">
+          <div className="relative z-10 w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-12 xl:pl-[85px] px-6 sm:px-10 lg:px-0 py-8 sm:py-12 lg:py-20">
             <div className="max-w-[520px] lg:max-w-none mx-auto lg:mx-0">
               <h1
                 className="arcade-up-1 font-bold font-sora text-white mb-0 text-balance text-center lg:text-left text-[30px] sm:text-[44px] lg:text-[56px] xl:text-[64px] 2xl:text-[72px]"
