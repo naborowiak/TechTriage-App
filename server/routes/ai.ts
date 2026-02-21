@@ -569,12 +569,17 @@ function buildContents(history: any[]) {
       }
       contents.push({ role: 'model', parts });
 
-      // Next user message becomes a functionResponse (Gemini requires this after a functionCall)
+      // Next user message becomes a functionResponse (Gemini requires this after a functionCall).
+      // CRITICAL: Always include both functionResponse AND text in the same turn.
+      // Gemini returns empty responses when a user turn has ONLY a functionResponse.
       if (fcName && i + 1 < history.length && history[i + 1].role === 'user') {
-        const userText = history[i + 1].text;
+        const userText = typeof history[i + 1].text === 'string' ? history[i + 1].text : '...';
         contents.push({
           role: 'user',
-          parts: [{ functionResponse: { name: fcName, response: { result: typeof userText === 'string' ? userText : '...' } } }]
+          parts: [
+            { functionResponse: { name: fcName, response: { result: userText } } },
+            { text: userText },
+          ]
         });
         skipIndices.add(i + 1);
       }
@@ -703,14 +708,18 @@ router.post("/chat", requireAuth, loadSubscription, requireFeature('chat'), vali
       : null;
 
     if (unpairedFc) {
-      contents.push({
-        role: 'user',
-        parts: [{ functionResponse: { name: unpairedFc.name, response: { result: message } } }]
-      });
+      // CRITICAL: Gemini returns empty responses when a user turn contains ONLY
+      // a functionResponse with no text part. Always include the user's text
+      // alongside the functionResponse so Gemini can generate a proper reply.
+      const frParts: any[] = [
+        { functionResponse: { name: unpairedFc.name, response: { result: message } } },
+        { text: message },
+      ];
       if (image) {
         const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
-        contents.push({ role: 'user', parts: [{ text: message }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] });
+        frParts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
       }
+      contents.push({ role: 'user', parts: frParts });
     } else {
       const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
       if (image) {
@@ -816,14 +825,16 @@ router.post("/chat-live-agent", requireAuth, loadSubscription, requireFeature('c
       : null;
 
     if (unpairedFc) {
-      contents.push({
-        role: 'user',
-        parts: [{ functionResponse: { name: unpairedFc.name, response: { result: message } } }]
-      });
+      // CRITICAL: Same fix as /chat — include text alongside functionResponse
+      const frParts: any[] = [
+        { functionResponse: { name: unpairedFc.name, response: { result: message } } },
+        { text: message },
+      ];
       if (image) {
         const base64Data = image.includes('base64,') ? image.split('base64,')[1] : image;
-        contents.push({ role: 'user', parts: [{ text: message }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] });
+        frParts.push({ inlineData: { mimeType: "image/jpeg", data: base64Data } });
       }
+      contents.push({ role: 'user', parts: frParts });
     } else {
       const currentParts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: message }];
       if (image) {
