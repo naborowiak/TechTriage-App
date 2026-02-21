@@ -95,12 +95,12 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.1} className="relative z-10">
             <h1 className="text-5xl font-bold text-text-primary dark:text-white mb-6 tracking-tight">
-              Four ways to fix your <span className="text-gradient-electric">tech</span>
+              Get help <span className="text-gradient-electric">your way</span>
             </h1>
           </AnimatedElement>
           <AnimatedElement animation="fadeInUp" delay={0.2} className="relative z-10">
             <p className="text-xl text-text-secondary font-medium">
-              Chat, snap a photo, call, or show us on video. TotalAssist meets you where you are.
+              Type it, snap it, say it, or show it — pick whatever feels easiest and your agent handles the rest.
             </p>
           </AnimatedElement>
         </div>
