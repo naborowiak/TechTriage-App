@@ -5,7 +5,7 @@ entrypoint = "src/App.tsx"
 
 [nix]
 channel = "stable-24_05"
-packages = ["unzip", "tmux"]
+packages = ["unzip", "tmux", "chromium", "nss", "freetype", "harfbuzz", "fontconfig"]
 
 [unitTest]
 language = "nodejs"

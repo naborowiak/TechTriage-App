@@ -275,7 +275,7 @@ router.patch("/:id", async (req, res) => {
           try {
             const escMessages = (messageRecord?.messages as CasePDFData["messages"]) || [];
             const escAgentName = escMessages.find(m => m.role !== "user" && m.agentName)?.agentName;
-            pdfBase64 = generateCaseGuidePDF({
+            pdfBase64 = await generateCaseGuidePDF({
               caseId: id,
               title: updated.title,
               status: "escalated",
@@ -467,7 +467,7 @@ router.get("/:id/report", async (req, res) => {
       return res.status(404).json({ error: "Case not found" });
     }
 
-    const pdfBase64 = generateCaseGuidePDF(result.pdfData);
+    const pdfBase64 = await generateCaseGuidePDF(result.pdfData);
     const pdfBuffer = Buffer.from(pdfBase64, "base64");
 
     const safeTitle = (result.pdfData.title || "Report")
@@ -507,7 +507,7 @@ router.post("/:id/report/email", async (req, res) => {
       return res.status(400).json({ error: "No email address on file" });
     }
 
-    const pdfBase64 = generateCaseGuidePDF(result.pdfData);
+    const pdfBase64 = await generateCaseGuidePDF(result.pdfData);
 
     const emailResult = await sendSessionGuideEmail(
       result.user.email,
