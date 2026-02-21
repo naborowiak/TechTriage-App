@@ -1,6 +1,12 @@
 import puppeteer from "puppeteer-core";
-import { readFileSync } from "fs";
-import { resolve } from "path";
+import { readFileSync, existsSync, readdirSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+import { execSync } from "child_process";
+
+// ESM-compatible __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Pre-load logo as base64 for HTML embedding
 let logoBase64: string = "";
@@ -17,43 +23,53 @@ function findChromium(): string {
   // 1. Explicit env var
   if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
 
-  // 2. Nix-installed chromium (Replit deployment + dev)
+  // 2. Nix store scan — programmatic (fast, avoids shell glob timeout)
   try {
-    const { execSync } = require("child_process");
-    const nixPath = execSync("which chromium 2>/dev/null || true", { encoding: "utf8" }).trim();
-    if (nixPath) return nixPath;
+    const nixStore = "/nix/store";
+    if (existsSync(nixStore)) {
+      const entries = readdirSync(nixStore);
+      const chromiumBins: { path: string; version: number[] }[] = [];
+      for (const entry of entries) {
+        if (!entry.includes("chromium") || entry.endsWith(".drv")) continue;
+        const binPath = resolve(nixStore, entry, "bin", "chromium");
+        if (existsSync(binPath)) {
+          // Extract version number (e.g., "chromium-138.0.7204.100" → [138,0,7204,100])
+          const vMatch = entry.match(/chromium-(\d+(?:\.\d+)*)/);
+          const version = vMatch ? vMatch[1].split(".").map(Number) : [0];
+          chromiumBins.push({ path: binPath, version });
+        }
+      }
+      if (chromiumBins.length > 0) {
+        // Sort by version descending, pick newest
+        chromiumBins.sort((a, b) => {
+          for (let i = 0; i < Math.max(a.version.length, b.version.length); i++) {
+            const diff = (b.version[i] || 0) - (a.version[i] || 0);
+            if (diff !== 0) return diff;
+          }
+          return 0;
+        });
+        return chromiumBins[0].path;
+      }
+    }
   } catch {}
 
-  // 3. Nix store glob — pick the newest version
-  try {
-    const { execSync } = require("child_process");
-    const storePath = execSync(
-      "ls -d /nix/store/*-chromium-*/bin/chromium 2>/dev/null | sort -t'-' -k2 -V | tail -1",
-      { encoding: "utf8" }
-    ).trim();
-    if (storePath) return storePath;
-  } catch {}
-
-  // 4. Puppeteer's cached Chrome
-  const puppeteerPaths = [
+  // 3. Puppeteer/Playwright cached Chrome
+  const cachedPaths = [
     resolve(__dirname, "../../.cache/puppeteer/chrome/linux-145.0.7632.77/chrome-linux64/chrome"),
     resolve(__dirname, "../../.cache/ms-playwright/chromium-1208/chrome-linux64/chrome"),
   ];
-  for (const p of puppeteerPaths) {
-    try {
-      readFileSync(p);
-      return p;
-    } catch {}
+  for (const p of cachedPaths) {
+    if (existsSync(p)) return p;
   }
 
-  // 5. Common system locations
-  for (const bin of ["chromium-browser", "chromium", "google-chrome-stable", "google-chrome"]) {
-    try {
-      const { execSync } = require("child_process");
-      const p = execSync(`which ${bin} 2>/dev/null || true`, { encoding: "utf8" }).trim();
-      if (p) return p;
-    } catch {}
-  }
+  // 4. System PATH lookup
+  try {
+    const p = execSync("which chromium chromium-browser google-chrome-stable google-chrome 2>/dev/null | head -1", {
+      encoding: "utf8",
+      timeout: 3000,
+    }).trim();
+    if (p) return p;
+  } catch {}
 
   throw new Error("No Chromium binary found. Set CHROMIUM_PATH env var.");
 }
@@ -816,8 +832,9 @@ async function generatePDFWithPuppeteer(html: string): Promise<string> {
  * jsPDF fallback for when Chromium is not available (e.g., deployment without nix packages).
  * Generates a functional but simpler PDF using jsPDF directly.
  */
-function generateFallbackPDF(data: CasePDFData): string {
-  const { jsPDF } = require("jspdf");
+async function generateFallbackPDF(data: CasePDFData): Promise<string> {
+  const jspdfModule = await import("jspdf");
+  const { jsPDF } = jspdfModule;
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
@@ -982,6 +999,11 @@ export async function generateCaseGuidePDF(data: CasePDFData): Promise<string> {
     return await generatePDFWithPuppeteer(html);
   } catch (puppeteerError) {
     console.warn("[PDF] Puppeteer/Chromium unavailable, falling back to jsPDF:", (puppeteerError as Error).message);
-    return generateFallbackPDF(data);
+    try {
+      return await generateFallbackPDF(data);
+    } catch (fallbackError) {
+      console.error("[PDF] jsPDF fallback also failed:", (fallbackError as Error).message);
+      throw fallbackError;
+    }
   }
 }
