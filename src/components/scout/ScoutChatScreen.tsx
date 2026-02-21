@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, UserPlus, Camera, ArrowLeft } from 'lucide-react';
+import { Send, UserPlus, Camera, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { EscalationBreadcrumb } from './EscalationBreadcrumb';
 import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
@@ -88,6 +88,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [voiceReport, setVoiceReport] = useState<VoiceDiagnosticReport | null>(null);
   const [showVoiceReport, setShowVoiceReport] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
 
   // Voice session hooks
   const voiceSession = useVoiceSession();
@@ -531,12 +532,23 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         }),
       });
 
+      // Notify dashboard to refresh case lists
+      window.dispatchEvent(new CustomEvent('case-resolved', { detail: { id: currentCaseId } }));
+
       // Show completion modal (chat path only — voice/video have their own flows)
       setShowCompletionModal(true);
     } catch (e) {
       console.error('Failed to finalize case:', e);
     }
   }, [isAuthenticated]);
+
+  // Manual end session — user-triggered fallback when Gemini doesn't call endSession
+  const handleManualEndSession = useCallback(async () => {
+    if (isEndingSession || !caseId) return;
+    setIsEndingSession(true);
+    await handleSessionEnd(caseId, messages, 'Session ended by user.');
+    setIsEndingSession(false);
+  }, [caseId, messages, handleSessionEnd, isEndingSession]);
 
   // Escalation handler
   const handleEscalate = useCallback(async () => {
@@ -872,6 +884,17 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {hasActiveSession && isAuthenticated && caseId && (
+                <button
+                  onClick={handleManualEndSession}
+                  disabled={isEndingSession || showCompletionModal}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 transition-colors text-sm font-medium disabled:opacity-50"
+                  aria-label="End session and get report"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {isEndingSession ? 'Ending...' : 'End Session'}
+                </button>
+              )}
               {hasActiveSession && isAuthenticated && (
                 <button
                   onClick={() => {
@@ -940,23 +963,36 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                 </span>
               )}
             </div>
-            {hasActiveSession && isAuthenticated && (
-              <button
-                onClick={() => {
-                  if (tier === 'guest' || tier === 'free') {
-                    setLockedFeature('escalation');
-                    setShowUpgradeModal(true);
-                  } else {
-                    setShowEscalateConfirm(true);
-                  }
-                }}
-                disabled={isEscalating}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-sm font-medium"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                {isEscalating ? 'Working on it...' : 'Get a Pro'}
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {hasActiveSession && isAuthenticated && caseId && (
+                <button
+                  onClick={handleManualEndSession}
+                  disabled={isEndingSession || showCompletionModal}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 transition-colors text-sm font-medium disabled:opacity-50"
+                  aria-label="End session and get report"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {isEndingSession ? 'Ending...' : 'End Session'}
+                </button>
+              )}
+              {hasActiveSession && isAuthenticated && (
+                <button
+                  onClick={() => {
+                    if (tier === 'guest' || tier === 'free') {
+                      setLockedFeature('escalation');
+                      setShowUpgradeModal(true);
+                    } else {
+                      setShowEscalateConfirm(true);
+                    }
+                  }}
+                  disabled={isEscalating}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 hover:bg-orange-500/30 transition-colors text-sm font-medium"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  {isEscalating ? 'Working on it...' : 'Get a Pro'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

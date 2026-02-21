@@ -157,6 +157,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return () => window.removeEventListener("case-created", handler);
   }, []);
 
+  // Listen for case resolution — refetch full list to get updated status
+  useEffect(() => {
+    const handler = () => {
+      if (user?.id) {
+        fetch("/api/cases", { credentials: "include" })
+          .then((res) => res.ok ? res.json() : Promise.reject())
+          .then((data) => { if (Array.isArray(data)) setCases(data.slice(0, 50)); })
+          .catch(() => {});
+      }
+    };
+    window.addEventListener("case-resolved", handler);
+    return () => window.removeEventListener("case-resolved", handler);
+  }, [user?.id]);
+
   // Click-outside for user menu
   useEffect(() => {
     if (!showUserMenu) return;

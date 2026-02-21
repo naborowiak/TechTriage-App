@@ -173,6 +173,8 @@ export const SessionHistoryView: React.FC<SessionHistoryViewProps> = ({
   const [cases, setCases] = useState<Case[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Refetch on every mount (component unmounts/remounts on tab switch)
+  const [fetchKey, setFetchKey] = useState(0);
   useEffect(() => {
     if (!userId) return;
     setIsLoading(true);
@@ -186,7 +188,18 @@ export const SessionHistoryView: React.FC<SessionHistoryViewProps> = ({
       })
       .catch((err) => console.error("Failed to load cases:", err))
       .finally(() => setIsLoading(false));
-  }, [userId]);
+  }, [userId, fetchKey]);
+
+  // Listen for case updates (resolved, created) and refetch
+  useEffect(() => {
+    const handler = () => setFetchKey((k) => k + 1);
+    window.addEventListener("case-resolved", handler);
+    window.addEventListener("case-created", handler);
+    return () => {
+      window.removeEventListener("case-resolved", handler);
+      window.removeEventListener("case-created", handler);
+    };
+  }, []);
 
   const currentCases = cases.filter((c) => c.status === "open" || c.status === "pending");
   const historyCases = cases.filter((c) => c.status !== "open" && c.status !== "pending");
