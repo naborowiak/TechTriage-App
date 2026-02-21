@@ -513,7 +513,7 @@ const Hero: React.FC<{
           <div className="relative z-10 w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-12 xl:pl-[85px] px-6 sm:px-10 lg:px-0 py-8 sm:py-12 lg:py-20">
             <div className="max-w-[520px] lg:max-w-none mx-auto lg:mx-0">
               <h1
-                className="arcade-up-1 font-bold font-sora text-white mb-0 text-balance text-center lg:text-left text-[30px] sm:text-[44px] lg:text-[56px] xl:text-[64px] 2xl:text-[72px]"
+                className="arcade-up-1 font-bold font-sora text-white mb-0 text-balance text-center lg:text-left text-[30px] sm:text-[44px] lg:text-[48px] xl:text-[64px] 2xl:text-[72px]"
                 style={{ lineHeight: '110%', letterSpacing: '-2px' }}
               >
                 Get help with<br />
@@ -572,7 +572,7 @@ const Hero: React.FC<{
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
           >
-            <div className="relative w-full max-w-[820px] lg:h-[680px]">
+            <div className="relative w-full max-w-[820px] lg:h-[560px] xl:h-[680px]">
               {/* Invisible spacer — sets height on mobile, hidden on desktop where lg:h-[680px] takes over */}
               <img
                 src={HERO_SLIDES[0].top}
@@ -1478,10 +1478,6 @@ const App: React.FC = () => {
     navigate(PageView.SIGNUP);
   }, [navigate]);
 
-  const handleScrollToLifecycle = useCallback(() => {
-    document.getElementById('how-it-works-lifecycle')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
 
   const handleHeroAction = useCallback((mode: 'voice' | 'photo' | 'video' | 'chat') => {
     if (dashboardUser) {
@@ -1888,7 +1884,7 @@ const App: React.FC = () => {
                 onFreeTrial={handleFreeTrial}
                 onPricing={handleNavigateToPricing}
                 onHeroAction={handleHeroAction}
-                onSecondaryAction={handleScrollToLifecycle}
+                onSecondaryAction={() => navigate(PageView.HOW_IT_WORKS)}
               />
               {/* Free Preview Modal for unauthenticated users */}
               {heroPreviewMode && (
