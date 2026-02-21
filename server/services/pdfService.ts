@@ -190,8 +190,16 @@ function getStatusInfo(status: string): { label: string; color: string; bg: stri
 }
 
 // ============================================
-// HTML Template Builder
+// HTML Template Builder (Glassmorphic Design)
 // ============================================
+
+function splitIntoSteps(text: string): string[] {
+  const numbered = text.split(/\d+[.)]\s+/).filter(s => s.trim().length > 5);
+  if (numbered.length > 1) return numbered.map(s => s.trim().replace(/\.\s*$/, ""));
+  const sentences = text.split(/(?<=[.!])\s+/).filter(s => s.trim().length > 10);
+  if (sentences.length > 1) return sentences;
+  return [text];
+}
 
 function buildHTMLReport(data: CasePDFData): string {
   const tz = data.userTimezone;
@@ -205,555 +213,119 @@ function buildHTMLReport(data: CasePDFData): string {
   const sessionMode = data.sessionMode
     ? data.sessionMode.charAt(0).toUpperCase() + data.sessionMode.slice(1)
     : null;
+  const modeLabel = sessionMode
+    ? sessionMode + (sessionMode.toLowerCase() === "chat" || sessionMode.toLowerCase() === "voice" || sessionMode.toLowerCase() === "video" ? " Mode" : "")
+    : null;
 
-  // Timestamps
-  let startTime = "";
-  let endTime = "";
-  if (data.messages.length > 0) {
-    startTime = formatDateTime(data.messages[0].timestamp, tz);
-    endTime = formatDateTime(data.messages[data.messages.length - 1].timestamp, tz);
+  // Duration
+  let durationStr = "";
+  if (data.messages.length >= 2) {
+    const ms = data.messages[data.messages.length - 1].timestamp - data.messages[0].timestamp;
+    const mins = Math.max(1, Math.round(ms / 60000));
+    durationStr = mins === 1 ? "1 minute" : `${mins} minutes`;
   }
 
-  // Parse AI summary
+  // Parse AI summary into categorized sections
   const parsedSections = data.aiSummary ? parseAISummary(data.aiSummary) : null;
 
-  // SVG icon helpers (inline SVGs render reliably in headless Chromium — emoji do not)
-  const svgIcon = (path: string, color = "#6366F1") =>
-    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><${path}/></svg>`;
+  const issueTexts: string[] = [];
+  const rootCauseTexts: string[] = [];
+  const resolutionTexts: string[] = [];
+  const nextStepsTexts: string[] = [];
 
-  // Section icon SVGs (Lucide-style)
-  const sectionIconSvgs: Record<string, string> = {
-    problem: svgIcon('circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"', "#EF4444"),
-    analysis: svgIcon('path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"', "#8B5CF6"),
-    fix: svgIcon('path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"', "#10B981"),
-    resolution: svgIcon('polyline points="20 6 9 17 4 12"', "#10B981"),
-    "next steps": svgIcon('line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"', "#F59E0B"),
-    "next step": svgIcon('line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"', "#F59E0B"),
-    recommendation: svgIcon('line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"', "#F59E0B"),
-    cause: svgIcon('circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"', "#EF4444"),
-    "root cause": svgIcon('circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"', "#EF4444"),
-    summary: svgIcon('path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"', "#6366F1"),
+  if (parsedSections) {
+    for (const s of parsedSections) {
+      const label = s.label.toLowerCase();
+      if (["problem", "what happened"].includes(label)) {
+        issueTexts.push(s.content);
+      } else if (["analysis", "cause", "root cause", "what we found"].includes(label)) {
+        rootCauseTexts.push(s.content);
+      } else if (["fix", "resolution", "steps taken", "action taken", "what we did"].includes(label)) {
+        resolutionTexts.push(s.content);
+      } else if (["next steps", "next step", "recommendation", "summary"].includes(label)) {
+        nextStepsTexts.push(s.content);
+      }
+    }
+  }
+
+  const issueText = issueTexts.length > 0
+    ? issueTexts.join(" ")
+    : data.title || (data.aiSummary ? data.aiSummary.split(".")[0] + "." : "Technical issue diagnosed");
+
+  // Status badge colors
+  const statusStyleMap: Record<string, { bg: string; border: string; text: string; dot: string; dotShadow: string }> = {
+    resolved:    { bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.18)", text: "rgba(5,120,80,0.95)", dot: "rgba(16,185,129,0.85)", dotShadow: "rgba(16,185,129,0.14)" },
+    escalated:   { bg: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.18)", text: "rgba(153,27,27,0.95)", dot: "rgba(239,68,68,0.85)", dotShadow: "rgba(239,68,68,0.14)" },
+    in_progress: { bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.18)", text: "rgba(146,64,14,0.95)", dot: "rgba(245,158,11,0.85)", dotShadow: "rgba(245,158,11,0.14)" },
   };
+  const sc = statusStyleMap[statusInfo.label.toLowerCase().replace(" ", "_")] || statusStyleMap.resolved;
 
-  // Section header SVG icons (for the section titles)
-  const reportSvg = svgIcon('rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"', "#4F46E5");
-  const detailsSvg = svgIcon('circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"', "#16A34A");
-  const transcriptSvg = svgIcon('path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"', "#D97706");
+  // Resolution steps
+  const resolutionSteps = resolutionTexts.length > 0 ? splitIntoSteps(resolutionTexts.join(" ")) : [];
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  // SVG icons (inline — headless Chromium has no emoji fonts)
+  const iconOverview = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h8M8 15h8M8 19h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+  const iconIssue = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10v7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 7.2h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
+  const iconRootCause = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 18a7.5 7.5 0 1 1 5.3-12.8A7.5 7.5 0 0 1 10.5 18Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16.2 21 21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7.9 10.6 9.8 12.5 13.4 8.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const iconResolution = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7.8a6 6 0 0 1-8.3 5.5L7.1 19a2 2 0 0 1-2.8 0l-.3-.3a2 2 0 0 1 0-2.8l5.7-5.6A6 6 0 0 1 16.2 3l-2.7 2.7 2.1 2.1L18.3 5A6 6 0 0 1 21 7.8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
+  const iconNextSteps = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const iconEscalation = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
+  const iconTranscript = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`;
+  const iconCheck = `<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  // Build conditional sections
+  const hasRootCause = rootCauseTexts.length > 0;
+  const hasResolution = resolutionSteps.length > 0;
+  const hasNextSteps = nextStepsTexts.length > 0;
+  const hasEscalation = !!data.escalationReport;
+  const hasTranscript = data.messages.length > 0;
 
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #1F2937;
-    background: #FFFFFF;
-    font-size: 13px;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .page {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 0;
-    margin: 0 auto;
-  }
-
-  /* ===== HEADER ===== */
-  .header {
-    background: linear-gradient(135deg, #6366F1 0%, #4F46E5 40%, #4338CA 100%);
-    padding: 32px 40px 28px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-  }
-
-  .header::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: 10%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-    border-radius: 50%;
-  }
-
-  .header-content {
-    position: relative;
-    z-index: 1;
-  }
-
-  .logo {
-    height: 28px;
-    margin-bottom: 16px;
-    opacity: 0.95;
-  }
-
-  .logo-text {
-    color: #FFFFFF;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    margin-bottom: 16px;
-  }
-
-  .header-title {
-    font-size: 26px;
-    font-weight: 700;
-    color: #FFFFFF;
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
-  }
-
-  .header-subtitle {
-    font-size: 13px;
-    color: rgba(255,255,255,0.7);
-    font-weight: 400;
-  }
-
-  .header-meta {
-    display: flex;
-    gap: 24px;
-    margin-top: 16px;
-  }
-
-  .header-meta-item {
-    font-size: 11px;
-    color: rgba(255,255,255,0.65);
-    font-weight: 400;
-  }
-
-  .header-meta-item strong {
-    color: rgba(255,255,255,0.9);
-    font-weight: 600;
-  }
-
-  /* ===== CONTENT ===== */
-  .content {
-    padding: 28px 40px 40px;
-  }
-
-  /* ===== STATUS BADGE ===== */
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  /* ===== SECTION ===== */
-  .section {
-    margin-bottom: 28px;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #F3F4F6;
-  }
-
-  .section-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-
-  .section-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #111827;
-    letter-spacing: -0.2px;
-  }
-
-  /* ===== INFO GRID ===== */
-  .info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    background: #F3F4F6;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #E5E7EB;
-  }
-
-  .info-cell {
-    background: #FFFFFF;
-    padding: 12px 16px;
-  }
-
-  .info-cell.full-width {
-    grid-column: 1 / -1;
-  }
-
-  .info-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #9CA3AF;
-    margin-bottom: 3px;
-  }
-
-  .info-value {
-    font-size: 13px;
-    font-weight: 500;
-    color: #1F2937;
-  }
-
-  /* ===== SUMMARY CARDS ===== */
-  .summary-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .summary-card {
-    background: #F9FAFB;
-    border: 1px solid #E5E7EB;
-    border-radius: 10px;
-    padding: 16px 18px;
-    page-break-inside: avoid;
-  }
-
-  .summary-card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  .summary-card-icon {
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-
-  .summary-card-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: #374151;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .summary-card-content {
-    font-size: 13px;
-    color: #4B5563;
-    line-height: 1.65;
-  }
-
-  /* Unstructured bullets */
-  .bullet-list {
-    list-style: none;
-    padding: 0;
-  }
-
-  .bullet-item {
-    position: relative;
-    padding-left: 16px;
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: #4B5563;
-    line-height: 1.6;
-  }
-
-  .bullet-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 8px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #6366F1;
-  }
-
-  /* ===== ESCALATION ===== */
-  .escalation-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .escalation-item {
-    background: #FEF2F2;
-    border: 1px solid #FECACA;
-    border-radius: 8px;
-    padding: 12px 14px;
-  }
-
-  .escalation-item .info-label {
-    color: #DC2626;
-  }
-
-  .escalation-item .info-value {
-    color: #991B1B;
-    font-weight: 600;
-  }
-
-  /* ===== TRANSCRIPT ===== */
-  .transcript {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .msg {
-    padding: 10px 14px;
-    border-radius: 10px;
-    max-width: 88%;
-    page-break-inside: avoid;
-  }
-
-  .msg-user {
-    background: #EEF2FF;
-    border: 1px solid #C7D2FE;
-    align-self: flex-end;
-    margin-left: auto;
-  }
-
-  .msg-agent {
-    background: #F3F4F6;
-    border: 1px solid #E5E7EB;
-    align-self: flex-start;
-  }
-
-  .msg-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-
-  .msg-name {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-  }
-
-  .msg-name-user { color: #4338CA; }
-  .msg-name-agent { color: #374151; }
-
-  .msg-time {
-    font-size: 10px;
-    color: #9CA3AF;
-    font-weight: 400;
-  }
-
-  .msg-text {
-    font-size: 12.5px;
-    color: #374151;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-
-  /* ===== FOOTER ===== */
-  .footer {
-    margin-top: 32px;
-    padding: 20px 40px;
-    background: #F9FAFB;
-    border-top: 1px solid #E5E7EB;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .footer-left {
-    font-size: 11px;
-    color: #6B7280;
-  }
-
-  .footer-left strong {
-    color: #4F46E5;
-    font-weight: 600;
-  }
-
-  .footer-right {
-    font-size: 10px;
-    color: #9CA3AF;
-  }
-
-  .footer-divider {
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, #6366F1, #A78BFA, #6366F1);
-    border-radius: 2px;
-  }
-
-  /* ===== PRINT / PAGE BREAKS ===== */
-  .page-break-before {
-    page-break-before: always;
-  }
-</style>
-</head>
-<body>
-<div class="page">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-content">
-      ${logoBase64 ? `<img src="${logoBase64}" class="logo" alt="TotalAssist" />` : `<div class="logo-text">TotalAssist</div>`}
-      <div class="header-title">Diagnostic Report</div>
-      <div class="header-subtitle">Comprehensive support session summary</div>
-      <div class="header-meta">
-        <div class="header-meta-item"><strong>${esc(sessionId)}</strong> Session ID</div>
-        <div class="header-meta-item"><strong>${esc(dateStr)}</strong> Date</div>
-        ${sessionMode ? `<div class="header-meta-item"><strong>${esc(sessionMode)}</strong> Mode</div>` : ""}
-        <div class="header-meta-item"><strong>${esc(assistedBy)}</strong> Agent</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- REPORT SUMMARY -->
-    <div class="section">
-      <div class="section-header">
-        <div class="section-icon" style="background: #EEF2FF;">${reportSvg}</div>
-        <div class="section-title">Report Summary</div>
-      </div>
-      <div class="info-grid">
-        ${data.userName ? `<div class="info-cell"><div class="info-label">Client Name</div><div class="info-value">${esc(data.userName)}</div></div>` : ""}
-        ${data.userEmail ? `<div class="info-cell"><div class="info-label">Email</div><div class="info-value">${esc(data.userEmail)}</div></div>` : ""}
-        <div class="info-cell">
-          <div class="info-label">Date</div>
-          <div class="info-value">${esc(dateStr)}</div>
-        </div>
-        <div class="info-cell">
-          <div class="info-label">Session ID</div>
-          <div class="info-value">${esc(sessionId)}</div>
-        </div>
-        ${sessionMode ? `<div class="info-cell"><div class="info-label">Session Mode</div><div class="info-value">${esc(sessionMode)}</div></div>` : ""}
-        <div class="info-cell">
-          <div class="info-label">Assisted By</div>
-          <div class="info-value">${esc(assistedBy)}</div>
-        </div>
-        ${startTime ? `<div class="info-cell"><div class="info-label">Started</div><div class="info-value">${esc(startTime)}</div></div>` : ""}
-        ${endTime ? `<div class="info-cell"><div class="info-label">Completed</div><div class="info-value">${esc(endTime)}</div></div>` : ""}
-        <div class="info-cell full-width">
-          <div class="info-label">Status</div>
-          <div class="info-value">
-            <span class="status-badge" style="background: ${statusInfo.bg}; color: ${statusInfo.color};">
-              <span class="status-dot" style="background: ${statusInfo.color};"></span>
-              ${esc(statusInfo.label)}
-            </span>
-          </div>
-        </div>
-        <div class="info-cell full-width">
-          <div class="info-label">Issue</div>
-          <div class="info-value">${esc(data.title || data.aiSummary?.split(".")[0] || "Technical issue diagnosed")}</div>
+  // Escalation HTML
+  let escalationHTML = "";
+  if (hasEscalation) {
+    const r = data.escalationReport!;
+    const analysisLabel = data.agentName ? `${data.agentName}'s Analysis` : "Support Analysis";
+    escalationHTML = `
+    <hr class="divider" />
+    <section class="section">
+      <div class="section__head">
+        <div class="icon icon--red">${iconEscalation}</div>
+        <div>
+          <h2>Escalation Details</h2>
+          <p class="muted">This case has been escalated for specialist attention.</p>
         </div>
       </div>
-    </div>
-
-    <!-- DETAILS & RECOMMENDATIONS -->
-    ${(data.aiSummary || data.escalationReport) ? `
-    <div class="section">
-      <div class="section-header">
-        <div class="section-icon" style="background: #F0FDF4;">${detailsSvg}</div>
-        <div class="section-title">Details &amp; Recommendations</div>
+      <div class="escalation-tiles">
+        <div class="escalation-tile"><div class="k">Recommended Specialist</div><div class="v">${esc(r.recommendedSpecialist)}</div></div>
+        <div class="escalation-tile"><div class="k">Urgency Level</div><div class="v">${esc(r.urgencyLevel)}</div></div>
+        ${r.estimatedCostRange ? `<div class="escalation-tile"><div class="k">Estimated Cost</div><div class="v">${esc(r.estimatedCostRange)}</div></div>` : ""}
+        ${r.photosIncluded > 0 ? `<div class="escalation-tile"><div class="k">Photos Included</div><div class="v">${r.photosIncluded}</div></div>` : ""}
       </div>
+      ${r.stepsTried.length > 0 ? `
+        <ul class="checks" style="margin-top: 14px;">
+          ${r.stepsTried.map(s => `<li><span class="checkIcon" aria-hidden="true">${iconCheck}</span>${esc(s)}</li>`).join("")}
+        </ul>
+      ` : ""}
+      ${r.scoutAnalysis ? `
+        <div class="note" style="margin-top: 12px;">
+          <strong>${esc(analysisLabel)}:</strong> ${esc(r.scoutAnalysis)}
+        </div>
+      ` : ""}
+    </section>`;
+  }
 
-      ${data.aiSummary ? (() => {
-        if (parsedSections && parsedSections.length > 0) {
-          return `<div class="summary-cards">${parsedSections.map((s) => {
-            const icon = sectionIconSvgs[s.label.toLowerCase()] || svgIcon('circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"', "#6366F1");
-            return `<div class="summary-card">
-              <div class="summary-card-header">
-                <span class="summary-card-icon">${icon}</span>
-                <span class="summary-card-label">${esc(s.label)}</span>
-              </div>
-              <div class="summary-card-content">${esc(s.content)}</div>
-            </div>`;
-          }).join("")}</div>`;
-        } else {
-          const sentences = data.aiSummary.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 5);
-          return `<ul class="bullet-list">${sentences.map((s) => `<li class="bullet-item">${esc(s.trim())}</li>`).join("")}</ul>`;
-        }
-      })() : ""}
-
-      ${data.escalationReport ? (() => {
-        const r = data.escalationReport;
-        const analysisLabel = data.agentName ? `${data.agentName}'s Analysis` : "Support Analysis";
-        return `
-          <div class="escalation-grid" style="margin-top: 16px;">
-            <div class="escalation-item">
-              <div class="info-label">Recommended Specialist</div>
-              <div class="info-value">${esc(r.recommendedSpecialist)}</div>
-            </div>
-            <div class="escalation-item">
-              <div class="info-label">Urgency Level</div>
-              <div class="info-value">${esc(r.urgencyLevel)}</div>
-            </div>
-            ${r.estimatedCostRange ? `<div class="escalation-item"><div class="info-label">Estimated Cost</div><div class="info-value">${esc(r.estimatedCostRange)}</div></div>` : ""}
-            ${r.photosIncluded > 0 ? `<div class="escalation-item"><div class="info-label">Photos Included</div><div class="info-value">${r.photosIncluded}</div></div>` : ""}
-          </div>
-          ${r.stepsTried.length > 0 ? `
-            <div class="summary-card" style="margin-top: 12px;">
-              <div class="summary-card-header">
-                <span class="summary-card-icon">${sectionIconSvgs.fix}</span>
-                <span class="summary-card-label">Steps Already Tried</span>
-              </div>
-              <ul class="bullet-list">${r.stepsTried.map((s) => `<li class="bullet-item">${esc(s)}</li>`).join("")}</ul>
-            </div>
-          ` : ""}
-          ${r.scoutAnalysis ? `
-            <div class="summary-card" style="margin-top: 12px;">
-              <div class="summary-card-header">
-                <span class="summary-card-icon">${sectionIconSvgs.analysis}</span>
-                <span class="summary-card-label">${esc(analysisLabel)}</span>
-              </div>
-              <div class="summary-card-content">${esc(r.scoutAnalysis)}</div>
-            </div>
-          ` : ""}
-        `;
-      })() : ""}
-    </div>
-    ` : ""}
-
-    <!-- CONVERSATION TRANSCRIPT -->
-    ${data.messages.length > 0 ? `
-    <div class="section">
-      <div class="section-header">
-        <div class="section-icon" style="background: #FEF3C7;">${transcriptSvg}</div>
-        <div class="section-title">Conversation Transcript</div>
+  // Transcript HTML
+  let transcriptHTML = "";
+  if (hasTranscript) {
+    transcriptHTML = `
+    <hr class="divider" />
+    <section class="section">
+      <div class="section__head">
+        <div class="icon icon--amber">${iconTranscript}</div>
+        <div>
+          <h2>Conversation Transcript</h2>
+          <p class="muted">Full session dialogue between client and support agent.</p>
+        </div>
       </div>
       <div class="transcript">
         ${data.messages.map((msg) => {
@@ -761,32 +333,659 @@ function buildHTMLReport(data: CasePDFData): string {
           const speaker = msg.role === "user" ? (data.userName?.split(" ")[0] || "You") : agentLabel;
           const time = formatTime(msg.timestamp, tz);
           const isUser = msg.role === "user";
-          return `<div class="msg ${isUser ? "msg-user" : "msg-agent"}">
-            <div class="msg-header">
-              <span class="msg-name ${isUser ? "msg-name-user" : "msg-name-agent"}">${esc(speaker)}</span>
-              <span class="msg-time">${esc(time)}</span>
+          return `<div class="msg ${isUser ? "msg--user" : "msg--agent"}">
+            <div class="msg__head">
+              <span class="msg__name">${esc(speaker)}</span>
+              <span class="msg__time">${esc(time)}</span>
             </div>
-            <div class="msg-text">${esc(msg.text)}</div>
+            <div class="msg__text">${esc(msg.text)}</div>
           </div>`;
         }).join("")}
       </div>
-    </div>
-    ` : ""}
+    </section>`;
+  }
 
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+:root{
+  --bg1:#5B4BFF;
+  --bg2:#2AA7FF;
+  --ink:#0B1020;
+  --muted:#6B7280;
+  --card:rgba(255,255,255,0.90);
+  --stroke:rgba(255,255,255,0.36);
+  --shadow:0 24px 80px rgba(11,16,32,0.25);
+  --radius:24px;
+  --radius2:18px;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color:rgba(255,255,255,0.92);
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  -webkit-font-smoothing: antialiased;
+}
+
+.page{
+  width: 210mm;
+  padding: 30px 18px 50px;
+  position:relative;
+}
+
+/* Background decor */
+.bg{
+  position:absolute;
+  top:0; left:0; right:0;
+  height: 420px;
+  overflow:hidden;
+  z-index:0;
+}
+.glow{
+  position:absolute;
+  width:520px;
+  height:520px;
+  filter: blur(40px);
+  opacity:0.55;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55), rgba(255,255,255,0));
+}
+.glow--tl{ top:-160px; left:-160px; transform:rotate(12deg); }
+.glow--tr{ top:-180px; right:-180px; opacity:0.45; }
+.glow--br{ bottom:-200px; right:-220px; opacity:0.35; }
+
+.shell{
+  width: 100%;
+  position:relative;
+  z-index:1;
+}
+
+/* Hero header */
+.hero{
+  padding: 10px 6px 18px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.mark{
+  width:52px;
+  height:52px;
+  border-radius:16px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 10px 30px rgba(11,16,32,0.18);
+  display:grid;
+  place-items:center;
+}
+.mark svg{ width:30px; height:30px; }
+
+.brand__text{ line-height:1.05; }
+.brand__name{
+  font-weight:800;
+  letter-spacing:-0.02em;
+  font-size:22px;
+}
+.brand__name span{
+  font-weight:700;
+  opacity:0.95;
+}
+.brand__tagline{
+  margin-top:6px;
+  font-size:11px;
+  letter-spacing:0.16em;
+  opacity:0.78;
+}
+
+.titleBlock{
+  margin-top: 22px;
+}
+.titleBlock h1{
+  margin:0;
+  font-size: 42px;
+  letter-spacing:-0.03em;
+  line-height:1.06;
+}
+.titleBlock p{
+  margin:10px 0 0;
+  opacity:0.86;
+  font-size: 15px;
+}
+
+/* Meta pills */
+.metaRow{
+  margin-top: 18px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.metaPill{
+  display:flex;
+  gap:10px;
+  align-items:baseline;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.20);
+}
+.metaPill span{
+  font-size:12px;
+  opacity:0.78;
+}
+.metaPill strong{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:-0.01em;
+}
+
+/* Main glass card */
+.card{
+  margin-top: 18px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+
+.section{
+  padding: 22px 22px 18px;
+}
+
+.section__head{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  position:relative;
+}
+.icon{
+  width:42px;
+  height:42px;
+  border-radius: 14px;
+  background: rgba(91,75,255,0.12);
+  border: 1px solid rgba(91,75,255,0.14);
+  display:grid;
+  place-items:center;
+  color: rgba(64, 84, 255, 0.95);
+  flex-shrink:0;
+}
+.icon svg{ width:22px; height:22px; }
+.icon--green{ background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.14); color: rgba(5,120,80,0.95); }
+.icon--amber{ background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.14); color: rgba(180,100,10,0.95); }
+.icon--red{ background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.14); color: rgba(220,38,38,0.95); }
+
+.section__head h2{
+  margin:0;
+  font-size: 20px;
+  letter-spacing:-0.02em;
+}
+.muted{
+  margin:6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Status badge */
+.status{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.statusDot{
+  width:10px;
+  height:10px;
+  border-radius: 999px;
+}
+
+/* Tiles grid */
+.tiles{
+  margin-top: 16px;
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.tile{
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(11,16,32,0.06);
+  border-radius: var(--radius2);
+  padding: 14px 14px;
+  box-shadow: 0 10px 28px rgba(11,16,32,0.07);
+  page-break-inside: avoid;
+}
+.k{
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(107,114,128,0.95);
+}
+.v{
+  margin-top:8px;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing:-0.01em;
+  color: rgba(11,16,32,0.92);
+}
+
+/* Divider */
+.divider{
+  margin:0;
+  border:0;
+  height:1px;
+  background: linear-gradient(90deg, rgba(11,16,32,0.05), rgba(11,16,32,0.10), rgba(11,16,32,0.05));
+}
+
+/* Callout */
+.callout{
+  margin-top: 14px;
+  padding: 16px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(91,75,255,0.20);
+  background:
+    linear-gradient(135deg, rgba(91,75,255,0.16), rgba(42,167,255,0.14)),
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.55), rgba(255,255,255,0));
+  position:relative;
+  overflow:hidden;
+  page-break-inside: avoid;
+}
+.callout__label{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(56, 66, 160, 0.95);
+  font-weight: 800;
+}
+.callout__text{
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 650;
+  color: rgba(11,16,32,0.86);
+  line-height: 1.45;
+}
+
+/* Check items */
+.checks{
+  margin: 14px 0 0;
+  padding:0;
+  list-style:none;
+  display:grid;
+  gap:10px;
+}
+.checks li{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding: 12px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(11,16,32,0.06);
+  box-shadow: 0 10px 26px rgba(11,16,32,0.06);
+  line-height:1.5;
+  color: rgba(11,16,32,0.82);
+  font-size: 14px;
+  page-break-inside: avoid;
+}
+.checkIcon{
+  width:22px;
+  height:22px;
+  border-radius: 10px;
+  background: rgba(16,185,129,0.14);
+  border: 1px solid rgba(16,185,129,0.20);
+  color: rgba(16,185,129,0.95);
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  margin-top:2px;
+}
+.checkIcon svg{ width:14px; height:14px; }
+
+/* Numbered steps */
+.steps{
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display:grid;
+  gap:10px;
+}
+.steps li{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding: 12px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(11,16,32,0.06);
+  box-shadow: 0 10px 26px rgba(11,16,32,0.06);
+  line-height:1.5;
+  color: rgba(11,16,32,0.82);
+  font-size: 14px;
+  page-break-inside: avoid;
+}
+.stepNum{
+  width:26px;
+  height:26px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(91,75,255,0.75), rgba(42,167,255,0.75));
+  color: white;
+  font-weight: 800;
+  font-size: 13px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  margin-top:1px;
+  box-shadow: 0 10px 18px rgba(91,75,255,0.18);
+}
+
+/* Note */
+.note{
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.14);
+  color: rgba(11,16,32,0.78);
+  font-size: 13px;
+  line-height: 1.55;
+  page-break-inside: avoid;
+}
+
+/* Recommendation */
+.recommendation{
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.16);
+  page-break-inside: avoid;
+}
+.recommendation__label{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(146,64,14,0.85);
+  font-weight: 800;
+}
+.recommendation__text{
+  margin-top: 10px;
+  font-size: 14px;
+  color: rgba(11,16,32,0.78);
+  line-height: 1.5;
+}
+
+/* Escalation tiles */
+.escalation-tiles{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.escalation-tile{
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.14);
+  border-radius: var(--radius2);
+  padding: 14px;
+  page-break-inside: avoid;
+}
+.escalation-tile .k{ color: rgba(220,38,38,0.75); }
+.escalation-tile .v{ color: rgba(153,27,27,0.9); }
+
+/* Transcript */
+.transcript{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.msg{
+  padding: 12px 14px;
+  border-radius: 16px;
+  max-width: 85%;
+  page-break-inside: avoid;
+}
+.msg--user{
+  background: rgba(91,75,255,0.06);
+  border: 1px solid rgba(91,75,255,0.12);
+  align-self: flex-end;
+  margin-left: auto;
+}
+.msg--agent{
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(11,16,32,0.06);
+  align-self: flex-start;
+  box-shadow: 0 4px 12px rgba(11,16,32,0.04);
+}
+.msg__head{
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.msg__name{
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.msg--user .msg__name{ color: rgba(91,75,255,0.8); }
+.msg--agent .msg__name{ color: rgba(11,16,32,0.55); }
+.msg__time{
+  font-size: 10px;
+  color: rgba(107,114,128,0.65);
+}
+.msg__text{
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(11,16,32,0.78);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Footer */
+.footer{
+  display:flex;
+  gap:12px;
+  justify-content:space-between;
+  padding: 16px 22px 18px;
+  background: rgba(255,255,255,0.62);
+  border-top: 1px solid rgba(11,16,32,0.05);
+  color: rgba(11,16,32,0.62);
+  font-size: 12px;
+}
+.footer strong{ color: rgba(11,16,32,0.78); }
+</style>
+</head>
+
+<body>
+  <div class="bg" aria-hidden="true">
+    <div class="glow glow--tl"></div>
+    <div class="glow glow--tr"></div>
+    <div class="glow glow--br"></div>
   </div>
 
-  <!-- FOOTER -->
-  <div class="footer-divider"></div>
-  <div class="footer">
-    <div class="footer-left">
-      <strong>TotalAssist</strong> &nbsp;·&nbsp; Fast, friendly tech support
-    </div>
-    <div class="footer-right">
-      Generated ${esc(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }))} &nbsp;·&nbsp; totalassist.tech
-    </div>
-  </div>
+  <main class="page">
+    <section class="shell">
 
-</div>
+      <!-- Hero Header -->
+      <header class="hero">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img" aria-label="TotalAssist mark">
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="var(--bg2)"/>
+                  <stop offset="1" stop-color="var(--bg1)"/>
+                </linearGradient>
+              </defs>
+              <path d="M32 6 8 58h10l6-14h16l6 14h10L32 6Zm-4 28 4-10 4 10h-8Z" fill="url(#g1)"/>
+            </svg>
+          </div>
+          <div class="brand__text">
+            <div class="brand__name">Total<span>Assist</span></div>
+            <div class="brand__tagline">AI-POWERED HOME TECH SUPPORT</div>
+          </div>
+        </div>
+
+        <div class="titleBlock">
+          <h1>Diagnostic Report</h1>
+          <p>Comprehensive support session summary</p>
+        </div>
+
+        <div class="metaRow" role="list" aria-label="Session metadata">
+          <div class="metaPill" role="listitem"><span>Session ID</span><strong>${esc(sessionId)}</strong></div>
+          <div class="metaPill" role="listitem"><span>Date</span><strong>${esc(dateStr)}</strong></div>
+          ${modeLabel ? `<div class="metaPill" role="listitem"><span>Mode</span><strong>${esc(modeLabel)}</strong></div>` : ""}
+          <div class="metaPill" role="listitem"><span>Agent</span><strong>${esc(assistedBy)}</strong></div>
+        </div>
+      </header>
+
+      <!-- Main Glass Card -->
+      <section class="card">
+
+        <!-- Session Overview -->
+        <section class="section">
+          <div class="section__head">
+            <div class="icon">${iconOverview}</div>
+            <div>
+              <h2>Session Overview</h2>
+              <p class="muted">Key information captured for this support session.</p>
+            </div>
+            <div class="status" style="background:${sc.bg}; border:1px solid ${sc.border}; color:${sc.text};">
+              <span class="statusDot" style="background:${sc.dot}; box-shadow:0 0 0 4px ${sc.dotShadow};" aria-hidden="true"></span>
+              <span>${esc(statusInfo.label)}</span>
+            </div>
+          </div>
+
+          <div class="tiles">
+            ${data.userName ? `<div class="tile"><div class="k">Client Name</div><div class="v">${esc(data.userName)}</div></div>` : ""}
+            <div class="tile"><div class="k">Date</div><div class="v">${esc(dateStr)}</div></div>
+            <div class="tile"><div class="k">Session ID</div><div class="v">${esc(sessionId)}</div></div>
+            ${sessionMode ? `<div class="tile"><div class="k">Session Mode</div><div class="v">${esc(modeLabel || sessionMode)}</div></div>` : ""}
+            <div class="tile"><div class="k">Support Agent</div><div class="v">${esc(assistedBy)}</div></div>
+            ${durationStr ? `<div class="tile"><div class="k">Duration</div><div class="v">${esc(durationStr)}</div></div>` : ""}
+          </div>
+        </section>
+
+        <hr class="divider" />
+
+        <!-- Issue Summary -->
+        <section class="section">
+          <div class="section__head">
+            <div class="icon">${iconIssue}</div>
+            <div>
+              <h2>Issue Summary</h2>
+              <p class="muted">What the client reported and what was observed.</p>
+            </div>
+          </div>
+
+          <div class="callout">
+            <div class="callout__label">Issue</div>
+            <div class="callout__text">${esc(issueText)}</div>
+          </div>
+        </section>
+
+        ${hasRootCause ? `
+        <hr class="divider" />
+
+        <!-- Root Cause Analysis -->
+        <section class="section">
+          <div class="section__head">
+            <div class="icon">${iconRootCause}</div>
+            <div>
+              <h2>Root Cause Analysis</h2>
+              <p class="muted">Why the problem occurred (high-confidence summary).</p>
+            </div>
+          </div>
+
+          <ul class="checks">
+            ${rootCauseTexts.map(t => `<li><span class="checkIcon" aria-hidden="true">${iconCheck}</span>${esc(t)}</li>`).join("")}
+          </ul>
+        </section>
+        ` : ""}
+
+        ${hasResolution ? `
+        <hr class="divider" />
+
+        <!-- Resolution Steps -->
+        <section class="section">
+          <div class="section__head">
+            <div class="icon icon--green">${iconResolution}</div>
+            <div>
+              <h2>Resolution Steps</h2>
+              <p class="muted">Actions taken to restore service.</p>
+            </div>
+          </div>
+
+          <ol class="steps">
+            ${resolutionSteps.map((s, i) => `<li><span class="stepNum">${i + 1}</span> ${esc(s)}</li>`).join("")}
+          </ol>
+
+          ${resolutionSteps.length === 1 ? "" : `<div class="note">The issue was addressed through the steps above.</div>`}
+        </section>
+        ` : ""}
+
+        ${hasNextSteps ? `
+        <hr class="divider" />
+
+        <!-- Recommendations -->
+        <section class="section">
+          <div class="section__head">
+            <div class="icon icon--amber">${iconNextSteps}</div>
+            <div>
+              <h2>Recommendations</h2>
+              <p class="muted">Suggested next steps to prevent recurrence.</p>
+            </div>
+          </div>
+
+          <div class="recommendation">
+            <div class="recommendation__label">Next Steps</div>
+            <div class="recommendation__text">${esc(nextStepsTexts.join(" "))}</div>
+          </div>
+        </section>
+        ` : ""}
+
+        ${!hasRootCause && !hasResolution && !hasNextSteps && data.aiSummary && !parsedSections ? `
+        <hr class="divider" />
+
+        <!-- Unstructured Summary -->
+        <section class="section">
+          <div class="section__head">
+            <div class="icon">${iconRootCause}</div>
+            <div>
+              <h2>Analysis</h2>
+              <p class="muted">Support agent findings and recommendations.</p>
+            </div>
+          </div>
+
+          <ul class="checks">
+            ${data.aiSummary.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 10).map(s => `<li><span class="checkIcon" aria-hidden="true">${iconCheck}</span>${esc(s.trim())}</li>`).join("")}
+          </ul>
+        </section>
+        ` : ""}
+
+        ${escalationHTML}
+
+        ${transcriptHTML}
+
+        <!-- Footer -->
+        <footer class="footer">
+          <div><strong>TotalAssist</strong> &middot; Diagnostic Session Report</div>
+          <div>Confidential &middot; For client use</div>
+        </footer>
+      </section>
+
+    </section>
+  </main>
 </body>
 </html>`;
 }
