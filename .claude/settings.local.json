@@ -122,7 +122,9 @@
       "WebFetch(domain:docs.stripe.com)",
       "Bash(node:*)",
       "WebFetch(domain:www.arcade.software)",
-      "Bash(tr:*)"
+      "Bash(tr:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(ffprobe:*)"
     ]
   }
 }

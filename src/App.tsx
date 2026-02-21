@@ -502,32 +502,18 @@ const Hero: React.FC<{
   return (
     <div className="agentic-hero-banner relative bg-xenon-900 dark overflow-hidden pt-[64px]">
       <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none">
-        <source src="/hero-bg.mp4" type="video/mp4" />
+        <source src="/project-3.mp4" type="video/mp4" />
       </video>
-      {/* Brand gradient overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.35) 0%, rgba(6,182,212,0.20) 50%, rgba(99,102,241,0.15) 100%)',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 80% 60% at 20% 50%, rgba(99,102,241,0.25) 0%, transparent 70%), radial-gradient(ellipse 60% 50% at 80% 40%, rgba(6,182,212,0.18) 0%, transparent 70%)',
-        }}
-        aria-hidden="true"
-      />
 
       {/* Content container — matches Algolia's exact structure */}
       <div className="relative mx-auto max-w-[1512px] overflow-hidden z-10">
         <div className="mx-auto relative z-20 flex flex-col lg:flex-row">
 
           {/* Left column — matches Algolia: 47.7% width, left padding */}
-          <div className="relative w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-[85px] px-6 sm:px-10 lg:px-0 py-12 lg:py-20">
+          <div className="relative z-10 w-full lg:w-[47.7%] flex flex-col justify-center lg:pl-[85px] px-6 sm:px-10 lg:px-0 py-8 sm:py-12 lg:py-20">
+            <div className="max-w-[520px] lg:max-w-none mx-auto lg:mx-0">
               <h1
-                className="arcade-up-1 font-bold font-sora text-white mb-0 text-balance text-center lg:text-left text-[36px] sm:text-[44px] lg:text-[56px] xl:text-[64px] 2xl:text-[72px]"
+                className="arcade-up-1 font-bold font-sora text-white mb-0 text-balance text-center lg:text-left text-[30px] sm:text-[44px] lg:text-[56px] xl:text-[64px] 2xl:text-[72px]"
                 style={{ lineHeight: '110%', letterSpacing: '-2px' }}
               >
                 Get help with<br />
@@ -537,17 +523,17 @@ const Hero: React.FC<{
                 <span className="hero-cursor" aria-hidden="true" />
               </h1>
 
-              <div className="arcade-up-2 mt-6 lg:mt-8">
-                <p className="font-sora text-center lg:text-left text-base sm:text-lg lg:text-xl xl:text-[22px] font-normal leading-relaxed text-white/85 my-0 max-w-[560px] mx-auto lg:mx-0">
-                  24/7 AI-powered tech support for your home — chat, snap a photo, or hop on a video call.
+              <div className="arcade-up-2 mt-4 lg:mt-8">
+                <p className="font-sora text-center lg:text-left text-sm sm:text-lg lg:text-xl xl:text-[22px] font-normal leading-relaxed text-white/85 my-0 mx-auto lg:mx-0">
+                  24/7 AI-powered tech support<br /> for your home.
                 </p>
               </div>
 
               {/* CTAs */}
-              <div className="arcade-up-3 flex justify-center gap-4 mt-10 lg:mt-12 lg:justify-start">
+              <div className="arcade-up-3 flex justify-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12 lg:justify-start">
                 <button
                   onClick={onFreeTrial}
-                  className="flex items-center cursor-pointer font-sora justify-center text-white px-8 lg:px-10 h-13 lg:h-[58px] rounded-full blue-gradient text-base lg:text-lg"
+                  className="flex items-center cursor-pointer font-sora justify-center text-white px-6 sm:px-8 lg:px-10 h-11 sm:h-13 lg:h-[58px] rounded-full blue-gradient text-sm sm:text-base lg:text-lg"
                 >
                   <span className="font-semibold font-sora whitespace-nowrap">
                     Get Help
@@ -556,7 +542,7 @@ const Hero: React.FC<{
                 {onSecondaryAction && (
                   <button
                     onClick={onSecondaryAction}
-                    className="flex items-center justify-center cursor-pointer font-sora text-white px-8 lg:px-10 h-13 lg:h-[58px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors text-base lg:text-lg"
+                    className="flex items-center justify-center cursor-pointer font-sora text-white px-6 sm:px-8 lg:px-10 h-11 sm:h-13 lg:h-[58px] rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-colors text-sm sm:text-base lg:text-lg"
                   >
                     <span className="font-semibold font-sora whitespace-nowrap">
                       See how it works
@@ -566,7 +552,7 @@ const Hero: React.FC<{
               </div>
 
               {/* Trust chips — natural flow below CTAs */}
-              <div className="arcade-up-3 flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 mt-8 lg:mt-10">
+              <div className="arcade-up-3 flex flex-wrap justify-center lg:justify-start gap-x-4 sm:gap-x-5 gap-y-2 mt-5 sm:mt-8 lg:mt-10">
                 <span className="flex items-center gap-1.5 text-sm text-white/60">
                   <CheckCircle2 className="w-4 h-4" /> No credit card needed
                 </span>
@@ -577,6 +563,7 @@ const Hero: React.FC<{
                   <CheckCircle2 className="w-4 h-4" /> 24/7 instant answers
                 </span>
               </div>
+            </div>
           </div>
 
           {/* Right column — verbatim Algolia structure */}

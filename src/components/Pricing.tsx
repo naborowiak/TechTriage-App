@@ -775,7 +775,7 @@ export const Pricing: React.FC<PricingProps> = ({ onNavigate, onCheckoutSuccess 
           className="absolute inset-0 w-full h-full object-cover"
           aria-hidden="true"
         >
-          <source src="/hero-bg.mp4" type="video/mp4" />
+          <source src="/project-3.mp4" type="video/mp4" />
         </video>
         {/* Brand gradient overlay */}
         <div
