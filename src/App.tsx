@@ -1423,12 +1423,18 @@ const App: React.FC = () => {
     const applyNavigation = () => {
       setCurrentView(view);
       if (scrollToId) {
-        // Delay scroll to allow the new view to render
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            document.getElementById(scrollToId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 100);
-        });
+        // Poll for the element since the target page may be lazy-loaded
+        let attempts = 0;
+        const poll = () => {
+          const el = document.getElementById(scrollToId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else if (attempts < 20) {
+            attempts++;
+            setTimeout(poll, 100);
+          }
+        };
+        requestAnimationFrame(poll);
       } else {
         window.scrollTo(0, 0);
       }
