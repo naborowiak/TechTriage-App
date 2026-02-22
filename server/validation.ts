@@ -69,6 +69,12 @@ export const aiChatSchema = z.object({
   agentName: z.string().max(50).optional(),
 });
 
+export const guestChatSchema = z.object({
+  history: z.array(chatHistoryItem).max(10), // Guests get shorter history
+  message: z.string().min(1, "Message is required").max(5000),
+  agentName: z.string().max(50).optional(),
+});
+
 export const aiChatLiveAgentSchema = z.object({
   history: z.array(chatHistoryItem).max(200),
   message: z.string().min(1, "Message is required").max(10000),
@@ -136,7 +142,42 @@ export const paymentIntentSchema = z.object({
 });
 
 // ============================================
-// Validation middleware factory
+// Agent CRM schemas
+// ============================================
+
+export const agentCaseListSchema = z.object({
+  status: z.enum(["open", "resolved", "escalated", "pending"]).optional(),
+  priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+  assignedAgentId: z.string().max(255).optional(),
+  customerId: z.string().max(255).optional(),
+  search: z.string().max(200).trim().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  sortBy: z.enum(["createdAt", "updatedAt", "priority", "status"]).default("updatedAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export const agentCaseUpdateSchema = z.object({
+  status: z.enum(["open", "resolved", "escalated", "pending"]).optional(),
+  priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+});
+
+export const agentCaseAssignSchema = z.object({
+  agentId: z.string().min(1, "Agent ID is required").max(255),
+});
+
+export const agentCaseNoteSchema = z.object({
+  content: z.string().min(1, "Note content is required").max(10000).trim(),
+});
+
+export const agentRoleChangeSchema = z.object({
+  role: z.enum(["customer", "agent", "admin"]),
+});
+
+// ============================================
+// Validation middleware factories
 // ============================================
 
 export function validate(schema: z.ZodSchema) {
@@ -149,6 +190,21 @@ export function validate(schema: z.ZodSchema) {
       });
     }
     req.body = result.data;
+    next();
+  };
+}
+
+export function validateQuery(schema: z.ZodSchema) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) {
+      const firstError = result.error.errors[0];
+      return res.status(400).json({
+        error: firstError?.message || "Invalid query parameters",
+      });
+    }
+    // Express 5 makes req.query read-only; store validated data on req.validatedQuery
+    (req as any).validatedQuery = result.data;
     next();
   };
 }

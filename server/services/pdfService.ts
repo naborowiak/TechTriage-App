@@ -820,15 +820,12 @@ body{
       <header class="hero">
         <div class="brand">
           <div class="mark" aria-hidden="true">
-            <svg viewBox="0 0 64 64" role="img" aria-label="TotalAssist mark">
-              <defs>
-                <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="var(--bg2)"/>
-                  <stop offset="1" stop-color="var(--bg1)"/>
-                </linearGradient>
-              </defs>
-              <path d="M32 6 8 58h10l6-14h16l6 14h10L32 6Zm-4 28 4-10 4 10h-8Z" fill="url(#g1)"/>
-            </svg>
+            ${logoBase64
+              ? `<img src="${logoBase64}" alt="TotalAssist" style="width:34px;height:34px;object-fit:contain;" />`
+              : `<svg viewBox="0 0 64 64" role="img" aria-label="TotalAssist mark">
+                <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--bg2)"/><stop offset="1" stop-color="var(--bg1)"/></linearGradient></defs>
+                <path d="M32 6 8 58h10l6-14h16l6 14h10L32 6Zm-4 28 4-10 4 10h-8Z" fill="url(#g1)"/>
+              </svg>`}
           </div>
           <div class="brand__text">
             <div class="brand__name">Total<span>Assist</span></div>

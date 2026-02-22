@@ -59,6 +59,7 @@ const SettingsModal = lazy(() => import("./components/SettingsModal").then(m => 
 const CaseAnalytics = lazy(() => import("./components/CaseAnalytics").then(m => ({ default: m.CaseAnalytics })));
 const SpecialistResponse = lazy(() => import("./components/SpecialistResponse").then(m => ({ default: m.SpecialistResponse })));
 const ServicePage = lazy(() => import("./components/ServicePage").then(m => ({ default: m.ServicePage })));
+const AgentPortal = lazy(() => import("./components/agent/AgentPortal").then(m => ({ default: m.AgentPortal })));
 
 // Page loading fallback for lazy-loaded routes
 const PageLoadingFallback = () => <LoadingScreen />;
@@ -307,7 +308,7 @@ const Header: React.FC<{
         </div>
 
         {/* Mobile: CTA + Hamburger */}
-        <div className="flex lg:hidden items-center gap-3">
+        <div className="flex lg:hidden items-center gap-3 shrink-0">
           <button
             onClick={() => onNavigate(isAuthenticated && user ? PageView.DASHBOARD : PageView.SIGNUP)}
             className="btn-gradient-electric text-white font-semibold px-4 py-2 rounded-lg text-sm whitespace-nowrap"
@@ -1021,9 +1022,26 @@ const Footer: React.FC<{ onNavigate: (view: PageView) => void }> = ({
             >
               <Logo variant="light" />
             </button>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+            <p className="text-gray-400 text-sm leading-relaxed mb-4">
               Your 24/7 technical safety net. TotalAssist diagnoses and fixes your home's Wi-Fi, gadgets, and appliances instantly. Expert support is now just a heartbeat away.
             </p>
+            <a href="mailto:support@totalassist.tech" className="text-sm text-gray-400 hover:text-electric-indigo transition-colors">
+              support@totalassist.tech
+            </a>
+            <div className="flex items-center gap-3 mt-4">
+              <a href="https://facebook.com/totalassist.tech" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-8 h-8 rounded-lg bg-midnight-800 hover:bg-midnight-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+              <a href="https://instagram.com/totalassist.tech" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-8 h-8 rounded-lg bg-midnight-800 hover:bg-midnight-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+              </a>
+              <a href="https://tiktok.com/@totalassist.tech" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="w-8 h-8 rounded-lg bg-midnight-800 hover:bg-midnight-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.46V13.2a8.16 8.16 0 005.58 2.17V11.9a4.83 4.83 0 01-3.77-1.44V6.69h3.77z"/></svg>
+              </a>
+              <a href="https://youtube.com/@totalassisttech" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="w-8 h-8 rounded-lg bg-midnight-800 hover:bg-midnight-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
+            </div>
           </div>
 
           {/* Product Column */}
@@ -1199,6 +1217,7 @@ const pathToView: Record<string, PageView> = {
   '/services/photo': PageView.SERVICE_PHOTO,
   '/services/voice': PageView.SERVICE_VOICE,
   '/services/video': PageView.SERVICE_VIDEO,
+  '/agent': PageView.AGENT_PORTAL,
 };
 
 const viewToPath: Record<PageView, string> = {
@@ -1224,6 +1243,7 @@ const viewToPath: Record<PageView, string> = {
   [PageView.SERVICE_PHOTO]: '/services/photo',
   [PageView.SERVICE_VOICE]: '/services/voice',
   [PageView.SERVICE_VIDEO]: '/services/video',
+  [PageView.AGENT_PORTAL]: '/agent',
 };
 
 // Get initial view from URL
@@ -1231,6 +1251,7 @@ const getInitialView = (): PageView => {
   const path = window.location.pathname;
   if (path.startsWith('/specialist/')) return PageView.SPECIALIST;
   if (path.startsWith('/services/')) return pathToView[path] || PageView.NOT_FOUND;
+  if (path === '/agent') return PageView.AGENT_PORTAL;
   return pathToView[path] || PageView.NOT_FOUND;
 };
 
@@ -1762,7 +1783,7 @@ const App: React.FC = () => {
             </>
           );
         }
-        return <ScoutChatScreen />;
+        return <ScoutChatScreen key="guest-scout" />;
       case PageView.DASHBOARD:
         // After Stripe checkout, poll until subscription tier updates before showing dashboard
         if (dashboardUser && isPostCheckout) {
@@ -1874,6 +1895,8 @@ const App: React.FC = () => {
           return <ServicePage serviceId="voice" onNavigate={navigate} />;
         case PageView.SERVICE_VIDEO:
           return <ServicePage serviceId="video" onNavigate={navigate} />;
+        case PageView.AGENT_PORTAL:
+          return <AgentPortal onNavigate={navigate} />;
         case PageView.NOT_FOUND:
           return (
             <div className="min-h-screen-safe bg-light-50 dark:bg-midnight-950 flex flex-col items-center justify-center px-6 text-center">
@@ -1984,6 +2007,15 @@ const App: React.FC = () => {
         {/* ChatWidget removed from dashboard — chat IS the dashboard now */}
         <PWAInstallBanner {...pwaInstall} />
         <CookieConsentBanner />
+      </div>
+    );
+  }
+
+  // Agent Portal has its own layout — no marketing header/footer
+  if (currentView === PageView.AGENT_PORTAL) {
+    return (
+      <div className="min-h-screen bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
+        {renderContent()}
       </div>
     );
   }

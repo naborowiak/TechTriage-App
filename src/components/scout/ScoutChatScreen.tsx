@@ -6,7 +6,7 @@ import { VoiceOverlay } from './VoiceOverlay';
 import { PhotoCaptureModal } from './PhotoCaptureModal';
 import { VideoSessionModal } from './VideoSessionModal';
 import { useUsage } from '../../stores/usageStore';
-import { sendMessageToGemini, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
+import { sendMessageToGemini, sendGuestMessage, getGuestUsage, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
 import { useVoiceSession, VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
 import { VoiceReportModal } from '../voice/VoiceReportModal';
 import { CaseCompletionModal } from './CaseCompletionModal';
@@ -89,6 +89,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [showVoiceReport, setShowVoiceReport] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [isEndingSession, setIsEndingSession] = useState(false);
+  const [showGuestSignupWall, setShowGuestSignupWall] = useState(false);
+  const [guestRemaining, setGuestRemaining] = useState<number | null>(null);
 
   // Voice session hooks
   const voiceSession = useVoiceSession();
@@ -98,6 +100,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingGuidedUpdateRef = useRef<{ messageId: string; action: GuidedAction } | null>(null);
+
+  // Check guest usage on mount
+  useEffect(() => {
+    if (!isAuthenticated) {
+      getGuestUsage().then(u => setGuestRemaining(u.remaining));
+    }
+  }, [isAuthenticated]);
 
   // Fetch user devices on mount
   useEffect(() => {
@@ -360,8 +369,47 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     try {
       let response;
 
-      if (isFirstInteraction) {
-        // Run API call and connection timer in parallel (5-10 seconds)
+      // Guest mode: use simplified guest endpoint with IP-based rate limiting
+      if (!isAuthenticated) {
+        const connectDelay = isFirstInteraction ? 3000 + Math.random() * 3000 : 0;
+        const [guestResponse] = await Promise.all([
+          sendGuestMessage(messages, text.trim(), agentName),
+          connectDelay > 0 ? new Promise<void>(resolve => setTimeout(resolve, connectDelay)) : Promise.resolve(),
+        ]);
+
+        if (isFirstInteraction) {
+          setIsConnecting(false);
+          const joinMsg: ChatMessage = {
+            id: generateId(),
+            role: UserRole.MODEL,
+            text: `${agentName} has connected to your session.`,
+            timestamp: Date.now(),
+            agentName,
+          };
+          newMessages = [...newMessages, joinMsg];
+          setMessages(newMessages);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Check if guest limit was hit
+        if (guestResponse.code === 'GUEST_LIMIT_REACHED') {
+          setGuestRemaining(0);
+          setShowGuestSignupWall(true);
+          setIsLoading(false);
+          return;
+        }
+
+        setGuestRemaining(guestResponse.remaining);
+        response = { text: guestResponse.text, functionCall: undefined };
+
+        // Add small delay for realism on non-first messages
+        if (!isFirstInteraction) {
+          const charDelay = (response.text?.length || 0) * 18;
+          const delay = Math.max(1500, Math.min(6000, 1000 + charDelay));
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      } else if (isFirstInteraction) {
+        // Authenticated first interaction
         const connectDelay = 5000 + Math.random() * 5000;
         const [apiResponse] = await Promise.all([
           sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName),
@@ -406,7 +454,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       // Client-side safety net: if server returned a known fallback string with no function call, retry once
       const FALLBACK_STRINGS = ["I'm processing that for you...", "Let me look into that for you..."];
-      if (FALLBACK_STRINGS.includes(response.text) && !response.functionCall) {
+      if (isAuthenticated && FALLBACK_STRINGS.includes(response.text) && !response.functionCall) {
         const retryResponse = await sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName);
         if (retryResponse.text && !FALLBACK_STRINGS.includes(retryResponse.text)) {
           response = retryResponse;
@@ -1110,6 +1158,24 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       {/* Input Area */}
       <div className="px-4 pb-safe-4 bg-light-50 dark:bg-[#0B0E14]">
         <div className="max-w-3xl mx-auto">
+        {/* Guest remaining messages indicator */}
+        {!isAuthenticated && guestRemaining !== null && (
+          <div className="mb-2 text-center">
+            {guestRemaining > 0 ? (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {guestRemaining} free {guestRemaining === 1 ? 'message' : 'messages'} remaining
+                <span className="mx-1.5">·</span>
+                <a href="/signup" className="text-indigo-500 dark:text-indigo-400 hover:underline font-medium">Sign up for unlimited</a>
+              </span>
+            ) : (
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                Free messages used up
+                <span className="mx-1.5">·</span>
+                <a href="/signup" className="text-indigo-500 dark:text-indigo-400 hover:underline">Create free account to continue</a>
+              </span>
+            )}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           {/* Photo attach button */}
           <button
@@ -1290,6 +1356,38 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           onClose={() => setShowCompletionModal(false)}
           userEmail={user?.email || undefined}
         />
+      )}
+
+      {/* Guest Signup Wall — shown when free messages exhausted */}
+      {showGuestSignupWall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-[#1A2025] rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <UserPlus className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              You're getting great help!
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+              Create a free account to keep chatting, save your case history, use photo diagnosis, and connect with live specialists.
+            </p>
+            <div className="space-y-2.5">
+              <a
+                href="/signup"
+                className="block w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-sm hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md"
+              >
+                Create free account
+              </a>
+              <a
+                href="/login"
+                className="block w-full py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Already have an account? Sign in
+              </a>
+            </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-4">No credit card required</p>
+          </div>
+        </div>
       )}
     </div>
   );

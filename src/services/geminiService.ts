@@ -46,6 +46,63 @@ export const sendMessageToGemini = async (
   }
 };
 
+export const sendGuestMessage = async (
+  history: ChatMessage[],
+  newMessage: string,
+  agentName?: string
+): Promise<{ text: string; remaining: number; limit: number; error?: string; code?: string }> => {
+  try {
+    const historyPayload = history
+      .filter(msg => msg.id !== 'welcome')
+      .slice(-8) // Keep last 8 messages for guest context
+      .map(msg => ({
+        role: msg.role === UserRole.USER ? 'user' : 'model',
+        text: msg.text,
+      }));
+
+    const res = await fetch('/api/ai/guest-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        history: historyPayload,
+        message: newMessage,
+        agentName,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.status === 429) {
+      return {
+        text: '',
+        remaining: 0,
+        limit: data.limit || 5,
+        error: data.error,
+        code: data.code || 'GUEST_LIMIT_REACHED',
+      };
+    }
+
+    if (!res.ok) {
+      return { text: data.error || "Something went wrong. Please try again.", remaining: data.remaining ?? 0, limit: data.limit ?? 5 };
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Guest chat error:", error);
+    return { text: "I'm having trouble connecting. Please try again.", remaining: 0, limit: 5 };
+  }
+};
+
+export const getGuestUsage = async (): Promise<{ remaining: number; limit: number; used: number }> => {
+  try {
+    const res = await fetch('/api/ai/guest-usage');
+    if (!res.ok) return { remaining: 5, limit: 5, used: 0 };
+    return await res.json();
+  } catch {
+    return { remaining: 5, limit: 5, used: 0 };
+  }
+};
+
 export const sendMessageAsLiveAgent = async (
   history: ChatMessage[],
   newMessage: string,

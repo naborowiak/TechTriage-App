@@ -589,6 +589,43 @@ If The_Skeptic and a Dev agent disagree:
 - If Stripe changes webhook delivery ordering, email deduplication relies on DB write in `handleCheckoutCompleted` committing before `handleSubscriptionUpdated` reads (acceptable for single-instance deployment)
 - If a fourth tier is added, `highlightedTier` computation needs updating
 
+### Quick Fixes: Mobile Header + PDF Logo (Feb 22, 2026)
+- **Scope**: Small Change Exemption (2 files frontend, 1 file backend, <15 lines total)
+- **Changes**:
+  1. `src/components/Logo.tsx` — Tagline hidden on mobile (`hidden sm:block`)
+  2. `src/App.tsx` — Added `shrink-0` to mobile CTA+hamburger container
+  3. `server/services/pdfService.ts` — Replaced SVG mark with actual `total_assist-new-white.png` logo (base64) in Puppeteer HTML template, SVG fallback retained
+
+### Phase 9: CRM Schema Evolution — Agent Support (Feb 22, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes (Backend only):
+1. **shared/schema/schema.ts** — Add `role` VARCHAR(20) to `usersTable` (customer/agent/admin). Add `priority` VARCHAR(20) and `assignedAgentId` to `casesTable`. New `caseNotesTable` (internal agent notes). New `caseActivityTable` (audit trail).
+2. **drizzle/0003_add_agent_crm.sql** — Additive-only migration: ALTER ADD COLUMN (with defaults), CREATE TABLE, indexes.
+3. **server/middleware/agentMiddleware.ts** (NEW) — `requireAgent` and `requireAgentAdmin` middleware with DB-backed role check + 2-min cache.
+4. **server/routes/agent.ts** (NEW) — 14 CRM endpoints under `/api/agent`: case queue with pagination/filtering/search, full case detail (ServiceNow caller_id pattern with customer profile, devices, subscription, messages, notes, activity), case assignment, internal notes CRUD, activity audit log, customer profile, agent roster, role management.
+5. **server/services/caseActivityService.ts** (NEW) — Audit trail logging service.
+6. **server/validation.ts** — Zod schemas for agent endpoints + `validateQuery` helper.
+7. **server/index.ts** — Mount agent router, update `requireAdmin` to check DB role.
+
+#### Key Skeptic Conditions Applied:
+1. `req.user` NEVER consulted for role authorization in agent routes — only `req.agentUser` (DB-backed) is authoritative
+2. `requireAgentAdmin` checks DB `role` column only — ADMIN_EMAILS is bootstrap-only, documented for removal after first DB admin created
+3. Zod enum validation on role change endpoint body
+4. General rate limit (100/min) documented as sufficient for initial agent team; dedicated limiter deferred
+5. Customer profile endpoint uses explicit column allowlist in Drizzle select() — never selects passwordHash, tokens, stripe IDs
+6. Activity log `details` JSONB stores action identifiers only (not full note content) — note_id referenced
+7. Note deletion logs `note_deleted` activity entry with actor ID before DELETE executes
+8. Initial indexes reduced to 5 essential (assigned_agent_id, case_notes.case_id, case_activity.case_id, case_activity.created_at, cases.status+priority composite consideration); others deferred
+
+#### Risks Accepted:
+- 2-minute role cache window (revoked agent retains access up to 2 min) — acceptable for small internal team
+- Manual SQL bootstrap for first admin — deliberate, avoids setup wizard
+- JSONB caseMessages not normalized — deferred, agent endpoints read existing structure
+- No real-time case updates — agents must refresh (acceptable for initial launch)
+- Last-admin demotion guard not implemented — documented edge case, deferred
+
 <!-- DECISIONS END -->
 
 ---

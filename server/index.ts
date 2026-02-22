@@ -14,6 +14,7 @@ import casesRouter from "./routes/cases";
 import devicesRouter from "./routes/devices";
 import aiRouter from "./routes/ai";
 import specialistRouter from "./routes/specialist";
+import agentRouter from "./routes/agent";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendTestEmailWithResendDomain, sendSessionGuideEmail } from "./services/emailService";
@@ -1233,17 +1234,21 @@ app.post("/api/promo-codes/validate", async (req, res) => {
 });
 
 // Admin authentication middleware
-const requireAdmin = (req: any, res: any, next: any) => {
+const requireAdmin = async (req: any, res: any, next: any) => {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
     return res.status(401).json({ error: "Authentication required" });
   }
-  // Check admin role (owner email or explicit admin flag)
   const user = req.user as any;
+  // Check DB role first (authoritative source)
+  try {
+    const { getAgentUserFromDB } = await import("./middleware/agentMiddleware");
+    const agentUser = await getAgentUserFromDB(user.id);
+    if (agentUser?.role === "admin") return next();
+  } catch {}
+  // Fallback: ADMIN_EMAILS env var (bootstrap-only, remove after first DB admin is created)
   const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
-  if (!user.isAdmin && !adminEmails.includes(user.email?.toLowerCase())) {
-    return res.status(403).json({ error: "Admin access required" });
-  }
-  next();
+  if (adminEmails.includes(user.email?.toLowerCase())) return next();
+  return res.status(403).json({ error: "Admin access required" });
 };
 
 // Create a promo code (admin endpoint)
@@ -2088,10 +2093,25 @@ async function main() {
       },
     );
 
-    // 3. Get User Info
-    app.get("/api/auth/user", (req, res) => {
+    // 3. Get User Info (includes role from DB via cached lookup)
+    app.get("/api/auth/user", async (req, res) => {
       if (req.isAuthenticated() && req.user) {
-        res.json({ user: req.user });
+        try {
+          const { getAgentUserFromDB } = await import("./middleware/agentMiddleware");
+          const agentUser = await getAgentUserFromDB((req.user as any).id);
+          let role = agentUser?.role || "customer";
+          // Bootstrap fallback: check ADMIN_EMAILS env var for initial admin setup
+          if (role === "customer") {
+            const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+            const userEmail = (req.user as any).email?.toLowerCase();
+            if (userEmail && adminEmails.includes(userEmail)) {
+              role = "admin";
+            }
+          }
+          res.json({ user: { ...req.user, role } });
+        } catch {
+          res.json({ user: { ...req.user, role: "customer" } });
+        }
       } else {
         res.status(401).json({ user: null });
       }
@@ -2132,6 +2152,7 @@ async function main() {
     app.use("/api/devices", devicesRouter);
     app.use("/api/ai", aiLimiter, aiRouter);
     app.use("/api/specialist", specialistRouter);
+    app.use("/api/agent", agentRouter);
   } catch (error) {
     console.error("Auth setup failed:", error);
   }

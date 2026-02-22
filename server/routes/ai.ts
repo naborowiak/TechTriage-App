@@ -9,6 +9,7 @@ import {
   voiceSummarySchema,
   caseSummarySchema,
   escalationReportSchema,
+  guestChatSchema,
 } from "../validation";
 import { db } from "../db";
 import { usersTable, casesTable } from "../../shared/schema/schema";
@@ -1182,6 +1183,120 @@ Return ONLY valid JSON, no markdown.`;
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
+});
+
+// ============================================
+// Guest chat — IP-limited, no auth required
+// ============================================
+
+// In-memory IP usage tracker for guest chat (resets daily)
+const guestUsage = new Map<string, { count: number; resetAt: number }>();
+const GUEST_MAX_MESSAGES = 5;
+const GUEST_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+// Optional: capture guest queries for analytics (in-memory, capped)
+const guestQueryLog: Array<{ ip: string; message: string; timestamp: number }> = [];
+const GUEST_LOG_MAX = 1000;
+
+function getGuestUsage(ip: string): { count: number; remaining: number; allowed: boolean } {
+  const now = Date.now();
+  const entry = guestUsage.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    return { count: 0, remaining: GUEST_MAX_MESSAGES, allowed: true };
+  }
+  const remaining = Math.max(0, GUEST_MAX_MESSAGES - entry.count);
+  return { count: entry.count, remaining, allowed: entry.count < GUEST_MAX_MESSAGES };
+}
+
+function incrementGuestUsage(ip: string): void {
+  const now = Date.now();
+  const entry = guestUsage.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    guestUsage.set(ip, { count: 1, resetAt: now + GUEST_WINDOW_MS });
+  } else {
+    entry.count++;
+  }
+}
+
+// Cleanup stale entries every hour
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of guestUsage) {
+    if (now >= entry.resetAt) guestUsage.delete(ip);
+  }
+}, 60 * 60 * 1000);
+
+const GUEST_SYSTEM_PROMPT = `You are a friendly support agent at TotalAssist. You help homeowners troubleshoot technology problems — Wi-Fi, routers, smart devices, computers, printers, TVs, appliances, and more.
+
+RULES:
+- You are helpful, warm, and conversational. Sound like a real person, not a robot.
+- Ask one question at a time to diagnose the issue.
+- Give clear, step-by-step instructions when suggesting fixes.
+- Keep responses concise (2-4 sentences max per turn).
+- Never say "I'm an AI" — you're a TotalAssist support specialist.
+- After 2-3 exchanges, gently mention: "For faster resolution, you can create a free account to save your case history and access photo diagnosis."
+- Do NOT provide overly detailed walkthroughs in guest mode — give enough to demonstrate value, then encourage signup for the full experience.`;
+
+// POST /api/ai/guest-chat — Limited free chat for unauthenticated users
+router.post("/guest-chat", validate(guestChatSchema), async (req: Request, res: Response) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const usage = getGuestUsage(ip);
+
+    if (!usage.allowed) {
+      return res.status(429).json({
+        error: "You've reached your free message limit. Create a free account to continue getting help!",
+        code: "GUEST_LIMIT_REACHED",
+        remaining: 0,
+        limit: GUEST_MAX_MESSAGES,
+      });
+    }
+
+    const { history, message, agentName: rawAgentName } = req.body;
+    const safeAgentName = sanitizeAgentName(rawAgentName);
+
+    // Log guest query for analytics (capped, no PII beyond IP prefix)
+    if (guestQueryLog.length < GUEST_LOG_MAX) {
+      const anonIp = ip.replace(/\.\d+$/, '.x'); // Anonymize last octet
+      guestQueryLog.push({ ip: anonIp, message: message.substring(0, 200), timestamp: Date.now() });
+    }
+
+    const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    const contents = buildContents(history);
+    contents.push({ role: 'user', parts: [{ text: message }] });
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents,
+      config: {
+        systemInstruction: GUEST_SYSTEM_PROMPT.replace(/support agent/g, safeAgentName),
+        temperature: 0.4,
+      },
+    });
+
+    incrementGuestUsage(ip);
+    const remaining = GUEST_MAX_MESSAGES - getGuestUsage(ip).count;
+
+    res.json({
+      text: response.text || "I'm having trouble processing that. Could you rephrase?",
+      remaining,
+      limit: GUEST_MAX_MESSAGES,
+    });
+  } catch (error) {
+    console.error("Guest chat error:", error);
+    res.status(500).json({
+      error: "Something went wrong. Please try again.",
+      remaining: 0,
+      limit: GUEST_MAX_MESSAGES,
+    });
+  }
+});
+
+// GET /api/ai/guest-usage — Check remaining guest messages
+router.get("/guest-usage", (req: Request, res: Response) => {
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+  const usage = getGuestUsage(ip);
+  res.json({ remaining: usage.remaining, limit: GUEST_MAX_MESSAGES, used: usage.count });
 });
 
 export default router;

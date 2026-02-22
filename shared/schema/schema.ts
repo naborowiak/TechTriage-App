@@ -9,6 +9,14 @@ import {
 } from "drizzle-orm/pg-core";
 import { v4 as uuidv4 } from "uuid";
 
+// User role types (ServiceNow sys_user pattern — one table for all user types)
+export const userRoleEnum = ["customer", "agent", "admin"] as const;
+export type UserRole = (typeof userRoleEnum)[number];
+
+// Case priority types
+export const casePriorityEnum = ["low", "medium", "high", "critical"] as const;
+export type CasePriority = (typeof casePriorityEnum)[number];
+
 // Subscription tier and billing interval types
 export const subscriptionTierEnum = ["free", "home", "pro"] as const;
 export type SubscriptionTier = (typeof subscriptionTierEnum)[number];
@@ -40,6 +48,7 @@ export const usersTable = pgTable("users", {
   emailNotifications: boolean("email_notifications").default(true),
   sessionGuideEmails: boolean("session_guide_emails").default(true), // Fixed typo: 'sessieon' -> 'session'
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }).unique(),
+  role: varchar("role", { length: 20 }).default("customer"), // 'customer' | 'agent' | 'admin'
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -109,6 +118,8 @@ export const casesTable = pgTable("cases", {
   specialistNotes: text("specialist_notes"),
   specialistRespondedAt: timestamp("specialist_responded_at"),
   playbookProcessed: boolean("playbook_processed"),
+  priority: varchar("priority", { length: 20 }).default("medium"), // 'low' | 'medium' | 'high' | 'critical'
+  assignedAgentId: varchar("assigned_agent_id", { length: 255 }).references(() => usersTable.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -240,6 +251,39 @@ export const webhookEventsTable = pgTable("webhook_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Case Notes Table — internal agent notes (never visible to customers)
+export const caseNotesTable = pgTable("case_notes", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  caseId: varchar("case_id", { length: 255 })
+    .notNull()
+    .references(() => casesTable.id),
+  authorId: varchar("author_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Case Activity Table — immutable audit trail for case lifecycle events
+export const caseActivityTable = pgTable("case_activity", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  caseId: varchar("case_id", { length: 255 })
+    .notNull()
+    .references(() => casesTable.id),
+  actorId: varchar("actor_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id),
+  action: varchar("action", { length: 50 }).notNull(),
+  // action values: "created" | "assigned" | "unassigned" | "status_changed" | "priority_changed" | "note_added" | "note_deleted" | "escalated" | "resolved"
+  details: jsonb("details").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Promo codes table - tracks promotional codes and their configuration
 export const promoCodesTable = pgTable("promo_codes", {
   id: varchar("id", { length: 255 })
@@ -299,3 +343,7 @@ export type PromoCodeRedemption = typeof promoCodeRedemptionsTable.$inferSelect;
 export type InsertPromoCodeRedemption = typeof promoCodeRedemptionsTable.$inferInsert;
 export type PlaybookBranch = typeof playbookBranchesTable.$inferSelect;
 export type InsertPlaybookBranch = typeof playbookBranchesTable.$inferInsert;
+export type CaseNote = typeof caseNotesTable.$inferSelect;
+export type InsertCaseNote = typeof caseNotesTable.$inferInsert;
+export type CaseActivity = typeof caseActivityTable.$inferSelect;
+export type InsertCaseActivity = typeof caseActivityTable.$inferInsert;

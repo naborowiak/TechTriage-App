@@ -112,7 +112,7 @@ export const Logo: React.FC<LogoProps> = ({
           <span className={`font-bold ${isLight ? 'text-white' : 'text-midnight-950'}`}>Total</span>
           <span className="font-medium text-gradient-electric">Assist</span>
         </span>
-        <span className={`text-[9px] font-medium tracking-wide uppercase whitespace-nowrap ${isLight ? 'text-white/60' : 'text-midnight-600'}`}>
+        <span className={`hidden sm:block text-[9px] font-medium tracking-wide uppercase whitespace-nowrap ${isLight ? 'text-white/60' : 'text-midnight-600'}`}>
           AI-Powered Home Tech Support
         </span>
       </div>

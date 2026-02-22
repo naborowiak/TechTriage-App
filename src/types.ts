@@ -73,6 +73,105 @@ export enum PageView {
   SERVICE_PHOTO = "service_photo",
   SERVICE_VOICE = "service_voice",
   SERVICE_VIDEO = "service_video",
+  AGENT_PORTAL = "agent_portal",
+}
+
+// ============================================
+// Agent Portal types
+// ============================================
+
+export interface AgentCaseListItem {
+  id: string;
+  caseNumber: number | null;
+  title: string;
+  status: string;
+  priority: string | null;
+  sessionMode: string | null;
+  aiSummary: string | null;
+  createdAt: string;
+  updatedAt: string;
+  customer: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+  };
+  assignedAgent: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+  } | null;
+}
+
+export interface AgentCaseListResponse {
+  cases: AgentCaseListItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface AgentNote {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  author: { id: string; firstName: string | null; lastName: string | null };
+}
+
+export interface AgentActivityEntry {
+  id: string;
+  action: string;
+  details: Record<string, unknown> | null;
+  createdAt: string;
+  actor: { id: string; firstName: string | null; lastName: string | null };
+}
+
+export interface AgentRosterItem {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  role: string;
+}
+
+export interface AgentCustomerProfile {
+  customer: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    phone: string | null;
+    profileImageUrl: string | null;
+    homeType: string | null;
+    techComfort: string | null;
+    householdSize: string | null;
+    primaryIssues: string[] | null;
+    howHeard: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+  subscription: {
+    tier: string;
+    status: string;
+    billingInterval: string | null;
+    currentPeriodEnd: string | null;
+    videoCredits: number;
+  } | null;
+  devices: Array<{
+    id: string;
+    name: string;
+    type: string;
+    brand: string | null;
+    model: string | null;
+    location: string | null;
+  }>;
+  caseStats: { total: number; open: number; resolved: number; escalated: number; pending: number };
+  recentCases: Array<{
+    id: string;
+    caseNumber: number | null;
+    title: string;
+    status: string;
+    sessionMode: string | null;
+    createdAt: string;
+  }>;
 }
 
 export interface PricingTier {
