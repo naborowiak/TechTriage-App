@@ -18,6 +18,22 @@ import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 import { useAuth } from '../../hooks/useAuth';
 import { ROOT_CATEGORIES } from '../../../shared/models/playbook';
 
+// Client-side fallback: infer context-aware pill choices when the server returns no function call.
+function inferChoicesFromContext(lastUserMessage: string): string[] {
+  const msg = lastUserMessage.toLowerCase();
+  if (/wi-?fi|wifi|internet|router|modem|network|connect/.test(msg))
+    return ["Keeps disconnecting", "Slow speeds", "Can't connect at all", "No internet light on router", "Dead zones / weak signal"];
+  if (/smart\s?home|alexa|google\s?home|ring|nest|smart\s?(light|lock|plug|speaker|device)/.test(msg))
+    return ["Device won't respond", "Can't set up new device", "Device keeps going offline", "App not working", "Voice commands not working"];
+  if (/appliance|washer|dryer|dishwasher|fridge|refrigerator|oven|microwave/.test(msg))
+    return ["Showing an error code", "Won't turn on", "Making strange noise", "Not working properly", "Leaking"];
+  if (/hvac|thermostat|heat|cool|furnace|air\s?condition|ac\b/.test(msg))
+    return ["Not heating", "Not cooling", "Thermostat issues", "Strange noises", "Turning on and off"];
+  if (/tv|streaming|remote|netflix|roku|fire\s?stick|hdmi|screen/.test(msg))
+    return ["No picture", "Streaming app issues", "Remote not working", "No sound", "Input/source problems"];
+  return [...ROOT_CATEGORIES];
+}
+
 const AGENT_NAMES = ['Jordan', 'Alex', 'Sam', 'Riley', 'Morgan'];
 
 function pickAgentName(): string {
@@ -431,6 +447,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     // Auto-create case on first user message
     const currentCaseId = await ensureCase(text.trim(), activeMode);
 
+    // Warn if case creation failed for an authenticated user (likely expired session)
+    if (!currentCaseId && isAuthenticated && !hasCreatedCase) {
+      console.warn('[Scout] Case creation failed despite being authenticated — session may have expired');
+    }
+
     // If photo was attached, increment photosCount
     if (imageBase64 && currentCaseId) {
       fetch(`/api/cases/${currentCaseId}`, {
@@ -547,6 +568,11 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         } else if (name === 'confirmResult' && typeof args.question === 'string') {
           guidedAction = { type: 'confirmResult', question: args.question, yesLabel: args.yesLabel ? String(args.yesLabel) : undefined, noLabel: args.noLabel ? String(args.noLabel) : undefined };
         }
+      }
+
+      // Client-side defense-in-depth: if server returned no guided action, synthesize pills from context
+      if (!guidedAction && response.text && !(response.functionCall?.name === 'endSession')) {
+        guidedAction = { type: 'presentChoices', prompt: '', choices: inferChoicesFromContext(text.trim()) };
       }
 
       const assistantMessage: ChatMessage = {

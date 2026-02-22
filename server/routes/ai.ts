@@ -475,6 +475,28 @@ const endSessionTool: FunctionDeclaration = {
   }
 };
 
+// Context-aware fallback pill synthesis when Gemini fails to call a tool.
+// Examines the user's message to present relevant sub-category pills instead of generic root categories.
+function inferFallbackChoices(message: string): { prompt: string; choices: string[] } {
+  const msg = message.toLowerCase();
+  if (/wi-?fi|wifi|internet|router|modem|network|connect/.test(msg)) {
+    return { prompt: "What's going on with your connection?", choices: ["Keeps disconnecting", "Slow speeds", "Can't connect at all", "No internet light on router", "Dead zones / weak signal"] };
+  }
+  if (/smart\s?home|alexa|google\s?home|ring|nest|smart\s?(light|lock|plug|speaker|device)/.test(msg)) {
+    return { prompt: "What's happening with your smart device?", choices: ["Device won't respond", "Can't set up new device", "Device keeps going offline", "App not working", "Voice commands not working"] };
+  }
+  if (/appliance|washer|dryer|dishwasher|fridge|refrigerator|oven|microwave/.test(msg)) {
+    return { prompt: "What kind of appliance issue?", choices: ["Showing an error code", "Won't turn on", "Making strange noise", "Not working properly", "Leaking"] };
+  }
+  if (/hvac|thermostat|heat|cool|furnace|air\s?condition|ac\b/.test(msg)) {
+    return { prompt: "What's the issue with your system?", choices: ["Not heating", "Not cooling", "Thermostat issues", "Strange noises", "Turning on and off"] };
+  }
+  if (/tv|streaming|remote|netflix|roku|fire\s?stick|hdmi|screen/.test(msg)) {
+    return { prompt: "What's going on with your TV/streaming?", choices: ["No picture", "Streaming app issues", "Remote not working", "No sound", "Input/source problems"] };
+  }
+  return { prompt: "What would you like help with?", choices: ["Wi-Fi / Internet", "Smart Home Devices", "Appliances", "HVAC / Thermostat", "TV / Streaming"] };
+}
+
 const presentChoicesTool: FunctionDeclaration = {
   name: 'presentChoices',
   parameters: {
@@ -773,12 +795,14 @@ router.post("/chat", requireAuth, loadSubscription, requireFeature('chat'), vali
       functionCall = response.functionCalls?.[0];
     }
 
-    // If all retries failed to produce a function call, synthesize a presentChoices fallback
-    if (!functionCall && !responseText) {
-      responseText = "Let me pull up some options for you.";
+    // If all retries failed to produce a function call, synthesize a context-aware presentChoices fallback.
+    // Trigger whenever there's no function call — even if Gemini returned text.
+    if (!functionCall) {
+      if (!responseText) responseText = "Let me pull up some options for you.";
+      const fallback = inferFallbackChoices(message);
       functionCall = {
         name: 'presentChoices',
-        args: { prompt: "What would you like help with?", choices: ["Wi-Fi / Internet", "Smart Home Devices", "Appliances", "HVAC / Thermostat", "TV / Streaming"] }
+        args: fallback
       } as any;
     }
 
@@ -883,12 +907,13 @@ router.post("/chat-live-agent", requireAuth, loadSubscription, requireFeature('c
       functionCall = response.functionCalls?.[0];
     }
 
-    // Synthesize fallback if all retries failed
-    if (!functionCall && !responseText) {
-      responseText = "Let me pull up some options for you.";
+    // Synthesize context-aware fallback if all retries failed to produce a function call.
+    if (!functionCall) {
+      if (!responseText) responseText = "Let me pull up some options for you.";
+      const fallback = inferFallbackChoices(message);
       functionCall = {
         name: 'presentChoices',
-        args: { prompt: "What would you like help with?", choices: ["Wi-Fi / Internet", "Smart Home Devices", "Appliances", "HVAC / Thermostat", "TV / Streaming"] }
+        args: fallback
       } as any;
     }
 

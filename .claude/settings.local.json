@@ -148,7 +148,11 @@
       "WebFetch(domain:servicenownextexperience.github.io)",
       "WebFetch(domain:samsmall.design)",
       "Bash(npm run build 2>&1 | tee build_output.log | tail -100)",
-      "Bash(npm list --production 2>&1 | head -80)"
+      "Bash(npm list --production 2>&1 | head -80)",
+      "Bash(for pid in /proc/[0-9]*/fd/*; do readlink \"$pid\" 2>/dev/null | grep -q \"socket:\\\\[44569270\\\\]\" && echo \"PID: $\\(echo $pid | cut -d/ -f3\\)\"; done 2>/dev/null | head -3)",
+      "Bash(while read inode)",
+      "Bash(do for pid in /proc/[0-9]*/fd/*)",
+      "Bash(do readlink $pid)"
     ]
   }
 }
