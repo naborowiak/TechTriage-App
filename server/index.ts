@@ -98,6 +98,7 @@ app.use(helmet({
       frameSrc: ["https://js.stripe.com", "https://demo.arcade.software"],
       workerSrc: ["'self'", "blob:"],
       objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
       baseUri: ["'self'"],
     },
   } : false, // Disabled in dev for Vite proxy compatibility
@@ -130,6 +131,15 @@ const aiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "You're sending messages too quickly. Please slow down." },
+});
+
+// Rate limiting - specialist token lookups (prevent brute-force)
+const specialistLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 token lookups per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please try again later." },
 });
 
 // Apply general rate limit to all API routes
@@ -777,10 +787,12 @@ app.post("/api/auth/user/:id/profile-image", requireAuth, requireSelf, async (re
       return res.status(400).json({ error: "Unsupported image format. Use JPEG, PNG, WebP, or GIF." });
     }
 
-    // Process: resize to 200x200, convert to JPEG
+    // Process: resize to 200x200, convert to JPEG, strip EXIF/metadata
     const processedBuffer = await sharp(inputBuffer)
+      .rotate() // Auto-rotate based on EXIF orientation before stripping
       .resize(200, 200, { fit: 'cover' })
       .jpeg({ quality: 80 })
+      .withMetadata(false as any) // Strip all EXIF data (location, device info)
       .toBuffer();
 
     const profileImageUrl = `data:image/jpeg;base64,${processedBuffer.toString('base64')}`;
@@ -838,42 +850,7 @@ app.delete("/api/auth/user/:id/profile-image", requireAuth, requireSelf, async (
 // Trial Management (Database)
 // ============================================
 
-// Check trial eligibility (database version)
-app.post("/api/trial/check-db", async (req, res) => {
-  try {
-    const { email, fingerprint } = req.body;
-    const ip = getClientIP(req);
-    const result = await authService.checkTrialEligibility(email, ip, fingerprint);
-    res.json(result);
-  } catch (error) {
-    console.error("Trial check error:", error);
-    res.status(500).json({ error: "Failed to check trial eligibility" });
-  }
-});
-
-// Start trial (database version)
-app.post("/api/trial/start-db", async (req, res) => {
-  try {
-    const { email, fingerprint } = req.body;
-    const ip = getClientIP(req);
-    const result = await authService.startTrial(email, ip, fingerprint);
-    res.json(result);
-  } catch (error) {
-    console.error("Start trial error:", error);
-    res.status(500).json({ error: "Failed to start trial" });
-  }
-});
-
-// Get trial status (database version)
-app.get("/api/trial/status/:email", async (req, res) => {
-  try {
-    const result = await authService.getTrialStatus(req.params.email);
-    res.json(result);
-  } catch (error) {
-    console.error("Trial status error:", error);
-    res.status(500).json({ error: "Failed to get trial status" });
-  }
-});
+// Legacy trial DB endpoints removed — use /api/trial/check, /api/trial/start, /api/trial/status
 
 // Trial tracking storage (in-memory fallback for development)
 interface TrialRecord {
@@ -911,7 +888,7 @@ const getClientIP = (req: express.Request): string => {
 };
 
 // Check trial eligibility — DB-backed with in-memory fast path
-app.post("/api/trial/check", async (req, res) => {
+app.post("/api/trial/check", authLimiter, async (req, res) => {
   try {
     const { email, fingerprint } = req.body;
     const ip = getClientIP(req);
@@ -949,7 +926,7 @@ app.post("/api/trial/check", async (req, res) => {
 });
 
 // Start a new trial — DB-backed, in-memory cache populated on success
-app.post("/api/trial/start", async (req, res) => {
+app.post("/api/trial/start", authLimiter, async (req, res) => {
   try {
     const { email, fingerprint } = req.body;
     const ip = getClientIP(req);
@@ -993,7 +970,7 @@ app.post("/api/trial/start", async (req, res) => {
 });
 
 // Get trial status — DB-backed with in-memory fast path
-app.get("/api/trial/status", async (req, res) => {
+app.get("/api/trial/status", authLimiter, async (req, res) => {
   try {
     const ip = getClientIP(req);
     const email = req.query.email as string;
@@ -1032,7 +1009,7 @@ app.get("/api/trial/status", async (req, res) => {
 });
 
 // Chat audit logging endpoint
-app.post("/api/audit/chat", (req, res) => {
+app.post("/api/audit/chat", requireAuth, (req, res) => {
   const { sessionId, userId, agentName, agentMode, action, messageRole, messageText } = req.body;
   const ip = getClientIP(req);
 
@@ -2151,7 +2128,7 @@ async function main() {
     app.use("/api/cases", casesRouter);
     app.use("/api/devices", devicesRouter);
     app.use("/api/ai", aiLimiter, aiRouter);
-    app.use("/api/specialist", specialistRouter);
+    app.use("/api/specialist", specialistLimiter, specialistRouter);
     app.use("/api/agent", agentRouter);
   } catch (error) {
     console.error("Auth setup failed:", error);

@@ -101,12 +101,81 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingGuidedUpdateRef = useRef<{ messageId: string; action: GuidedAction } | null>(null);
 
+  // Inactivity timeout refs
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleWarningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasWarnedIdleRef = useRef(false);
+
   // Check guest usage on mount
   useEffect(() => {
     if (!isAuthenticated) {
       getGuestUsage().then(u => setGuestRemaining(u.remaining));
     }
   }, [isAuthenticated]);
+
+  // Inactivity timeout: 1 min idle → prompt, 1 more min → close session
+  // Uses refs to avoid stale closures in timers
+  const caseIdRef = useRef(caseId);
+  caseIdRef.current = caseId;
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const sessionEndRef = useRef<((caseId: string | null, msgs: ChatMessage[], summary?: string) => Promise<void>) | null>(null);
+
+  const resetInactivityTimer = useCallback(() => {
+    hasWarnedIdleRef.current = false;
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    if (idleWarningTimerRef.current) clearTimeout(idleWarningTimerRef.current);
+    // Only start timer if agent has connected (conversation has started)
+    if (!hasConnectedRef.current) return;
+    inactivityTimerRef.current = setTimeout(() => {
+      // Send "Are you still there?" prompt
+      hasWarnedIdleRef.current = true;
+      setMessages(prev => [...prev, {
+        id: `idle-warning-${Date.now()}`,
+        role: UserRole.MODEL,
+        text: `Are you still there? I'll close this session in a minute if I don't hear back.`,
+        timestamp: Date.now(),
+        agentName: agentNameRef.current,
+      }]);
+      // Start the close countdown
+      idleWarningTimerRef.current = setTimeout(() => {
+        // Auto-close the session
+        setMessages(prev => {
+          const updated = [...prev, {
+            id: `idle-close-${Date.now()}`,
+            role: UserRole.MODEL as const,
+            text: `It looks like you've stepped away. I'm closing this session now — your progress has been saved. Feel free to start a new chat anytime!`,
+            timestamp: Date.now(),
+            agentName: agentNameRef.current,
+          }];
+          // End the session using latest state via refs
+          if (caseIdRef.current && isAuthenticated && sessionEndRef.current) {
+            sessionEndRef.current(caseIdRef.current, updated, 'Session closed due to inactivity.');
+          }
+          return updated;
+        });
+      }, 60_000); // 1 more minute
+    }, 60_000); // 1 minute of no user activity
+  }, [isAuthenticated]);
+
+  // Reset inactivity timer after each model response (waiting for user to reply)
+  // Also reset when user sends a message (they're active, timer restarts after next AI reply)
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage) return;
+    // Skip idle-warning/idle-close messages to avoid recursive triggers
+    if (lastMessage.id?.startsWith('idle-')) return;
+    // Reset timer on any meaningful message (user or model)
+    resetInactivityTimer();
+  }, [messages, resetInactivityTimer]);
+
+  // Cleanup inactivity timers on unmount
+  useEffect(() => {
+    return () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      if (idleWarningTimerRef.current) clearTimeout(idleWarningTimerRef.current);
+    };
+  }, []);
 
   // Fetch user devices on mount
   useEffect(() => {
@@ -589,6 +658,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       console.error('Failed to finalize case:', e);
     }
   }, [isAuthenticated]);
+
+  // Keep sessionEndRef in sync for the inactivity timer
+  sessionEndRef.current = handleSessionEnd;
 
   // Manual end session — user-triggered fallback when Gemini doesn't call endSession
   const handleManualEndSession = useCallback(async () => {

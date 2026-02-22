@@ -1227,8 +1227,6 @@ const viewToPath: Record<PageView, string> = {
   [PageView.FAQ]: "/faq",
   [PageView.SIGNUP]: "/signup",
   [PageView.LOGIN]: "/login",
-  [PageView.HISTORY]: "/history",
-  [PageView.SAFETY]: "/safety",
   [PageView.DASHBOARD]: "/dashboard",
   [PageView.PRIVACY]: "/privacy",
   [PageView.TERMS]: "/terms",

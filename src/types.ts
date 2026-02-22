@@ -57,8 +57,6 @@ export enum PageView {
   FAQ = "faq",
   SIGNUP = "signup",
   LOGIN = "login",
-  HISTORY = "history",
-  SAFETY = "safety",
   DASHBOARD = "dashboard",
   PRIVACY = "privacy",
   TERMS = "terms",
