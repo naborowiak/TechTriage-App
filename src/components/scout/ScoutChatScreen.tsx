@@ -37,7 +37,10 @@ interface ScoutChatScreenProps {
 
 export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, initialMessage, onInitialMessageSent, onEscalation, onCaseCreated, onBackToDashboard }: ScoutChatScreenProps) {
   const { canUse, incrementUsage, canUseVideoCredit, useVideoCredit, tier } = useUsage();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated: authHookAuthenticated } = useAuth();
+  // When embedded in Dashboard, trust that the user is authenticated (Dashboard only renders for authed users).
+  // This prevents a race where useAuth() hasn't resolved yet when the user taps a pill.
+  const isAuthenticated = embedded || authHookAuthenticated;
 
   // Pick a consistent agent name for this session (stable across re-renders)
   const agentNameRef = useRef(pickAgentName());
@@ -347,9 +350,12 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           // Dispatch event so sidebar can update in real-time
           window.dispatchEvent(new CustomEvent('case-created', { detail: newCase }));
           return newCase.id;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.error('[Scout] Case creation failed:', res.status, errData);
         }
       } catch (e) {
-        console.error('Failed to create case:', e);
+        console.error('[Scout] Failed to create case:', e);
       } finally {
         ensureCasePromiseRef.current = null;
       }
