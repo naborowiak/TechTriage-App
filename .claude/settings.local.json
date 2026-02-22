@@ -147,7 +147,8 @@
       "WebFetch(domain:www.servicenow.com)",
       "WebFetch(domain:servicenownextexperience.github.io)",
       "WebFetch(domain:samsmall.design)",
-      "Bash(npm run build 2>&1 | tee build_output.log | tail -100)"
+      "Bash(npm run build 2>&1 | tee build_output.log | tail -100)",
+      "Bash(npm list --production 2>&1 | head -80)"
     ]
   }
 }
