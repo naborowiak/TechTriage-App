@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable, caseNotesTable, caseActivityTable } from "../../shared/schema/schema";
+import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable, devicesTable, caseNotesTable, caseActivityTable } from "../../shared/schema/schema";
 import { eq, desc, and, max } from "drizzle-orm";
 import { generateCaseGuidePDF, type CasePDFData } from "../services/pdfService";
 import { sendSessionGuideEmail, sendEscalationEmail } from "../services/emailService";
@@ -50,6 +50,22 @@ async function buildCasePDFData(
     ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || undefined
     : undefined;
 
+  // Fetch device details if case has a deviceId
+  let device: { name: string | null; type: string | null; brand: string | null; model: string | null } | null = null;
+  if (caseDetails.deviceId) {
+    try {
+      const [deviceRow] = await db.select({
+        name: devicesTable.name,
+        type: devicesTable.type,
+        brand: devicesTable.brand,
+        model: devicesTable.model,
+      }).from(devicesTable).where(eq(devicesTable.id, caseDetails.deviceId)).limit(1);
+      if (deviceRow) device = deviceRow;
+    } catch (err) {
+      console.warn('Failed to fetch device for PDF:', err);
+    }
+  }
+
   // Extract agent name from messages (first non-user message with an agentName)
   const rawMessages = (messageRecord?.messages as CasePDFData["messages"]) || [];
   const agentName = rawMessages.find(m => m.role !== "user" && m.agentName)?.agentName;
@@ -66,6 +82,7 @@ async function buildCasePDFData(
     userName,
     userTimezone,
     agentName,
+    device,
   };
 
   return {

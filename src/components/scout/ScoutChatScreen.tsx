@@ -13,7 +13,7 @@ import { CaseCompletionModal } from './CaseCompletionModal';
 import { saveVoiceReportToHistory } from '../../services/voiceReportService';
 import { useWebSpeech } from '../../hooks/useWebSpeech';
 import { useGeminiVoice } from '../../hooks/useGeminiVoice';
-import { ChatMessage, UserRole, DeviceRecord, EscalationReportData, GuidedAction, formatCaseDisplayId } from '../../types';
+import { ChatMessage, UserRole, EscalationReportData, GuidedAction, formatCaseDisplayId } from '../../types';
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 import { useAuth } from '../../hooks/useAuth';
 import { ROOT_CATEGORIES } from '../../../shared/models/playbook';
@@ -95,12 +95,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [modeSequence, setModeSequence] = useState<number | null>(null);
   const [hasCreatedCase, setHasCreatedCase] = useState(!!initialCaseId);
   const ensureCasePromiseRef = useRef<Promise<string | null> | null>(null);
-
-  // Device context
-  const [devices, setDevices] = useState<DeviceRecord[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<DeviceRecord | null>(null);
-  const [showDevicePicker, setShowDevicePicker] = useState(false);
-  const [hasPickedDevice, setHasPickedDevice] = useState(false);
 
   // Modal states
   const [showVoiceOverlay, setShowVoiceOverlay] = useState(false);
@@ -201,23 +195,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       if (idleWarningTimerRef.current) clearTimeout(idleWarningTimerRef.current);
     };
   }, []);
-
-  // Fetch user devices on mount
-  useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      fetch('/api/devices', { credentials: 'include' })
-        .then(res => res.ok ? res.json() : [])
-        .then(data => {
-          if (Array.isArray(data) && data.length > 0) {
-            setDevices(data);
-            if (!initialCaseId) {
-              setShowDevicePicker(true);
-            }
-          }
-        })
-        .catch(() => {});
-    }
-  }, [isAuthenticated, user?.id, initialCaseId]);
 
   // Load existing case messages and metadata if reopening
   useEffect(() => {
@@ -361,7 +338,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           body: JSON.stringify({
             title,
             sessionMode: mode,
-            deviceId: selectedDevice?.id || null,
+            deviceId: null,
           }),
         });
         if (res.ok) {
@@ -388,7 +365,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
     ensureCasePromiseRef.current = promise;
     return promise;
-  }, [hasCreatedCase, caseId, isAuthenticated, selectedDevice]);
+  }, [hasCreatedCase, caseId, isAuthenticated]);
 
   // Save messages to API (immediate, no debounce)
   const saveMessages = useCallback((currentCaseId: string, msgs: ChatMessage[]) => {
@@ -407,15 +384,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       body: JSON.stringify({ messages: msgData }),
     }).catch(err => console.error('[Scout] Failed to save messages:', err));
   }, []);
-
-  // Build device context string for Gemini
-  const getDeviceContext = useCallback((): string | undefined => {
-    if (!selectedDevice) return undefined;
-    const parts = [`User is asking about their ${selectedDevice.brand || ''} ${selectedDevice.model || ''} ${selectedDevice.type}`.trim()];
-    if (selectedDevice.location) parts.push(`located in ${selectedDevice.location}`);
-    if (selectedDevice.notes) parts.push(`Notes: ${selectedDevice.notes}`);
-    return parts.join(', ');
-  }, [selectedDevice]);
 
   const sendMessage = useCallback(async (text: string, imageBase64?: string) => {
     if (!text.trim() && !imageBase64) return;
@@ -517,7 +485,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         // Authenticated first interaction
         const connectDelay = 5000 + Math.random() * 5000;
         const [apiResponse] = await Promise.all([
-          sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName, currentCaseId || undefined),
+          sendMessageToGemini(messages, text.trim(), imageBase64, undefined, agentName, currentCaseId || undefined),
           new Promise<void>(resolve => setTimeout(resolve, connectDelay)),
         ]);
         response = apiResponse;
@@ -543,7 +511,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           messages,
           text.trim(),
           imageBase64,
-          getDeviceContext(),
+          undefined,
           agentName,
           currentCaseId || undefined
         );
@@ -561,7 +529,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       // Client-side safety net: if server returned a known fallback string with no function call, retry once
       const FALLBACK_STRINGS = ["I'm processing that for you...", "Let me look into that for you..."];
       if (isAuthenticated && FALLBACK_STRINGS.includes(response.text) && !response.functionCall) {
-        const retryResponse = await sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName, currentCaseId || undefined);
+        const retryResponse = await sendMessageToGemini(messages, text.trim(), imageBase64, undefined, agentName, currentCaseId || undefined);
         if (retryResponse.text && !FALLBACK_STRINGS.includes(retryResponse.text)) {
           response = retryResponse;
         }
@@ -620,7 +588,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     } finally {
       setIsLoading(false);
     }
-  }, [messages, canUse, incrementUsage, ensureCase, activeMode, getDeviceContext, saveMessages]);
+  }, [messages, canUse, incrementUsage, ensureCase, activeMode, saveMessages]);
 
   // Handle guided action interaction (user taps choice/confirm)
   const handleGuidedAction = useCallback((messageId: string, updatedAction: GuidedAction, responseText: string) => {
@@ -733,7 +701,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
 
       const report = await generateEscalationReport(
         msgData,
-        getDeviceContext(),
       );
 
       // Update case with escalation data
@@ -784,7 +751,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     } finally {
       setIsEscalating(false);
     }
-  }, [caseId, ensureCase, activeMode, messages, getDeviceContext, onEscalation]);
+  }, [caseId, ensureCase, activeMode, messages, onEscalation]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -951,12 +918,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     setActiveMode('chat');
   }, [showVoiceOverlay, voiceSession, geminiVoice, sendMessage]);
 
-  const handleDeviceSelect = useCallback((device: DeviceRecord | null) => {
-    setSelectedDevice(device);
-    setShowDevicePicker(false);
-    setHasPickedDevice(true);
-  }, []);
-
   const renderMarkdown = (text: string): React.ReactNode => {
     // Safe inline formatter: parses **bold** into <strong> React elements (no raw HTML)
     const processInline = (str: string, lineIndex: number): React.ReactNode[] => {
@@ -1120,11 +1081,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   {modeSequence ? formatCaseDisplayId(activeMode, modeSequence) : caseTitle || `Case ${caseId.substring(0, 8)}`}
                 </span>
               )}
-              {selectedDevice && (
-                <span className="text-cyan-400/70 text-xs bg-cyan-400/10 px-2 py-1 rounded truncate max-w-[120px]">
-                  {selectedDevice.name}
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {hasActiveSession && isAuthenticated && caseId && (
@@ -1155,33 +1111,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   {isEscalating ? 'Working on it...' : 'Get a Pro'}
                 </button>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Device Picker */}
-      {showDevicePicker && !hasPickedDevice && devices.length > 0 && (
-        <div className="px-4 py-3 bg-light-100/80 dark:bg-[#151922]/80 border-b border-light-200 dark:border-white/5">
-          <div className="max-w-3xl mx-auto">
-            <p className="text-text-secondary dark:text-white/70 text-sm mb-3">Which device are you having trouble with?</p>
-            <div className="flex flex-wrap gap-2">
-              {devices.map(device => (
-                <button
-                  key={device.id}
-                  onClick={() => handleDeviceSelect(device)}
-                  className="px-4 py-2.5 rounded-full bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 text-text-primary dark:text-white/80 text-sm hover:bg-light-300 dark:hover:bg-white/10 hover:border-[#06B6D4]/30 transition-colors"
-                >
-                  {device.name}
-                  {device.brand && <span className="text-gray-400 dark:text-white/50 ml-1">({device.brand})</span>}
-                </button>
-              ))}
-              <button
-                onClick={() => handleDeviceSelect(null)}
-                className="px-4 py-2.5 rounded-full bg-light-200 dark:bg-white/5 border border-light-300 dark:border-white/10 text-text-muted dark:text-white/60 text-sm hover:bg-light-300 dark:hover:bg-white/10 transition-colors"
-              >
-                Not sure / Something else
-              </button>
             </div>
           </div>
         </div>
@@ -1226,9 +1155,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   {renderMarkdown(message.text)}
                 </div>
               )}
-              {/* Guided Fix Engine: Interactive elements */}
+              {/* Guided Fix Engine: Interactive elements — negative margin on mobile to reclaim bubble padding */}
               {message.guidedAction && message.role === UserRole.MODEL && (
-                <>
+                <div className="-mx-2 sm:mx-0">
                   {message.guidedAction.type === 'presentChoices' && (
                     <ChoicePills action={message.guidedAction} messageId={message.id} onSelect={handleGuidedAction} disabled={isLoading} />
                   )}
@@ -1243,9 +1172,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                   {message.guidedAction.type === 'confirmResult' && (
                     <ConfirmButtons action={message.guidedAction} messageId={message.id} onSelect={handleGuidedAction} disabled={isLoading} />
                   )}
-                </>
+                </div>
               )}
-              <div className={`text-xs mt-2 ${message.role === UserRole.USER ? 'text-white/70' : 'text-gray-400 dark:text-white/50'}`}>
+              <div className={`text-xs mt-1 sm:mt-2 ${message.role === UserRole.USER ? 'text-white/70' : 'text-gray-400 dark:text-white/50'}`}>
                 {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>

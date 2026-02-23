@@ -692,6 +692,31 @@ When users selected "It's Something Else" from the initial guided choice pills i
 - "I can't connect" disambiguation adds one extra tap for the most common case (Wi-Fi connectivity)
 - If `ROOT_CATEGORIES` grows beyond 5 items, the client-side fallback "It's Something Else" escape hatch would be silently dropped by `.slice(0, 6)`
 
+### Mobile Compaction for Guided Action Components (Feb 23, 2026)
+- **Scope**: Frontend only — `src/components/scout/GuidedActions.tsx`, `src/components/scout/ScoutChatScreen.tsx`
+- **Verdict**: Small Change Exemption (CSS/class-name styling, 2 files, no auth/payment/security)
+- **Changes**: Added Tailwind responsive breakpoints to ChoicePills, StepCard, and ConfirmButtons. Mobile-first compact sizing (`px-3 py-2 text-sm`) with `sm:` prefixes restoring desktop sizes. Negative margin wrapper on guided actions to reclaim bubble padding on mobile. All interactive elements retain `min-h-[44px]` touch targets.
+
+### Device Picker Removal + PDF Device Details + Stronger identifyDevice Prompt (Feb 23, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **src/components/scout/ScoutChatScreen.tsx** — Removed device picker UI, `devices`/`selectedDevice`/`showDevicePicker`/`hasPickedDevice` state, device fetch useEffect, `getDeviceContext` callback, `handleDeviceSelect` handler, and header device badge. Eliminated one HTTP request per chat mount. Device identification now handled entirely by AI's `identifyDevice` tool during conversation.
+2. **server/services/pdfService.ts** — Added optional `device` field to `CasePDFData` interface. Added Device/Brand/Model rows to Session Details table in PDF HTML template, conditionally rendered when non-null. All values HTML-escaped via `esc()`.
+3. **server/routes/cases.ts** — Added `devicesTable` import. In `buildCasePDFData`, queries device data when case has `deviceId` FK. Wrapped in try/catch (PDF still generates if device query fails).
+4. **server/routes/ai.ts** — Strengthened DEVICE IDENTIFICATION sections in both `SYSTEM_INSTRUCTION` and `LIVE_AGENT_INSTRUCTION`: more aggressive trigger conditions (call on any brand/model/type mention), infer device from symptoms, "Do NOT wait until you have all fields" instruction.
+
+#### Key Skeptic Conditions Applied:
+- All device fields passed through `esc()` in PDF template (XSS prevention)
+- Device info integrated into existing Session Details table (not standalone section)
+- `devicesTable` import added to cases.ts
+
+#### Risks Accepted:
+- Gemini may still not consistently fire `identifyDevice` (graceful degradation — PDF renders without device section)
+- Device picker removal is one-way door; if auto-identification underperforms, no manual fallback (picker was rarely used — only showed when users pre-added devices)
+- `escalation-report` endpoint's `deviceContext` parameter now always undefined from frontend (can derive from case FK in future pass)
+
 <!-- DECISIONS END -->
 
 ---

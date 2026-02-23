@@ -104,6 +104,12 @@ export interface CasePDFData {
   userEmail?: string;
   userTimezone?: string;
   agentName?: string;
+  device?: {
+    name: string | null;
+    type: string | null;
+    brand: string | null;
+    model: string | null;
+  } | null;
 }
 
 // ============================================
@@ -740,6 +746,9 @@ body{
             ${modeLabel ? `<tr><td class="lbl">Mode</td><td class="val">${esc(modeLabel)}</td></tr>` : ""}
             <tr><td class="lbl">Agent</td><td class="val">${esc(assistedBy)}</td></tr>
             ${durationStr ? `<tr><td class="lbl">Duration</td><td class="val">${esc(durationStr)}</td></tr>` : ""}
+            ${data.device?.name ? `<tr><td class="lbl">Device</td><td class="val">${esc(data.device.name)}</td></tr>` : ''}
+            ${data.device?.brand ? `<tr><td class="lbl">Brand</td><td class="val">${esc(data.device.brand)}</td></tr>` : ''}
+            ${data.device?.model ? `<tr><td class="lbl">Model</td><td class="val">${esc(data.device.model)}</td></tr>` : ''}
           </table>
         </section>
 
