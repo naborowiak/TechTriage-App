@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, ChevronLeft, ChevronRight, RefreshCw, ArrowUpDown, Inbox, AlertTriangle, Clock, CheckCircle2, User, ArrowUpCircle, Trash2 } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, RefreshCw, ArrowUpDown, Inbox, AlertTriangle, Clock, CheckCircle2, User, ArrowUpCircle, Trash2, Loader2, X } from 'lucide-react';
 import { useAgentApi } from '../../hooks/useAgentApi';
 import { DeletedCases } from './DeletedCases';
-import type { AgentCaseListItem, AgentCaseListResponse } from '../../types';
+import type { AgentCaseListItem, AgentCaseListResponse, AgentRosterItem } from '../../types';
 
 // ServiceNow Polaris-inspired highlighted value colors
 const statusHighlight: Record<string, string> = {
@@ -19,6 +19,9 @@ const priorityHighlight: Record<string, string> = {
   low: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
+const STATUS_OPTIONS = ['open', 'resolved', 'escalated', 'pending'] as const;
+const PRIORITY_OPTIONS = ['critical', 'high', 'medium', 'low'] as const;
+
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   const diff = Date.now() - d.getTime();
@@ -33,7 +36,11 @@ function formatDate(dateStr: string): string {
 
 function fullName(obj: { firstName: string | null; lastName: string | null } | null): string {
   if (!obj) return '';
-  return `${obj.firstName || ''} ${obj.lastName || ''}`.trim() || '—';
+  return `${obj.firstName || ''} ${obj.lastName || ''}`.trim() || '\u2014';
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 interface FilterCategory {
@@ -68,6 +75,68 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const committedSearch = useRef(search);
   const fetchIdRef = useRef(0); // prevent stale results
+
+  // ── Inline editing state ──────────────────────────────────
+  const [editingCell, setEditingCell] = useState<{ caseId: string; field: 'status' | 'priority' | 'assignedAgent' } | null>(null);
+  const [isCellSaving, setIsCellSaving] = useState(false);
+  const [cellError, setCellError] = useState<{ caseId: string; field: string; message: string } | null>(null);
+  const [agents, setAgents] = useState<AgentRosterItem[]>([]);
+
+  // ── Selection state (admin-only) ──────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const confirmCancelRef = useRef<HTMLButtonElement>(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Fetch agent roster for assignment dropdown
+  useEffect(() => {
+    api.fetchAgents().then(r => setAgents(r.agents)).catch(() => {});
+  }, []);
+
+  // Clear selection when page/filter/search changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [activeCategory, search, sortBy, sortOrder, pagination.page]);
+
+  // Auto-dismiss cell error after 3s
+  useEffect(() => {
+    if (cellError) {
+      const t = setTimeout(() => setCellError(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [cellError]);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toastMessage) {
+      const duration = toastMessage.type === 'error' ? 6000 : 4000;
+      const t = setTimeout(() => setToastMessage(null), duration);
+      return () => clearTimeout(t);
+    }
+  }, [toastMessage]);
+
+  // Focus trap for confirmation dialog
+  useEffect(() => {
+    if (showBulkDeleteConfirm && confirmCancelRef.current) {
+      confirmCancelRef.current.focus();
+    }
+  }, [showBulkDeleteConfirm]);
+
+  // Escape key to close confirmation dialog
+  useEffect(() => {
+    if (!showBulkDeleteConfirm) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isBulkDeleting) {
+        setShowBulkDeleteConfirm(false);
+        deleteButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showBulkDeleteConfirm, isBulkDeleting]);
 
   // Apply initialCategory/initialSearch when they change from parent
   useEffect(() => {
@@ -153,6 +222,98 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
     fetchCases(page, activeCategory, committedSearch.current);
   };
 
+  // ── Inline edit handlers ──────────────────────────────────
+
+  const handleInlineEdit = async (caseId: string, field: 'status' | 'priority' | 'assignedAgent', value: string) => {
+    setIsCellSaving(true);
+    setCellError(null);
+
+    // Capture current state for rollback
+    const originalCase = cases.find(c => c.id === caseId);
+    if (!originalCase) { setIsCellSaving(false); return; }
+
+    // Optimistic update
+    setCases(prev => prev.map(c => {
+      if (c.id !== caseId) return c;
+      if (field === 'status') return { ...c, status: value };
+      if (field === 'priority') return { ...c, priority: value };
+      if (field === 'assignedAgent') {
+        if (value === '__unassign__') return { ...c, assignedAgent: null };
+        const agent = agents.find(a => a.id === value);
+        return { ...c, assignedAgent: agent ? { id: agent.id, firstName: agent.firstName, lastName: agent.lastName } : null };
+      }
+      return c;
+    }));
+
+    setEditingCell(null);
+
+    try {
+      if (field === 'status' || field === 'priority') {
+        await api.updateCase(caseId, { [field]: value });
+      } else if (field === 'assignedAgent') {
+        if (value === '__unassign__') {
+          await api.unassignCase(caseId);
+        } else {
+          await api.assignCase(caseId, value);
+        }
+      }
+    } catch (err: any) {
+      // Revert optimistic update
+      setCases(prev => prev.map(c => c.id === caseId ? originalCase : c));
+      setCellError({ caseId, field, message: err.message || 'Update failed' });
+    } finally {
+      setIsCellSaving(false);
+    }
+  };
+
+  // ── Selection handlers (admin-only) ───────────────────────
+
+  const handleToggleSelect = (caseId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(caseId)) next.delete(caseId);
+      else next.add(caseId);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (cases.length > 0 && cases.every(c => selectedIds.has(c.id))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(cases.map(c => c.id)));
+    }
+  };
+
+  const handleClearSelection = () => setSelectedIds(new Set());
+
+  const executeBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+      const result = await api.bulkDeleteCases([...selectedIds]);
+      // Remove successfully deleted cases from local state
+      const deletedIds = new Set(result.results.filter(r => r.success).map(r => r.caseId));
+      setCases(prev => prev.filter(c => !deletedIds.has(c.id)));
+      setPagination(prev => ({ ...prev, total: prev.total - result.deleted }));
+      setSelectedIds(new Set());
+      setShowBulkDeleteConfirm(false);
+
+      if (result.failed > 0) {
+        setToastMessage({ text: `${result.deleted} deleted, ${result.failed} failed`, type: 'error' });
+      } else {
+        setToastMessage({ text: `${result.deleted} case${result.deleted > 1 ? 's' : ''} deleted`, type: 'success' });
+      }
+    } catch (err: any) {
+      setToastMessage({ text: err.message || 'Bulk delete failed', type: 'error' });
+      setShowBulkDeleteConfirm(false);
+    } finally {
+      setIsBulkDeleting(false);
+      deleteButtonRef.current?.focus();
+    }
+  };
+
+  const colCount = isAdmin ? 8 : 7;
+
   return (
     <div className="h-full flex flex-col">
       {/* Search bar */}
@@ -173,7 +334,7 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4F5664] dark:text-gray-500 hover:text-[#37444A] dark:hover:text-gray-300"
               aria-label="Clear search"
             >
-              ×
+              &times;
             </button>
           )}
         </div>
@@ -230,6 +391,50 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
           <DeletedCases />
         ) : (
         <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Bulk action bar (admin-only, when items selected) */}
+          {isAdmin && selectedIds.size > 0 && (
+            <div className="px-5 py-2.5 bg-[#4F52BD]/5 dark:bg-[#4F52BD]/10 border-b border-[#4F52BD]/20 flex items-center gap-3 shrink-0">
+              <span className="text-sm font-medium text-[#4F52BD] dark:text-indigo-400">
+                {selectedIds.size} case{selectedIds.size > 1 ? 's' : ''} selected
+              </span>
+              <button
+                ref={deleteButtonRef}
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                disabled={isBulkDeleting}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label={`Delete ${selectedIds.size} selected cases`}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Selected
+              </button>
+              <button
+                onClick={handleClearSelection}
+                className="text-xs text-[#4F5664] dark:text-gray-400 hover:underline"
+              >
+                Clear selection
+              </button>
+              {isBulkDeleting && <Loader2 className="w-4 h-4 animate-spin text-[#4F52BD]" />}
+            </div>
+          )}
+
+          {/* Toast message */}
+          {toastMessage && (
+            <div
+              className={`mx-4 mt-3 p-3 rounded-lg text-sm flex items-center justify-between ${
+                toastMessage.type === 'success'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              <span>{toastMessage.text}</span>
+              <button onClick={() => setToastMessage(null)} className="ml-2 p-0.5 hover:opacity-70" aria-label="Dismiss">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className="mx-4 mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm flex items-center justify-between" role="alert">
@@ -242,6 +447,18 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
             <table className="w-full text-sm">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-[#F5F6F7] dark:bg-[#10171A] border-b border-gray-200 dark:border-gray-800">
+                  {/* Checkbox column (admin-only) */}
+                  {isAdmin && (
+                    <th scope="col" className="w-10 px-2 py-3">
+                      <input
+                        type="checkbox"
+                        checked={cases.length > 0 && cases.every(c => selectedIds.has(c.id))}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-[#4F52BD] focus:ring-[#4F52BD] cursor-pointer"
+                        aria-label="Select all cases on this page"
+                      />
+                    </th>
+                  )}
                   <th scope="col" className="px-4 py-3 text-left font-medium text-[#4F5664] dark:text-gray-500 text-xs uppercase tracking-wider">Number</th>
                   <th scope="col" className="px-4 py-3 text-left font-medium text-[#4F5664] dark:text-gray-500 text-xs uppercase tracking-wider">Description</th>
                   <th scope="col" className="px-4 py-3 text-left font-medium text-[#4F5664] dark:text-gray-500 text-xs uppercase tracking-wider">Customer</th>
@@ -257,7 +474,7 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
                 {isLoading ? (
                   Array.from({ length: 8 }).map((_, i) => (
                     <tr key={i} className="border-b border-gray-100 dark:border-gray-800">
-                      {Array.from({ length: 7 }).map((_, j) => (
+                      {Array.from({ length: colCount }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" style={{ width: `${40 + Math.random() * 60}%` }} />
                         </td>
@@ -266,7 +483,7 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
                   ))
                 ) : cases.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-16 text-center text-[#4F5664] dark:text-gray-400">
+                    <td colSpan={colCount} className="px-4 py-16 text-center text-[#4F5664] dark:text-gray-400">
                       <Inbox className="w-8 h-8 mx-auto mb-2 opacity-40" />
                       <p className="font-medium">
                         {search || activeCategory !== 'all'
@@ -276,44 +493,170 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
                     </td>
                   </tr>
                 ) : (
-                  cases.map((c) => (
-                    <tr
-                      key={c.id}
-                      onClick={() => onSelectCase(c.id)}
-                      className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 cursor-pointer transition-colors h-11"
-                    >
-                      <td className="px-4 py-2 font-mono text-xs">
-                        <span className="text-[#2469FF] dark:text-blue-400 font-medium">{c.caseNumber ? `CS${String(c.caseNumber).padStart(7, '0')}` : '—'}</span>
-                      </td>
-                      <td className="px-4 py-2 text-[#37444A] dark:text-gray-200 max-w-[300px] truncate font-medium">
-                        {c.title}
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onSelectCustomer(c.customer.id); }}
-                          className="text-[#2469FF] dark:text-blue-400 hover:underline text-left truncate max-w-[150px] block font-medium"
+                  cases.map((c) => {
+                    const isSelected = selectedIds.has(c.id);
+                    const hasCellError = cellError?.caseId === c.id;
+
+                    return (
+                      <tr
+                        key={c.id}
+                        onClick={() => onSelectCase(c.id)}
+                        className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/30 cursor-pointer transition-colors h-11 ${
+                          isSelected ? 'bg-[#4F52BD]/5 dark:bg-[#4F52BD]/10' : ''
+                        }`}
+                      >
+                        {/* Checkbox (admin-only) */}
+                        {isAdmin && (
+                          <td className="w-10 px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelect(c.id)}
+                              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-[#4F52BD] focus:ring-[#4F52BD] cursor-pointer"
+                              aria-label={`Select case ${c.caseNumber ? 'CS' + String(c.caseNumber).padStart(7, '0') : c.title}`}
+                            />
+                          </td>
+                        )}
+
+                        {/* Case number */}
+                        <td className="px-4 py-2 font-mono text-xs">
+                          <span className="text-[#2469FF] dark:text-blue-400 font-medium">{c.caseNumber ? `CS${String(c.caseNumber).padStart(7, '0')}` : '\u2014'}</span>
+                        </td>
+
+                        {/* Title */}
+                        <td className="px-4 py-2 text-[#37444A] dark:text-gray-200 max-w-[300px] truncate font-medium">
+                          {c.title}
+                        </td>
+
+                        {/* Customer */}
+                        <td className="px-4 py-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onSelectCustomer(c.customer.id); }}
+                            className="text-[#2469FF] dark:text-blue-400 hover:underline text-left truncate max-w-[150px] block font-medium"
+                          >
+                            {fullName(c.customer)}
+                          </button>
+                        </td>
+
+                        {/* Status — inline editable */}
+                        <td
+                          className="px-4 py-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isCellSaving) setEditingCell({ caseId: c.id, field: 'status' });
+                          }}
                         >
-                          {fullName(c.customer)}
-                        </button>
-                      </td>
-                      <td className="px-4 py-2">
-                        <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded ${statusHighlight[c.status] || 'bg-gray-100 text-gray-600'}`}>
-                          {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2">
-                        <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded ${priorityHighlight[c.priority || 'medium'] || ''}`}>
-                          {(c.priority || 'medium').charAt(0).toUpperCase() + (c.priority || 'medium').slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 text-[#4F5664] dark:text-gray-400 text-xs truncate max-w-[130px]">
-                        {c.assignedAgent ? fullName(c.assignedAgent) : <span className="italic opacity-50">Unassigned</span>}
-                      </td>
-                      <td className="px-4 py-2 text-[#4F5664] dark:text-gray-500 text-xs whitespace-nowrap">
-                        {formatDate(c.updatedAt)}
-                      </td>
-                    </tr>
-                  ))
+                          {editingCell?.caseId === c.id && editingCell.field === 'status' ? (
+                            <select
+                              autoFocus
+                              value={c.status}
+                              onChange={(e) => handleInlineEdit(c.id, 'status', e.target.value)}
+                              onBlur={() => setEditingCell(null)}
+                              onKeyDown={(e) => { if (e.key === 'Escape') setEditingCell(null); }}
+                              disabled={isCellSaving}
+                              className="text-xs px-2 py-1 border border-[#4F52BD] rounded bg-white dark:bg-[#10171A] text-[#37444A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F52BD]"
+                              aria-label="Edit status"
+                            >
+                              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{capitalize(s)}</option>)}
+                            </select>
+                          ) : (
+                            <button
+                              tabIndex={0}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setEditingCell({ caseId: c.id, field: 'status' }); } }}
+                              className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded cursor-pointer hover:ring-2 hover:ring-[#4F52BD]/30 transition-shadow ${
+                                hasCellError && cellError.field === 'status'
+                                  ? 'ring-2 ring-red-400 animate-pulse'
+                                  : ''
+                              } ${statusHighlight[c.status] || 'bg-gray-100 text-gray-600'}`}
+                              aria-label={`Status: ${capitalize(c.status)}. Click to edit.`}
+                            >
+                              {capitalize(c.status)}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Priority — inline editable */}
+                        <td
+                          className="px-4 py-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isCellSaving) setEditingCell({ caseId: c.id, field: 'priority' });
+                          }}
+                        >
+                          {editingCell?.caseId === c.id && editingCell.field === 'priority' ? (
+                            <select
+                              autoFocus
+                              value={c.priority || 'medium'}
+                              onChange={(e) => handleInlineEdit(c.id, 'priority', e.target.value)}
+                              onBlur={() => setEditingCell(null)}
+                              onKeyDown={(e) => { if (e.key === 'Escape') setEditingCell(null); }}
+                              disabled={isCellSaving}
+                              className="text-xs px-2 py-1 border border-[#4F52BD] rounded bg-white dark:bg-[#10171A] text-[#37444A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F52BD]"
+                              aria-label="Edit priority"
+                            >
+                              {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{capitalize(p)}</option>)}
+                            </select>
+                          ) : (
+                            <button
+                              tabIndex={0}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setEditingCell({ caseId: c.id, field: 'priority' }); } }}
+                              className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded cursor-pointer hover:ring-2 hover:ring-[#4F52BD]/30 transition-shadow ${
+                                hasCellError && cellError.field === 'priority'
+                                  ? 'ring-2 ring-red-400 animate-pulse'
+                                  : ''
+                              } ${priorityHighlight[c.priority || 'medium'] || ''}`}
+                              aria-label={`Priority: ${capitalize(c.priority || 'medium')}. Click to edit.`}
+                            >
+                              {capitalize(c.priority || 'medium')}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Assigned agent — inline editable */}
+                        <td
+                          className="px-4 py-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isCellSaving) setEditingCell({ caseId: c.id, field: 'assignedAgent' });
+                          }}
+                        >
+                          {editingCell?.caseId === c.id && editingCell.field === 'assignedAgent' ? (
+                            <select
+                              autoFocus
+                              value={c.assignedAgent?.id || '__unassign__'}
+                              onChange={(e) => handleInlineEdit(c.id, 'assignedAgent', e.target.value)}
+                              onBlur={() => setEditingCell(null)}
+                              onKeyDown={(e) => { if (e.key === 'Escape') setEditingCell(null); }}
+                              disabled={isCellSaving}
+                              className="text-xs px-2 py-1 border border-[#4F52BD] rounded bg-white dark:bg-[#10171A] text-[#37444A] dark:text-white focus:outline-none focus:ring-1 focus:ring-[#4F52BD] max-w-[150px]"
+                              aria-label="Edit assigned agent"
+                            >
+                              <option value="__unassign__">Unassigned</option>
+                              {agents.map(a => <option key={a.id} value={a.id}>{fullName(a)}</option>)}
+                            </select>
+                          ) : (
+                            <button
+                              tabIndex={0}
+                              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setEditingCell({ caseId: c.id, field: 'assignedAgent' }); } }}
+                              className={`text-xs truncate max-w-[130px] block cursor-pointer hover:ring-2 hover:ring-[#4F52BD]/30 rounded px-1 py-0.5 transition-shadow ${
+                                hasCellError && cellError.field === 'assignedAgent'
+                                  ? 'ring-2 ring-red-400 animate-pulse'
+                                  : ''
+                              } ${c.assignedAgent ? 'text-[#4F5664] dark:text-gray-400' : 'text-[#4F5664]/50 dark:text-gray-500 italic'}`}
+                              aria-label={`Assigned to: ${c.assignedAgent ? fullName(c.assignedAgent) : 'Unassigned'}. Click to edit.`}
+                            >
+                              {c.assignedAgent ? fullName(c.assignedAgent) : 'Unassigned'}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Updated */}
+                        <td className="px-4 py-2 text-[#4F5664] dark:text-gray-500 text-xs whitespace-nowrap">
+                          {formatDate(c.updatedAt)}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -323,7 +666,7 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
           {pagination.totalPages > 1 && (
             <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A2025] flex items-center justify-between text-sm text-[#4F5664] dark:text-gray-400 shrink-0">
               <span className="text-xs">
-                {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+                {((pagination.page - 1) * pagination.limit) + 1}&ndash;{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -349,6 +692,55 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
         </div>
         )}
       </div>
+
+      {/* Bulk delete confirmation dialog (admin-only) */}
+      {showBulkDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm bulk delete"
+          onClick={(e) => { if (e.target === e.currentTarget && !isBulkDeleting) setShowBulkDeleteConfirm(false); }}
+        >
+          <div className="bg-white dark:bg-[#1A2025] rounded-xl shadow-xl p-6 max-w-sm mx-4 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#37444A] dark:text-white">
+                Delete {selectedIds.size} case{selectedIds.size > 1 ? 's' : ''}?
+              </h3>
+            </div>
+            <p className="text-sm text-[#4F5664] dark:text-gray-400 mb-5">
+              Deleted cases can be recovered within 7 days from the Deleted category. After that, they are permanently removed.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                ref={confirmCancelRef}
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                disabled={isBulkDeleting}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-[#4F5664] dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeBulkDelete}
+                disabled={isBulkDeleting}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isBulkDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

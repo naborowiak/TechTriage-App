@@ -182,6 +182,12 @@ export const agentArchiveListSchema = z.object({
   search: z.string().max(200).trim().optional(),
 });
 
+export const agentBulkDeleteSchema = z.object({
+  caseIds: z.array(
+    z.string().min(1, "Case ID is required").max(255)
+  ).min(1, "At least one case ID is required").max(50, "Maximum 50 cases per batch"),
+});
+
 // ============================================
 // Validation middleware factories
 // ============================================

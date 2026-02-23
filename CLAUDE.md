@@ -626,6 +626,38 @@ If The_Skeptic and a Dev agent disagree:
 - No real-time case updates — agents must refresh (acceptable for initial launch)
 - Last-admin demotion guard not implemented — documented edge case, deferred
 
+### Phase 10: ServiceNow-Style Inline List Editing + Bulk Delete (Feb 23, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **server/validation.ts** — Added `agentBulkDeleteSchema`: Zod validation for bulk delete endpoint (array of case IDs, max 50)
+2. **server/routes/agent.ts** — Added `POST /api/agent/cases/bulk-delete` (admin-only): sequential archival via existing `archiveCase()`, partial success pattern, dedicated rate limiter (5 req/15min), console audit log for bulk operations
+3. **src/types.ts** — Added `BulkDeleteResult` interface
+4. **src/hooks/useAgentApi.ts** — Added `bulkDeleteCases(caseIds)` API method
+5. **src/components/agent/CaseQueue.tsx** — Major overhaul: inline cell editing (Status, Priority, Assigned To), admin-only checkbox column with select-all, bulk action bar, bulk delete confirmation dialog, result toast, optimistic updates with error revert
+
+#### Key Skeptic Conditions Applied:
+1. Console audit log for bulk delete operations (actor ID, counts, case IDs attempted)
+2. Dedicated rate limiter: 5 requests per 15-minute window on bulk-delete endpoint
+3. Inline edit cells are keyboard-accessible: `<button>` wrappers with `tabIndex={0}`, `onKeyDown` for Enter/Space, Escape to cancel
+4. Error feedback on optimistic revert: red ring + pulse animation on reverted cell, auto-dismiss after 3s
+5. Confirmation dialog: `role="dialog"`, `aria-modal="true"`, Escape-to-close, auto-focus Cancel button (not Delete), backdrop click to dismiss
+
+#### ACL Matrix:
+| Action | Agent | Admin |
+|---|---|---|
+| View all cases | Yes | Yes |
+| Inline edit status/priority/assignment | Yes | Yes |
+| See checkboxes | No | Yes |
+| Select rows / Bulk delete | No | Yes |
+
+#### Risks Accepted:
+- Sequential archival of 50 cases may take several seconds (loading state shown)
+- Duplicate caseIds in request cause "Case not found" for second attempt (non-harmful, shown as failure in results)
+- Checkbox column on mobile may cause horizontal overflow (CRM is primarily desktop)
+- No undo for inline edits (agent can manually change back)
+
 <!-- DECISIONS END -->
 
 ---

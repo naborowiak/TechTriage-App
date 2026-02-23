@@ -5,6 +5,7 @@ import type {
   AgentRosterItem,
   AgentCustomerProfile,
   CaseArchiveListResponse,
+  BulkDeleteResult,
 } from '../types';
 
 async function fetchWithAuth(url: string, options?: RequestInit) {
@@ -124,6 +125,13 @@ export function useAgentApi() {
     restoreCase: (archiveId: string): Promise<{ success: boolean }> =>
       fetchWithAuth(`/api/agent/archives/${encodeURIComponent(archiveId)}/restore`, {
         method: 'POST',
+      }),
+
+    // Bulk delete (admin)
+    bulkDeleteCases: (caseIds: string[]): Promise<BulkDeleteResult> =>
+      fetchWithAuth('/api/agent/cases/bulk-delete', {
+        method: 'POST',
+        body: JSON.stringify({ caseIds }),
       }),
   };
 }

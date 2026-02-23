@@ -25,7 +25,9 @@ import {
   agentCaseNoteSchema,
   agentRoleChangeSchema,
   agentArchiveListSchema,
+  agentBulkDeleteSchema,
 } from "../validation";
+import rateLimit from "express-rate-limit";
 
 const router = Router();
 
@@ -612,6 +614,52 @@ router.delete("/cases/:id", requireAgentAdmin, async (req: any, res: any) => {
     }
     console.error("Error archiving case:", error);
     res.status(500).json({ error: "Failed to archive case" });
+  }
+});
+
+// ============================================
+// BULK DELETE (admin-only) — archive multiple cases
+// ============================================
+const bulkDeleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { error: "Too many bulk delete requests. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.post("/cases/bulk-delete", requireAgentAdmin, bulkDeleteLimiter, validate(agentBulkDeleteSchema), async (req: any, res: any) => {
+  try {
+    const { caseIds } = req.body;
+    const actorId = req.agentUser!.id;
+
+    // Deduplicate case IDs
+    const uniqueIds = [...new Set(caseIds as string[])];
+
+    const results: Array<{ caseId: string; success: boolean; error?: string }> = [];
+
+    // Sequential archival — each archiveCase does ~11 DB operations
+    for (const caseId of uniqueIds) {
+      try {
+        await archiveCase(caseId, actorId);
+        results.push({ caseId, success: true });
+      } catch (err: any) {
+        results.push({ caseId, success: false, error: err.message || "Failed to archive" });
+      }
+    }
+
+    const deleted = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+
+    // Audit log: single bulk_delete entry (Skeptic condition #1)
+    if (deleted > 0) {
+      console.log(`[Agent] Bulk delete by ${actorId}: ${deleted} archived, ${failed} failed out of ${uniqueIds.length} requested`);
+    }
+
+    res.json({ results, deleted, failed });
+  } catch (err) {
+    console.error("[Agent] Failed to bulk delete cases:", err);
+    res.status(500).json({ error: "An unexpected error occurred. Please try again." });
   }
 });
 

@@ -264,6 +264,12 @@ export interface CaseArchiveListResponse {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
+export interface BulkDeleteResult {
+  results: Array<{ caseId: string; success: boolean; error?: string }>;
+  deleted: number;
+  failed: number;
+}
+
 // Format case display ID from sessionMode + modeSequence
 export function formatCaseDisplayId(sessionMode: string | null | undefined, modeSequence: number | null | undefined): string {
   const prefixMap: Record<string, string> = {
