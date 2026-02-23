@@ -339,7 +339,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
               <button
                 key={c.id}
                 onClick={() => setSelectedCase(c)}
-                className={`w-full text-left bg-white dark:bg-midnight-800 rounded-xl p-4 border-2 transition-all hover:shadow-md ${
+                className={`w-full text-left bg-white dark:bg-midnight-800 rounded-xl p-4 border-2 transition-all hover:shadow-md overflow-hidden ${
                   selectedCase?.id === c.id
                     ? 'border-electric-indigo shadow-md'
                     : 'border-gray-100 dark:border-midnight-700 hover:border-gray-200 dark:hover:border-midnight-600'
@@ -374,23 +374,23 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
           {selectedCase ? (
             <div className="bg-white dark:bg-midnight-800 rounded-2xl border border-gray-100 dark:border-midnight-700 overflow-hidden">
               {/* Case Header */}
-              <div className="p-6 border-b border-gray-100 dark:border-midnight-700">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-text-primary dark:text-white mb-2">{selectedCase.title}</h2>
-                    <div className="flex items-center gap-4 text-sm text-text-muted">
+              <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-midnight-700">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-bold text-text-primary dark:text-white mb-2 break-words">{selectedCase.title}</h2>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-text-muted">
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="w-4 h-4 shrink-0" />
                         {formatDate(selectedCase.createdAt)}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-4 h-4 shrink-0" />
                         {formatTime(selectedCase.createdAt)}
                       </span>
                       {getStatusBadge(selectedCase.status || 'open')}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     {(selectedCase.status === 'resolved' || selectedCase.status === 'escalated') && onReopenCase && (
                       <button
                         onClick={() => reopenCase(selectedCase.id)}
@@ -420,9 +420,9 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
 
               {/* AI Summary */}
               {selectedCase.aiSummary && (
-                <div className="p-6 border-b border-gray-100 dark:border-midnight-700 bg-gray-50 dark:bg-midnight-900">
+                <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-midnight-700 bg-gray-50 dark:bg-midnight-900 overflow-hidden">
                   <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-wider mb-3">
-                    <FileText className="w-4 h-4" />
+                    <FileText className="w-4 h-4 shrink-0" />
                     Case Summary
                   </div>
                   {(() => {
@@ -431,36 +431,36 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                       return (
                         <div className="space-y-3">
                           {Object.entries(structured).map(([key, value]) => (
-                            <div key={key}>
+                            <div key={key} className="overflow-hidden">
                               <span className="text-xs font-semibold text-electric-indigo uppercase">{key}</span>
-                              <p className="text-text-primary dark:text-white text-sm leading-relaxed">{value}</p>
+                              <p className="text-text-primary dark:text-white text-sm leading-relaxed break-words">{value}</p>
                             </div>
                           ))}
                         </div>
                       );
                     }
-                    return <p className="text-text-primary dark:text-white leading-relaxed">{selectedCase.aiSummary}</p>;
+                    return <p className="text-text-primary dark:text-white leading-relaxed break-words">{selectedCase.aiSummary}</p>;
                   })()}
                 </div>
               )}
 
               {/* Escalation Report */}
               {selectedCase.escalationReport && (
-                <div className="p-6 border-b border-gray-100 dark:border-midnight-700 bg-orange-50 dark:bg-orange-500/5">
+                <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-midnight-700 bg-orange-50 dark:bg-orange-500/5 overflow-hidden">
                   <div className="flex items-center gap-2 text-xs font-bold text-orange-500 uppercase tracking-wider mb-3">
-                    <AlertTriangle className="w-4 h-4" />
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
                     Escalation Report
                   </div>
                   <div className="space-y-3">
                     <div>
                       <span className="text-xs font-semibold text-text-muted">Problem</span>
-                      <p className="text-text-primary dark:text-white text-sm">{selectedCase.escalationReport.problemDescription}</p>
+                      <p className="text-text-primary dark:text-white text-sm break-words">{selectedCase.escalationReport.problemDescription}</p>
                     </div>
                     <div>
                       <span className="text-xs font-semibold text-text-muted">Recommended Specialist</span>
-                      <p className="text-text-primary dark:text-white text-sm font-medium">{selectedCase.escalationReport.recommendedSpecialist}</p>
+                      <p className="text-text-primary dark:text-white text-sm font-medium break-words">{selectedCase.escalationReport.recommendedSpecialist}</p>
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-4">
                       <div>
                         <span className="text-xs font-semibold text-text-muted">Urgency</span>
                         <p className={`text-sm font-medium ${
@@ -494,7 +494,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
 
               {/* Specialist Response */}
               {selectedCase.specialistNotes && (
-                <div className="p-6 border-b border-gray-100 dark:border-midnight-700 bg-emerald-50 dark:bg-emerald-500/5">
+                <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-midnight-700 bg-emerald-50 dark:bg-emerald-500/5 overflow-hidden">
                   <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-3">
                     <CheckCircle className="w-4 h-4" />
                     Specialist Response
@@ -509,16 +509,16 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
               )}
 
               {/* Transcript */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6 overflow-hidden">
                 <div className="flex items-center gap-2 text-xs font-bold text-text-muted uppercase tracking-wider mb-4">
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="w-4 h-4 shrink-0" />
                   Conversation Transcript
                 </div>
-                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                <div className="space-y-4 max-h-[400px] overflow-y-auto overflow-x-hidden">
                   {caseMessages.length > 0 ? (
                     caseMessages.map((entry, i) => (
                       <div key={i} className={`flex ${entry.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] p-4 rounded-2xl ${
+                        <div className={`max-w-[80%] p-3 sm:p-4 rounded-2xl overflow-hidden ${
                           entry.role === 'user'
                             ? 'bg-gradient-to-r from-electric-indigo to-scout-purple text-white rounded-tr-none'
                             : 'bg-gray-100 dark:bg-midnight-700 text-text-primary dark:text-white rounded-tl-none'
@@ -529,7 +529,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                           {entry.image && (
                             <img src={entry.image} alt="Attached" className="rounded-lg mb-2 max-h-32 w-auto" />
                           )}
-                          <p className="text-sm leading-relaxed">{entry.text}</p>
+                          <p className="text-sm leading-relaxed break-words">{entry.text}</p>
                         </div>
                       </div>
                     ))
@@ -555,7 +555,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
 
   if (embedded) {
     return (
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto overflow-hidden">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-text-primary dark:text-white">Case History</h1>
           <p className="text-sm text-text-muted">Review your past support cases and diagnostic reports</p>
