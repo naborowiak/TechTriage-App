@@ -319,9 +319,9 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-3 sm:gap-6 overflow-hidden">
         {/* Cases List */}
-        <div className="lg:col-span-1 space-y-3">
+        <div className="lg:col-span-1 space-y-3 min-w-0 overflow-hidden">
           {isLoading ? (
             <div className="bg-white dark:bg-midnight-800 rounded-2xl p-8 border border-gray-100 dark:border-midnight-700">
               <LoadingScreen size="sm" message="Loading cases..." />
@@ -370,7 +370,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
         </div>
 
         {/* Case Detail */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0 overflow-hidden">
           {selectedCase ? (
             <div className="bg-white dark:bg-midnight-800 rounded-2xl border border-gray-100 dark:border-midnight-700 overflow-hidden">
               {/* Case Header */}
@@ -471,7 +471,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                       </div>
                       <div>
                         <span className="text-xs font-semibold text-text-muted">Est. Cost</span>
-                        <p className="text-text-primary dark:text-white text-sm">{selectedCase.escalationReport.estimatedCostRange}</p>
+                        <p className="text-text-primary dark:text-white text-sm break-words">{selectedCase.escalationReport.estimatedCostRange}</p>
                       </div>
                     </div>
                     {selectedCase.escalationReport.stepsTried.length > 0 && (
@@ -486,7 +486,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                     )}
                     <div>
                       <span className="text-xs font-semibold text-text-muted">Support Analysis</span>
-                      <p className="text-text-primary dark:text-white text-sm">{selectedCase.escalationReport.scoutAnalysis}</p>
+                      <p className="text-text-primary dark:text-white text-sm break-words">{selectedCase.escalationReport.scoutAnalysis}</p>
                     </div>
                   </div>
                 </div>
@@ -499,7 +499,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                     <CheckCircle className="w-4 h-4" />
                     Specialist Response
                   </div>
-                  <p className="text-text-primary dark:text-white text-sm leading-relaxed whitespace-pre-wrap">{selectedCase.specialistNotes}</p>
+                  <p className="text-text-primary dark:text-white text-sm leading-relaxed whitespace-pre-wrap break-words">{selectedCase.specialistNotes}</p>
                   {selectedCase.specialistRespondedAt && (
                     <p className="text-xs text-text-muted mt-3">
                       Responded {formatDate(selectedCase.specialistRespondedAt)} at {formatTime(selectedCase.specialistRespondedAt)}
@@ -555,7 +555,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
 
   if (embedded) {
     return (
-      <div className="max-w-6xl mx-auto overflow-hidden">
+      <div className="max-w-6xl mx-auto overflow-hidden min-w-0 w-full">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-text-primary dark:text-white">Case History</h1>
           <p className="text-sm text-text-muted">Review your past support cases and diagnostic reports</p>

@@ -460,7 +460,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className={
               isScoutView
                 ? "flex-1 overflow-hidden"
-                : "flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8"
+                : "flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 lg:p-8"
             }
           >
             {children}
