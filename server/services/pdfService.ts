@@ -263,6 +263,17 @@ function buildHTMLReport(data: CasePDFData): string {
   // Resolution steps
   const resolutionSteps = resolutionTexts.length > 0 ? splitIntoSteps(resolutionTexts.join(" ")) : [];
 
+  // Executive summary derivations
+  const execRootCause = rootCauseTexts.length > 0 ? rootCauseTexts[0] : "See detailed analysis";
+  const execPrimaryFix = resolutionSteps.length > 0 ? resolutionSteps[0] : (resolutionTexts.length > 0 ? resolutionTexts[0] : "See resolution steps");
+
+  // Report generation timestamp
+  const generatedAt = new Date().toLocaleString("en-US", {
+    month: "long", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit",
+    ...(tz ? { timeZone: tz } : {}),
+  });
+
   // SVG icons (inline — headless Chromium has no emoji fonts)
   const iconOverview = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11h8M8 15h8M8 19h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
   const iconIssue = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10v7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 7.2h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
@@ -272,6 +283,7 @@ function buildHTMLReport(data: CasePDFData): string {
   const iconEscalation = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
   const iconTranscript = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`;
   const iconCheck = `<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const iconSession = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`;
 
   // Build conditional sections
   const hasRootCause = rootCauseTexts.length > 0;
@@ -314,510 +326,338 @@ function buildHTMLReport(data: CasePDFData): string {
     </section>`;
   }
 
-  // Transcript HTML
+  // Transcript HTML — rendered as appendix on page 2+
   let transcriptHTML = "";
   if (hasTranscript) {
     transcriptHTML = `
-    <hr class="divider" />
-    <section class="section">
-      <div class="section__head">
-        <div class="icon icon--amber">${iconTranscript}</div>
-        <div>
-          <h2>Conversation Transcript</h2>
-          <p class="muted">Full session dialogue between client and support agent.</p>
-        </div>
-      </div>
-      <div class="transcript">
-        ${data.messages.map((msg) => {
-          const agentLabel = msg.agentName || data.agentName || "TotalAssist Support";
-          const speaker = msg.role === "user" ? (data.userName?.split(" ")[0] || "You") : agentLabel;
-          const time = formatTime(msg.timestamp, tz);
-          const isUser = msg.role === "user";
-          return `<div class="msg ${isUser ? "msg--user" : "msg--agent"}">
-            <div class="msg__head">
-              <span class="msg__name">${esc(speaker)}</span>
-              <span class="msg__time">${esc(time)}</span>
+    <div class="appendix">
+      <section class="card">
+        <section class="section">
+          <div class="section__head">
+            <div class="icon icon--amber">${iconTranscript}</div>
+            <div>
+              <h2>Appendix: Conversation Transcript</h2>
+              <p class="muted">Full session dialogue between client and support agent.</p>
             </div>
-            <div class="msg__text">${esc(msg.text)}</div>
-          </div>`;
-        }).join("")}
-      </div>
-    </section>`;
+          </div>
+          <div class="transcript">
+            ${data.messages.map((msg) => {
+              const agentLabel = msg.agentName || data.agentName || "TotalAssist Support";
+              const speaker = msg.role === "user" ? (data.userName?.split(" ")[0] || "You") : agentLabel;
+              const time = formatTime(msg.timestamp, tz);
+              const isUser = msg.role === "user";
+              return `<div class="msg ${isUser ? "msg--user" : "msg--agent"}">
+                <div class="msg__head">
+                  <span class="msg__name">${esc(speaker)}</span>
+                  <span class="msg__time">${esc(time)}</span>
+                </div>
+                <div class="msg__text">${esc(msg.text)}</div>
+              </div>`;
+            }).join("")}
+          </div>
+        </section>
+        <footer class="footer">
+          <div><strong>TotalAssist</strong> &middot; Diagnostic Report &middot; ${esc(sessionId)}</div>
+          <div>Generated ${esc(generatedAt)}</div>
+        </footer>
+      </section>
+    </div>`;
   }
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+@page { size: A4; margin: 0; }
 :root{
   --bg1:#5B4BFF;
   --bg2:#2AA7FF;
   --ink:#0B1020;
   --muted:#6B7280;
-  --card:rgba(255,255,255,0.90);
-  --stroke:rgba(255,255,255,0.36);
-  --shadow:0 24px 80px rgba(11,16,32,0.25);
-  --radius:24px;
-  --radius2:18px;
+  --card:#FFFFFF;
+  --stroke:rgba(0,0,0,0.06);
+  --shadow:0 4px 24px rgba(11,16,32,0.08);
+  --radius:20px;
+  --radius2:14px;
+  --subtle-bg:#FAFBFC;
 }
 
 *{ box-sizing:border-box; margin:0; padding:0; }
 body{
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color:rgba(255,255,255,0.92);
-  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  color: var(--ink);
+  background: #F8F9FB;
   -webkit-font-smoothing: antialiased;
 }
 
 .page{
   width: 210mm;
-  padding: 30px 18px 50px;
+  padding: 0;
   position:relative;
 }
 
-/* Background decor */
-.bg{
-  position:absolute;
-  top:0; left:0; right:0;
-  height: 420px;
-  overflow:hidden;
-  z-index:0;
+/* ── Hero (self-contained gradient) ── */
+.hero-wrap{
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  padding: 28px 28px 24px;
+  position: relative;
+  overflow: hidden;
 }
 .glow{
   position:absolute;
-  width:520px;
-  height:520px;
-  filter: blur(40px);
-  opacity:0.55;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55), rgba(255,255,255,0));
+  width:400px;
+  height:400px;
+  filter: blur(50px);
+  opacity:0.25;
+  background: radial-gradient(circle, rgba(255,255,255,0.4), rgba(255,255,255,0));
+  pointer-events:none;
 }
-.glow--tl{ top:-160px; left:-160px; transform:rotate(12deg); }
-.glow--tr{ top:-180px; right:-180px; opacity:0.45; }
-.glow--br{ bottom:-200px; right:-220px; opacity:0.35; }
+.glow--tl{ top:-140px; left:-140px; }
+.glow--tr{ top:-160px; right:-160px; opacity:0.18; }
 
-.shell{
-  width: 100%;
-  position:relative;
-  z-index:1;
-}
-
-/* Hero header */
-.hero{
-  padding: 10px 6px 18px;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:14px;
-}
+.brand{ display:flex; align-items:center; gap:14px; }
 .mark{
-  width:52px;
-  height:52px;
-  border-radius:16px;
+  width:48px; height:48px; border-radius:14px;
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: 0 10px 30px rgba(11,16,32,0.18);
-  display:grid;
-  place-items:center;
-}
-.mark svg{ width:30px; height:30px; }
-
-.brand__text{ line-height:1.05; }
-.brand__name{
-  font-weight:800;
-  letter-spacing:-0.02em;
-  font-size:22px;
-}
-.brand__name span{
-  font-weight:700;
-  opacity:0.95;
-}
-.brand__tagline{
-  margin-top:6px;
-  font-size:11px;
-  letter-spacing:0.16em;
-  opacity:0.78;
+  display:grid; place-items:center;
 }
 
-.titleBlock{
-  margin-top: 22px;
-}
-.titleBlock h1{
-  margin:0;
-  font-size: 42px;
-  letter-spacing:-0.03em;
-  line-height:1.06;
-}
-.titleBlock p{
-  margin:10px 0 0;
-  opacity:0.86;
-  font-size: 15px;
-}
+.brand__text{ line-height:1.05; color:white; }
+.brand__name{ font-weight:800; letter-spacing:-0.02em; font-size:20px; }
+.brand__name span{ font-weight:700; opacity:0.95; }
+.brand__tagline{ margin-top:5px; font-size:10px; letter-spacing:0.16em; opacity:0.78; text-transform:uppercase; }
 
-/* Meta pills */
-.metaRow{
-  margin-top: 18px;
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-}
+.titleBlock{ margin-top:20px; color:white; }
+.titleBlock h1{ font-size:34px; letter-spacing:-0.03em; line-height:1.06; }
+.titleBlock p{ margin:8px 0 0; opacity:0.86; font-size:14px; }
+
+.metaRow{ margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; }
 .metaPill{
-  display:flex;
-  gap:10px;
-  align-items:baseline;
-  padding: 10px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.14);
-  border: 1px solid rgba(255,255,255,0.20);
+  display:flex; gap:8px; align-items:baseline;
+  padding:8px 12px; border-radius:999px;
+  background:rgba(255,255,255,0.14);
+  border:1px solid rgba(255,255,255,0.20);
+  color:white;
 }
-.metaPill span{
-  font-size:12px;
-  opacity:0.78;
-}
-.metaPill strong{
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:-0.01em;
-}
+.metaPill span{ font-size:11px; opacity:0.78; }
+.metaPill strong{ font-size:12px; font-weight:700; }
 
-/* Main glass card */
+/* ── Content area (white) ── */
+.content{ padding:20px 28px 0; }
+
+/* ── Card ── */
 .card{
-  margin-top: 18px;
-  background: var(--card);
-  color: var(--ink);
-  border: 1px solid rgba(255,255,255,0.55);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
   overflow:hidden;
 }
 
-.section{
-  padding: 22px 22px 18px;
-}
+.section{ padding:20px 22px 16px; }
 
 .section__head{
-  display:flex;
-  align-items:flex-start;
-  gap:12px;
-  position:relative;
+  display:flex; align-items:flex-start; gap:12px;
 }
 .icon{
-  width:42px;
-  height:42px;
-  border-radius: 14px;
-  background: rgba(91,75,255,0.12);
-  border: 1px solid rgba(91,75,255,0.14);
-  display:grid;
-  place-items:center;
-  color: rgba(64, 84, 255, 0.95);
+  width:38px; height:38px; border-radius:12px;
+  background:rgba(91,75,255,0.10);
+  border:1px solid rgba(91,75,255,0.12);
+  display:grid; place-items:center;
+  color:rgba(64,84,255,0.90);
   flex-shrink:0;
 }
-.icon svg{ width:22px; height:22px; }
-.icon--green{ background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.14); color: rgba(5,120,80,0.95); }
-.icon--amber{ background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.14); color: rgba(180,100,10,0.95); }
-.icon--red{ background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.14); color: rgba(220,38,38,0.95); }
+.icon svg{ width:20px; height:20px; }
+.icon--green{ background:rgba(16,185,129,0.10); border-color:rgba(16,185,129,0.12); color:rgba(5,120,80,0.90); }
+.icon--amber{ background:rgba(245,158,11,0.10); border-color:rgba(245,158,11,0.12); color:rgba(180,100,10,0.90); }
+.icon--red{ background:rgba(239,68,68,0.10); border-color:rgba(239,68,68,0.12); color:rgba(220,38,38,0.90); }
 
-.section__head h2{
-  margin:0;
-  font-size: 20px;
-  letter-spacing:-0.02em;
-}
-.muted{
-  margin:6px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
+.section__head h2{ font-size:18px; letter-spacing:-0.02em; color:var(--ink); }
+.muted{ margin:4px 0 0; color:var(--muted); font-size:12px; }
 
 /* Status badge */
 .status{
   margin-left:auto;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding: 10px 12px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 13px;
-  white-space:nowrap;
-  flex-shrink:0;
+  display:flex; align-items:center; gap:7px;
+  padding:8px 12px; border-radius:999px;
+  font-weight:700; font-size:12px; white-space:nowrap; flex-shrink:0;
 }
-.statusDot{
-  width:10px;
-  height:10px;
-  border-radius: 999px;
+.statusDot{ width:8px; height:8px; border-radius:999px; }
+
+/* ── Executive Summary ── */
+.exec-summary{
+  margin-top:14px;
+  border-radius:var(--radius2);
+  background:rgba(91,75,255,0.03);
+  border:1px solid rgba(91,75,255,0.08);
+  overflow:hidden;
+}
+.exec-row{
+  display:flex; padding:12px 14px;
+  border-bottom:1px solid rgba(91,75,255,0.06);
+  page-break-inside:avoid;
+}
+.exec-row:last-child{ border-bottom:none; }
+.exec-label{
+  width:110px; flex-shrink:0;
+  font-size:11px; letter-spacing:0.10em; text-transform:uppercase;
+  color:rgba(91,75,255,0.60); font-weight:700; padding-top:2px;
+}
+.exec-value{
+  font-size:14px; font-weight:650; color:var(--ink); line-height:1.4;
 }
 
-/* Tiles grid */
-.tiles{
-  margin-top: 16px;
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+/* ── Session Details table ── */
+.overview-tbl{
+  margin-top:14px; width:100%;
+  border-collapse:separate; border-spacing:0;
+  border-radius:var(--radius2); overflow:hidden;
+  background:var(--subtle-bg);
+  border:1px solid var(--stroke);
 }
-.tile{
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(11,16,32,0.06);
-  border-radius: var(--radius2);
-  padding: 14px 14px;
-  box-shadow: 0 10px 28px rgba(11,16,32,0.07);
-  page-break-inside: avoid;
+.overview-tbl td{
+  padding:9px 14px; font-size:13px; vertical-align:top;
+  border-bottom:1px solid rgba(0,0,0,0.04);
 }
-.k{
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(107,114,128,0.95);
+.overview-tbl tr:last-child td{ border-bottom:none; }
+.overview-tbl .lbl{
+  font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; width:110px; white-space:nowrap;
 }
-.v{
-  margin-top:8px;
-  font-size: 16px;
-  font-weight: 750;
-  letter-spacing:-0.01em;
-  color: rgba(11,16,32,0.92);
-}
+.overview-tbl .val{ font-weight:650; color:var(--ink); }
 
 /* Divider */
 .divider{
-  margin:0;
-  border:0;
-  height:1px;
-  background: linear-gradient(90deg, rgba(11,16,32,0.05), rgba(11,16,32,0.10), rgba(11,16,32,0.05));
+  margin:0; border:0; height:1px;
+  background:linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.07), rgba(0,0,0,0.03));
 }
 
 /* Callout */
 .callout{
-  margin-top: 14px;
-  padding: 16px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(91,75,255,0.20);
-  background:
-    linear-gradient(135deg, rgba(91,75,255,0.16), rgba(42,167,255,0.14)),
-    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.55), rgba(255,255,255,0));
-  position:relative;
-  overflow:hidden;
-  page-break-inside: avoid;
+  margin-top:12px; padding:14px;
+  border-radius:var(--radius2);
+  border:1px solid rgba(91,75,255,0.14);
+  background:rgba(91,75,255,0.04);
+  page-break-inside:avoid;
 }
-.callout__label{
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(56, 66, 160, 0.95);
-  font-weight: 800;
-}
-.callout__text{
-  margin-top: 10px;
-  font-size: 15px;
-  font-weight: 650;
-  color: rgba(11,16,32,0.86);
-  line-height: 1.45;
-}
+.callout__label{ font-size:10px; text-transform:uppercase; letter-spacing:0.12em; color:rgba(91,75,255,0.70); font-weight:800; }
+.callout__text{ margin-top:8px; font-size:14px; font-weight:600; color:var(--ink); line-height:1.45; }
 
 /* Check items */
-.checks{
-  margin: 14px 0 0;
-  padding:0;
-  list-style:none;
-  display:grid;
-  gap:10px;
-}
+.checks{ margin:12px 0 0; padding:0; list-style:none; display:grid; gap:8px; }
 .checks li{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  padding: 12px 12px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(11,16,32,0.06);
-  box-shadow: 0 10px 26px rgba(11,16,32,0.06);
-  line-height:1.5;
-  color: rgba(11,16,32,0.82);
-  font-size: 14px;
-  page-break-inside: avoid;
+  display:flex; gap:10px; align-items:flex-start;
+  padding:10px 12px; border-radius:12px;
+  background:var(--subtle-bg); border:1px solid var(--stroke);
+  line-height:1.5; color:rgba(11,16,32,0.80); font-size:13px;
+  page-break-inside:avoid;
 }
 .checkIcon{
-  width:22px;
-  height:22px;
-  border-radius: 10px;
-  background: rgba(16,185,129,0.14);
-  border: 1px solid rgba(16,185,129,0.20);
-  color: rgba(16,185,129,0.95);
-  display:grid;
-  place-items:center;
-  flex:0 0 auto;
-  margin-top:2px;
+  width:20px; height:20px; border-radius:8px;
+  background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.16);
+  color:rgba(16,185,129,0.90);
+  display:grid; place-items:center; flex:0 0 auto; margin-top:1px;
 }
-.checkIcon svg{ width:14px; height:14px; }
+.checkIcon svg{ width:13px; height:13px; }
 
 /* Numbered steps */
-.steps{
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-  display:grid;
-  gap:10px;
-}
+.steps{ margin:12px 0 0; padding:0; list-style:none; display:grid; gap:8px; }
 .steps li{
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  padding: 12px 12px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(11,16,32,0.06);
-  box-shadow: 0 10px 26px rgba(11,16,32,0.06);
-  line-height:1.5;
-  color: rgba(11,16,32,0.82);
-  font-size: 14px;
-  page-break-inside: avoid;
+  display:flex; gap:10px; align-items:flex-start;
+  padding:10px 12px; border-radius:12px;
+  background:var(--subtle-bg); border:1px solid var(--stroke);
+  line-height:1.5; color:rgba(11,16,32,0.80); font-size:13px;
+  page-break-inside:avoid;
 }
 .stepNum{
-  width:26px;
-  height:26px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(91,75,255,0.75), rgba(42,167,255,0.75));
-  color: white;
-  font-weight: 800;
-  font-size: 13px;
-  display:grid;
-  place-items:center;
-  flex:0 0 auto;
-  margin-top:1px;
-  box-shadow: 0 10px 18px rgba(91,75,255,0.18);
+  width:24px; height:24px; border-radius:999px;
+  background:linear-gradient(135deg, rgba(91,75,255,0.70), rgba(42,167,255,0.70));
+  color:white; font-weight:800; font-size:12px;
+  display:grid; place-items:center; flex:0 0 auto; margin-top:1px;
 }
 
 /* Note */
 .note{
-  margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(59,130,246,0.08);
-  border: 1px solid rgba(59,130,246,0.14);
-  color: rgba(11,16,32,0.78);
-  font-size: 13px;
-  line-height: 1.55;
-  page-break-inside: avoid;
+  margin-top:10px; padding:10px 14px; border-radius:12px;
+  background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.10);
+  color:rgba(11,16,32,0.72); font-size:12px; line-height:1.5;
+  page-break-inside:avoid;
 }
 
 /* Recommendation */
 .recommendation{
-  margin-top: 14px;
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(245,158,11,0.08);
-  border: 1px solid rgba(245,158,11,0.16);
-  page-break-inside: avoid;
+  margin-top:12px; padding:14px; border-radius:var(--radius2);
+  background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.12);
+  page-break-inside:avoid;
 }
-.recommendation__label{
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(146,64,14,0.85);
-  font-weight: 800;
-}
-.recommendation__text{
-  margin-top: 10px;
-  font-size: 14px;
-  color: rgba(11,16,32,0.78);
-  line-height: 1.5;
-}
+.recommendation__label{ font-size:10px; text-transform:uppercase; letter-spacing:0.12em; color:rgba(146,64,14,0.80); font-weight:800; }
+.recommendation__text{ margin-top:8px; font-size:13px; color:rgba(11,16,32,0.72); line-height:1.5; }
 
 /* Escalation tiles */
 .escalation-tiles{
-  margin-top: 14px;
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  margin-top:12px; display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;
 }
 .escalation-tile{
-  background: rgba(239,68,68,0.06);
-  border: 1px solid rgba(239,68,68,0.14);
-  border-radius: var(--radius2);
-  padding: 14px;
-  page-break-inside: avoid;
+  background:rgba(239,68,68,0.04); border:1px solid rgba(239,68,68,0.10);
+  border-radius:var(--radius2); padding:12px; page-break-inside:avoid;
 }
-.escalation-tile .k{ color: rgba(220,38,38,0.75); }
-.escalation-tile .v{ color: rgba(153,27,27,0.9); }
+.escalation-tile .k{ font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:rgba(220,38,38,0.70); font-weight:600; }
+.escalation-tile .v{ margin-top:6px; font-size:14px; font-weight:700; color:rgba(153,27,27,0.85); }
+
+/* ── Appendix ── */
+.appendix{
+  page-break-before:always;
+  padding:20px 28px 0;
+}
 
 /* Transcript */
-.transcript{
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 14px;
-}
-.msg{
-  padding: 12px 14px;
-  border-radius: 16px;
-  max-width: 85%;
-  page-break-inside: avoid;
-}
+.transcript{ display:flex; flex-direction:column; gap:6px; margin-top:12px; }
+.msg{ padding:10px 12px; border-radius:12px; max-width:85%; page-break-inside:avoid; }
 .msg--user{
-  background: rgba(91,75,255,0.06);
-  border: 1px solid rgba(91,75,255,0.12);
-  align-self: flex-end;
-  margin-left: auto;
+  background:rgba(91,75,255,0.05); border:1px solid rgba(91,75,255,0.10);
+  align-self:flex-end; margin-left:auto;
 }
 .msg--agent{
-  background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(11,16,32,0.06);
-  align-self: flex-start;
-  box-shadow: 0 4px 12px rgba(11,16,32,0.04);
+  background:var(--subtle-bg); border:1px solid var(--stroke);
+  align-self:flex-start;
 }
-.msg__head{
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-  margin-bottom: 4px;
-}
-.msg__name{
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.msg--user .msg__name{ color: rgba(91,75,255,0.8); }
-.msg--agent .msg__name{ color: rgba(11,16,32,0.55); }
-.msg__time{
-  font-size: 10px;
-  color: rgba(107,114,128,0.65);
-}
+.msg__head{ display:flex; gap:8px; align-items:baseline; margin-bottom:3px; }
+.msg__name{ font-size:10px; font-weight:700; letter-spacing:0.02em; }
+.msg--user .msg__name{ color:rgba(91,75,255,0.75); }
+.msg--agent .msg__name{ color:rgba(11,16,32,0.50); }
+.msg__time{ font-size:9px; color:rgba(107,114,128,0.60); }
 .msg__text{
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: rgba(11,16,32,0.78);
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  font-size:12px; line-height:1.5; color:rgba(11,16,32,0.75);
+  white-space:pre-wrap; word-wrap:break-word;
 }
+
+/* General label/value */
+.k{ font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+.v{ margin-top:6px; font-size:14px; font-weight:700; color:var(--ink); }
 
 /* Footer */
 .footer{
-  display:flex;
-  gap:12px;
-  justify-content:space-between;
-  padding: 16px 22px 18px;
-  background: rgba(255,255,255,0.62);
-  border-top: 1px solid rgba(11,16,32,0.05);
-  color: rgba(11,16,32,0.62);
-  font-size: 12px;
+  display:flex; gap:12px; justify-content:space-between;
+  padding:14px 22px; background:var(--subtle-bg);
+  border-top:1px solid var(--stroke);
+  color:var(--muted); font-size:11px;
 }
-.footer strong{ color: rgba(11,16,32,0.78); }
+.footer strong{ color:var(--ink); }
 </style>
 </head>
 
 <body>
-  <div class="bg" aria-hidden="true">
-    <div class="glow glow--tl"></div>
-    <div class="glow glow--tr"></div>
-    <div class="glow glow--br"></div>
-  </div>
-
   <main class="page">
-    <section class="shell">
 
-      <!-- Hero Header -->
-      <header class="hero">
+    <!-- Hero Header (gradient contained here) -->
+    <div class="hero-wrap">
+      <div class="glow glow--tl" aria-hidden="true"></div>
+      <div class="glow glow--tr" aria-hidden="true"></div>
+
+      <header>
         <div class="brand">
           <div class="mark" aria-hidden="true">
             ${logoBase64
@@ -829,48 +669,78 @@ body{
           </div>
           <div class="brand__text">
             <div class="brand__name">Total<span>Assist</span></div>
-            <div class="brand__tagline">AI-POWERED HOME TECH SUPPORT</div>
+            <div class="brand__tagline">AI-Powered Home Tech Support</div>
           </div>
         </div>
 
         <div class="titleBlock">
           <h1>Diagnostic Report</h1>
-          <p>Comprehensive support session summary</p>
+          <p>Support session summary and findings</p>
         </div>
 
         <div class="metaRow" role="list" aria-label="Session metadata">
-          <div class="metaPill" role="listitem"><span>Session ID</span><strong>${esc(sessionId)}</strong></div>
+          <div class="metaPill" role="listitem"><span>Session</span><strong>${esc(sessionId)}</strong></div>
           <div class="metaPill" role="listitem"><span>Date</span><strong>${esc(dateStr)}</strong></div>
           ${modeLabel ? `<div class="metaPill" role="listitem"><span>Mode</span><strong>${esc(modeLabel)}</strong></div>` : ""}
           <div class="metaPill" role="listitem"><span>Agent</span><strong>${esc(assistedBy)}</strong></div>
         </div>
       </header>
+    </div>
 
-      <!-- Main Glass Card -->
+    <!-- Main Content (white background) -->
+    <div class="content">
       <section class="card">
 
-        <!-- Session Overview -->
+        <!-- Executive Summary -->
         <section class="section">
           <div class="section__head">
             <div class="icon">${iconOverview}</div>
             <div>
-              <h2>Session Overview</h2>
-              <p class="muted">Key information captured for this support session.</p>
+              <h2>Executive Summary</h2>
+              <p class="muted">At-a-glance outcome of this support session.</p>
             </div>
-            <div class="status" style="background:${sc.bg}; border:1px solid ${sc.border}; color:${sc.text};">
-              <span class="statusDot" style="background:${sc.dot}; box-shadow:0 0 0 4px ${sc.dotShadow};" aria-hidden="true"></span>
+            <div class="status" style="background:${sc.bg};border:1px solid ${sc.border};color:${sc.text};">
+              <span class="statusDot" style="background:${sc.dot};box-shadow:0 0 0 3px ${sc.dotShadow};" aria-hidden="true"></span>
               <span>${esc(statusInfo.label)}</span>
             </div>
           </div>
 
-          <div class="tiles">
-            ${data.userName ? `<div class="tile"><div class="k">Client Name</div><div class="v">${esc(data.userName)}</div></div>` : ""}
-            <div class="tile"><div class="k">Date</div><div class="v">${esc(dateStr)}</div></div>
-            <div class="tile"><div class="k">Session ID</div><div class="v">${esc(sessionId)}</div></div>
-            ${sessionMode ? `<div class="tile"><div class="k">Session Mode</div><div class="v">${esc(modeLabel || sessionMode)}</div></div>` : ""}
-            <div class="tile"><div class="k">Support Agent</div><div class="v">${esc(assistedBy)}</div></div>
-            ${durationStr ? `<div class="tile"><div class="k">Duration</div><div class="v">${esc(durationStr)}</div></div>` : ""}
+          <div class="exec-summary">
+            <div class="exec-row">
+              <div class="exec-label">Outcome</div>
+              <div class="exec-value">${esc(statusInfo.label)}</div>
+            </div>
+            <div class="exec-row">
+              <div class="exec-label">Root Cause</div>
+              <div class="exec-value">${esc(execRootCause)}</div>
+            </div>
+            <div class="exec-row">
+              <div class="exec-label">Primary Fix</div>
+              <div class="exec-value">${esc(execPrimaryFix)}</div>
+            </div>
           </div>
+        </section>
+
+        <hr class="divider" />
+
+        <!-- Session Details (compact table) -->
+        <section class="section">
+          <div class="section__head">
+            <div class="icon">${iconSession}</div>
+            <div>
+              <h2>Session Details</h2>
+              <p class="muted">Key information for this support session.</p>
+            </div>
+          </div>
+
+          <table class="overview-tbl">
+            ${data.userName ? `<tr><td class="lbl">Client</td><td class="val">${esc(data.userName)}</td></tr>` : ""}
+            <tr><td class="lbl">Date</td><td class="val">${esc(dateStr)}</td></tr>
+            <tr><td class="lbl">Session ID</td><td class="val">${esc(sessionId)}</td></tr>
+            ${modeLabel ? `<tr><td class="lbl">Mode</td><td class="val">${esc(modeLabel)}</td></tr>` : ""}
+            <tr><td class="lbl">Agent</td><td class="val">${esc(assistedBy)}</td></tr>
+            ${durationStr ? `<tr><td class="lbl">Duration</td><td class="val">${esc(durationStr)}</td></tr>` : ""}
+          </table>
         </section>
 
         <hr class="divider" />
@@ -900,7 +770,7 @@ body{
             <div class="icon">${iconRootCause}</div>
             <div>
               <h2>Root Cause Analysis</h2>
-              <p class="muted">Why the problem occurred (high-confidence summary).</p>
+              <p class="muted">Why the problem occurred.</p>
             </div>
           </div>
 
@@ -972,16 +842,17 @@ body{
 
         ${escalationHTML}
 
-        ${transcriptHTML}
-
         <!-- Footer -->
         <footer class="footer">
-          <div><strong>TotalAssist</strong> &middot; Diagnostic Session Report</div>
-          <div>Confidential &middot; For client use</div>
+          <div><strong>TotalAssist</strong> &middot; Diagnostic Report &middot; ${esc(sessionId)}</div>
+          <div>Generated ${esc(generatedAt)}</div>
         </footer>
       </section>
+    </div>
 
-    </section>
+    <!-- Appendix: Transcript (starts on new page) -->
+    ${transcriptHTML}
+
   </main>
 </body>
 </html>`;
@@ -1012,8 +883,14 @@ async function generatePDFWithPuppeteer(html: string): Promise<string> {
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
+      margin: { top: "0mm", right: "0mm", bottom: "14mm", left: "0mm" },
       preferCSSPageSize: false,
+      displayHeaderFooter: true,
+      headerTemplate: "<div></div>",
+      footerTemplate: `<div style="font-size:9px;width:100%;padding:0 28px;display:flex;justify-content:space-between;color:#9CA3AF;font-family:system-ui,sans-serif;">
+        <span>TotalAssist &middot; Diagnostic Report</span>
+        <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+      </div>`,
     });
 
     return Buffer.from(pdfBuffer).toString("base64");
