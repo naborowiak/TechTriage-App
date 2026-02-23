@@ -152,7 +152,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       setMessages(prev => [...prev, {
         id: `idle-warning-${Date.now()}`,
         role: UserRole.MODEL,
-        text: `Are you still there? I'll close this session in a minute if I don't hear back.`,
+        text: `Are you still there? I'll close this session in a couple of minutes if I don't hear back.`,
         timestamp: Date.now(),
         agentName: agentNameRef.current,
       }]);
@@ -173,8 +173,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           }
           return updated;
         });
-      }, 60_000); // 1 more minute
-    }, 60_000); // 1 minute of no user activity
+      }, 120_000); // 2 more minutes
+    }, 120_000); // 2 minutes of no user activity
   }, [isAuthenticated]);
 
   // Reset inactivity timer after each model response (waiting for user to reply)

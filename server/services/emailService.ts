@@ -12,6 +12,9 @@ const APP_BASE_URL = process.env.APP_URL || "https://totalassist.tech";
 const DEFAULT_SENDER = "support@totalassist.tech";
 const EMAIL_FROM = process.env.EMAIL_FROM || `TotalAssist <${DEFAULT_SENDER}>`;
 
+// Timezone for email date/time formatting (US Central)
+const EMAIL_TIMEZONE = "America/Chicago";
+
 // Resend's default test sender (works without domain verification)
 const RESEND_TEST_SENDER = "onboarding@resend.dev";
 
@@ -244,6 +247,7 @@ function getTrialEndingEmailText(firstName: string, daysRemaining: number, trial
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: EMAIL_TIMEZONE,
   });
   const urgencyText = daysRemaining === 1
     ? 'Your trial ends tomorrow!'
@@ -282,6 +286,7 @@ function getSessionGuideEmailText(userName: string, summary: string, sessionDate
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: EMAIL_TIMEZONE,
   });
 
   return `Your TotalAssist Session Guide - ${formattedDate}
@@ -701,6 +706,7 @@ function getTrialEndingEmailHtml(firstName: string, daysRemaining: number, trial
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: EMAIL_TIMEZONE,
   });
 
   const urgencyColor = daysRemaining === 1 ? '#ef4444' : BRAND.electricCyan;
@@ -1064,10 +1070,12 @@ function getSessionGuideEmailHtml(userName: string, summary: string, sessionDate
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: EMAIL_TIMEZONE,
   });
   const formattedTime = sessionDate.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: EMAIL_TIMEZONE,
   });
 
   return `<!DOCTYPE html>
@@ -1457,6 +1465,7 @@ export async function sendSessionGuideEmail(
       year: "numeric",
       month: "long",
       day: "numeric",
+      timeZone: EMAIL_TIMEZONE,
     });
 
     const data = await resend.emails.send({
@@ -1944,6 +1953,7 @@ function getCancellationScheduledText(firstName: string, planName: string, perio
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: EMAIL_TIMEZONE,
   });
   return `Your TotalAssist cancellation is confirmed
 
@@ -1971,6 +1981,7 @@ function getCancellationScheduledHtml(firstName: string, planName: string, perio
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: EMAIL_TIMEZONE,
   });
 
   return `<!DOCTYPE html>
