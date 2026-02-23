@@ -477,7 +477,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             userId={user.id}
           />
         ) : showChatHome ? (
-          <div className="flex-1 overflow-y-auto pb-4 lg:pb-8 relative">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden pb-4 lg:pb-8 relative">
             <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-6">
               {/* Heading */}
               <div className="arcade-up-1 space-y-1">

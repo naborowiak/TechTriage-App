@@ -1508,6 +1508,20 @@ const App: React.FC = () => {
     return () => { document.body.style.overflow = ''; };
   }, [heroPreviewMode]);
 
+  // Deep-link: open case directly from ?caseId= query param (e.g. email links)
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+    const params = new URLSearchParams(window.location.search);
+    const caseId = params.get('caseId');
+    if (caseId && currentView === PageView.DASHBOARD) {
+      setScoutInitialCaseId(caseId);
+      setScoutSessionKey(prev => prev + 1);
+      setDashboardView('scout');
+      // Clean the URL to prevent re-opening on refresh
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [authLoading, isAuthenticated, currentView]);
+
   const handleFreeTrial = useCallback(() => {
     navigate(PageView.SIGNUP);
   }, [navigate]);
@@ -2000,7 +2014,7 @@ const App: React.FC = () => {
   // Also show this layout when on dashboard route but still loading (no dashboardUser yet)
   if (currentView === PageView.DASHBOARD) {
     return (
-      <div className={`${dashboardView === 'scout' ? 'h-screen-safe overflow-hidden' : 'min-h-screen'} bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300`}>
+      <div className="h-screen-safe overflow-hidden bg-light-50 dark:bg-midnight-950 font-['Inter',sans-serif] text-text-primary dark:text-white transition-colors duration-300">
         {renderContent()}
         {/* ChatWidget removed from dashboard — chat IS the dashboard now */}
         <PWAInstallBanner {...pwaInstall} />

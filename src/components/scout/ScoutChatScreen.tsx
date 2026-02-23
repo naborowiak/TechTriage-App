@@ -1039,7 +1039,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {hasActiveSession && isAuthenticated && caseId && (
                 <button
                   onClick={handleManualEndSession}
@@ -1106,20 +1106,20 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               onSuggestEscalation={() => setShowEscalateConfirm(true)}
             />
           )}
-          <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mt-1 gap-2 overflow-hidden">
+            <div className="flex items-center gap-2 min-w-0 flex-wrap">
               {caseId && (
-                <span className="text-gray-400 dark:text-white/40 text-xs bg-light-200 dark:bg-white/5 px-2 py-1 rounded">
+                <span className="text-gray-400 dark:text-white/40 text-xs bg-light-200 dark:bg-white/5 px-2 py-1 rounded truncate max-w-[180px]">
                   {modeSequence ? formatCaseDisplayId(activeMode, modeSequence) : caseTitle || `Case ${caseId.substring(0, 8)}`}
                 </span>
               )}
               {selectedDevice && (
-                <span className="text-cyan-400/70 text-xs bg-cyan-400/10 px-2 py-1 rounded">
+                <span className="text-cyan-400/70 text-xs bg-cyan-400/10 px-2 py-1 rounded truncate max-w-[120px]">
                   {selectedDevice.name}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {hasActiveSession && isAuthenticated && caseId && (
                 <button
                   onClick={handleManualEndSession}
@@ -1181,7 +1181,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" role="log" aria-label="Support conversation" aria-live="polite">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4" role="log" aria-label="Support conversation" aria-live="polite">
         <div className="max-w-3xl mx-auto space-y-4">
         {(() => {
           // Find the last showStep message to attach navigation pills
@@ -1193,7 +1193,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             key={message.id}
             className={`flex ${message.role === UserRole.USER ? 'justify-end' : 'justify-start'} ${message.role === UserRole.USER ? 'chat-msg-user' : 'chat-msg-assistant'}`}
           >
-            <div className="max-w-[85%]">
+            <div className="max-w-[85%] overflow-hidden">
               {message.role !== UserRole.USER && message.agentName && (
                 <span className="text-xs text-gray-400 dark:text-white/40 mb-1 ml-1 block">{message.agentName}</span>
               )}
@@ -1215,7 +1215,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               )}
               {/* Hide fallback text when guided action is the main content */}
               {!(message.guidedAction && (!message.text || message.text === "I'm processing that for you..." || message.text === "Let me look into that for you...")) && (
-                <div className="text-[15px] leading-relaxed">
+                <div className="text-[15px] leading-relaxed break-words">
                   {renderMarkdown(message.text)}
                 </div>
               )}

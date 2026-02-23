@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 /* ── Base styles ── */
-body {
+html, body {
+  overflow-x: hidden;
   scroll-behavior: smooth;
+}
+
+/* ── Word-break containment for chat messages ── */
+.break-words {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* ── Dark mode text color overrides ── */

@@ -213,7 +213,7 @@ export const SessionHistoryView: React.FC<SessionHistoryViewProps> = ({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
         <h1 className="text-2xl font-bold text-text-primary dark:text-white">
           Session History
