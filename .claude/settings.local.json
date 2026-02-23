@@ -153,7 +153,13 @@
       "Bash(while read inode)",
       "Bash(do for pid in /proc/[0-9]*/fd/*)",
       "Bash(do readlink $pid)",
-      "Bash(replit secrets set ADMIN_EMAILS \"neal@totalassist.tech,naborowiak@gmail.com\" 2>&1 || echo \"replit secrets command failed, trying alternative...\")"
+      "Bash(replit secrets set ADMIN_EMAILS \"neal@totalassist.tech,naborowiak@gmail.com\" 2>&1 || echo \"replit secrets command failed, trying alternative...\")",
+      "WebFetch(domain:ut.service-now.com)",
+      "WebFetch(domain:support.servicenow.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:maislinc.umich.edu)",
+      "WebFetch(domain:mylinccontent.dsc.umich.edu)",
+      "WebFetch(domain:codecreative.io)"
     ]
   }
 }
