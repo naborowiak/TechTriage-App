@@ -19,8 +19,14 @@ import { useAuth } from '../../hooks/useAuth';
 import { ROOT_CATEGORIES } from '../../../shared/models/playbook';
 
 // Client-side fallback: infer context-aware pill choices when the server returns no function call.
+// SYNC NOTE: The "something else" branch must stay aligned with inferFallbackChoices()
+// in server/routes/ai.ts — both should present the same alternative device-type categories.
+// All branches return exactly 5 items (the rendering layer caps at 6 via .slice(0, 6)).
 function inferChoicesFromContext(lastUserMessage: string): string[] {
   const msg = lastUserMessage.toLowerCase();
+  // "It's Something Else" at top level → present device types (matches server-side fallback)
+  if (/something else|none of these|other option|different|not listed/.test(msg))
+    return ["Phone / Tablet", "Computer / Laptop", "Printer / Scanner", "Home Security / Camera", "Other Device"];
   if (/wi-?fi|wifi|internet|router|modem|network|connect/.test(msg))
     return ["Keeps disconnecting", "Slow speeds", "Can't connect at all", "No internet light on router", "Dead zones / weak signal"];
   if (/smart\s?home|alexa|google\s?home|ring|nest|smart\s?(light|lock|plug|speaker|device)/.test(msg))

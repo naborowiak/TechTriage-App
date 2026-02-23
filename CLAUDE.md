@@ -658,6 +658,40 @@ If The_Skeptic and a Dev agent disagree:
 - Checkbox column on mobile may cause horizontal overflow (CRM is primarily desktop)
 - No undo for inline edits (agent can manually change back)
 
+### Fix: "It's Something Else" Wi-Fi Bias in Chat/Photo Modes (Feb 23, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Bug:
+When users selected "It's Something Else" from the initial guided choice pills in chat/photo modes, the AI defaulted to Wi-Fi troubleshooting. Voice mode correctly asked general follow-up questions.
+
+#### Root Cause:
+1. System prompts (`SYSTEM_INSTRUCTION`, `LIVE_AGENT_INSTRUCTION`) had Wi-Fi as the first/most-detailed branch in the diagnostic decision tree, Wi-Fi-heavy examples, and free-form text rules mapping ambiguous phrases directly to Wi-Fi
+2. Client-side fallback `inferChoicesFromContext()` had no "something else" regex — fell through to `ROOT_CATEGORIES` (Wi-Fi first)
+
+#### Changes:
+1. **server/routes/ai.ts** — 7 edits to both `SYSTEM_INSTRUCTION` and `LIVE_AGENT_INSTRUCTION`:
+   - Replaced Wi-Fi-specific conversational examples with category-neutral ones
+   - Diversified `presentChoices` tool examples (added appliance example, removed router-brand example)
+   - Added "It's Something Else / General Inquiry" branch at TOP of diagnostic decision tree with explicit device-type guidance
+   - Reordered remaining categories alphabetically (Wi-Fi moved from 1st to last)
+   - Expanded free-form text rules: "I can't connect" now disambiguates across Wi-Fi/Bluetooth/streaming/smart devices instead of assuming Wi-Fi
+   - Added WRONG/RIGHT examples in Assist Pills rules for "Something Else" handling
+   - Diversified device identification examples (replaced router with appliance/smart device)
+   - Added SYNC NOTE comment on `inferFallbackChoices()`
+2. **src/components/scout/ScoutChatScreen.tsx** — Added "something else" regex as first pattern in `inferChoicesFromContext()`, returning device-type categories matching server-side fallback. Added SYNC NOTE comment.
+
+#### Key Skeptic Conditions Applied:
+- "Something else" alternative categories aligned between server (`inferFallbackChoices`) and client (`inferChoicesFromContext`) — both return: "Phone / Tablet", "Computer / Laptop", "Printer / Scanner", "Home Security / Camera", "Other Device"
+- SYNC NOTE comments added in both files referencing each other
+- 6-item cap safety documented (all branches return 5 items; `.slice(0, 6)` cap noted)
+- Second-round guidance in decision tree documented as non-binding suggestions
+
+#### Risks Accepted:
+- Gemini may still occasionally bias toward Wi-Fi (LLM behavior is probabilistic; prompt changes reduce but don't eliminate bias)
+- "I can't connect" disambiguation adds one extra tap for the most common case (Wi-Fi connectivity)
+- If `ROOT_CATEGORIES` grows beyond 5 items, the client-side fallback "It's Something Else" escape hatch would be silently dropped by `.slice(0, 6)`
+
 <!-- DECISIONS END -->
 
 ---
