@@ -230,7 +230,11 @@ ASSIST PILLS RULES:
 - On your VERY FIRST response, ALWAYS call presentChoices with common issue sub-categories based on what the user described. If they gave a broad category like "Wi-Fi", present specific sub-problems. If they typed a detailed issue, present likely diagnostic paths.
 - USE presentChoices on EVERY response. This is not optional. Many of our users are elderly, visually impaired, or have limited mobility — they CANNOT type easily. Assist Pills are an accessibility requirement, not a nice-to-have.
 - NEVER ask the user to "describe", "explain", "tell me more", or "type" anything. Instead, ALWAYS present your best guesses as tappable pills. If you're unsure what the issue is, present the 4-5 most common possibilities — guessing with pills is ALWAYS better than asking someone to type.
-- When the user taps "It's Something Else": present MORE SPECIFIC choices based on what you know so far. For example, if they said "Wi-Fi" and tapped "It's Something Else" on the sub-problems, present less common Wi-Fi issues like "Network name disappeared", "Connected but pages won't load", "Only works close to router". Only as a LAST RESORT after two rounds of "It's Something Else" should you say "Go ahead and describe what you're seeing."
+- When the user taps "It's Something Else":
+  * At the TOP LEVEL (initial categories): present DIFFERENT categories they haven't seen yet — device types like "Phone / Tablet", "Computer / Laptop", "Printer / Scanner", "Home Security / Camera", "Other Device". Do NOT default to Wi-Fi or repeat the same categories.
+  * Within a CATEGORY (e.g., Wi-Fi sub-problems): present less common issues for that category. For example, less common Wi-Fi issues: "Network name disappeared", "Connected but pages won't load", "Only works close to router".
+  * After TWO rounds of "It's Something Else": say "Go ahead and describe what you're seeing."
+  * NEVER assume Wi-Fi or any specific category when the user taps "It's Something Else" — they are explicitly telling you that none of your suggestions match.
 - After the user does type a free-form message, your NEXT response MUST use presentChoices again based on what they told you.
 - Include a short conversational text alongside every tool call — it appears as a chat bubble above the interactive element.
 - ONE tool call per response maximum. Never stack multiple tools.
@@ -368,7 +372,11 @@ ASSIST PILLS RULES:
 - On your VERY FIRST response, ALWAYS call presentChoices with common issue sub-categories based on what the user described. If they gave a broad category like "Wi-Fi", present specific sub-problems. If they typed a detailed issue, present likely diagnostic paths.
 - USE presentChoices on EVERY response. This is not optional. Many of our users are elderly, visually impaired, or have limited mobility — they CANNOT type easily. Assist Pills are an accessibility requirement, not a nice-to-have.
 - NEVER ask the user to "describe", "explain", "tell me more", or "type" anything. Instead, ALWAYS present your best guesses as tappable pills. If you're unsure what the issue is, present the 4-5 most common possibilities — guessing with pills is ALWAYS better than asking someone to type.
-- When the user taps "It's Something Else": present MORE SPECIFIC choices based on what you know so far. For example, if they said "Wi-Fi" and tapped "It's Something Else" on the sub-problems, present less common Wi-Fi issues like "Network name disappeared", "Connected but pages won't load", "Only works close to router". Only as a LAST RESORT after two rounds of "It's Something Else" should you say "Go ahead and describe what you're seeing."
+- When the user taps "It's Something Else":
+  * At the TOP LEVEL (initial categories): present DIFFERENT categories they haven't seen yet — device types like "Phone / Tablet", "Computer / Laptop", "Printer / Scanner", "Home Security / Camera", "Other Device". Do NOT default to Wi-Fi or repeat the same categories.
+  * Within a CATEGORY (e.g., Wi-Fi sub-problems): present less common issues for that category. For example, less common Wi-Fi issues: "Network name disappeared", "Connected but pages won't load", "Only works close to router".
+  * After TWO rounds of "It's Something Else": say "Go ahead and describe what you're seeing."
+  * NEVER assume Wi-Fi or any specific category when the user taps "It's Something Else" — they are explicitly telling you that none of your suggestions match.
 - After the user does type a free-form message, your NEXT response MUST use presentChoices again based on what they told you.
 - Include a short conversational text alongside every tool call — it appears as a chat bubble above the interactive element.
 - ONE tool call per response maximum. Never stack multiple tools.
@@ -500,6 +508,10 @@ const endSessionTool: FunctionDeclaration = {
 // Examines the user's message to present relevant sub-category pills instead of generic root categories.
 function inferFallbackChoices(message: string): { prompt: string; choices: string[] } {
   const msg = message.toLowerCase();
+  // "It's Something Else" at top level → present device types instead of repeating the same 5 categories
+  if (/something else|none of these|other option|different|not listed/i.test(msg)) {
+    return { prompt: "What kind of device do you need help with?", choices: ["Phone / Tablet", "Computer / Laptop", "Printer / Scanner", "Home Security / Camera", "Other Device"] };
+  }
   if (/wi-?fi|wifi|internet|router|modem|network|connect/.test(msg)) {
     return { prompt: "What's going on with your connection?", choices: ["Keeps disconnecting", "Slow speeds", "Can't connect at all", "No internet light on router", "Dead zones / weak signal"] };
   }
