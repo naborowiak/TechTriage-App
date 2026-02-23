@@ -240,7 +240,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: isProduction,
+      secure: isProduction || !!process.env.APP_DOMAINS, // Secure when production OR custom HTTPS domain
       httpOnly: true,
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -2046,26 +2046,44 @@ async function main() {
       "/api/auth/callback/google",
       passport.authenticate("google", {
         failureRedirect: "/?error=auth_failed",
+        keepSessionInfo: true, // Passport 0.7+ regenerates sessions; preserve authOrigin
       }),
       async (req, res) => {
-        const authOrigin = (req.session as any).authOrigin;
-        delete (req.session as any).authOrigin;
+        try {
+          const authOrigin = (req.session as any).authOrigin;
+          delete (req.session as any).authOrigin;
 
-        // Check if user has completed onboarding (has firstName set from onboarding form)
-        const user = req.user as any;
-        const dbUser = user?.id ? await authStorage.getUser(user.id) : null;
-        const hasCompletedOnboarding = dbUser?.homeType || dbUser?.techComfort;
+          const user = req.user as any;
+          console.log("[GOOGLE CALLBACK] Auth success, user:", { id: user?.id, email: user?.email });
 
-        // Determine redirect path - new users go to onboarding, returning users to dashboard
-        const redirectPath = hasCompletedOnboarding
-          ? "/dashboard"
-          : "/signup?oauth=true";
+          const dbUser = user?.id ? await authStorage.getUser(user.id) : null;
+          const hasCompletedOnboarding = dbUser?.homeType || dbUser?.techComfort;
 
-        // Redirect to stored origin domain if allowed, otherwise relative
-        if (authOrigin && isAllowedDomain(authOrigin)) {
-          res.redirect(`https://${authOrigin}${redirectPath}`);
-        } else {
-          res.redirect(redirectPath);
+          // Determine redirect path - new users go to onboarding, returning users to dashboard
+          const redirectPath = hasCompletedOnboarding
+            ? "/dashboard"
+            : "/signup?oauth=true";
+
+          // Use authOrigin if preserved, otherwise fall back to first allowed domain
+          const redirectDomain = (authOrigin && isAllowedDomain(authOrigin))
+            ? authOrigin
+            : allowedDomains[0] || null;
+
+          // Explicitly save session before redirect to guarantee persistence
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error("[GOOGLE CALLBACK] Session save error:", saveErr);
+            }
+            if (redirectDomain) {
+              console.log("[GOOGLE CALLBACK] Redirecting to:", `https://${redirectDomain}${redirectPath}`);
+              res.redirect(`https://${redirectDomain}${redirectPath}`);
+            } else {
+              res.redirect(redirectPath);
+            }
+          });
+        } catch (callbackErr) {
+          console.error("[GOOGLE CALLBACK] Error in success handler:", callbackErr);
+          res.redirect("/?error=auth_failed");
         }
       },
     );
