@@ -1210,21 +1210,16 @@ app.post("/api/promo-codes/validate", async (req, res) => {
   }
 });
 
-// Admin authentication middleware
+// Admin authentication middleware — uses getAgentUserFromDB which includes ADMIN_EMAILS bootstrap
 const requireAdmin = async (req: any, res: any, next: any) => {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
     return res.status(401).json({ error: "Authentication required" });
   }
-  const user = req.user as any;
-  // Check DB role first (authoritative source)
   try {
     const { getAgentUserFromDB } = await import("./middleware/agentMiddleware");
-    const agentUser = await getAgentUserFromDB(user.id);
+    const agentUser = await getAgentUserFromDB((req.user as any).id);
     if (agentUser?.role === "admin") return next();
   } catch {}
-  // Fallback: ADMIN_EMAILS env var (bootstrap-only, remove after first DB admin is created)
-  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
-  if (adminEmails.includes(user.email?.toLowerCase())) return next();
   return res.status(403).json({ error: "Admin access required" });
 };
 
@@ -2093,22 +2088,10 @@ async function main() {
       if (req.isAuthenticated() && req.user) {
         try {
           const { getAgentUserFromDB } = await import("./middleware/agentMiddleware");
-          const sessionUser = req.user as any;
-          const agentUser = await getAgentUserFromDB(sessionUser.id);
-          let role = agentUser?.role || "customer";
-          console.log("[AUTH_USER]", sessionUser.email, "| DB role:", agentUser?.role ?? "null", "| resolved:", role);
-          // Bootstrap fallback: check ADMIN_EMAILS env var for initial admin setup
-          if (role === "customer") {
-            const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
-            const userEmail = sessionUser.email?.toLowerCase();
-            if (userEmail && adminEmails.includes(userEmail)) {
-              role = "admin";
-              console.log("[AUTH_USER] Bootstrap override to admin via ADMIN_EMAILS");
-            }
-          }
+          const agentUser = await getAgentUserFromDB((req.user as any).id);
+          const role = agentUser?.role || "customer";
           res.json({ user: { ...req.user, role } });
-        } catch (err) {
-          console.error("[AUTH_USER] Role lookup failed:", err);
+        } catch {
           res.json({ user: { ...req.user, role: "customer" } });
         }
       } else {

@@ -28,6 +28,20 @@ const roleCache = new Map<string, { role: string; firstName: string | null; last
 const CACHE_TTL_MS = 2 * 60 * 1000;
 const CACHE_MAX_SIZE = 500;
 
+/**
+ * Bootstrap admin check: ADMIN_EMAILS env var grants admin access before
+ * the first admin is promoted via the Agent Portal's role management UI.
+ * Remove this fallback after initial admin setup is complete.
+ */
+function isBootstrapAdmin(email: string | undefined): boolean {
+  if (!email) return false;
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e: string) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return adminEmails.includes(email.toLowerCase());
+}
+
 export async function getAgentUserFromDB(userId: string): Promise<AgentUser | null> {
   // Check cache
   const cached = roleCache.get(userId);
@@ -50,7 +64,13 @@ export async function getAgentUserFromDB(userId: string): Promise<AgentUser | nu
 
     if (!user) return null;
 
-    const role = user.role || "customer";
+    let role = user.role || "customer";
+
+    // Bootstrap fallback: promote to admin if email is in ADMIN_EMAILS
+    if (role === "customer" && isBootstrapAdmin(user.email)) {
+      role = "admin";
+      console.log("[AGENT_AUTH] Bootstrap admin override for", user.email);
+    }
 
     // Evict oldest entries if cache is full
     if (roleCache.size >= CACHE_MAX_SIZE) {
@@ -105,8 +125,7 @@ export async function requireAgent(req: Request, res: Response, next: NextFuncti
 
 /**
  * Middleware: requires authenticated user with role 'admin'.
- * Checks DB role column only — does NOT use ADMIN_EMAILS env var.
- * ADMIN_EMAILS is a bootstrap-only mechanism for initial admin setup via manual SQL.
+ * Checks DB role (with ADMIN_EMAILS bootstrap fallback).
  */
 export async function requireAgentAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
