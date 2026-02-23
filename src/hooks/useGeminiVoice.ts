@@ -28,8 +28,11 @@ export interface UseGeminiVoiceReturn {
 
 const TARGET_SAMPLE_RATE = 16000;
 
-export function useGeminiVoice(): UseGeminiVoiceReturn {
+export function useGeminiVoice(caseId?: string | null): UseGeminiVoiceReturn {
   const { user } = useAuth();
+  const caseIdRef = useRef<string | null>(caseId || null);
+  // Keep ref in sync so setCaseId can be sent if caseId arrives after connect
+  if (caseId) caseIdRef.current = caseId;
   const [status, setStatus] = useState<GeminiVoiceStatus>('idle');
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -203,7 +206,12 @@ export function useGeminiVoice(): UseGeminiVoiceReturn {
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
-        ws.onopen = () => {};
+        ws.onopen = () => {
+          // Send caseId so server can link identified devices to this case
+          if (caseIdRef.current) {
+            ws.send(JSON.stringify({ type: 'setCaseId', caseId: caseIdRef.current }));
+          }
+        };
 
         ws.onmessage = (event) => {
           try {

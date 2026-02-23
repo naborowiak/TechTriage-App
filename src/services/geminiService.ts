@@ -9,7 +9,8 @@ export const sendMessageToGemini = async (
   newMessage: string,
   image?: string,
   deviceContext?: string,
-  agentName?: string
+  agentName?: string,
+  caseId?: string
 ): Promise<{ text: string, functionCall?: { name: string; args: Record<string, unknown> } }> => {
   try {
     const historyPayload = history
@@ -31,6 +32,7 @@ export const sendMessageToGemini = async (
         image,
         deviceContext,
         agentName,
+        caseId,
       }),
     });
 
@@ -107,7 +109,8 @@ export const sendMessageAsLiveAgent = async (
   history: ChatMessage[],
   newMessage: string,
   agent: { first: string; last: string },
-  image?: string
+  image?: string,
+  caseId?: string
 ): Promise<{ text: string, functionCall?: { name: string; args: Record<string, unknown> } }> => {
   try {
     const historyPayload = history
@@ -128,6 +131,7 @@ export const sendMessageAsLiveAgent = async (
         message: newMessage,
         agent,
         image,
+        caseId,
       }),
     });
 

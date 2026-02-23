@@ -28,6 +28,7 @@ import sharp from "sharp";
 import type { IncomingMessage } from "http";
 
 import * as stripeService from "./services/stripeService";
+import { processDeviceIdentification } from "./services/deviceIdentificationService";
 import * as promoCodeService from "./services/promoCodeService";
 import { getPlaybookBlock } from "./services/playbookService";
 import { startTrialNotificationJob, startArchivePurgeJob, runTrialNotificationCheckNow } from "./services/scheduledJobs";
@@ -1521,6 +1522,11 @@ CRITICAL RULES:
 
 ${SERVER_SAFETY_PLAYBOOK}
 
+DEVICE IDENTIFICATION (silent background tool):
+You have an additional tool: identifyDevice(deviceType, brand?, model?, displayName). Call it ONCE when you learn what device the user is troubleshooting.
+- This is an EXCEPTION to the one-tool-per-turn rule — you MAY call identifyDevice alongside other tools.
+- Do NOT mention this tool to the user. It works silently in the background.
+
 You're Alex from TotalAssist. Warm, competent, and human.`;
 }
 
@@ -1554,10 +1560,16 @@ CRITICAL RULES:
 
 ${SERVER_SAFETY_PLAYBOOK}
 
+DEVICE IDENTIFICATION (silent background tool):
+You have an additional tool: identifyDevice(deviceType, brand?, model?, displayName). Call it ONCE when you learn what device the user is troubleshooting.
+- This is an EXCEPTION to the one-tool-per-turn rule — you MAY call identifyDevice alongside other tools.
+- Do NOT mention this tool to the user. It works silently in the background.
+
 You're Alex from TotalAssist. Warm, competent, and human.`;
 }
 
-async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video', userContext?: UserContext | null) {
+async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video', userContext?: UserContext | null, userId?: string) {
+  let wsCaseId: string | null = null;
   const apiKey = process.env.GEMINI_API_KEY_TOTALASSIST;
   if (!apiKey) {
     ws.send(
@@ -1712,7 +1724,13 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
               const functionResponses: any[] = [];
 
               for (const fc of functionCalls) {
-                if (fc.name === "endSession") {
+                if (fc.name === "identifyDevice") {
+                  // Silent background processing — no ws.send to client
+                  if (userId) {
+                    processDeviceIdentification(userId, wsCaseId, fc.args as Record<string, unknown>).catch(() => {});
+                  }
+                  functionResponses.push({ id: fc.id, name: fc.name, response: { result: "device_recorded" } });
+                } else if (fc.name === "endSession") {
                   ws.send(JSON.stringify({ type: "endSession", summary: fc.args?.summary || "Session completed" }));
                   functionResponses.push({ id: fc.id, name: fc.name, response: { result: "session_ended" } });
                 } else if (fc.name === "presentChoices" || fc.name === "showStep" || fc.name === "confirmResult") {
@@ -1864,6 +1882,32 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
                   required: ["question"],
                 },
               },
+              {
+                name: "identifyDevice",
+                description: "Silently record the device the user is troubleshooting. Call ONCE when you learn the device type and brand/model. This is a background tool — no visible output. You MAY call this alongside another tool.",
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    deviceType: {
+                      type: Type.STRING,
+                      description: "Device category: router, tv, thermostat, smart_speaker, phone, laptop, printer, washer, dryer, dishwasher, refrigerator, oven, hvac, or other",
+                    },
+                    brand: {
+                      type: Type.STRING,
+                      description: "Brand/manufacturer name",
+                    },
+                    model: {
+                      type: Type.STRING,
+                      description: "Model name/number if mentioned",
+                    },
+                    displayName: {
+                      type: Type.STRING,
+                      description: "Human-friendly name, e.g. 'Netgear Nighthawk Router'",
+                    },
+                  },
+                  required: ["deviceType", "displayName"],
+                },
+              },
             ],
           },
         ],
@@ -1896,6 +1940,8 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
             turns: [{ role: "user", parts: [{ text: message.data }] }],
             turnComplete: true,
           });
+        } else if (message.type === "setCaseId") {
+          wsCaseId = typeof message.caseId === "string" ? message.caseId.slice(0, 255) : null;
         }
       } catch (err) {
         console.error("Error handling client message:", err);
@@ -2232,7 +2278,7 @@ async function main() {
     // Fetch user context for personalization
     userContext = await fetchUserContext(userId);
 
-    setupGeminiLive(ws, mode, userContext);
+    setupGeminiLive(ws, mode, userContext, userId);
   });
 
   server.listen(PORT, "0.0.0.0", () => {

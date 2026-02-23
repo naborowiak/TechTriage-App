@@ -114,7 +114,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   // Voice session hooks
   const voiceSession = useVoiceSession();
   const webSpeech = useWebSpeech();
-  const geminiVoice = useGeminiVoice();
+  const geminiVoice = useGeminiVoice(caseId);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -511,7 +511,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         // Authenticated first interaction
         const connectDelay = 5000 + Math.random() * 5000;
         const [apiResponse] = await Promise.all([
-          sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName),
+          sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName, currentCaseId || undefined),
           new Promise<void>(resolve => setTimeout(resolve, connectDelay)),
         ]);
         response = apiResponse;
@@ -538,7 +538,8 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           text.trim(),
           imageBase64,
           getDeviceContext(),
-          agentName
+          agentName,
+          currentCaseId || undefined
         );
 
         // Realistic delay scaled by response length (~55 WPM typing feel)
@@ -554,7 +555,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       // Client-side safety net: if server returned a known fallback string with no function call, retry once
       const FALLBACK_STRINGS = ["I'm processing that for you...", "Let me look into that for you..."];
       if (isAuthenticated && FALLBACK_STRINGS.includes(response.text) && !response.functionCall) {
-        const retryResponse = await sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName);
+        const retryResponse = await sendMessageToGemini(messages, text.trim(), imageBase64, getDeviceContext(), agentName, currentCaseId || undefined);
         if (retryResponse.text && !FALLBACK_STRINGS.includes(retryResponse.text)) {
           response = retryResponse;
         }

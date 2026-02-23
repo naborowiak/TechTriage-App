@@ -362,6 +362,10 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
 
         ws.onopen = () => {
           setStatus('listening');
+          // Send caseId so server can link identified devices to this case
+          if (resolvedCaseIdRef.current) {
+            ws.send(JSON.stringify({ type: 'setCaseId', caseId: resolvedCaseIdRef.current }));
+          }
         };
 
         ws.onmessage = (event) => {

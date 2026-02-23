@@ -67,6 +67,7 @@ export const aiChatSchema = z.object({
   image: z.string().max(10_000_000).optional().nullable(),
   deviceContext: z.string().max(2000).optional().nullable(),
   agentName: z.string().max(50).optional(),
+  caseId: z.string().max(255).optional().nullable(),
 });
 
 export const guestChatSchema = z.object({
@@ -85,6 +86,7 @@ export const aiChatLiveAgentSchema = z.object({
     personality: z.string().max(1000).optional(),
   }).passthrough(),
   image: z.string().max(10_000_000).optional().nullable(),
+  caseId: z.string().max(255).optional().nullable(),
 });
 
 export const generateCaseNameSchema = z.object({
