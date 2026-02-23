@@ -328,7 +328,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Slim Header */}
         <header className="relative bg-white/80 dark:bg-midnight-900/80 backdrop-blur-md border-b border-surface-border dark:border-midnight-700 px-4 py-3 flex items-center justify-between shrink-0 z-30">
           {/* Left: Logo (mobile only) */}
@@ -460,7 +460,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             className={
               isScoutView
                 ? "flex-1 overflow-hidden"
-                : "flex-1 overflow-y-auto p-6 lg:p-8"
+                : "flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8"
             }
           >
             {children}
@@ -660,7 +660,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-6 lg:p-8">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8">
             {/* Fallback for other activeViews with children (analytics, etc.) */}
           </div>
         )}

@@ -125,12 +125,24 @@ html, body {
 }
 
 /* ── Animated Glow Dock ── */
-/* Dock uses dark bg universally to make glow beam visible in both themes */
+/* Light mode: white frosted glass with colored spotlight */
 .dock-glow {
-  background: #191919;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
+}
+
+/* Dark mode: original dark dock */
+.dark .dock-glow {
+  background: #191919;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: none;
 }
 
 .dock-glow-light {
@@ -157,6 +169,14 @@ html, body {
   height: 40px;
   clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
   pointer-events: none;
+}
+
+/* Light mode: softer beam opacity */
+.dock-glow .dock-glow-beam {
+  opacity: 0.5;
+}
+.dark .dock-glow .dock-glow-beam {
+  opacity: 1;
 }
 
 .dock-icon-glow {

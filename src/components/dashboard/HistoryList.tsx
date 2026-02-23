@@ -201,7 +201,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
             <button
               key={c.id}
               onClick={() => onOpenCase(c.id)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-light-100/60 dark:hover:bg-white/[0.03] transition-all text-left min-h-[52px] group"
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-light-100/60 dark:hover:bg-white/[0.03] transition-all text-left min-h-[52px] group overflow-hidden"
             >
               {/* Status icon with colored background */}
               <span
