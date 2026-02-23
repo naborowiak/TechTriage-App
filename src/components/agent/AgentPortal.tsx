@@ -215,8 +215,11 @@ export const AgentPortal: React.FC<Props> = ({ onNavigate }) => {
             <Shield className="w-8 h-8 text-red-500" />
           </div>
           <h1 className="text-xl font-bold text-[#37444A] dark:text-white mb-2">Access Denied</h1>
-          <p className="text-sm text-[#4F5664] dark:text-gray-400 mb-6">
+          <p className="text-sm text-[#4F5664] dark:text-gray-400 mb-4">
             You don't have permission to access the Agent Portal. Contact an administrator if you believe this is an error.
+          </p>
+          <p className="text-xs text-[#4F5664]/60 dark:text-gray-500 mb-6 font-mono">
+            Debug: auth={String(isAuthenticated)} role={user?.role ?? 'none'} email={user?.email ?? 'none'}
           </p>
           <button
             onClick={() => onNavigate(PageView.HOME)}

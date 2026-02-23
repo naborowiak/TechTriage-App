@@ -152,7 +152,8 @@
       "Bash(for pid in /proc/[0-9]*/fd/*; do readlink \"$pid\" 2>/dev/null | grep -q \"socket:\\\\[44569270\\\\]\" && echo \"PID: $\\(echo $pid | cut -d/ -f3\\)\"; done 2>/dev/null | head -3)",
       "Bash(while read inode)",
       "Bash(do for pid in /proc/[0-9]*/fd/*)",
-      "Bash(do readlink $pid)"
+      "Bash(do readlink $pid)",
+      "Bash(replit secrets set ADMIN_EMAILS \"neal@totalassist.tech,naborowiak@gmail.com\" 2>&1 || echo \"replit secrets command failed, trying alternative...\")"
     ]
   }
 }

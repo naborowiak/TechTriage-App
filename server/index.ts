@@ -2093,18 +2093,22 @@ async function main() {
       if (req.isAuthenticated() && req.user) {
         try {
           const { getAgentUserFromDB } = await import("./middleware/agentMiddleware");
-          const agentUser = await getAgentUserFromDB((req.user as any).id);
+          const sessionUser = req.user as any;
+          const agentUser = await getAgentUserFromDB(sessionUser.id);
           let role = agentUser?.role || "customer";
+          console.log("[AUTH_USER]", sessionUser.email, "| DB role:", agentUser?.role ?? "null", "| resolved:", role);
           // Bootstrap fallback: check ADMIN_EMAILS env var for initial admin setup
           if (role === "customer") {
             const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
-            const userEmail = (req.user as any).email?.toLowerCase();
+            const userEmail = sessionUser.email?.toLowerCase();
             if (userEmail && adminEmails.includes(userEmail)) {
               role = "admin";
+              console.log("[AUTH_USER] Bootstrap override to admin via ADMIN_EMAILS");
             }
           }
           res.json({ user: { ...req.user, role } });
-        } catch {
+        } catch (err) {
+          console.error("[AUTH_USER] Role lookup failed:", err);
           res.json({ user: { ...req.user, role: "customer" } });
         }
       } else {

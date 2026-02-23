@@ -82,6 +82,7 @@ export function invalidateRoleCache(userId: string): void {
  */
 export async function requireAgent(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+    console.log("[AGENT_AUTH] Rejected: not authenticated");
     return res.status(401).json({ error: "Authentication required" });
   }
 
@@ -89,10 +90,12 @@ export async function requireAgent(req: Request, res: Response, next: NextFuncti
   const agentUser = await getAgentUserFromDB(sessionUser.id);
 
   if (!agentUser) {
+    console.log("[AGENT_AUTH] Rejected: user not found in DB for id:", sessionUser.id, "email:", sessionUser.email);
     return res.status(401).json({ error: "Authentication required" });
   }
 
   if (agentUser.role !== "agent" && agentUser.role !== "admin") {
+    console.log("[AGENT_AUTH] Rejected: role is", JSON.stringify(agentUser.role), "for", agentUser.email);
     return res.status(403).json({ error: "Agent access required" });
   }
 
