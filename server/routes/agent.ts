@@ -5,6 +5,7 @@ import {
   caseMessagesTable,
   caseNotesTable,
   caseActivityTable,
+  caseArchivesTable,
   sessionRecordingsTable,
   usersTable,
   devicesTable,
@@ -14,6 +15,7 @@ import { eq, desc, asc, and, or, ilike, isNull, sql, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { requireAgent, requireAgentAdmin, invalidateRoleCache } from "../middleware/agentMiddleware";
 import { logCaseActivity } from "../services/caseActivityService";
+import { archiveCase, restoreCase } from "../services/caseArchiveService";
 import {
   validate,
   validateQuery,
@@ -22,6 +24,7 @@ import {
   agentCaseAssignSchema,
   agentCaseNoteSchema,
   agentRoleChangeSchema,
+  agentArchiveListSchema,
 } from "../validation";
 
 const router = Router();
@@ -514,9 +517,9 @@ router.post("/cases/:id/reply", validate(agentCaseNoteSchema), async (req: any, 
     const { content } = req.body;
     const agentUser = req.agentUser;
 
-    // Verify case exists
+    // Verify case exists (include userId + title for email notification)
     const [existing] = await db
-      .select({ id: casesTable.id })
+      .select({ id: casesTable.id, userId: casesTable.userId, title: casesTable.title })
       .from(casesTable)
       .where(eq(casesTable.id, caseId))
       .limit(1);
@@ -558,10 +561,153 @@ router.post("/cases/:id/reply", validate(agentCaseNoteSchema), async (req: any, 
       .set({ updatedAt: new Date() })
       .where(eq(casesTable.id, caseId));
 
+    // Fire-and-forget email notification to case owner
+    try {
+      const [caseOwner] = await db.select({
+        email: usersTable.email,
+        firstName: usersTable.firstName,
+      }).from(usersTable).where(eq(usersTable.id, existing.userId)).limit(1);
+
+      if (caseOwner?.email) {
+        const { sendCaseReplyNotificationEmail } = await import("../services/emailService");
+        sendCaseReplyNotificationEmail(caseOwner.email, {
+          customerFirstName: caseOwner.firstName,
+          agentName: agentMessage.agentName,
+          messagePreview: content.substring(0, 500),
+          caseId,
+          caseTitle: existing.title,
+        }).catch(err => console.error("[AGENT_REPLY] Email notification failed:", err));
+      }
+    } catch (emailErr) {
+      console.error("[AGENT_REPLY] Email lookup failed:", emailErr);
+    }
+
     res.json({ success: true, message: agentMessage });
   } catch (err) {
     console.error("[Agent] Failed to send reply:", err);
     res.status(500).json({ error: "An unexpected error occurred. Please try again." });
+  }
+});
+
+// ============================================
+// CASE DELETION (admin-only) — archives case for 7-day recovery
+// ============================================
+router.delete("/cases/:id", requireAgentAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const archive = await archiveCase(id, req.agentUser.id);
+    res.json({
+      success: true,
+      archive: {
+        id: archive.id,
+        caseId: archive.caseId,
+        title: archive.title,
+        deletedAt: archive.deletedAt,
+        purgeAfter: archive.purgeAfter,
+      },
+    });
+  } catch (error: any) {
+    if (error.message === "Case not found") {
+      return res.status(404).json({ error: "Case not found" });
+    }
+    console.error("Error archiving case:", error);
+    res.status(500).json({ error: "Failed to archive case" });
+  }
+});
+
+// ============================================
+// ARCHIVE LIST (admin-only) — list deleted cases
+// ============================================
+router.get("/archives", requireAgentAdmin, validateQuery(agentArchiveListSchema), async (req: any, res: any) => {
+  try {
+    const { search, page, limit } = (req.validatedQuery || req.query) as any;
+
+    const conditions: any[] = [];
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(caseArchivesTable.title, `%${search}%`),
+          sql`CAST(${caseArchivesTable.caseNumber} AS TEXT) ILIKE ${"%" + search + "%"}`
+        )
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Count total
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(caseArchivesTable)
+      .where(whereClause);
+
+    const totalNum = Number(total);
+    const offset = (page - 1) * limit;
+
+    // Fetch archives with admin name
+    const archives = await db
+      .select({
+        id: caseArchivesTable.id,
+        caseId: caseArchivesTable.caseId,
+        userId: caseArchivesTable.userId,
+        caseNumber: caseArchivesTable.caseNumber,
+        title: caseArchivesTable.title,
+        deletedById: caseArchivesTable.deletedById,
+        deletedAt: caseArchivesTable.deletedAt,
+        purgeAfter: caseArchivesTable.purgeAfter,
+        deletedByFirstName: usersTable.firstName,
+        deletedByLastName: usersTable.lastName,
+      })
+      .from(caseArchivesTable)
+      .leftJoin(usersTable, eq(caseArchivesTable.deletedById, usersTable.id))
+      .where(whereClause)
+      .orderBy(desc(caseArchivesTable.deletedAt))
+      .limit(limit)
+      .offset(offset);
+
+    const formattedArchives = archives.map(a => ({
+      id: a.id,
+      caseId: a.caseId,
+      userId: a.userId,
+      caseNumber: a.caseNumber,
+      title: a.title,
+      deletedAt: a.deletedAt,
+      purgeAfter: a.purgeAfter,
+      deletedBy: {
+        id: a.deletedById,
+        firstName: a.deletedByFirstName,
+        lastName: a.deletedByLastName,
+      },
+    }));
+
+    res.json({
+      archives: formattedArchives,
+      pagination: {
+        page,
+        limit,
+        total: totalNum,
+        totalPages: Math.ceil(totalNum / limit),
+      },
+    });
+  } catch (err) {
+    console.error("[Agent] Failed to list archives:", err);
+    res.status(500).json({ error: "An unexpected error occurred. Please try again." });
+  }
+});
+
+// ============================================
+// ARCHIVE RESTORE (admin-only) — restore deleted case
+// ============================================
+router.post("/archives/:id/restore", requireAgentAdmin, async (req: any, res: any) => {
+  try {
+    const result = await restoreCase(req.params.id, req.agentUser.id);
+    res.json({ success: true, caseId: result.caseId });
+  } catch (error: any) {
+    if (error.message === "Archive not found") return res.status(404).json({ error: error.message });
+    if (error.message === "Archive has expired") return res.status(410).json({ error: error.message });
+    if (error.message === "Case ID already exists") return res.status(409).json({ error: error.message });
+    console.error("Error restoring case:", error);
+    res.status(500).json({ error: "Failed to restore case" });
   }
 });
 

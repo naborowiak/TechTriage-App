@@ -403,12 +403,14 @@ export const AgentPortal: React.FC<Props> = ({ onNavigate }) => {
               currentUserId={user!.id}
               initialCategory={initialQueueCategory}
               initialSearch={initialQueueSearch}
+              isAdmin={isAdmin}
             />
           )}
           {agentView === 'case-detail' && selectedCaseId && (
             <CaseDetail
               caseId={selectedCaseId}
               currentUserId={user!.id}
+              currentUserRole={user?.role || 'customer'}
               onBack={handleBackToQueue}
               onSelectCustomer={handleSelectCustomer}
               onSelectCase={handleSelectCase}

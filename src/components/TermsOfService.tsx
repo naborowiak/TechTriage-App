@@ -57,7 +57,7 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
             2. Description of Service
           </h3>
           <p>
-            TotalAssist provides AI-powered technical support assistance through "Scout," our artificial intelligence assistant. The Service includes:
+            TotalAssist provides AI-powered technical support assistance through our artificial intelligence assistant. The Service includes:
           </p>
           <ul className="list-disc pl-5 space-y-2 mt-3">
             <li><strong className="text-text-primary dark:text-white">Chat Support:</strong> Text-based AI conversations for troubleshooting tech issues</li>
@@ -74,14 +74,14 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 my-4">
             <p className="text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider mb-2">Critical Acknowledgment</p>
             <p className="text-text-secondary text-sm">
-              YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT SCOUT IS AN ARTIFICIAL INTELLIGENCE SYSTEM AND NOT A HUMAN TECHNICIAN, ELECTRICIAN, PLUMBER, OR OTHER LICENSED PROFESSIONAL.
+              YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT THE AI ASSISTANT IS AN ARTIFICIAL INTELLIGENCE SYSTEM AND NOT A HUMAN TECHNICIAN, ELECTRICIAN, PLUMBER, OR OTHER LICENSED PROFESSIONAL.
             </p>
           </div>
           <p><strong className="text-text-primary dark:text-white">3.1. Nature of AI Advice.</strong> You understand and agree that:</p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
             <li>AI systems can "hallucinate" or generate incorrect, incomplete, or misleading information</li>
-            <li>All advice, instructions, diagnostics, and recommendations from Scout are for <strong>informational purposes only</strong></li>
-            <li>Scout's responses are generated algorithmically and may not account for your specific circumstances, local codes, or safety requirements</li>
+            <li>All advice, instructions, diagnostics, and recommendations from the AI assistant are for <strong>informational purposes only</strong></li>
+            <li>The AI assistant's responses are generated algorithmically and may not account for your specific circumstances, local codes, or safety requirements</li>
             <li>The Service does not replace professional consultation from licensed electricians, plumbers, HVAC technicians, or other qualified professionals</li>
           </ul>
 
@@ -107,7 +107,7 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
             </p>
           </div>
           <p>
-            Smart Tek Labs is <strong>not liable</strong> for any property damage, data loss, personal injury, death, or other harm resulting from your decision to follow AI-generated advice. You assume all risk associated with implementing any suggestions provided by Scout.
+            Smart Tek Labs is <strong>not liable</strong> for any property damage, data loss, personal injury, death, or other harm resulting from your decision to follow AI-generated advice. You assume all risk associated with implementing any suggestions provided by the AI assistant.
           </p>
 
           {/* Section 5 - Accounts */}
@@ -215,7 +215,7 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
           <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
             10. Intellectual Property Rights
           </h3>
-          <p><strong className="text-text-primary dark:text-white">10.1. Our Property.</strong> The Service, including all software, AI models, algorithms, text, graphics, logos, icons, images, audio clips, and the overall "look and feel," is owned by Smart Tek Labs or its licensors and is protected by copyright, trademark, and other intellectual property laws. "TotalAssist," "Scout," "Scout AI," and the TotalAssist logo are trademarks of Smart Tek Labs.</p>
+          <p><strong className="text-text-primary dark:text-white">10.1. Our Property.</strong> The Service, including all software, AI models, algorithms, text, graphics, logos, icons, images, audio clips, and the overall "look and feel," is owned by Smart Tek Labs or its licensors and is protected by copyright, trademark, and other intellectual property laws. "TotalAssist" and the TotalAssist logo are trademarks of Smart Tek Labs.</p>
 
           <p className="mt-4"><strong className="text-text-primary dark:text-white">10.2. Your Content.</strong> By uploading photos, text, or other content ("User Content") to the Service, you grant Smart Tek Labs a worldwide, non-exclusive, royalty-free, sublicensable license to use, reproduce, modify, and process your User Content solely for the purpose of:</p>
           <ul className="list-disc pl-5 space-y-2 mt-2">

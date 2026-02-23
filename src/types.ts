@@ -243,6 +243,27 @@ export interface CaseProgressStep {
 
 export type DashboardTab = 'chat' | 'history' | 'devices' | 'settings';
 
+// Case archive types (admin case deletion with recovery)
+export interface CaseArchiveListItem {
+  id: string;
+  caseId: string;
+  userId: string;
+  caseNumber: number | null;
+  title: string;
+  deletedAt: string;
+  purgeAfter: string;
+  deletedBy: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+  };
+}
+
+export interface CaseArchiveListResponse {
+  archives: CaseArchiveListItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
 // Format case display ID from sessionMode + modeSequence
 export function formatCaseDisplayId(sessionMode: string | null | undefined, modeSequence: number | null | undefined): string {
   const prefixMap: Record<string, string> = {

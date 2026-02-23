@@ -67,12 +67,13 @@ function activityLabel(action: string, details: any): string {
 interface Props {
   caseId: string;
   currentUserId: string;
+  currentUserRole: string;
   onBack: () => void;
   onSelectCustomer: (userId: string) => void;
   onSelectCase: (caseId: string) => void;
 }
 
-export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, onBack, onSelectCustomer, onSelectCase }) => {
+export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, currentUserRole, onBack, onSelectCustomer, onSelectCase }) => {
   const api = useAgentApi();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,6 +94,10 @@ export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, onBack, onS
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isDeletingNote, setIsDeletingNote] = useState(false);
+
+  // Case deletion state (admin only)
+  const [isConfirmingCaseDelete, setIsConfirmingCaseDelete] = useState(false);
+  const [isDeletingCase, setIsDeletingCase] = useState(false);
 
   const loadCase = useCallback(async () => {
     setIsLoading(true);
@@ -179,6 +184,19 @@ export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, onBack, onS
       showStatus(`Delete failed: ${err.message}`, true);
     } finally {
       setIsDeletingNote(false);
+    }
+  };
+
+  const handleDeleteCase = async () => {
+    setIsDeletingCase(true);
+    try {
+      await api.deleteCase(caseId);
+      onBack();
+    } catch (err: any) {
+      showStatus(`Delete failed: ${err.message}`, true);
+      setIsConfirmingCaseDelete(false);
+    } finally {
+      setIsDeletingCase(false);
     }
   };
 
@@ -445,7 +463,7 @@ export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, onBack, onS
                         <div key={`ai-${i}`} className="p-4 bg-gray-50/50 dark:bg-gray-800/20">
                           <div className="flex items-center gap-2 mb-1">
                             <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[10px] font-semibold text-indigo-700 dark:text-indigo-400">AI</div>
-                            <span className="text-sm font-medium text-[#37444A] dark:text-gray-200">Scout AI</span>
+                            <span className="text-sm font-medium text-[#37444A] dark:text-gray-200">{item.data.agentName || 'AI Assistant'}</span>
                             <span className="text-xs text-[#4F5664] dark:text-gray-500 ml-auto">
                               {item.data.timestamp ? new Date(item.data.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}
                             </span>
@@ -694,6 +712,41 @@ export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, onBack, onS
             <option value="unassign">Unassigned</option>
             {agents.map(a => <option key={a.id} value={a.id}>{fullName(a)}</option>)}
           </select>
+
+          {/* Delete Case — admin only */}
+          {currentUserRole === 'admin' && (
+            isConfirmingCaseDelete ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleDeleteCase}
+                  disabled={isDeletingCase}
+                  className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  aria-label="Confirm delete case"
+                >
+                  {isDeletingCase ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setIsConfirmingCaseDelete(false)}
+                  disabled={isDeletingCase}
+                  className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium text-[#37444A] dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+                  aria-label="Cancel delete case"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsConfirmingCaseDelete(true)}
+                disabled={isMutating}
+                className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                aria-label="Delete case"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Case
+              </button>
+            )
+          )}
         </div>
       </div>
     </div>

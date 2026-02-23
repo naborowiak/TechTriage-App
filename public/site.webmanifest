@@ -54,9 +54,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Open Scout AI",
-      "short_name": "Scout AI",
-      "description": "Start a chat with Scout AI",
+      "name": "Start Chat",
+      "short_name": "Chat",
+      "description": "Start a support chat",
       "url": "/dashboard",
       "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
     }

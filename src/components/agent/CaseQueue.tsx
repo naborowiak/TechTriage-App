@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, ChevronLeft, ChevronRight, RefreshCw, ArrowUpDown, Inbox, AlertTriangle, Clock, CheckCircle2, User, ArrowUpCircle } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, RefreshCw, ArrowUpDown, Inbox, AlertTriangle, Clock, CheckCircle2, User, ArrowUpCircle, Trash2 } from 'lucide-react';
 import { useAgentApi } from '../../hooks/useAgentApi';
+import { DeletedCases } from './DeletedCases';
 import type { AgentCaseListItem, AgentCaseListResponse } from '../../types';
 
 // ServiceNow Polaris-inspired highlighted value colors
@@ -48,9 +49,10 @@ interface Props {
   currentUserId: string;
   initialCategory?: string;
   initialSearch?: string;
+  isAdmin?: boolean;
 }
 
-export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, currentUserId, initialCategory, initialSearch }) => {
+export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, currentUserId, initialCategory, initialSearch, isAdmin }) => {
   const api = useAgentApi();
 
   const [cases, setCases] = useState<AgentCaseListItem[]>([]);
@@ -90,6 +92,7 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
     { id: 'unassigned', label: 'Unassigned', icon: Inbox, filter: { assignedAgentId: 'unassigned' } },
     { id: 'critical', label: 'Critical / High', icon: AlertTriangle, filter: { priority: 'critical' } },
     { id: 'resolved', label: 'Resolved', icon: CheckCircle2, filter: { status: 'resolved' } },
+    ...(isAdmin ? [{ id: 'deleted', label: 'Deleted', icon: Trash2, filter: {} } as FilterCategory] : []),
   ];
 
   // Core fetch function — reads current state directly via refs/args
@@ -222,7 +225,10 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
           </select>
         </div>
 
-        {/* Data table */}
+        {/* Data table or Deleted Cases view */}
+        {activeCategory === 'deleted' ? (
+          <DeletedCases />
+        ) : (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Error */}
           {error && (
@@ -341,6 +347,7 @@ export const CaseQueue: React.FC<Props> = ({ onSelectCase, onSelectCustomer, cur
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );

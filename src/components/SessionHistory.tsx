@@ -265,7 +265,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
       doc.setTextColor(31, 41, 55);
       for (const entry of caseMessages) {
         const time = new Date(entry.timestamp).toLocaleTimeString();
-        const speaker = entry.role === 'user' ? 'You' : (entry.agentName || 'Support');
+        const speaker = entry.role === 'user' ? 'You' : (entry.agentName || 'AI Assistant');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.text(`[${time}] ${speaker}:`, margin, yPosition);
@@ -524,7 +524,7 @@ export const SessionHistory: React.FC<SessionHistoryProps> = ({ onBack, userEmai
                             : 'bg-gray-100 dark:bg-midnight-700 text-text-primary dark:text-white rounded-tl-none'
                         }`}>
                           <div className="text-xs opacity-70 mb-1">
-                            {entry.role === 'user' ? 'You' : (entry.agentName || 'Support')} • {new Date(entry.timestamp).toLocaleTimeString()}
+                            {entry.role === 'user' ? 'You' : (entry.agentName || 'AI Assistant')} • {new Date(entry.timestamp).toLocaleTimeString()}
                           </div>
                           {entry.image && (
                             <img src={entry.image} alt="Attached" className="rounded-lg mb-2 max-h-32 w-auto" />

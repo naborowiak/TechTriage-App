@@ -4,6 +4,7 @@ import type {
   AgentActivityEntry,
   AgentRosterItem,
   AgentCustomerProfile,
+  CaseArchiveListResponse,
 } from '../types';
 
 async function fetchWithAuth(url: string, options?: RequestInit) {
@@ -108,6 +109,21 @@ export function useAgentApi() {
       fetchWithAuth(`/api/agent/users/${encodeURIComponent(userId)}/role`, {
         method: 'PUT',
         body: JSON.stringify({ role }),
+      }),
+
+    // Case deletion (admin)
+    deleteCase: (caseId: string): Promise<{ success: boolean }> =>
+      fetchWithAuth(`/api/agent/cases/${encodeURIComponent(caseId)}`, {
+        method: 'DELETE',
+      }),
+
+    // Archives
+    fetchDeletedCases: (params: Record<string, unknown>): Promise<CaseArchiveListResponse> =>
+      fetchWithAuth(`/api/agent/archives${buildQuery(params)}`),
+
+    restoreCase: (archiveId: string): Promise<{ success: boolean }> =>
+      fetchWithAuth(`/api/agent/archives/${encodeURIComponent(archiveId)}/restore`, {
+        method: 'POST',
       }),
   };
 }

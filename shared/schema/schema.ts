@@ -284,6 +284,29 @@ export const caseActivityTable = pgTable("case_activity", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Case Archives Table — stores deleted case snapshots for 7-day recovery window
+export const caseArchivesTable = pgTable("case_archives", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  caseId: varchar("case_id", { length: 255 }).notNull(), // Original case ID (no FK — case is deleted)
+  userId: varchar("user_id", { length: 255 }).notNull(),  // Original case owner
+  caseNumber: integer("case_number"),
+  title: varchar("title", { length: 255 }).notNull(),
+  snapshot: jsonb("snapshot").$type<{
+    case: Record<string, unknown>;
+    messages: unknown[];
+    recordings: unknown[];
+    notes: unknown[];
+    activity: unknown[];
+  }>(),
+  deletedById: varchar("deleted_by_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id),
+  deletedAt: timestamp("deleted_at").defaultNow(),
+  purgeAfter: timestamp("purge_after").notNull(), // deletedAt + 7 days
+});
+
 // Promo codes table - tracks promotional codes and their configuration
 export const promoCodesTable = pgTable("promo_codes", {
   id: varchar("id", { length: 255 })
@@ -347,3 +370,5 @@ export type CaseNote = typeof caseNotesTable.$inferSelect;
 export type InsertCaseNote = typeof caseNotesTable.$inferInsert;
 export type CaseActivity = typeof caseActivityTable.$inferSelect;
 export type InsertCaseActivity = typeof caseActivityTable.$inferInsert;
+export type CaseArchive = typeof caseArchivesTable.$inferSelect;
+export type InsertCaseArchive = typeof caseArchivesTable.$inferInsert;

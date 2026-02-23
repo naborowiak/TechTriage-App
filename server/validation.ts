@@ -176,6 +176,12 @@ export const agentRoleChangeSchema = z.object({
   role: z.enum(["customer", "agent", "admin"]),
 });
 
+export const agentArchiveListSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  search: z.string().max(200).trim().optional(),
+});
+
 // ============================================
 // Validation middleware factories
 // ============================================

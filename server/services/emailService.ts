@@ -2574,3 +2574,106 @@ export async function sendPaymentFailedEmail(
     return { success: false, error: String(error) };
   }
 }
+
+// ============================================
+// Case Reply Notification Email
+// ============================================
+
+export async function sendCaseReplyNotificationEmail(
+  email: string,
+  data: {
+    customerFirstName: string | null;
+    agentName: string;
+    messagePreview: string;
+    caseId: string;
+    caseTitle: string;
+  }
+): Promise<{ success: boolean; simulated?: boolean; error?: string }> {
+  console.log(`[EMAIL] Sending case reply notification to ${email} for case ${data.caseId}`);
+
+  const displayName = data.customerFirstName || "there";
+  const truncatedPreview = data.messagePreview.length > 500
+    ? data.messagePreview.substring(0, 500) + "..."
+    : data.messagePreview;
+  const caseUrl = `${APP_BASE_URL}/dashboard?caseId=${data.caseId}`;
+
+  if (!resend) {
+    console.log("[EMAIL] No RESEND_API_KEY found - Simulation Mode");
+    console.log(`[EMAIL] To: ${email}, Case: ${data.caseTitle}, Agent: ${data.agentName}`);
+    return { success: true, simulated: true };
+  }
+
+  try {
+    const result = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `New message on your case: ${data.caseTitle}`,
+      html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>New Message on Your Case</title>
+    <style>${getEmailStyles()}</style>
+</head>
+<body class="body-bg" style="margin: 0; padding: 0; background-color: ${BRAND.light};">
+    ${getPreheaderHtml(`${data.agentName} has replied to your support case "${data.caseTitle}".`)}
+    <center style="width: 100%; background-color: ${BRAND.light}; padding: 40px 0;" class="body-bg">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            ${getHeaderHtml("New Message", "There's a reply on your support case.")}
+            <tr>
+                <td align="left" class="light-section content-padding" style="background-color: #ffffff; padding: 45px 40px;">
+                    <p class="light-text" style="margin: 0 0 20px; color: ${BRAND.slate}; font-size: 18px; line-height: 1.6;">
+                        Hi <strong style="color: ${BRAND.midnight};">${displayName}</strong>,
+                    </p>
+                    <p class="light-text-secondary" style="margin: 0 0 25px; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        <strong style="color: ${BRAND.midnight};">${data.agentName}</strong> has replied to your support case:
+                    </p>
+                    <!-- Quoted message preview block -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 0 0 25px;">
+                        <tr>
+                            <td class="card-bg" style="background-color: ${BRAND.light}; border-left: 4px solid ${BRAND.electricIndigo}; border-radius: 0 8px 8px 0; padding: 20px 24px;">
+                                <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 15px; line-height: 1.7; font-style: italic;">
+                                    "${truncatedPreview}"
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 16px; line-height: 1.75;">
+                        View the full conversation and continue the discussion in your dashboard.
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td align="center" style="background: linear-gradient(135deg, ${BRAND.midnight} 0%, ${BRAND.midnightLight} 100%); padding: 50px 30px;">
+                    ${getPrimaryButtonHtml("View Case", caseUrl)}
+                </td>
+            </tr>
+            <tr>
+                <td align="center" class="light-section" style="background-color: #ffffff; padding: 20px 40px;">
+                    <p class="light-text-secondary" style="margin: 0; color: ${BRAND.slateLight}; font-size: 13px; line-height: 1.5;">
+                        You're receiving this because there was activity on your TotalAssist support case.
+                    </p>
+                </td>
+            </tr>
+            ${getFooterHtml()}
+        </table>
+    </center>
+</body>
+</html>`,
+      text: `Hi ${displayName},\n\n${data.agentName} has replied to your support case "${data.caseTitle}":\n\n"${truncatedPreview}"\n\nView the full conversation: ${caseUrl}\n\n---\nYou're receiving this because there was activity on your TotalAssist support case.\n\nPowered by TotalAssist\n(c) ${new Date().getFullYear()} Smart Tek Labs. All rights reserved.\nPrivacy Policy: ${APP_BASE_URL}/privacy\nTerms of Service: ${APP_BASE_URL}/terms`,
+    });
+
+    if (result.error) {
+      console.error("[EMAIL] Resend API Error:", result.error);
+      return { success: false, error: result.error.message };
+    }
+
+    console.log("[EMAIL] Case reply notification email sent:", result.data?.id);
+    return { success: true };
+  } catch (error) {
+    console.error("[EMAIL] Failed to send case reply notification email:", error);
+    return { success: false, error: String(error) };
+  }
+}

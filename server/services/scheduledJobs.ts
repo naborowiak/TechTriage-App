@@ -3,6 +3,7 @@ import { db } from '../db';
 import { subscriptionsTable, usersTable } from '../../shared/schema/schema';
 import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import { sendTrialEndingEmail } from './emailService';
+import { purgeExpiredArchives } from './caseArchiveService';
 
 /**
  * Check for subscriptions with trials ending soon (3 days or 1 day)
@@ -104,6 +105,24 @@ export function startTrialNotificationJob(): void {
   cron.schedule('0 9 * * *', async () => {
     console.log('[SCHEDULED] Cron job triggered at', new Date().toISOString());
     await checkTrialEndingNotifications();
+  });
+}
+
+/**
+ * Start the cron job for purging expired case archives
+ * Runs daily at 3 AM
+ */
+export function startArchivePurgeJob(): void {
+  console.log('[SCHEDULED] Starting archive purge cron job (daily at 3 AM)');
+
+  cron.schedule('0 3 * * *', async () => {
+    try {
+      console.log('[SCHEDULED] Archive purge triggered at', new Date().toISOString());
+      await purgeExpiredArchives();
+      console.log('[SCHEDULED] Archive purge completed');
+    } catch (error) {
+      console.error('[SCHEDULED] Error purging expired archives:', error);
+    }
   });
 }
 

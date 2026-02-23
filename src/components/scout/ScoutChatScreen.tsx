@@ -232,13 +232,14 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         // Load messages
         let loaded: ChatMessage[] = [];
         if (msgData?.messages?.length > 0) {
-          loaded = msgData.messages.map((m: { role: string; text: string; image?: string; timestamp: number; guidedAction?: GuidedAction }, i: number) => ({
+          loaded = msgData.messages.map((m: { role: string; text: string; image?: string; timestamp: number; guidedAction?: GuidedAction; agentName?: string }, i: number) => ({
             id: `loaded_${i}`,
             role: m.role === 'user' ? UserRole.USER : UserRole.MODEL,
             text: m.text,
             image: m.image,
             timestamp: m.timestamp,
             guidedAction: m.guidedAction,
+            agentName: m.agentName,
           }));
         }
 
@@ -309,6 +310,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           image: m.image,
           timestamp: m.timestamp,
           guidedAction: m.guidedAction,
+          agentName: m.agentName,
         }));
         navigator.sendBeacon(
           `/api/cases/${currentCaseId}/messages`,
@@ -390,6 +392,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       image: m.image,
       timestamp: m.timestamp,
       guidedAction: m.guidedAction,
+      agentName: m.agentName,
     }));
     fetch(`/api/cases/${currentCaseId}/messages`, {
       method: 'POST',
@@ -653,6 +656,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         image: m.image,
         timestamp: m.timestamp,
         guidedAction: m.guidedAction,
+        agentName: m.agentName,
       }));
       await fetch(`/api/cases/${currentCaseId}/messages`, {
         method: 'POST',
@@ -1189,9 +1193,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
             key={message.id}
             className={`flex ${message.role === UserRole.USER ? 'justify-end' : 'justify-start'} ${message.role === UserRole.USER ? 'chat-msg-user' : 'chat-msg-assistant'}`}
           >
+            <div className="max-w-[85%]">
+              {message.role !== UserRole.USER && message.agentName && (
+                <span className="text-xs text-gray-400 dark:text-white/40 mb-1 ml-1 block">{message.agentName}</span>
+              )}
             <div
               className={`
-                max-w-[85%] rounded-2xl px-4 py-3
+                rounded-2xl px-4 py-3
                 ${message.role === UserRole.USER
                   ? 'bg-gradient-to-r from-[#6366F1] to-[#06B6D4] text-white'
                   : 'bg-light-200 dark:bg-white/5 backdrop-blur-md border border-light-300 dark:border-white/10 text-text-primary dark:text-white/90'
@@ -1233,6 +1241,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
               <div className={`text-xs mt-2 ${message.role === UserRole.USER ? 'text-white/70' : 'text-gray-400 dark:text-white/50'}`}>
                 {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
+            </div>
             </div>
           </div>
         ));

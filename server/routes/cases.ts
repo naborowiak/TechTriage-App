@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable } from "../../shared/schema/schema";
+import { casesTable, sessionRecordingsTable, caseMessagesTable, usersTable, caseNotesTable, caseActivityTable } from "../../shared/schema/schema";
 import { eq, desc, and, max } from "drizzle-orm";
 import { generateCaseGuidePDF, type CasePDFData } from "../services/pdfService";
 import { sendSessionGuideEmail, sendEscalationEmail } from "../services/emailService";
@@ -319,8 +319,10 @@ router.delete("/", async (req, res) => {
       .from(casesTable)
       .where(eq(casesTable.userId, req.user.id));
 
-    // Delete in FK-safe order
+    // Delete in FK-safe order: activity → notes → messages → recordings → case
     for (const c of userCases) {
+      await db.delete(caseActivityTable).where(eq(caseActivityTable.caseId, c.id));
+      await db.delete(caseNotesTable).where(eq(caseNotesTable.caseId, c.id));
       await db.delete(caseMessagesTable).where(eq(caseMessagesTable.caseId, c.id));
       await db.delete(sessionRecordingsTable).where(eq(sessionRecordingsTable.caseId, c.id));
     }
@@ -353,7 +355,9 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Case not found" });
     }
 
-    // Delete associated data first (FK constraints)
+    // Delete associated data first (FK-safe order: activity → notes → messages → recordings → case)
+    await db.delete(caseActivityTable).where(eq(caseActivityTable.caseId, id));
+    await db.delete(caseNotesTable).where(eq(caseNotesTable.caseId, id));
     await db.delete(caseMessagesTable).where(eq(caseMessagesTable.caseId, id));
     await db.delete(sessionRecordingsTable).where(eq(sessionRecordingsTable.caseId, id));
     await db.delete(casesTable).where(eq(casesTable.id, id));

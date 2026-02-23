@@ -360,7 +360,7 @@ export const generateVoiceReportPDF = (
       second: '2-digit',
     });
     const isUser = entry.role === 'user';
-    const speaker = isUser ? 'You' : 'Scout AI';
+    const speaker = isUser ? 'You' : ((entry as any).agentName || 'AI Assistant');
     const speakerColor = isUser ? PDF_COLORS.value : PDF_COLORS.accent;
 
     doc.setFontSize(8);

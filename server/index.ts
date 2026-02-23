@@ -30,7 +30,7 @@ import type { IncomingMessage } from "http";
 import * as stripeService from "./services/stripeService";
 import * as promoCodeService from "./services/promoCodeService";
 import { getPlaybookBlock } from "./services/playbookService";
-import { startTrialNotificationJob, runTrialNotificationCheckNow } from "./services/scheduledJobs";
+import { startTrialNotificationJob, startArchivePurgeJob, runTrialNotificationCheckNow } from "./services/scheduledJobs";
 import {
   loadSubscription,
   requireFeature,
@@ -2127,6 +2127,7 @@ async function main() {
 
     // Start scheduled jobs
     startTrialNotificationJob();
+    startArchivePurgeJob();
     console.log("Scheduled jobs initialized");
 
     // Mount the cases, devices, and AI routers
