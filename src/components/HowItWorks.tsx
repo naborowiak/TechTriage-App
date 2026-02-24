@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Camera, Mic, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText } from 'lucide-react';
+import { MessageSquare, Camera, Mic, Video, CheckCircle2, ArrowRight, Shield, Zap, Clock, Sparkles, FileText, Search, Wrench, Lightbulb } from 'lucide-react';
 import { ScoutSignalIcon } from './Logo';
 import { AnimatedElement } from '../hooks/useAnimations';
 
@@ -75,12 +75,38 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
     },
   ];
 
-  const reportSections = [
-    { icon: Sparkles, title: 'Outcome Status', desc: 'Resolved, In Progress, or Needs Pro' },
-    { icon: FileText, title: 'Issue Summary', desc: 'Clear description of the problem' },
-    { icon: Zap, title: 'Diagnosis', desc: 'Root cause analysis & findings' },
-    { icon: CheckCircle2, title: 'Actions & Next Steps', desc: 'What was done + recommendations' },
-  ];
+  // Dummy data for the PDF-style report preview
+  const dummyReport = {
+    client: 'Bill Wonka',
+    date: 'February 24, 2026',
+    sessionId: 'TA-20260224-0847',
+    mode: 'Photo Analysis',
+    agent: 'TotalAssist AI',
+    duration: '6m 18s',
+    device: 'Smart Thermostat',
+    brand: 'Ecobee',
+    model: 'SmartThermostat Premium',
+    status: 'Resolved',
+    outcome: 'HVAC system restored to normal operation',
+    rootCause: 'Thermostat firmware update interrupted by power fluctuation, leaving the scheduling module in a corrupted state',
+    primaryFix: 'Factory reset and firmware reinstall via USB recovery mode',
+    issue: 'Ecobee thermostat screen frozen on "Calibrating..." for 3+ hours after an overnight update. HVAC system not responding to temperature changes.',
+    rootCauseItems: [
+      'Firmware v4.8.2 update interrupted at 73% by a brief power dip (confirmed via utility outage log)',
+      'Corrupted scheduling module prevented the thermostat from completing its calibration cycle',
+      'HVAC relay remained in last-known state (heat off) due to thermostat communication failure',
+    ],
+    resolutionSteps: [
+      'Identified frozen calibration loop from photo of thermostat screen',
+      'Guided client through USB recovery mode (hold Menu + Power for 10 seconds)',
+      'Performed factory reset and reinstalled firmware v4.8.3 via Ecobee portal',
+      'Verified HVAC response by toggling temperature set point up 3°F',
+    ],
+    recommendations: [
+      'Connect thermostat to a UPS-backed outlet to prevent future update interruptions',
+      'Enable automatic firmware updates during low-usage hours (2–5 AM)',
+    ],
+  };
 
   return (
     <div className="pt-32 pb-20 bg-white dark:bg-midnight-950 min-h-screen transition-colors">
@@ -180,130 +206,338 @@ export const HowItWorks: React.FC<{ onStart: () => void }> = ({ onStart }) => {
         </div>
 
         {/* Case Report Section */}
-        <AnimatedElement animation="fadeInUp">
-          <div className="card-clean rounded-2xl p-8 md:p-12 mb-24 relative overflow-hidden">
-            <div className="relative z-10">
-              <AnimatedElement animation="fadeInLeft" delay={0.1}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(6,182,212,0.10) 100%)' }}>
-                    <FileText className="w-6 h-6 text-electric-indigo" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-text-primary dark:text-white">Every Session Gets a Case Report</h2>
-                    <p className="text-text-secondary text-sm">A clear summary of what happened, what was fixed, and what to do next</p>
-                  </div>
-                </div>
-              </AnimatedElement>
-
-              <div className="grid md:grid-cols-4 gap-4 mb-8">
-                {reportSections.map((section, i) => (
-                  <AnimatedElement key={i} animation="scaleIn" delay={0.2 + i * 0.1}>
-                    <div className="bg-surface-50 dark:bg-midnight-800 rounded-xl p-5 border border-surface-border dark:border-midnight-700 hover:border-electric-indigo/30 transition-colors h-full">
-                      <section.icon className="w-6 h-6 text-electric-cyan mb-3" />
-                      <h4 className="text-text-primary dark:text-white font-bold mb-1">{section.title}</h4>
-                      <p className="text-text-muted text-xs">{section.desc}</p>
-                    </div>
-                  </AnimatedElement>
-                ))}
+        <div className="mb-24">
+          <AnimatedElement animation="fadeInUp">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <FileText className="w-5 h-5 text-electric-indigo" />
+                <span className="text-gradient-electric font-bold text-sm uppercase tracking-wider">Case Reports</span>
               </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-text-primary dark:text-white mb-3 tracking-tight">
+                Every session gets a <span className="text-gradient-electric">diagnostic report</span>
+              </h2>
+              <p className="text-text-secondary font-medium">
+                A clear summary of what happened, what was fixed, and what to do next — downloadable as a PDF.
+              </p>
+            </div>
+          </AnimatedElement>
 
-              <AnimatedElement animation="fadeInUp" delay={0.5}>
-                <div className="bg-midnight-950 rounded-xl overflow-hidden border border-midnight-700 shadow-clean-lg">
-                  {/* PDF Header */}
-                  <div className="bg-midnight-900 px-6 py-4" style={{ borderBottom: '2px solid transparent', borderImage: 'linear-gradient(135deg, #6366F1, #06B6D4) 1' }}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-gradient-electric font-bold text-lg tracking-wide">TOTALASSIST</h4>
-                        <p className="text-electric-cyan text-xs font-medium tracking-wider">CASE REPORT</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-white text-xs font-bold">DIAGNOSTIC REPORT</p>
-                        <p className="text-text-muted text-xs">Feb 9, 2026</p>
-                      </div>
-                    </div>
+          {/* PDF Document Preview */}
+          <AnimatedElement animation="fadeInUp" delay={0.2}>
+            <div className="max-w-3xl mx-auto">
+              {/* Document shadow wrapper — looks like a floating page */}
+              <div
+                className="rounded-[20px] overflow-hidden"
+                style={{
+                  boxShadow: '0 8px 40px rgba(11,16,32,0.12), 0 2px 12px rgba(11,16,32,0.06)',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                }}
+              >
+                {/* ── Gradient Hero Header ── */}
+                <div
+                  className="relative overflow-hidden px-6 sm:px-7 pt-6 sm:pt-7 pb-5 sm:pb-6"
+                  style={{ background: 'linear-gradient(135deg, #5B4BFF, #2AA7FF)' }}
+                >
+                  {/* Decorative glow blobs */}
+                  <div
+                    className="absolute -top-36 -left-36 w-96 h-96 pointer-events-none"
+                    aria-hidden="true"
+                    style={{ filter: 'blur(50px)', opacity: 0.25, background: 'radial-gradient(circle, rgba(255,255,255,0.4), transparent)' }}
+                  />
+                  <div
+                    className="absolute -top-40 -right-40 w-96 h-96 pointer-events-none"
+                    aria-hidden="true"
+                    style={{ filter: 'blur(50px)', opacity: 0.18, background: 'radial-gradient(circle, rgba(255,255,255,0.4), transparent)' }}
+                  />
+
+                  {/* Brand row */}
+                  <div className="relative z-10 mb-5">
+                    <img src="/total_assist-new-white.png" alt="TotalAssist" className="h-10 sm:h-12 w-auto" />
                   </div>
 
-                  {/* Outcome Badge */}
-                  <div className="px-6 py-4">
-                    <div className="bg-green-500 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 font-bold text-sm">
-                      <CheckCircle2 className="w-4 h-4" />
-                      ISSUE RESOLVED
-                    </div>
+                  {/* Title */}
+                  <div className="relative z-10">
+                    <h3 className="text-white text-2xl sm:text-[28px] font-bold tracking-tight leading-tight">Diagnostic Report</h3>
+                    <p className="text-white/80 text-sm mt-1">Support session summary and findings</p>
                   </div>
 
-                  {/* Report Content */}
-                  <div className="px-6 pb-6 space-y-5 text-sm">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
-                        <span className="text-text-muted text-xs font-bold tracking-wider">SESSION OVERVIEW</span>
+                  {/* Meta pills */}
+                  <div className="relative z-10 flex flex-wrap gap-2 mt-4">
+                    {[
+                      { label: 'Session', value: dummyReport.sessionId },
+                      { label: 'Date', value: dummyReport.date.split(',')[0] },
+                      { label: 'Mode', value: dummyReport.mode },
+                      { label: 'Agent', value: dummyReport.agent },
+                    ].map((pill, i) => (
+                      <div
+                        key={i}
+                        className="flex gap-2 items-baseline px-3 py-1.5 rounded-full text-white"
+                        style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.20)' }}
+                      >
+                        <span className="text-[11px] opacity-75">{pill.label}</span>
+                        <span className="text-xs font-bold">{pill.value}</span>
                       </div>
-                      <div className="grid grid-cols-3 gap-4 text-xs">
-                        <div><span className="text-text-muted">Duration:</span> <span className="text-white">4m 32s</span></div>
-                        <div><span className="text-text-muted">Photos:</span> <span className="text-white">2</span></div>
-                        <div><span className="text-text-muted">Messages:</span> <span className="text-white">8</span></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
-                        <span className="text-text-muted text-xs font-bold tracking-wider">ISSUE SUMMARY</span>
-                      </div>
-                      <p className="text-white/90">Router showing red power LED with blinking amber internet indicator, unable to connect to network.</p>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
-                        <span className="text-text-muted text-xs font-bold tracking-wider">ANALYSIS & DIAGNOSIS</span>
-                      </div>
-                      <p className="text-white/90">ISP connection failure due to firmware corruption. Router required factory reset to clear corrupted authentication cache.</p>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
-                        <span className="text-text-muted text-xs font-bold tracking-wider">ACTIONS TAKEN</span>
-                      </div>
-                      <div className="space-y-2">
-                        {['Power cycled the router for 30 seconds', 'Performed factory reset via pinhole button', 'Re-entered ISP credentials from welcome letter'].map((step, i) => (
-                          <div key={i} className="flex items-start gap-3">
-                            <span className="w-5 h-5 bg-electric-indigo rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">{i + 1}</span>
-                            <span className="text-white/90">{step}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1 h-4 bg-electric-indigo rounded-full"></div>
-                        <span className="text-text-muted text-xs font-bold tracking-wider">RECOMMENDATIONS</span>
-                      </div>
-                      <ul className="space-y-1">
-                        {['Update router firmware to latest version', 'Consider enabling automatic updates'].map((rec, i) => (
-                          <li key={i} className="flex items-center gap-2 text-white/90">
-                            <div className="w-1.5 h-1.5 bg-electric-indigo rounded-full"></div>
-                            {rec}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="bg-midnight-900 px-6 py-3 border-t border-midnight-700">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-text-muted">Full conversation transcript included in report</span>
-                      <span className="text-gradient-electric font-bold">TOTALASSIST</span>
-                    </div>
+                    ))}
                   </div>
                 </div>
-              </AnimatedElement>
+
+                {/* ── White Content Area ── */}
+                <div className="bg-white">
+                  <div className="px-5 sm:px-6 pt-5">
+                    {/* Card container */}
+                    <div
+                      className="rounded-[20px] overflow-hidden"
+                      style={{ border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 24px rgba(11,16,32,0.08)' }}
+                    >
+
+                      {/* ── Executive Summary ── */}
+                      <div className="px-5 sm:px-6 pt-5 pb-4">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className="w-9 h-9 rounded-[10px] grid place-items-center shrink-0"
+                            style={{ background: 'rgba(91,75,255,0.10)', border: '1px solid rgba(91,75,255,0.12)' }}
+                          >
+                            <FileText className="w-5 h-5" style={{ color: 'rgba(64,84,255,0.90)' }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-[#0B1020] text-lg font-bold tracking-tight">Executive Summary</h4>
+                            <p className="text-[#6B7280] text-xs mt-0.5">At-a-glance outcome of this support session.</p>
+                          </div>
+                          {/* Status badge */}
+                          <div
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full font-bold text-xs whitespace-nowrap shrink-0"
+                            style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.18)', color: 'rgba(5,120,80,0.90)' }}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ background: '#10B981', boxShadow: '0 0 0 3px rgba(16,185,129,0.20)' }}
+                              aria-hidden="true"
+                            />
+                            {dummyReport.status}
+                          </div>
+                        </div>
+
+                        {/* Exec summary rows */}
+                        <div
+                          className="mt-3 rounded-[14px] overflow-hidden"
+                          style={{ background: 'rgba(91,75,255,0.03)', border: '1px solid rgba(91,75,255,0.08)' }}
+                        >
+                          {[
+                            { label: 'Outcome', value: dummyReport.outcome },
+                            { label: 'Root Cause', value: dummyReport.rootCause },
+                            { label: 'Primary Fix', value: dummyReport.primaryFix },
+                          ].map((row, i, arr) => (
+                            <div
+                              key={i}
+                              className="flex px-3.5 py-3"
+                              style={i < arr.length - 1 ? { borderBottom: '1px solid rgba(91,75,255,0.06)' } : undefined}
+                            >
+                              <div
+                                className="w-24 shrink-0 text-[11px] tracking-[0.10em] uppercase font-bold pt-0.5"
+                                style={{ color: 'rgba(91,75,255,0.60)' }}
+                              >
+                                {row.label}
+                              </div>
+                              <div className="text-[13px] font-semibold text-[#0B1020] leading-snug">{row.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <hr className="border-0 h-px" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.07), rgba(0,0,0,0.03))' }} />
+
+                      {/* ── Session Details ── */}
+                      <div className="px-5 sm:px-6 pt-5 pb-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div
+                            className="w-9 h-9 rounded-[10px] grid place-items-center shrink-0"
+                            style={{ background: 'rgba(91,75,255,0.10)', border: '1px solid rgba(91,75,255,0.12)' }}
+                          >
+                            <Sparkles className="w-5 h-5" style={{ color: 'rgba(64,84,255,0.90)' }} />
+                          </div>
+                          <div>
+                            <h4 className="text-[#0B1020] text-lg font-bold tracking-tight">Session Details</h4>
+                            <p className="text-[#6B7280] text-xs mt-0.5">Key information for this support session.</p>
+                          </div>
+                        </div>
+
+                        <div
+                          className="rounded-[14px] overflow-hidden"
+                          style={{ background: '#FAFBFC', border: '1px solid rgba(0,0,0,0.06)' }}
+                        >
+                          {[
+                            { label: 'Client', value: dummyReport.client },
+                            { label: 'Date', value: dummyReport.date },
+                            { label: 'Session ID', value: dummyReport.sessionId },
+                            { label: 'Mode', value: dummyReport.mode },
+                            { label: 'Agent', value: dummyReport.agent },
+                            { label: 'Duration', value: dummyReport.duration },
+                            { label: 'Device', value: dummyReport.device },
+                            { label: 'Brand', value: dummyReport.brand },
+                            { label: 'Model', value: dummyReport.model },
+                          ].map((row, i, arr) => (
+                            <div
+                              key={i}
+                              className="flex px-3.5 py-2.5 text-[13px]"
+                              style={i < arr.length - 1 ? { borderBottom: '1px solid rgba(0,0,0,0.04)' } : undefined}
+                            >
+                              <div className="w-24 shrink-0 text-[11px] tracking-[0.08em] uppercase text-[#6B7280] font-semibold">{row.label}</div>
+                              <div className="font-semibold text-[#0B1020]">{row.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <hr className="border-0 h-px" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.07), rgba(0,0,0,0.03))' }} />
+
+                      {/* ── Issue Summary ── */}
+                      <div className="px-5 sm:px-6 pt-5 pb-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div
+                            className="w-9 h-9 rounded-[10px] grid place-items-center shrink-0"
+                            style={{ background: 'rgba(91,75,255,0.10)', border: '1px solid rgba(91,75,255,0.12)' }}
+                          >
+                            <Zap className="w-5 h-5" style={{ color: 'rgba(64,84,255,0.90)' }} />
+                          </div>
+                          <div>
+                            <h4 className="text-[#0B1020] text-lg font-bold tracking-tight">Issue Summary</h4>
+                            <p className="text-[#6B7280] text-xs mt-0.5">What the client reported and what was observed.</p>
+                          </div>
+                        </div>
+
+                        <div
+                          className="rounded-[14px] px-3.5 py-3"
+                          style={{ background: 'rgba(91,75,255,0.04)', border: '1px solid rgba(91,75,255,0.14)' }}
+                        >
+                          <div className="text-[10px] uppercase tracking-[0.12em] font-extrabold" style={{ color: 'rgba(91,75,255,0.70)' }}>Issue</div>
+                          <div className="text-sm font-semibold text-[#0B1020] leading-relaxed mt-2">{dummyReport.issue}</div>
+                        </div>
+                      </div>
+
+                      <hr className="border-0 h-px" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.07), rgba(0,0,0,0.03))' }} />
+
+                      {/* ── Root Cause Analysis ── */}
+                      <div className="px-5 sm:px-6 pt-5 pb-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div
+                            className="w-9 h-9 rounded-[10px] grid place-items-center shrink-0"
+                            style={{ background: 'rgba(91,75,255,0.10)', border: '1px solid rgba(91,75,255,0.12)' }}
+                          >
+                            <Search className="w-5 h-5" style={{ color: 'rgba(64,84,255,0.90)' }} />
+                          </div>
+                          <div>
+                            <h4 className="text-[#0B1020] text-lg font-bold tracking-tight">Root Cause Analysis</h4>
+                            <p className="text-[#6B7280] text-xs mt-0.5">Why the problem occurred.</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          {dummyReport.rootCauseItems.map((item, i) => (
+                            <div
+                              key={i}
+                              className="flex gap-2.5 items-start px-3 py-2.5 rounded-xl text-[13px] leading-relaxed"
+                              style={{ background: '#FAFBFC', border: '1px solid rgba(0,0,0,0.06)', color: 'rgba(11,16,32,0.80)' }}
+                            >
+                              <span
+                                className="w-5 h-5 rounded-lg grid place-items-center shrink-0 mt-0.5"
+                                style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.16)' }}
+                              >
+                                <CheckCircle2 className="w-3 h-3" style={{ color: 'rgba(16,185,129,0.90)' }} />
+                              </span>
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <hr className="border-0 h-px" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.07), rgba(0,0,0,0.03))' }} />
+
+                      {/* ── Resolution Steps ── */}
+                      <div className="px-5 sm:px-6 pt-5 pb-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div
+                            className="w-9 h-9 rounded-[10px] grid place-items-center shrink-0"
+                            style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.12)' }}
+                          >
+                            <Wrench className="w-5 h-5" style={{ color: 'rgba(5,120,80,0.90)' }} />
+                          </div>
+                          <div>
+                            <h4 className="text-[#0B1020] text-lg font-bold tracking-tight">Resolution Steps</h4>
+                            <p className="text-[#6B7280] text-xs mt-0.5">Actions taken to restore service.</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          {dummyReport.resolutionSteps.map((step, i) => (
+                            <div
+                              key={i}
+                              className="flex gap-2.5 items-start px-3 py-2.5 rounded-xl text-[13px] leading-relaxed"
+                              style={{ background: '#FAFBFC', border: '1px solid rgba(0,0,0,0.06)', color: 'rgba(11,16,32,0.80)' }}
+                            >
+                              <span
+                                className="w-6 h-6 rounded-full grid place-items-center text-white text-xs font-extrabold shrink-0 mt-0.5"
+                                style={{ background: 'linear-gradient(135deg, rgba(91,75,255,0.70), rgba(42,167,255,0.70))' }}
+                              >
+                                {i + 1}
+                              </span>
+                              {step}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <hr className="border-0 h-px" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.07), rgba(0,0,0,0.03))' }} />
+
+                      {/* ── Recommendations ── */}
+                      <div className="px-5 sm:px-6 pt-5 pb-4">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div
+                            className="w-9 h-9 rounded-[10px] grid place-items-center shrink-0"
+                            style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.12)' }}
+                          >
+                            <Lightbulb className="w-5 h-5" style={{ color: 'rgba(180,100,10,0.90)' }} />
+                          </div>
+                          <div>
+                            <h4 className="text-[#0B1020] text-lg font-bold tracking-tight">Recommendations</h4>
+                            <p className="text-[#6B7280] text-xs mt-0.5">Suggested next steps to prevent recurrence.</p>
+                          </div>
+                        </div>
+
+                        <div
+                          className="rounded-[14px] px-3.5 py-3"
+                          style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.12)' }}
+                        >
+                          <div className="text-[10px] uppercase tracking-[0.12em] font-extrabold" style={{ color: 'rgba(146,64,14,0.80)' }}>Next Steps</div>
+                          <ul className="mt-2 space-y-1.5">
+                            {dummyReport.recommendations.map((rec, i) => (
+                              <li key={i} className="flex items-start gap-2 text-[13px] leading-relaxed" style={{ color: 'rgba(11,16,32,0.72)' }}>
+                                <span className="text-[rgba(146,64,14,0.60)] mt-1.5">&#8226;</span>
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* ── Footer ── */}
+                      <div
+                        className="flex items-center justify-between px-5 sm:px-6 py-3 text-[11px]"
+                        style={{ background: '#FAFBFC', borderTop: '1px solid rgba(0,0,0,0.06)', color: '#6B7280' }}
+                      >
+                        <div><span className="font-bold text-[#0B1020]">TotalAssist</span> &middot; Diagnostic Report &middot; {dummyReport.sessionId}</div>
+                        <div>Generated {dummyReport.date}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Subtle bottom padding for the white area */}
+                  <div className="h-5" />
+                </div>
+              </div>
             </div>
-          </div>
-        </AnimatedElement>
+          </AnimatedElement>
+        </div>
 
         {/* Why Scout Section */}
         <div className="grid md:grid-cols-3 gap-8 mb-24">
