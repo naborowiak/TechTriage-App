@@ -108,11 +108,11 @@ export const Logo: React.FC<LogoProps> = ({
         )}
       </div>
       <div className="flex flex-col justify-center items-start shrink-0">
-        <span className="text-xl tracking-tight leading-none whitespace-nowrap">
+        <span className="text-xl tracking-tight leading-none whitespace-nowrap" style={{ fontFamily: '"Exo 2", sans-serif' }}>
           <span className={`font-bold ${isLight ? 'text-white' : 'text-midnight-950'}`}>Total</span>
           <span className="font-medium text-gradient-electric">Assist</span>
         </span>
-        <span className={`hidden sm:block text-[9px] font-medium tracking-wide uppercase whitespace-nowrap ${isLight ? 'text-white/60' : 'text-midnight-600'}`}>
+        <span className={`hidden sm:block text-[9px] font-medium tracking-wide uppercase whitespace-nowrap ${isLight ? 'text-white/60' : 'text-midnight-600'}`} style={{ fontFamily: '"Exo 2", sans-serif' }}>
           AI-Powered Home Tech Support
         </span>
       </div>
