@@ -35,7 +35,6 @@ export async function registerUser(data: {
   howHeard?: string;
 }) {
   console.log("[AUTH SERVICE] registerUser called for:", data.email);
-  console.log("[AUTH SERVICE] Password received:", !!data.password, "Length:", data.password?.length);
 
   // Check if user already exists
   const existingUser = await db
