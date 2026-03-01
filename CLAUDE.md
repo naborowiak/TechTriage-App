@@ -735,6 +735,28 @@ When users selected "It's Something Else" from the initial guided choice pills i
 - Adds 1-2 extra conversation turns for most interactions (intentional trade-off for brand-specific troubleshooting accuracy)
 - No client-side changes — qualification uses existing `presentChoices` pill rendering
 
+### Model Qualification + Pro Escalation Protocol (Mar 1, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **server/routes/ai.ts** — Added Step 3 (model identification) to DEVICE QUALIFICATION PHASE in both `SYSTEM_INSTRUCTION` and `LIVE_AGENT_INSTRUCTION`. After brand is identified, AI now asks for specific model/line via `presentChoices` pills (e.g., "Galaxy S24 / S23", "Galaxy A-series"). Hard limit increased from 2 to 3 qualifying interactions (in practice usually 2, since device type is often pre-identified from decision tree). Updated WRONG/RIGHT examples to include model step.
+2. **server/routes/ai.ts** — Added ESCALATION PROTOCOL section to both `SYSTEM_INSTRUCTION` and `LIVE_AGENT_INSTRUCTION`. When at least 3 showStep() attempts fail, AI offers Pro escalation via presentChoices ("Connect with a Pro (live video)", "Try a different approach", "That's okay for now") instead of directing to manufacturer. Manufacturer/brand support offered only as secondary fallback after user declines Pro twice. Updated DIAGNOSTIC APPROACH step numbering (new step 7: escalation, step 8: endSession).
+
+#### Key Skeptic Conditions Applied:
+- Model question SKIPPED if brand is "Not sure" (no point asking model without brand)
+- Model "Not sure" proceeds gracefully with brand-level troubleshooting (no stalling)
+- Escalation requires at least 3 substantive showStep() attempts before triggering (prevents premature upsell)
+- Pro option framed as helpful, not salesy ("a Pro can take a closer look" not "upgrade for $49")
+- Manufacturer fallback preserved but demoted to secondary option after 2 Pro declines
+- "Try a different approach" option ensures AI attempts genuinely different troubleshooting before re-offering
+
+#### Risks Accepted:
+- Model question adds 1 extra turn for most interactions (trade-off for model-specific menu paths)
+- Hard limit increase from 2→3 may feel form-like if all 3 steps trigger (mitigated: device type usually pre-identified)
+- Gemini may not consistently count showStep() calls or follow the 3-step minimum (graceful degradation)
+- No client-side changes for Pro escalation routing — endSession() generates case report, user must manually navigate to video support
+
 <!-- DECISIONS END -->
 
 ---
