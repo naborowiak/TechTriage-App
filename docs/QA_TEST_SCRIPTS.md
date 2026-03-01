@@ -1528,12 +1528,12 @@ Each test case follows this format:
 ### Subscription Price IDs
 | Plan | Interval | Price ID |
 |---|---|---|
-| Home | Monthly | `price_1SxBdZPeLuLIM8GmEUA9WuJH` |
-| Home | Annual | `price_1SxBKmPeLuLIM8Gmv3EbHR44` |
-| Pro | Monthly | `price_1SxBdvPeLuLIM8GmXo3KCqT2` |
-| Pro | Annual | `price_1SxBefPeLuLIM8GmlwmfnA2C` |
-| Video Single | One-time | `price_1SxBftPeLuLIM8GmX9sxeASx` |
-| Video 5-Pack | One-time | `price_1SzOhPPeLuLIM8GmXLqoj7yt` |
+| Home | Monthly | `price_1T21xgBU2AOjMepZED8Q6Fab` |
+| Home | Annual | `price_1T21xgBU2AOjMepZXmdbOrGQ` |
+| Pro | Monthly | `price_1T21xdBU2AOjMepZBxnXa6GK` |
+| Pro | Annual | `price_1T21xdBU2AOjMepZ3pqCMDAx` |
+| Video Single | One-time | `price_1T21xZBU2AOjMepZhKtZdZrg` |
+| Video 5-Pack | One-time | `price_1T21xRBU2AOjMepZAUeP5cdr` |
 
 ### Plan Limits
 | Feature | Free | Home | Pro |

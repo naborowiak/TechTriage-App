@@ -5,12 +5,12 @@
 // ============================================
 export const STRIPE_PRICES = {
   home: {
-    monthly: 'price_1SxBdZPeLuLIM8GmEUA9WuJH',  // $9.99/month
-    annual: 'price_1SxBKmPeLuLIM8Gmv3EbHR44',   // $95.88/year ($7.99/mo)
+    monthly: 'price_1T21xgBU2AOjMepZED8Q6Fab',  // $9.99/month
+    annual: 'price_1T21xgBU2AOjMepZXmdbOrGQ',   // $95.88/year ($7.99/mo)
   },
   pro: {
-    monthly: 'price_1SxBdvPeLuLIM8GmXo3KCqT2',  // $19.99/month
-    annual: 'price_1SxBefPeLuLIM8GmlwmfnA2C',   // $191.88/year ($15.99/mo)
+    monthly: 'price_1T21xdBU2AOjMepZBxnXa6GK',  // $19.99/month
+    annual: 'price_1T21xdBU2AOjMepZ3pqCMDAx',   // $191.88/year ($15.99/mo)
   },
 } as const;
 
@@ -21,8 +21,8 @@ export const STRIPE_PRICES = {
 // or subscribers who need more than their included allowance
 export const STRIPE_CREDIT_PRICES = {
   videoDiagnostic: {
-    single: 'price_1SxBftPeLuLIM8GmX9sxeASx',  // $3 - 1 video diagnostic session
-    pack: 'price_1SzOhPPeLuLIM8GmXLqoj7yt',    // $12 - 5 video diagnostic sessions (save $3)
+    single: 'price_1T21xZBU2AOjMepZhKtZdZrg',  // $3 - 1 video diagnostic session
+    pack: 'price_1T21xRBU2AOjMepZAUeP5cdr',    // $12 - 5 video diagnostic sessions (save $3)
   },
 } as const;
 
