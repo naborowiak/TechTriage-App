@@ -717,6 +717,24 @@ When users selected "It's Something Else" from the initial guided choice pills i
 - Device picker removal is one-way door; if auto-identification underperforms, no manual fallback (picker was rarely used — only showed when users pre-added devices)
 - `escalation-report` endpoint's `deviceContext` parameter now always undefined from frontend (can derive from case FK in future pass)
 
+### Device Qualification Phase — Slow Down Before Fixing (Mar 1, 2026)
+
+**Verdict: APPROVED_WITH_CONDITIONS** (The_Skeptic)
+
+#### Changes:
+1. **server/routes/ai.ts** — Added DEVICE QUALIFICATION PHASE section to both `SYSTEM_INSTRUCTION` and `LIVE_AGENT_INSTRUCTION`. Inserts a mandatory phase between sub-problem selection and `showStep()` troubleshooting where the AI asks about device type and brand via `presentChoices` pills. Updated DIAGNOSTIC APPROACH numbering (new step 3: "QUALIFY THE DEVICE"). Updated DEVICE IDENTIFICATION "WHEN TO CALL" to reference qualification phase. Updated `identifyDeviceTool` function declaration description.
+
+#### Key Skeptic Conditions Applied:
+1. Deduplication with existing decision tree: Skip conditions explicitly state "if the branch you followed ALREADY asked for device type or brand, count that as qualification and do NOT ask again" (prevents double-asking in Appliances/HVAC flows)
+2. Simplified "I'm not sure" path: reduced from 4 pills to 2 — "I'll send a photo of it" and "Skip — just give me general steps"
+3. Concrete escape hatch: "If user types free-form text during qualification or selects 'It's Something Else', skip remaining qualification and proceed to showStep()"
+4. Hard limit: max 2 qualifying `presentChoices` interactions before starting `showStep()` — prevents extended intake-form feel
+
+#### Risks Accepted:
+- Gemini may not consistently follow the qualification phase (graceful degradation: falls back to current generic troubleshooting behavior)
+- Adds 1-2 extra conversation turns for most interactions (intentional trade-off for brand-specific troubleshooting accuracy)
+- No client-side changes — qualification uses existing `presentChoices` pill rendering
+
 <!-- DECISIONS END -->
 
 ---
