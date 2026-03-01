@@ -55,10 +55,20 @@ import {
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
 
-// Session secret — fail fast in production if not set
-if (isProduction && !process.env.SESSION_SECRET) {
-  console.error("FATAL: SESSION_SECRET environment variable must be set in production");
-  process.exit(1);
+// Critical environment variables — fail fast in production if not set
+if (isProduction) {
+  const required: Record<string, string | undefined> = {
+    SESSION_SECRET: process.env.SESSION_SECRET,
+    DATABASE_URL: process.env.DATABASE_URL,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    GEMINI_API_KEY_TOTALASSIST: process.env.GEMINI_API_KEY_TOTALASSIST,
+  };
+  const missing = Object.entries(required).filter(([, v]) => !v).map(([k]) => k);
+  if (missing.length > 0) {
+    console.error(`FATAL: Missing required environment variables in production: ${missing.join(", ")}`);
+    process.exit(1);
+  }
 }
 const SESSION_SECRET = process.env.SESSION_SECRET || "totalassist_dev_secret_change_in_prod";
 
@@ -71,7 +81,7 @@ app.use(
           const allowed = (process.env.APP_DOMAINS || "totalassist.tech")
             .split(",")
             .map((d: string) => d.trim())
-            .flatMap((d: string) => [`https://${d}`, `http://${d}`]);
+            .map((d: string) => `https://${d}`);
           if (allowed.includes(origin) || origin.endsWith(".replit.dev")) {
             callback(null, true);
           } else {
