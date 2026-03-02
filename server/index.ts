@@ -1205,6 +1205,7 @@ app.post("/api/subscription/apply-retention-discount", requireAuth, async (req, 
 // ============================================
 
 // Validate a promo code (public endpoint)
+// Checks local DB first, then falls back to Stripe promotion codes
 app.post("/api/promo-codes/validate", async (req, res) => {
   try {
     const { code, userId } = req.body;
@@ -1213,7 +1214,19 @@ app.post("/api/promo-codes/validate", async (req, res) => {
       return res.status(400).json({ error: "Promo code is required" });
     }
 
+    // Try local DB first
     const result = await promoCodeService.validatePromoCode(code, userId);
+    if (result.valid) {
+      return res.json(result);
+    }
+
+    // Fall back to Stripe promotion codes
+    const stripeResult = await stripeService.validateStripePromoCode(code);
+    if (stripeResult.valid) {
+      return res.json(stripeResult);
+    }
+
+    // Neither found — return the original local error
     res.json(result);
   } catch (error) {
     console.error("[PROMO] Validation error:", error);

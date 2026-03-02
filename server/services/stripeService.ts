@@ -487,6 +487,42 @@ export async function createPortalSession(
   return { url: session.url };
 }
 
+// Validate a promo code against Stripe's promotion codes
+export async function validateStripePromoCode(code: string): Promise<{
+  valid: boolean;
+  discountType?: string;
+  discountValue?: number;
+  error?: string;
+}> {
+  try {
+    const promoCodes = await stripe.promotionCodes.list({
+      code,
+      active: true,
+      limit: 1,
+    });
+
+    if (promoCodes.data.length === 0) {
+      return { valid: false, error: 'Promo code not found' };
+    }
+
+    const promo = promoCodes.data[0];
+    const coupon = promo.coupon;
+
+    if (!coupon.valid) {
+      return { valid: false, error: 'This promo code has expired' };
+    }
+
+    return {
+      valid: true,
+      discountType: coupon.percent_off ? 'percent' : 'fixed',
+      discountValue: coupon.percent_off || (coupon.amount_off ? coupon.amount_off / 100 : 0),
+    };
+  } catch (error) {
+    console.error('[STRIPE] Error validating promo code:', error);
+    return { valid: false, error: 'Failed to validate promo code' };
+  }
+}
+
 // Sync subscription from Stripe (fallback when webhook didn't fire)
 export async function syncSubscriptionFromStripe(userId: string): Promise<boolean> {
   // Get user's Stripe customer ID
