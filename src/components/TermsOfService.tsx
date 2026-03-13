@@ -211,9 +211,17 @@ export const TermsOfService: React.FC<Props> = ({ onBack }) => {
           </ul>
           <p className="mt-3">Violation of this policy may result in immediate account termination without refund.</p>
 
-          {/* Section 10 - Intellectual Property */}
+          {/* Section 10 - Screen Sharing */}
           <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
-            10. Intellectual Property Rights
+            10. Screen Sharing
+          </h3>
+          <p>Our voice and video support sessions include an optional screen sharing feature. By activating screen sharing, you grant TotalAssist permission to view and analyze the contents of your shared screen for the sole purpose of providing technical support.</p>
+          <p className="mt-3">You are responsible for closing any applications containing sensitive, confidential, or personal information before sharing your screen. TotalAssist is not liable for any information inadvertently displayed during a screen sharing session. Screen captures are processed in real-time and are not permanently stored.</p>
+          <p className="mt-3">You may terminate screen sharing at any time. TotalAssist cannot remotely control your device — screen sharing is view-only.</p>
+
+          {/* Section 11 - Intellectual Property */}
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
+            11. Intellectual Property Rights
           </h3>
           <p><strong className="text-text-primary dark:text-white">10.1. Our Property.</strong> The Service, including all software, AI models, algorithms, text, graphics, logos, icons, images, audio clips, and the overall "look and feel," is owned by Smart Tek Labs or its licensors and is protected by copyright, trademark, and other intellectual property laws. "TotalAssist" and the TotalAssist logo are trademarks of Smart Tek Labs.</p>
 

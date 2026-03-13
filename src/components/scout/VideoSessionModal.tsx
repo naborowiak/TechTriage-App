@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Mic, MicOff, Phone, MessageSquare, ChevronRight, Bot, User } from 'lucide-react';
+import { X, Mic, MicOff, Phone, MessageSquare, ChevronRight, Bot, User, Monitor, MonitorOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useScreenShareSupport } from '../../hooks/useScreenShareSupport';
 import type { GuidedAction } from '../../types';
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
+import { ScreenShareConsent } from './ScreenShareConsent';
 
 interface TranscriptEntry {
   role: 'user' | 'model';
@@ -31,6 +33,10 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
   const [summary, setSummary] = useState('');
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [guidedAction, setGuidedAction] = useState<GuidedAction | null>(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [showScreenShareConsent, setShowScreenShareConsent] = useState(false);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const { isSupported: screenShareSupported } = useScreenShareSupport();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,6 +57,10 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
 
   const stopAllHardware = useCallback(() => {
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+    }
     if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       audioContextRef.current.close();
@@ -162,6 +172,54 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
       });
     }
   }, [isMuted]);
+
+  const handleScreenShareToggle = useCallback(() => {
+    if (isScreenSharing) {
+      // Stop sharing: restore camera
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(t => t.stop());
+        screenStreamRef.current = null;
+      }
+      if (videoRef.current && streamRef.current) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+      setIsScreenSharing(false);
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'screenShareToggle', enabled: false }));
+      }
+    } else {
+      setShowScreenShareConsent(true);
+    }
+  }, [isScreenSharing]);
+
+  const handleScreenShareConfirm = useCallback(async () => {
+    setShowScreenShareConsent(false);
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      screenStreamRef.current = screenStream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = screenStream;
+      }
+      setIsScreenSharing(true);
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'screenShareToggle', enabled: true }));
+      }
+      // Handle browser "stop sharing" button
+      screenStream.getVideoTracks()[0].onended = () => {
+        screenStreamRef.current = null;
+        if (videoRef.current && streamRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+        }
+        setIsScreenSharing(false);
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'screenShareToggle', enabled: false }));
+        }
+      };
+    } catch (e: any) {
+      if (e?.name === 'AbortError' || e?.name === 'NotAllowedError') return;
+      console.error('Screen share error:', e);
+    }
+  }, []);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -511,6 +569,13 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
               <div className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${status === 'connecting' ? 'bg-yellow-400' : 'bg-emerald-400'} animate-pulse`} />
                 <span className="text-white/60 text-xs capitalize">{status}</span>
+                {isScreenSharing && (
+                  <>
+                    <span className="text-white/30">·</span>
+                    <Monitor className="w-3 h-3 text-emerald-400" />
+                    <span className="text-emerald-400 text-xs">Sharing</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -683,6 +748,23 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
       {/* Bottom controls */}
       {!isSessionEnded && (
         <div className="h-auto bg-[#0B0E14] flex items-center justify-center gap-6 px-6 py-4 pb-safe-4 border-t border-white/10">
+          {screenShareSupported && (
+            <button
+              onClick={handleScreenShareToggle}
+              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
+                isScreenSharing
+                  ? 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)]'
+                  : 'bg-white/10 hover:bg-white/20'
+              }`}
+              aria-label={isScreenSharing ? 'Stop sharing screen' : 'Share your screen'}
+            >
+              {isScreenSharing
+                ? <MonitorOff className="w-6 h-6 text-white" />
+                : <Monitor className="w-6 h-6 text-white" />
+              }
+            </button>
+          )}
+
           <button
             onClick={toggleMute}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${
@@ -702,6 +784,13 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
             End Session
           </button>
         </div>
+      )}
+
+      {showScreenShareConsent && (
+        <ScreenShareConsent
+          onConfirm={handleScreenShareConfirm}
+          onCancel={() => setShowScreenShareConsent(false)}
+        />
       )}
     </div>
   );

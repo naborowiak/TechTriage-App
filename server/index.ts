@@ -1711,6 +1711,8 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' | 'screens
     // Flag to track when session is ready for greeting
     let sessionReady = false;
     let sessionInstance: any = null;
+    // Track screen share state — can be toggled mid-session via screenShareToggle message
+    let screenShareActive = mode === 'screenshare';
 
     // Fetch learned playbook branches (cached, 10-min TTL)
     // Screen share uses the same base instruction as video, plus screen analysis guidance
@@ -1842,7 +1844,7 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
                 }),
               );
               // Forward AI guidance to agent viewers during screen share
-              if (mode === "screenshare" && wsCaseId) {
+              if (screenShareActive && wsCaseId) {
                 notifyAgentViewers(wsCaseId, {
                   type: "aiGuidance",
                   text: message.serverContent.outputTranscript,
@@ -1893,7 +1895,7 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
                     action: guidedAction
                   }));
                   // Forward guided actions to agent viewers during screen share
-                  if (mode === "screenshare" && wsCaseId) {
+                  if (screenShareActive && wsCaseId) {
                     notifyAgentViewers(wsCaseId, { type: "aiGuidance", action: guidedAction });
                   }
                   functionResponses.push({ id: fc.id, name: fc.name, response: { result: "displayed_to_user" } });
@@ -2094,7 +2096,7 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
             },
           });
           // Forward screen frames to any connected agent viewers
-          if (mode === "screenshare" && wsCaseId) {
+          if (screenShareActive && wsCaseId) {
             forwardFrameToAgentViewers(wsCaseId, message.data);
           }
         } else if (message.type === "text") {
@@ -2104,6 +2106,34 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
           });
         } else if (message.type === "setCaseId") {
           wsCaseId = typeof message.caseId === "string" ? message.caseId.slice(0, 255) : null;
+        } else if (message.type === "screenShareToggle") {
+          const enabled = !!message.enabled;
+          screenShareActive = enabled;
+          if (enabled) {
+            session.sendClientContent({
+              turns: [{
+                role: "user",
+                parts: [{ text: "[System: User is now sharing their screen. Analyze screen captures and provide navigation guidance. Reference specific UI elements you can see. If you see sensitive information (passwords, banking), do NOT read it aloud.]" }]
+              }],
+              turnComplete: true,
+            });
+            if (wsCaseId) {
+              notifyAgentViewers(wsCaseId, { type: "screenShareStarted" });
+            }
+            console.log(`[${mode.toUpperCase()}] Screen share started mid-session for user ${userId}`);
+          } else {
+            session.sendClientContent({
+              turns: [{
+                role: "user",
+                parts: [{ text: "[System: User has stopped sharing their screen. Continue with audio-only support.]" }]
+              }],
+              turnComplete: true,
+            });
+            if (wsCaseId) {
+              notifyAgentViewers(wsCaseId, { type: "screenShareEnded" });
+            }
+            console.log(`[${mode.toUpperCase()}] Screen share stopped mid-session for user ${userId}`);
+          }
         }
       } catch (err) {
         console.error("Error handling client message:", err);
@@ -2113,7 +2143,7 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
     ws.on("close", () => {
       console.log("Client disconnected, closing Gemini session");
       // Notify agent viewers that screen share ended
-      if (mode === "screenshare" && wsCaseId) {
+      if (screenShareActive && wsCaseId) {
         notifyAgentViewers(wsCaseId, { type: "screenShareEnded" });
       }
       try {

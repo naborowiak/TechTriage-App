@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { X, Mic, MicOff, Camera, Phone, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Mic, MicOff, Camera, Phone, AlertCircle, Loader2, Monitor, MonitorOff } from 'lucide-react';
 import type { VoiceSessionState } from '../../hooks/useVoiceSession';
 import type { GeminiVoiceStatus } from '../../hooks/useGeminiVoice';
 import type { GuidedAction } from '../../types';
@@ -31,6 +31,10 @@ interface VoiceOverlayProps {
   userName?: string;
   guidedAction?: GuidedAction | null;
   onGuidedAction?: (action: GuidedAction, responseText: string) => void;
+  screenShareSupported?: boolean;
+  isScreenSharing?: boolean;
+  onShareScreen?: () => void;
+  onStopShareScreen?: () => void;
 }
 
 // Format a duration in seconds to mm:ss
@@ -61,6 +65,10 @@ export function VoiceOverlay({
   userName,
   guidedAction,
   onGuidedAction,
+  screenShareSupported,
+  isScreenSharing,
+  onShareScreen,
+  onStopShareScreen,
 }: VoiceOverlayProps) {
   const isListening = geminiStatus ? geminiStatus === 'listening' : isListeningProp;
   const isSpeaking = geminiStatus ? geminiStatus === 'speaking' : isSpeakingProp;
@@ -169,6 +177,13 @@ export function VoiceOverlay({
             {geminiStatus === 'listening' || geminiStatus === 'speaking' ? (
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             ) : null}
+            {isScreenSharing && (
+              <>
+                <span className="text-white/30">·</span>
+                <Monitor className="w-3 h-3 text-emerald-400" />
+                <span className="text-emerald-400 text-xs">Sharing</span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -373,6 +388,24 @@ export function VoiceOverlay({
               >
                 <Camera className="w-5 h-5 text-white" />
               </button>
+
+              {/* Screen Share */}
+              {screenShareSupported && onShareScreen && onStopShareScreen && (
+                <button
+                  onClick={isScreenSharing ? onStopShareScreen : onShareScreen}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                    isScreenSharing
+                      ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                      : 'bg-white/10 hover:bg-white/15'
+                  }`}
+                  aria-label={isScreenSharing ? 'Stop sharing screen' : 'Share your screen'}
+                >
+                  {isScreenSharing
+                    ? <MonitorOff className="w-5 h-5 text-white" />
+                    : <Monitor className="w-5 h-5 text-white" />
+                  }
+                </button>
+              )}
 
               {/* Mic indicator — center, larger */}
               <div className={`

@@ -5,7 +5,8 @@ import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
 import { PhotoCaptureModal } from './PhotoCaptureModal';
 import { VideoSessionModal } from './VideoSessionModal';
-import { ScreenShareModal } from './ScreenShareModal';
+import { ScreenShareConsent } from './ScreenShareConsent';
+import { useScreenShareSupport } from '../../hooks/useScreenShareSupport';
 import { useUsage } from '../../stores/usageStore';
 import { sendMessageToGemini, sendGuestMessage, getGuestUsage, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
 import { useVoiceSession, VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
@@ -101,7 +102,13 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [showVoiceOverlay, setShowVoiceOverlay] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [showScreenShareModal, setShowScreenShareModal] = useState(false);
+  const [isVoiceScreenSharing, setIsVoiceScreenSharing] = useState(false);
+  const [showVoiceScreenShareConsent, setShowVoiceScreenShareConsent] = useState(false);
+  const voiceScreenStreamRef = useRef<MediaStream | null>(null);
+  const voiceScreenVideoRef = useRef<HTMLVideoElement | null>(null);
+  const voiceScreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const voiceScreenIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { isSupported: screenShareSupported } = useScreenShareSupport();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
@@ -780,9 +787,6 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         useVideoCredit();
         setShowVideoModal(true);
         break;
-      case 'screenshare':
-        setShowScreenShareModal(true);
-        break;
       default:
         // Chat mode - focus input
         inputRef.current?.focus();
@@ -797,7 +801,25 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
     geminiVoice.connect();
   }, [voiceSession, geminiVoice]);
 
+  const stopVoiceScreenShare = useCallback(() => {
+    if (voiceScreenIntervalRef.current) {
+      clearInterval(voiceScreenIntervalRef.current);
+      voiceScreenIntervalRef.current = null;
+    }
+    if (voiceScreenStreamRef.current) {
+      voiceScreenStreamRef.current.getTracks().forEach(t => t.stop());
+      voiceScreenStreamRef.current = null;
+    }
+    voiceScreenVideoRef.current = null;
+    voiceScreenCanvasRef.current = null;
+    setIsVoiceScreenSharing(false);
+    geminiVoice.sendScreenShareToggle(false);
+  }, [geminiVoice]);
+
   const endVoiceMode = useCallback(async () => {
+    // Clean up screen share if active
+    stopVoiceScreenShare();
+
     // Always hide overlay first — if cleanup throws, the user must not get stuck
     setShowVoiceOverlay(false);
     setActiveMode('chat');
@@ -904,7 +926,50 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         }).catch(() => {});
       }
     }
-  }, [geminiVoice, webSpeech, voiceSession, caseId, ensureCase]);
+  }, [geminiVoice, webSpeech, voiceSession, caseId, ensureCase, stopVoiceScreenShare]);
+
+  // Voice screen share — frame capture + start/confirm handlers
+  const captureVoiceScreenFrame = useCallback(() => {
+    const video = voiceScreenVideoRef.current;
+    const canvas = voiceScreenCanvasRef.current;
+    if (!video || !canvas || !video.videoWidth || !video.videoHeight) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const scale = Math.min(1, 1280 / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+    const base64 = dataUrl.split(',')[1];
+    geminiVoice.sendImage(base64);
+  }, [geminiVoice]);
+
+  const handleVoiceScreenShareConfirm = useCallback(async () => {
+    setShowVoiceScreenShareConsent(false);
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      voiceScreenStreamRef.current = screenStream;
+      const video = document.createElement('video');
+      video.srcObject = screenStream;
+      video.muted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      voiceScreenVideoRef.current = video;
+      voiceScreenCanvasRef.current = document.createElement('canvas');
+      video.onloadedmetadata = () => {
+        video.play();
+        voiceScreenIntervalRef.current = setInterval(captureVoiceScreenFrame, 1500);
+      };
+      setIsVoiceScreenSharing(true);
+      geminiVoice.sendScreenShareToggle(true);
+      screenStream.getVideoTracks()[0].onended = () => {
+        stopVoiceScreenShare();
+      };
+    } catch (e: any) {
+      if (e?.name === 'AbortError' || e?.name === 'NotAllowedError') return;
+      console.error('Voice screen share error:', e);
+    }
+  }, [captureVoiceScreenFrame, geminiVoice, stopVoiceScreenShare]);
 
   const handlePhotoCaptured = useCallback((imageBase64: string) => {
     setShowPhotoModal(false);
@@ -1293,6 +1358,10 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
           onGuidedAction={(_action, text) => {
             geminiVoice.sendText(text);
           }}
+          screenShareSupported={screenShareSupported}
+          isScreenSharing={isVoiceScreenSharing}
+          onShareScreen={() => setShowVoiceScreenShareConsent(true)}
+          onStopShareScreen={stopVoiceScreenShare}
         />
       )}
 
@@ -1322,16 +1391,10 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
       )}
 
       {/* Screen Share Modal */}
-      {showScreenShareModal && (
-        <ScreenShareModal
-          onClose={() => {
-            setShowScreenShareModal(false);
-            setActiveMode('chat');
-          }}
-          caseId={caseId || undefined}
-          onCaseCreated={(newId) => {
-            setCaseId(newId);
-          }}
+      {showVoiceScreenShareConsent && (
+        <ScreenShareConsent
+          onConfirm={handleVoiceScreenShareConfirm}
+          onCancel={() => setShowVoiceScreenShareConsent(false)}
         />
       )}
 

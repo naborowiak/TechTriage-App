@@ -72,7 +72,20 @@ export const PrivacyPolicy: React.FC<Props> = ({ onBack }) => {
           </p>
 
           <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
-            3. How We Use Your Information
+            3. Screen Sharing
+          </h3>
+          <p>
+            During voice or video support sessions, you may optionally share your device screen with our service. When screen sharing is active, periodic screenshots of your displayed content are captured and transmitted to our AI system for real-time analysis. These captures are used solely to provide context-specific troubleshooting guidance.
+          </p>
+          <p className="mt-3">
+            Screen captures are processed in real-time and are <strong className="text-text-primary dark:text-white">not permanently stored</strong> on our servers. If your case is escalated to a human support agent, they may view your shared screen in real-time to assist with troubleshooting.
+          </p>
+          <p className="mt-3">
+            Before each screen sharing session, you will be presented with a consent dialog. You are advised to close any applications displaying sensitive information (passwords, banking, personal messages) before sharing your screen. You may stop sharing at any time using the in-app controls or your browser's built-in "Stop sharing" button.
+          </p>
+
+          <h3 className="text-text-primary dark:text-white font-bold text-lg mt-8 mb-4">
+            4. How We Use Your Information
           </h3>
           <p>We use your data for the following specific purposes:</p>
           <ul className="list-disc pl-5 space-y-2 mt-2">
