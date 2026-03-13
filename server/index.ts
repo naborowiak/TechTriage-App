@@ -1902,6 +1902,7 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
                   functionResponses.push({ id: fc.id, name: fc.name, response: { result: "session_ended" } });
                 } else if (fc.name === "annotateScreen") {
                   // Convert Gemini's annotation args to AnnotationStroke format and send to user
+                  console.log(`[ANNOTATE] AI called annotateScreen with ${JSON.stringify(fc.args?.annotations?.length || 0)} annotations`);
                   const rawAnnotations = Array.isArray(fc.args?.annotations) ? fc.args.annotations : [];
                   const colorMap: Record<string, string> = { red: '#EF4444', yellow: '#EAB308', green: '#22C55E', blue: '#3B82F6' };
                   const strokes = rawAnnotations.slice(0, 20).map((a: any, i: number) => {
