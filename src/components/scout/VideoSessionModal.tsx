@@ -573,16 +573,14 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
           autoPlay
           playsInline
           muted
-          className={`absolute inset-0 w-full h-full transition-all duration-1000 ${
-            isScreenSharing ? 'object-contain' : 'object-cover'
-          } ${
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ${
             isSessionEnded ? 'opacity-20 blur-3xl scale-110' : 'opacity-100'
           }`}
         />
         <canvas ref={canvasRef} className="hidden" />
 
-        {/* Agent annotation overlay */}
-        {isScreenSharing && annotations.length > 0 && (
+        {/* AI annotation overlay — rendered whenever annotations arrive (server-gated to screen share) */}
+        {annotations.length > 0 && (
           <svg
             className="absolute inset-0 w-full h-full z-10 pointer-events-none"
             viewBox="0 0 1 1"
