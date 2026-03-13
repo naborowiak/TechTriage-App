@@ -1739,6 +1739,16 @@ STEP-BY-STEP NAVIGATION:
 - After each step, wait for the next screenshot to confirm the user followed the instruction.
 - If the screenshot doesn't match what you expected, gently correct: "It looks like you're on a different screen. Let's go back..."
 
+SCREEN ANNOTATIONS (annotateScreen tool):
+- You have an annotateScreen tool that draws visual highlights on the user's shared screen.
+- Use it to CIRCLE buttons, menu items, or areas you're referring to — this is extremely helpful for non-technical users.
+- Call annotateScreen EVERY TIME you reference a specific UI element. For example, if you say "tap the Wi-Fi icon in the top-right", also call annotateScreen with a circle at that location.
+- Coordinates are normalized 0-1 (0,0 = top-left, 1,1 = bottom-right). Estimate the position of UI elements from the screenshot.
+- Available tools: 'circle' (highlight an area), 'arrow' (point at something), 'freehand' (underline).
+- Colors: 'red' (default, for important elements), 'green' (for correct/confirmed elements), 'yellow' (for warnings), 'blue' (for informational).
+- You MAY call annotateScreen alongside showStep or other tools — it is an exception to the one-tool-per-turn rule, like identifyDevice.
+- Example: User needs to tap Settings → call annotateScreen with a red circle around the Settings icon AND call showStep with the instruction.
+
 SCREEN CONTENT RECOGNITION:
 - Settings menus: identify OS (Android/iOS/Windows/macOS) and navigate accordingly.
 - Router admin pages: identify router brand from UI and guide through specific menus.
@@ -1746,7 +1756,7 @@ SCREEN CONTENT RECOGNITION:
 - Error dialogs: read the error, explain what it means in simple terms, suggest the fix.
 - Wi-Fi/network settings: guide through password entry, forget/reconnect, DNS settings.
 
-IMPORTANT: The user shared their screen so you can see exactly what they see. Use this to give PRECISE, contextual guidance rather than generic troubleshooting. Always reference what you can actually see on their screen.`;
+IMPORTANT: The user shared their screen so you can see exactly what they see. Use this to give PRECISE, contextual guidance rather than generic troubleshooting. Always reference what you can actually see on their screen. ALWAYS use annotateScreen to visually highlight what you're talking about.`;
     }
     const playbookBlock = await getPlaybookBlock();
     if (playbookBlock) systemInstructionText += playbookBlock;
@@ -1890,6 +1900,35 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
                 } else if (fc.name === "endSession") {
                   ws.send(JSON.stringify({ type: "endSession", summary: fc.args?.summary || "Session completed" }));
                   functionResponses.push({ id: fc.id, name: fc.name, response: { result: "session_ended" } });
+                } else if (fc.name === "annotateScreen") {
+                  // Convert Gemini's annotation args to AnnotationStroke format and send to user
+                  const rawAnnotations = Array.isArray(fc.args?.annotations) ? fc.args.annotations : [];
+                  const colorMap: Record<string, string> = { red: '#EF4444', yellow: '#EAB308', green: '#22C55E', blue: '#3B82F6' };
+                  const strokes = rawAnnotations.slice(0, 20).map((a: any, i: number) => {
+                    const x = typeof a.x === 'number' ? Math.max(0, Math.min(1, a.x)) : 0.5;
+                    const y = typeof a.y === 'number' ? Math.max(0, Math.min(1, a.y)) : 0.5;
+                    const w = typeof a.width === 'number' ? Math.max(0.01, Math.min(1, a.width)) : 0.1;
+                    const h = typeof a.height === 'number' ? Math.max(0.01, Math.min(1, a.height)) : 0.1;
+                    const color = colorMap[a.color] || colorMap.red;
+                    const tool = (a.tool === 'circle' || a.tool === 'arrow' || a.tool === 'freehand') ? a.tool : 'circle';
+
+                    if (tool === 'circle') {
+                      return { id: `ai-${i}`, tool, points: [{ x: x - w / 2, y: y - h / 2 }, { x: x + w / 2, y: y + h / 2 }], color };
+                    } else if (tool === 'arrow') {
+                      return { id: `ai-${i}`, tool, points: [{ x, y }, { x: x + (w || 0.05), y: y + (h || 0.05) }], color };
+                    } else {
+                      // freehand — short horizontal line
+                      return { id: `ai-${i}`, tool, points: [{ x: x - w / 2, y }, { x: x + w / 2, y }], color };
+                    }
+                  });
+                  if (strokes.length > 0) {
+                    ws.send(JSON.stringify({ type: "annotation", annotations: strokes }));
+                    // Also forward to agent viewers
+                    if (wsCaseId) {
+                      notifyAgentViewers(wsCaseId, { type: "aiAnnotation", annotations: strokes });
+                    }
+                  }
+                  functionResponses.push({ id: fc.id, name: fc.name, response: { result: "annotations_displayed" } });
                 } else if (fc.name === "presentChoices" || fc.name === "showStep" || fc.name === "confirmResult") {
                   const guidedAction = { type: fc.name, ...fc.args };
                   ws.send(JSON.stringify({
@@ -2070,6 +2109,50 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
                   required: ["deviceType", "displayName"],
                 },
               },
+              {
+                name: "annotateScreen",
+                description: "Draw visual annotations on the user's shared screen to highlight UI elements, buttons, or areas. Only call this during screen share sessions when you need to point out something specific on the user's screen. Each annotation is a shape drawn at normalized coordinates (0-1 range, where 0,0 is top-left and 1,1 is bottom-right).",
+                parameters: {
+                  type: Type.OBJECT,
+                  properties: {
+                    annotations: {
+                      type: Type.ARRAY,
+                      description: "Array of annotation shapes to draw on the user's screen.",
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          tool: {
+                            type: Type.STRING,
+                            description: "Shape type: 'circle' to highlight an area, 'arrow' to point at something, 'freehand' to underline or draw attention.",
+                          },
+                          x: {
+                            type: Type.NUMBER,
+                            description: "X coordinate (0-1, left to right) of the annotation center or start point.",
+                          },
+                          y: {
+                            type: Type.NUMBER,
+                            description: "Y coordinate (0-1, top to bottom) of the annotation center or start point.",
+                          },
+                          width: {
+                            type: Type.NUMBER,
+                            description: "Width of the annotation (0-1 scale). For circles, this is the diameter. For arrows, this is the horizontal distance to the endpoint.",
+                          },
+                          height: {
+                            type: Type.NUMBER,
+                            description: "Height of the annotation (0-1 scale). For circles, this is the vertical diameter. For arrows, this is the vertical distance to the endpoint.",
+                          },
+                          color: {
+                            type: Type.STRING,
+                            description: "Color of the annotation: 'red', 'yellow', 'green', or 'blue'. Default red.",
+                          },
+                        },
+                        required: ["tool", "x", "y"],
+                      },
+                    },
+                  },
+                  required: ["annotations"],
+                },
+              },
             ],
           },
         ],
@@ -2117,7 +2200,7 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
             session.sendClientContent({
               turns: [{
                 role: "user",
-                parts: [{ text: "[System: User is now sharing their screen. Analyze screen captures and provide navigation guidance. Reference specific UI elements you can see. If you see sensitive information (passwords, banking), do NOT read it aloud.]" }]
+                parts: [{ text: "[System: User is now sharing their screen. Analyze screen captures and provide navigation guidance. Reference specific UI elements you can see. IMPORTANT: Use the annotateScreen tool to draw circles/arrows on the user's screen whenever you reference a specific UI element — this helps them find exactly what you're talking about. If you see sensitive information (passwords, banking), do NOT read it aloud.]" }]
               }],
               turnComplete: true,
             });
