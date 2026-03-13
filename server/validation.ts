@@ -191,6 +191,15 @@ export const agentBulkDeleteSchema = z.object({
 });
 
 // ============================================
+// Screen share schemas
+// ============================================
+
+export const screenShareTokenListSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+
+// ============================================
 // Validation middleware factories
 // ============================================
 

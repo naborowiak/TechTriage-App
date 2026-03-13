@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowLeft, Loader2, Send,
-  UserCheck, Pencil, Trash2, Check, X
+  UserCheck, Pencil, Trash2, Check, X, Monitor, Copy, Link
 } from 'lucide-react';
 import { useAgentApi } from '../../hooks/useAgentApi';
 import type { AgentRosterItem } from '../../types';
+import { ScreenShareViewer } from './ScreenShareViewer';
 
 const statusOptions = ['open', 'resolved', 'escalated', 'pending'];
 const priorityOptions = ['low', 'medium', 'high', 'critical'];
@@ -98,6 +99,12 @@ export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, currentUser
   // Case deletion state (admin only)
   const [isConfirmingCaseDelete, setIsConfirmingCaseDelete] = useState(false);
   const [isDeletingCase, setIsDeletingCase] = useState(false);
+
+  // Screen share state
+  const [screenShareLink, setScreenShareLink] = useState<string | null>(null);
+  const [isRequestingScreenShare, setIsRequestingScreenShare] = useState(false);
+  const [screenShareActive, setScreenShareActive] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const loadCase = useCallback(async () => {
     setIsLoading(true);
@@ -203,6 +210,32 @@ export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, currentUser
   const showStatus = (msg: string, isError = false) => {
     setStatusMsg(isError ? `Error: ${msg}` : msg);
     setTimeout(() => setStatusMsg(null), 4000);
+  };
+
+  const handleRequestScreenShare = async () => {
+    setIsRequestingScreenShare(true);
+    try {
+      const result = await api.requestScreenShare(caseId);
+      const fullUrl = `${window.location.origin}${result.link}`;
+      setScreenShareLink(fullUrl);
+      setScreenShareActive(true);
+      showStatus('Screen share link generated');
+    } catch (err: any) {
+      showStatus(err?.message || 'Failed to generate screen share link', true);
+    } finally {
+      setIsRequestingScreenShare(false);
+    }
+  };
+
+  const handleCopyScreenShareLink = async () => {
+    if (!screenShareLink) return;
+    try {
+      await navigator.clipboard.writeText(screenShareLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      showStatus('Failed to copy link', true);
+    }
   };
 
   if (isLoading) {
@@ -341,6 +374,45 @@ export const CaseDetail: React.FC<Props> = ({ caseId, currentUserId, currentUser
         <div className="flex-1 overflow-auto p-6" role="tabpanel">
           {activeTab === 'details' && (
             <div className="space-y-6">
+              {/* Screen Share Section */}
+              {(caseRecord.status === 'open' || caseRecord.status === 'escalated') && (
+                <div className="space-y-3">
+                  {!screenShareActive ? (
+                    <button
+                      onClick={handleRequestScreenShare}
+                      disabled={isRequestingScreenShare}
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors disabled:opacity-50"
+                      aria-label="Request screen share"
+                    >
+                      {isRequestingScreenShare ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Monitor className="w-4 h-4" />
+                      )}
+                      Request Screen Share
+                    </button>
+                  ) : (
+                    <div className="space-y-3">
+                      {screenShareLink && (
+                        <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/15 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                          <Link className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                          <span className="text-xs text-gray-700 dark:text-gray-300 truncate flex-1 font-mono">{screenShareLink}</span>
+                          <button
+                            onClick={handleCopyScreenShareLink}
+                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 rounded hover:bg-emerald-200 dark:hover:bg-emerald-900/40 transition-colors flex-shrink-0"
+                            aria-label="Copy screen share link"
+                          >
+                            {linkCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                            {linkCopied ? 'Copied' : 'Copy'}
+                          </button>
+                        </div>
+                      )}
+                      <ScreenShareViewer caseId={caseId} />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* 2-column form fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 <FormField label="Category" value={caseRecord.sessionMode || '—'} />

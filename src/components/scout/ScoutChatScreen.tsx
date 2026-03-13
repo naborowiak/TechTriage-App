@@ -5,6 +5,7 @@ import { ScoutMode } from './ModeDock';
 import { VoiceOverlay } from './VoiceOverlay';
 import { PhotoCaptureModal } from './PhotoCaptureModal';
 import { VideoSessionModal } from './VideoSessionModal';
+import { ScreenShareModal } from './ScreenShareModal';
 import { useUsage } from '../../stores/usageStore';
 import { sendMessageToGemini, sendGuestMessage, getGuestUsage, generateCaseSummary, generateEscalationReport, generateCaseName, generateVoiceSummary } from '../../services/geminiService';
 import { useVoiceSession, VoiceDiagnosticReport } from '../../hooks/useVoiceSession';
@@ -100,6 +101,7 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
   const [showVoiceOverlay, setShowVoiceOverlay] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showScreenShareModal, setShowScreenShareModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showEscalateConfirm, setShowEscalateConfirm] = useState(false);
   const [isEscalating, setIsEscalating] = useState(false);
@@ -778,6 +780,9 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         useVideoCredit();
         setShowVideoModal(true);
         break;
+      case 'screenshare':
+        setShowScreenShareModal(true);
+        break;
       default:
         // Chat mode - focus input
         inputRef.current?.focus();
@@ -1307,6 +1312,20 @@ export function ScoutChatScreen({ embedded = false, initialCaseId, initialMode, 
         <VideoSessionModal
           onClose={() => {
             setShowVideoModal(false);
+            setActiveMode('chat');
+          }}
+          caseId={caseId || undefined}
+          onCaseCreated={(newId) => {
+            setCaseId(newId);
+          }}
+        />
+      )}
+
+      {/* Screen Share Modal */}
+      {showScreenShareModal && (
+        <ScreenShareModal
+          onClose={() => {
+            setShowScreenShareModal(false);
             setActiveMode('chat');
           }}
           caseId={caseId || undefined}

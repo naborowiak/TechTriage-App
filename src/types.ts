@@ -72,6 +72,7 @@ export enum PageView {
   SERVICE_VOICE = "service_voice",
   SERVICE_VIDEO = "service_video",
   AGENT_PORTAL = "agent_portal",
+  SCREEN_SHARE = "screen_share",
 }
 
 // ============================================
@@ -273,10 +274,11 @@ export interface BulkDeleteResult {
 // Format case display ID from sessionMode + modeSequence
 export function formatCaseDisplayId(sessionMode: string | null | undefined, modeSequence: number | null | undefined): string {
   const prefixMap: Record<string, string> = {
-    chat: 'ME',    // Message
-    video: 'VI',   // Video
-    voice: 'TA',   // Talk
-    photo: 'PH',   // Photo
+    chat: 'ME',          // Message
+    video: 'VI',         // Video
+    voice: 'TA',         // Talk
+    photo: 'PH',         // Photo
+    screenshare: 'SS',   // Screen Share
   };
   const prefix = prefixMap[sessionMode || 'chat'] || 'ME';
   const seq = modeSequence || 0;

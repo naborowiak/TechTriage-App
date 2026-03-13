@@ -1,8 +1,8 @@
 import React from 'react';
-import { MessageSquare, Mic, Camera, Video, Lock } from 'lucide-react';
+import { MessageSquare, Mic, Camera, Video, Monitor, Lock } from 'lucide-react';
 import { UserTier } from '../../stores/usageStore';
 
-export type ScoutMode = 'chat' | 'voice' | 'photo' | 'video';
+export type ScoutMode = 'chat' | 'voice' | 'photo' | 'video' | 'screenshare';
 
 interface ModeConfig {
   id: ScoutMode;
@@ -46,6 +46,14 @@ const MODES: ModeConfig[] = [
     gradient: 'from-[#8B5CF6] via-[#A855F7] to-[#C084FC]',
     glow: 'shadow-[0_4px_20px_rgba(139,92,246,0.4)]',
   },
+  {
+    id: 'screenshare',
+    icon: Monitor,
+    label: 'Screen',
+    lockedTiers: ['guest', 'free'],
+    gradient: 'from-[#10B981] via-[#06B6D4] to-[#0EA5E9]',
+    glow: 'shadow-[0_4px_20px_rgba(16,185,129,0.4)]',
+  },
 ];
 
 interface ModeDockProps {
@@ -53,14 +61,16 @@ interface ModeDockProps {
   onModeSelect: (mode: ScoutMode) => void;
   userTier: UserTier;
   onLockedModeClick: (mode: ScoutMode) => void;
+  hideScreenShare?: boolean;
 }
 
-export function ModeDock({ activeMode, onModeSelect, userTier, onLockedModeClick }: ModeDockProps) {
+export function ModeDock({ activeMode, onModeSelect, userTier, onLockedModeClick, hideScreenShare }: ModeDockProps) {
   const isLocked = (mode: ModeConfig) => mode.lockedTiers.includes(userTier);
+  const visibleModes = hideScreenShare ? MODES.filter(m => m.id !== 'screenshare') : MODES;
 
   return (
     <div className="flex items-center justify-center gap-3 py-3 px-2">
-      {MODES.map((mode) => {
+      {visibleModes.map((mode) => {
         const Icon = mode.icon;
         const locked = isLocked(mode);
         const isActive = activeMode === mode.id;

@@ -15,12 +15,13 @@ import devicesRouter from "./routes/devices";
 import aiRouter from "./routes/ai";
 import specialistRouter from "./routes/specialist";
 import agentRouter from "./routes/agent";
+import screenShareRouter from "./routes/screenshare";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import * as authService from "./services/authService";
 import { sendWelcomeEmail, sendVerificationEmail, sendPasswordResetEmail, sendTestEmailWithResendDomain, sendSessionGuideEmail } from "./services/emailService";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { db } from "./db";
-import { usersTable } from "../shared/schema/schema";
+import { usersTable, screenShareTokensTable, casesTable } from "../shared/schema/schema";
 import { eq } from "drizzle-orm";
 import cookie from "cookie";
 import cookieSignature from "cookie-signature";
@@ -342,6 +343,100 @@ async function authenticateWebSocket(req: IncomingMessage): Promise<{ id: string
     const ip = req.socket.remoteAddress || "unknown";
     console.error(`[WS AUTH] Authentication failed (IP: ${ip})`);
     return null;
+  }
+}
+
+// ============================================
+// Screen Share: Agent Viewer Channel + Token Validation
+// ============================================
+
+// Map of caseId -> Set of connected agent viewer WebSockets
+const agentViewers = new Map<string, Set<{ ws: WebSocket; agentId: string }>>();
+const MAX_AGENT_VIEWERS_PER_CASE = 3;
+
+function registerAgentViewer(caseId: string, ws: WebSocket, agentId: string): boolean {
+  if (!agentViewers.has(caseId)) agentViewers.set(caseId, new Set());
+  const viewers = agentViewers.get(caseId)!;
+  if (viewers.size >= MAX_AGENT_VIEWERS_PER_CASE) return false;
+  const entry = { ws, agentId };
+  viewers.add(entry);
+  ws.on("close", () => {
+    viewers.delete(entry);
+    if (viewers.size === 0) agentViewers.delete(caseId);
+  });
+  return true;
+}
+
+function forwardFrameToAgentViewers(caseId: string, imageBase64: string) {
+  const viewers = agentViewers.get(caseId);
+  if (!viewers) return;
+  const msg = JSON.stringify({ type: "screenFrame", data: imageBase64, timestamp: Date.now() });
+  for (const { ws } of viewers) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+  }
+}
+
+function notifyAgentViewers(caseId: string, message: Record<string, unknown>) {
+  const viewers = agentViewers.get(caseId);
+  if (!viewers) return;
+  const msg = JSON.stringify(message);
+  for (const { ws } of viewers) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+  }
+}
+
+/**
+ * Validates and consumes a screen share token. Single-use enforcement:
+ * the token is marked as used atomically to prevent race conditions.
+ */
+async function validateAndConsumeScreenShareToken(token: string): Promise<{ caseId: string; userId: string } | null> {
+  try {
+    const [record] = await db
+      .select()
+      .from(screenShareTokensTable)
+      .where(eq(screenShareTokensTable.token, token))
+      .limit(1);
+
+    if (!record) return null;
+    if (record.usedAt) return null;
+    if (record.revokedAt) return null;
+    if (new Date() > record.expiresAt) return null;
+
+    // Mark as used
+    await db
+      .update(screenShareTokensTable)
+      .set({ usedAt: new Date() })
+      .where(eq(screenShareTokensTable.id, record.id));
+
+    // Look up case to get userId
+    const [caseRecord] = await db
+      .select({ userId: casesTable.userId })
+      .from(casesTable)
+      .where(eq(casesTable.id, record.caseId))
+      .limit(1);
+
+    if (!caseRecord) return null;
+
+    return { caseId: record.caseId, userId: caseRecord.userId };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Checks if a user has agent/admin role in the database.
+ * Used for agent-viewer WebSocket authentication.
+ */
+async function checkAgentRole(userId: string): Promise<boolean> {
+  try {
+    const [user] = await db
+      .select({ role: usersTable.role })
+      .from(usersTable)
+      .where(eq(usersTable.id, userId))
+      .limit(1);
+    return !!user && (user.role === "agent" || user.role === "admin");
+  } catch {
+    return false;
   }
 }
 
@@ -1591,8 +1686,8 @@ You have an additional tool: identifyDevice(deviceType, brand?, model?, displayN
 You're Alex from TotalAssist. Warm, competent, and human.`;
 }
 
-async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video', userContext?: UserContext | null, userId?: string) {
-  let wsCaseId: string | null = null;
+async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' | 'screenshare' = 'video', userContext?: UserContext | null, userId?: string, initialCaseId?: string) {
+  let wsCaseId: string | null = initialCaseId || null;
   const apiKey = process.env.GEMINI_API_KEY_TOTALASSIST;
   if (!apiKey) {
     ws.send(
@@ -1618,9 +1713,37 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
     let sessionInstance: any = null;
 
     // Fetch learned playbook branches (cached, 10-min TTL)
+    // Screen share uses the same base instruction as video, plus screen analysis guidance
     let systemInstructionText = mode === 'voice'
       ? buildVoiceSystemInstruction(selectedVoice.style, userContext)
       : buildSystemInstruction(selectedVoice.style, userContext);
+    if (mode === 'screenshare') {
+      systemInstructionText += `\n\nSCREEN SHARE MODE:
+The user is sharing their device screen with you. You can see periodic screenshots of what's on their screen.
+
+VISUAL ANALYSIS GUIDELINES:
+- Identify the device type, OS, and current app/screen from the screenshot.
+- Read any visible error messages, status indicators, or notifications.
+- Guide the user step-by-step: "I can see you're on the Settings screen. Now tap on 'Network & Internet'..."
+- Reference specific UI elements you can see: button labels, menu items, icons, text.
+- If the screen is unclear or too small, ask the user to zoom in or scroll to the relevant area.
+- If you see sensitive information (passwords, personal data, banking info), do NOT read it aloud or mention it. Simply tell the user "I notice some personal information is visible, you may want to cover that before we continue."
+
+STEP-BY-STEP NAVIGATION:
+- Use showStep() to display each navigation instruction on the user's screen.
+- Be precise: "Tap the gear icon in the top-right corner" not "Go to settings."
+- After each step, wait for the next screenshot to confirm the user followed the instruction.
+- If the screenshot doesn't match what you expected, gently correct: "It looks like you're on a different screen. Let's go back..."
+
+SCREEN CONTENT RECOGNITION:
+- Settings menus: identify OS (Android/iOS/Windows/macOS) and navigate accordingly.
+- Router admin pages: identify router brand from UI and guide through specific menus.
+- App screens: identify the app and help with specific features.
+- Error dialogs: read the error, explain what it means in simple terms, suggest the fix.
+- Wi-Fi/network settings: guide through password entry, forget/reconnect, DNS settings.
+
+IMPORTANT: The user shared their screen so you can see exactly what they see. Use this to give PRECISE, contextual guidance rather than generic troubleshooting. Always reference what you can actually see on their screen.`;
+    }
     const playbookBlock = await getPlaybookBlock();
     if (playbookBlock) systemInstructionText += playbookBlock;
 
@@ -1718,6 +1841,13 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
                   data: message.serverContent.outputTranscript,
                 }),
               );
+              // Forward AI guidance to agent viewers during screen share
+              if (mode === "screenshare" && wsCaseId) {
+                notifyAgentViewers(wsCaseId, {
+                  type: "aiGuidance",
+                  text: message.serverContent.outputTranscript,
+                });
+              }
             }
 
             if (message.serverContent?.turnComplete) {
@@ -1757,10 +1887,15 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
                   ws.send(JSON.stringify({ type: "endSession", summary: fc.args?.summary || "Session completed" }));
                   functionResponses.push({ id: fc.id, name: fc.name, response: { result: "session_ended" } });
                 } else if (fc.name === "presentChoices" || fc.name === "showStep" || fc.name === "confirmResult") {
+                  const guidedAction = { type: fc.name, ...fc.args };
                   ws.send(JSON.stringify({
                     type: "guidedAction",
-                    action: { type: fc.name, ...fc.args }
+                    action: guidedAction
                   }));
+                  // Forward guided actions to agent viewers during screen share
+                  if (mode === "screenshare" && wsCaseId) {
+                    notifyAgentViewers(wsCaseId, { type: "aiGuidance", action: guidedAction });
+                  }
                   functionResponses.push({ id: fc.id, name: fc.name, response: { result: "displayed_to_user" } });
                 }
               }
@@ -1958,6 +2093,10 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
               mimeType: "image/jpeg",
             },
           });
+          // Forward screen frames to any connected agent viewers
+          if (mode === "screenshare" && wsCaseId) {
+            forwardFrameToAgentViewers(wsCaseId, message.data);
+          }
         } else if (message.type === "text") {
           session.sendClientContent({
             turns: [{ role: "user", parts: [{ text: message.data }] }],
@@ -1973,6 +2112,10 @@ async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' = 'video',
 
     ws.on("close", () => {
       console.log("Client disconnected, closing Gemini session");
+      // Notify agent viewers that screen share ended
+      if (mode === "screenshare" && wsCaseId) {
+        notifyAgentViewers(wsCaseId, { type: "screenShareEnded" });
+      }
       try {
         session.close();
       } catch (err) {
@@ -2205,6 +2348,7 @@ async function main() {
     app.use("/api/ai", aiLimiter, aiRouter);
     app.use("/api/specialist", specialistLimiter, specialistRouter);
     app.use("/api/agent", agentRouter);
+    app.use("/api", screenShareRouter);
   } catch (error) {
     console.error("Auth setup failed:", error);
   }
@@ -2251,10 +2395,62 @@ async function main() {
   const wss = new WebSocketServer({ server, path: "/live" });
 
   wss.on("connection", async (ws, req) => {
-    // Parse query params for mode only (userId is NO LONGER trusted from query params)
     const url = new URL(req.url || "", `http://${req.headers.host}`);
-    const mode = (url.searchParams.get("mode") === "voice" ? "voice" : "video") as "voice" | "video";
+    const modeParam = url.searchParams.get("mode") || "video";
     const clientIp = req.socket.remoteAddress || "unknown";
+
+    // ---- Agent Viewer mode: agent watches a user's screen share ----
+    if (modeParam === "agent-viewer") {
+      const sessionUser = await authenticateWebSocket(req);
+      if (!sessionUser) {
+        ws.close(4401, "Authentication required");
+        return;
+      }
+      const isAgent = await checkAgentRole(sessionUser.id);
+      if (!isAgent) {
+        ws.close(4403, "Agent access required");
+        return;
+      }
+      const viewCaseId = url.searchParams.get("caseId");
+      if (!viewCaseId) {
+        ws.close(4400, "caseId required");
+        return;
+      }
+      const registered = registerAgentViewer(viewCaseId, ws, sessionUser.id);
+      if (!registered) {
+        ws.send(JSON.stringify({ type: "error", message: "Maximum viewers reached for this case" }));
+        ws.close(4429, "Too many viewers");
+        return;
+      }
+      console.log(`[WS] Agent ${sessionUser.id} viewing screen share for case ${viewCaseId}`);
+      ws.send(JSON.stringify({ type: "ready", mode: "agent-viewer" }));
+      return;
+    }
+
+    // ---- Screen share with token auth (Flow B: agent-sent link) ----
+    const screenShareToken = url.searchParams.get("token");
+    if (screenShareToken && modeParam === "screenshare") {
+      console.log(`[WS] Screen share connection with token (IP: ${clientIp})`);
+      const tokenResult = await validateAndConsumeScreenShareToken(screenShareToken);
+      if (!tokenResult) {
+        console.log(`[WS] Invalid screen share token rejected (IP: ${clientIp})`);
+        ws.close(4403, "Invalid or expired screen share token");
+        return;
+      }
+      const { caseId, userId } = tokenResult;
+      console.log(`[WS] Token-based screen share started for case ${caseId}`);
+
+      // Notify any watching agents
+      notifyAgentViewers(caseId, { type: "screenShareStarted" });
+
+      // Set up Gemini session for screen analysis
+      const userContext = await fetchUserContext(userId);
+      setupGeminiLive(ws, "screenshare", userContext, userId, caseId);
+      return;
+    }
+
+    // ---- Standard modes: voice, video, screenshare (session cookie auth) ----
+    const mode = (modeParam === "voice" ? "voice" : modeParam === "screenshare" ? "screenshare" : "video") as "voice" | "video" | "screenshare";
     console.log(`[WS] New WebSocket connection for ${mode} session (IP: ${clientIp})`);
 
     // SECURITY: Authenticate via session cookie — userId query param is completely ignored
@@ -2271,7 +2467,7 @@ async function main() {
 
     let userContext: UserContext | null = null;
 
-    // Check if user has access to live sessions (voice and video share the same quota)
+    // Check if user has access to live sessions (voice, video, and screenshare share the same quota)
     const accessCheck = await checkFeatureAccess(userId, "live");
     if (!accessCheck.allowed) {
       console.log(
@@ -2283,8 +2479,8 @@ async function main() {
           code: accessCheck.reason,
           message:
             accessCheck.reason === "LIMIT_REACHED"
-              ? `You've used all your ${mode} support sessions for this billing period.`
-              : `${mode === 'voice' ? 'Voice' : 'Live'} support is not available on your current plan.`,
+              ? `You've used all your live support sessions for this billing period.`
+              : `Live support is not available on your current plan.`,
           tier: accessCheck.tier,
           usage: accessCheck.usage,
           limits: accessCheck.limits,

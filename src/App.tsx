@@ -60,6 +60,7 @@ const CaseAnalytics = lazy(() => import("./components/CaseAnalytics").then(m => 
 const SpecialistResponse = lazy(() => import("./components/SpecialistResponse").then(m => ({ default: m.SpecialistResponse })));
 const ServicePage = lazy(() => import("./components/ServicePage").then(m => ({ default: m.ServicePage })));
 const AgentPortal = lazy(() => import("./components/agent/AgentPortal").then(m => ({ default: m.AgentPortal })));
+const ScreenShareLanding = lazy(() => import("./components/ScreenShareLanding").then(m => ({ default: m.ScreenShareLanding })));
 
 // Page loading fallback for lazy-loaded routes
 const PageLoadingFallback = () => <LoadingScreen />;
@@ -1218,6 +1219,7 @@ const pathToView: Record<string, PageView> = {
   '/services/voice': PageView.SERVICE_VOICE,
   '/services/video': PageView.SERVICE_VIDEO,
   '/agent': PageView.AGENT_PORTAL,
+  '/screen-share': PageView.SCREEN_SHARE,
 };
 
 const viewToPath: Record<PageView, string> = {
@@ -1242,6 +1244,7 @@ const viewToPath: Record<PageView, string> = {
   [PageView.SERVICE_VOICE]: '/services/voice',
   [PageView.SERVICE_VIDEO]: '/services/video',
   [PageView.AGENT_PORTAL]: '/agent',
+  [PageView.SCREEN_SHARE]: '/screen-share',
 };
 
 // Get initial view from URL
@@ -1249,6 +1252,7 @@ const getInitialView = (): PageView => {
   const path = window.location.pathname;
   if (path.startsWith('/specialist/')) return PageView.SPECIALIST;
   if (path.startsWith('/services/')) return pathToView[path] || PageView.NOT_FOUND;
+  if (path.startsWith('/screen-share/')) return PageView.SCREEN_SHARE;
   if (path === '/agent') return PageView.AGENT_PORTAL;
   return pathToView[path] || PageView.NOT_FOUND;
 };
@@ -1909,6 +1913,10 @@ const App: React.FC = () => {
           return <ServicePage serviceId="video" onNavigate={navigate} />;
         case PageView.AGENT_PORTAL:
           return <AgentPortal onNavigate={navigate} />;
+        case PageView.SCREEN_SHARE: {
+          const screenShareToken = window.location.pathname.split('/screen-share/')[1] || '';
+          return <ScreenShareLanding token={screenShareToken} />;
+        }
         case PageView.NOT_FOUND:
           return (
             <div className="min-h-screen-safe bg-light-50 dark:bg-midnight-950 flex flex-col items-center justify-center px-6 text-center">

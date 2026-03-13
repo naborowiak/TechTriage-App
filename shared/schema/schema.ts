@@ -307,6 +307,24 @@ export const caseArchivesTable = pgTable("case_archives", {
   purgeAfter: timestamp("purge_after").notNull(), // deletedAt + 7 days
 });
 
+// Screen Share Tokens Table — single-use tokens for agent-initiated remote screen share sessions
+export const screenShareTokensTable = pgTable("screen_share_tokens", {
+  id: varchar("id", { length: 255 })
+    .primaryKey()
+    .$defaultFn(() => uuidv4()),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  caseId: varchar("case_id", { length: 255 })
+    .notNull()
+    .references(() => casesTable.id),
+  createdById: varchar("created_by_id", { length: 255 })
+    .notNull()
+    .references(() => usersTable.id),
+  usedAt: timestamp("used_at"), // null until consumed — enforces single-use
+  expiresAt: timestamp("expires_at").notNull(),
+  revokedAt: timestamp("revoked_at"), // agent can cancel
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Promo codes table - tracks promotional codes and their configuration
 export const promoCodesTable = pgTable("promo_codes", {
   id: varchar("id", { length: 255 })
@@ -372,3 +390,5 @@ export type CaseActivity = typeof caseActivityTable.$inferSelect;
 export type InsertCaseActivity = typeof caseActivityTable.$inferInsert;
 export type CaseArchive = typeof caseArchivesTable.$inferSelect;
 export type InsertCaseArchive = typeof caseArchivesTable.$inferInsert;
+export type ScreenShareToken = typeof screenShareTokensTable.$inferSelect;
+export type InsertScreenShareToken = typeof screenShareTokensTable.$inferInsert;

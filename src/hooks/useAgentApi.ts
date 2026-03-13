@@ -133,5 +133,16 @@ export function useAgentApi() {
         method: 'POST',
         body: JSON.stringify({ caseIds }),
       }),
+
+    // Screen share
+    requestScreenShare: (caseId: string): Promise<{ token: { id: string; token: string; expiresAt: string }; link: string }> =>
+      fetchWithAuth(`/api/agent/cases/${encodeURIComponent(caseId)}/screen-share-token`, {
+        method: 'POST',
+      }),
+
+    revokeScreenShareToken: (caseId: string, tokenId: string): Promise<{ success: boolean }> =>
+      fetchWithAuth(`/api/agent/cases/${encodeURIComponent(caseId)}/screen-share-token/${encodeURIComponent(tokenId)}`, {
+        method: 'DELETE',
+      }),
   };
 }
