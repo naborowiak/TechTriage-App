@@ -191,7 +191,6 @@ export function ScreenShareViewer({ caseId }: ScreenShareViewerProps) {
           fill="none"
           stroke={stroke.color}
           strokeWidth="0.004"
-          vectorEffect="non-scaling-stroke"
         />
       );
     }
@@ -207,8 +206,7 @@ export function ScreenShareViewer({ caseId }: ScreenShareViewerProps) {
             y2={p1.y}
             stroke={stroke.color}
             strokeWidth="0.004"
-            vectorEffect="non-scaling-stroke"
-          />
+            />
           <circle cx={p1.x} cy={p1.y} r="0.008" fill={stroke.color} />
         </g>
       );
@@ -226,7 +224,6 @@ export function ScreenShareViewer({ caseId }: ScreenShareViewerProps) {
           strokeWidth="0.004"
           strokeLinecap="round"
           strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
         />
       );
     }

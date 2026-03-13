@@ -36,6 +36,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [showScreenShareConsent, setShowScreenShareConsent] = useState(false);
   const [annotations, setAnnotations] = useState<AnnotationStroke[]>([]);
+  const annotationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const { isSupported: screenShareSupported } = useScreenShareSupport();
 
@@ -421,11 +422,15 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
-        ws.onopen = () => {
+        ws.onopen = async () => {
           setStatus('listening');
-          // Send caseId so server can link identified devices to this case
-          if (resolvedCaseIdRef.current) {
-            ws.send(JSON.stringify({ type: 'setCaseId', caseId: resolvedCaseIdRef.current }));
+          // Ensure case exists and send caseId so server can register this WS for annotations
+          let activeCaseId = resolvedCaseIdRef.current;
+          if (!activeCaseId) {
+            activeCaseId = await ensureVideoCase();
+          }
+          if (activeCaseId) {
+            ws.send(JSON.stringify({ type: 'setCaseId', caseId: activeCaseId }));
           }
         };
 
@@ -477,8 +482,12 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
             } else if (message.type === 'annotation') {
               const strokes: AnnotationStroke[] = Array.isArray(message.annotations) ? message.annotations : [];
               setAnnotations(strokes);
+              if (annotationTimerRef.current) clearTimeout(annotationTimerRef.current);
               if (strokes.length > 0) {
-                setTimeout(() => setAnnotations([]), 8000);
+                annotationTimerRef.current = setTimeout(() => {
+                  setAnnotations([]);
+                  annotationTimerRef.current = null;
+                }, 8000);
               }
             } else if (message.type === 'endSession') {
               const finalSummary = message.summary || 'Session completed';
@@ -544,6 +553,9 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
       if (statusTransitionTimerRef.current) {
         clearTimeout(statusTransitionTimerRef.current);
       }
+      if (annotationTimerRef.current) {
+        clearTimeout(annotationTimerRef.current);
+      }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -561,7 +573,9 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
           autoPlay
           playsInline
           muted
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ${
+          className={`absolute inset-0 w-full h-full transition-all duration-1000 ${
+            isScreenSharing ? 'object-contain' : 'object-cover'
+          } ${
             isSessionEnded ? 'opacity-20 blur-3xl scale-110' : 'opacity-100'
           }`}
         />
@@ -590,7 +604,6 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
                     fill="none"
                     stroke={stroke.color}
                     strokeWidth="0.004"
-                    vectorEffect="non-scaling-stroke"
                   />
                 );
               }
@@ -606,8 +619,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
                       y2={p1.y}
                       stroke={stroke.color}
                       strokeWidth="0.004"
-                      vectorEffect="non-scaling-stroke"
-                    />
+                      />
                     <circle cx={p1.x} cy={p1.y} r="0.008" fill={stroke.color} />
                   </g>
                 );
@@ -625,7 +637,6 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
                     strokeWidth="0.004"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    vectorEffect="non-scaling-stroke"
                   />
                 );
               }
