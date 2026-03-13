@@ -159,7 +159,9 @@
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:maislinc.umich.edu)",
       "WebFetch(domain:mylinccontent.dsc.umich.edu)",
-      "WebFetch(domain:codecreative.io)"
+      "WebFetch(domain:codecreative.io)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:mobidev.biz)"
     ]
   }
 }
