@@ -42,6 +42,19 @@ export interface ConfirmResultAction {
 
 export type GuidedAction = PresentChoicesAction | ShowStepAction | ConfirmResultAction;
 
+// Annotation types for agent screen share drawing
+export interface AnnotationPoint {
+  x: number; // 0-1 normalized
+  y: number; // 0-1 normalized
+}
+
+export interface AnnotationStroke {
+  id: string;
+  tool: 'circle' | 'arrow' | 'freehand';
+  points: AnnotationPoint[];
+  color: string;
+}
+
 export interface SavedSession {
   id: string;
   title: string;

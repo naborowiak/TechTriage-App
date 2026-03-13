@@ -3,7 +3,7 @@ import { X, Mic, MicOff, Phone, MessageSquare, ChevronRight, Bot, User, Monitor,
 import { useAuth } from '../../hooks/useAuth';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useScreenShareSupport } from '../../hooks/useScreenShareSupport';
-import type { GuidedAction } from '../../types';
+import type { GuidedAction, AnnotationStroke } from '../../types';
 import { ChoicePills, StepCard, ConfirmButtons } from './GuidedActions';
 import { ScreenShareConsent } from './ScreenShareConsent';
 
@@ -35,6 +35,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
   const [guidedAction, setGuidedAction] = useState<GuidedAction | null>(null);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [showScreenShareConsent, setShowScreenShareConsent] = useState(false);
+  const [annotations, setAnnotations] = useState<AnnotationStroke[]>([]);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const { isSupported: screenShareSupported } = useScreenShareSupport();
 
@@ -184,6 +185,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
         videoRef.current.srcObject = streamRef.current;
       }
       setIsScreenSharing(false);
+      setAnnotations([]);
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ type: 'screenShareToggle', enabled: false }));
       }
@@ -211,6 +213,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
           videoRef.current.srcObject = streamRef.current;
         }
         setIsScreenSharing(false);
+        setAnnotations([]);
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'screenShareToggle', enabled: false }));
         }
@@ -471,6 +474,12 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
               stopAllHardware();
             } else if (message.type === 'guidedAction') {
               setGuidedAction(message.action);
+            } else if (message.type === 'annotation') {
+              const strokes: AnnotationStroke[] = Array.isArray(message.annotations) ? message.annotations : [];
+              setAnnotations(strokes);
+              if (strokes.length > 0) {
+                setTimeout(() => setAnnotations([]), 8000);
+              }
             } else if (message.type === 'endSession') {
               const finalSummary = message.summary || 'Session completed';
               setSummary(finalSummary);
@@ -557,6 +566,73 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
           }`}
         />
         <canvas ref={canvasRef} className="hidden" />
+
+        {/* Agent annotation overlay */}
+        {isScreenSharing && annotations.length > 0 && (
+          <svg
+            className="absolute inset-0 w-full h-full z-10 pointer-events-none"
+            viewBox="0 0 1 1"
+            preserveAspectRatio="none"
+          >
+            {annotations.map((stroke) => {
+              if (stroke.tool === 'circle' && stroke.points.length >= 2) {
+                const cx = (stroke.points[0].x + stroke.points[1].x) / 2;
+                const cy = (stroke.points[0].y + stroke.points[1].y) / 2;
+                const rx = Math.abs(stroke.points[1].x - stroke.points[0].x) / 2;
+                const ry = Math.abs(stroke.points[1].y - stroke.points[0].y) / 2;
+                return (
+                  <ellipse
+                    key={stroke.id}
+                    cx={cx}
+                    cy={cy}
+                    rx={rx}
+                    ry={ry}
+                    fill="none"
+                    stroke={stroke.color}
+                    strokeWidth="0.004"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              }
+              if (stroke.tool === 'arrow' && stroke.points.length >= 2) {
+                const p0 = stroke.points[0];
+                const p1 = stroke.points[stroke.points.length - 1];
+                return (
+                  <g key={stroke.id}>
+                    <line
+                      x1={p0.x}
+                      y1={p0.y}
+                      x2={p1.x}
+                      y2={p1.y}
+                      stroke={stroke.color}
+                      strokeWidth="0.004"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <circle cx={p1.x} cy={p1.y} r="0.008" fill={stroke.color} />
+                  </g>
+                );
+              }
+              if (stroke.tool === 'freehand' && stroke.points.length >= 2) {
+                const d = stroke.points
+                  .map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`)
+                  .join(' ');
+                return (
+                  <path
+                    key={stroke.id}
+                    d={d}
+                    fill="none"
+                    stroke={stroke.color}
+                    strokeWidth="0.004"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              }
+              return null;
+            })}
+          </svg>
+        )}
 
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 p-4 pt-safe flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent z-20">
@@ -677,7 +753,7 @@ export function VideoSessionModal({ onClose, caseId, onCaseCreated }: VideoSessi
         )}
 
         {/* Floating Assist Pills overlay */}
-        {guidedAction && !isSessionEnded && !connectionError && (
+        {guidedAction && !isSessionEnded && !connectionError && !isScreenSharing && (
           <div className="absolute bottom-36 left-1/2 -translate-x-1/2 w-[90vw] max-w-md z-20 animate-[fadeIn_0.3s_ease-out]">
             <div className="bg-[#0B0E14]/90 backdrop-blur-xl rounded-2xl p-5 border border-[#6366F1]/30 shadow-[0_0_40px_rgba(99,102,241,0.25)]">
               <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Tap to choose</p>

@@ -352,6 +352,7 @@ async function authenticateWebSocket(req: IncomingMessage): Promise<{ id: string
 
 // Map of caseId -> Set of connected agent viewer WebSockets
 const agentViewers = new Map<string, Set<{ ws: WebSocket; agentId: string }>>();
+const caseUserConnections = new Map<string, WebSocket>();
 const MAX_AGENT_VIEWERS_PER_CASE = 3;
 
 function registerAgentViewer(caseId: string, ws: WebSocket, agentId: string): boolean {
@@ -1688,6 +1689,7 @@ You're Alex from TotalAssist. Warm, competent, and human.`;
 
 async function setupGeminiLive(ws: WebSocket, mode: 'video' | 'voice' | 'screenshare' = 'video', userContext?: UserContext | null, userId?: string, initialCaseId?: string) {
   let wsCaseId: string | null = initialCaseId || null;
+  if (wsCaseId) caseUserConnections.set(wsCaseId, ws);
   const apiKey = process.env.GEMINI_API_KEY_TOTALASSIST;
   if (!apiKey) {
     ws.send(
@@ -2105,7 +2107,9 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
             turnComplete: true,
           });
         } else if (message.type === "setCaseId") {
+          if (wsCaseId) caseUserConnections.delete(wsCaseId);
           wsCaseId = typeof message.caseId === "string" ? message.caseId.slice(0, 255) : null;
+          if (wsCaseId) caseUserConnections.set(wsCaseId, ws);
         } else if (message.type === "screenShareToggle") {
           const enabled = !!message.enabled;
           screenShareActive = enabled;
@@ -2142,6 +2146,7 @@ IMPORTANT: The user shared their screen so you can see exactly what they see. Us
 
     ws.on("close", () => {
       console.log("Client disconnected, closing Gemini session");
+      if (wsCaseId) caseUserConnections.delete(wsCaseId);
       // Notify agent viewers that screen share ended
       if (screenShareActive && wsCaseId) {
         notifyAgentViewers(wsCaseId, { type: "screenShareEnded" });
@@ -2454,6 +2459,20 @@ async function main() {
       }
       console.log(`[WS] Agent ${sessionUser.id} viewing screen share for case ${viewCaseId}`);
       ws.send(JSON.stringify({ type: "ready", mode: "agent-viewer" }));
+
+      // Relay annotation messages from agent to user
+      ws.on("message", (data) => {
+        try {
+          const message = JSON.parse(data.toString());
+          if (message.type === "annotation" && Array.isArray(message.annotations)) {
+            const annotations = message.annotations.slice(0, 20);
+            const userWs = caseUserConnections.get(viewCaseId!);
+            if (userWs && userWs.readyState === WebSocket.OPEN) {
+              userWs.send(JSON.stringify({ type: "annotation", annotations }));
+            }
+          }
+        } catch { /* ignore */ }
+      });
       return;
     }
 

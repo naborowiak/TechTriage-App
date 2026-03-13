@@ -19,7 +19,6 @@ export interface UseGeminiVoiceReturn {
   disconnect: () => void;
   sendImage: (base64: string) => void;
   sendText: (text: string) => void;
-  sendScreenShareToggle: (enabled: boolean) => void;
   toggleMute: () => void;
   isMuted: boolean;
   outputAnalyser: AnalyserNode | null;
@@ -365,12 +364,6 @@ export function useGeminiVoice(caseId?: string | null): UseGeminiVoiceReturn {
     setGuidedAction(null);
   }, []);
 
-  // Toggle screen share state on server (enables agent viewer forwarding + context injection)
-  const sendScreenShareToggle = useCallback((enabled: boolean) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    wsRef.current.send(JSON.stringify({ type: 'screenShareToggle', enabled }));
-  }, []);
-
   return {
     status,
     isConnected,
@@ -380,7 +373,6 @@ export function useGeminiVoice(caseId?: string | null): UseGeminiVoiceReturn {
     disconnect,
     sendImage,
     sendText,
-    sendScreenShareToggle,
     toggleMute,
     isMuted,
     outputAnalyser,
